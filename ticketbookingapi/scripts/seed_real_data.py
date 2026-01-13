@@ -1,17 +1,14 @@
 import pymysql
-import os
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def seed_real_data():
     try:
-        host = os.getenv('DB_HOST')
-        user = os.getenv('DB_USER')
-        password = os.getenv('DB_PASSWORD')
-        database = os.getenv('DB_NAME')
-        port = int(os.getenv('DB_PORT', 20325))
+        # Hardcoded database credentials
+        host = 'mysql-3b8d5202-dailyreport.i.aivencloud.com'
+        user = 'avnadmin'
+        password = 'AVNS_Wyds9xpxDGzYAuRQ8Rm'
+        database = 'ticketbookingdb'
+        port = 20325
         
         conn = pymysql.connect(
             host=host, user=user, password=password, database=database, port=port,

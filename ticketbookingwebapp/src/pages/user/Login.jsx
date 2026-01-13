@@ -10,8 +10,7 @@ const Login = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        full_name: '',
-        username: ''
+        full_name: ''
     });
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -86,16 +85,6 @@ const Login = () => {
                                                     placeholder="Nguyễn Văn A"
                                                     value={formData.full_name}
                                                     onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                                                    className="py-2 px-3 bg-light border-0"
-                                                />
-                                            </Form.Group>
-                                            <Form.Group className="mb-3">
-                                                <Form.Label className="small fw-bold">Username</Form.Label>
-                                                <Form.Control
-                                                    required
-                                                    placeholder="username123"
-                                                    value={formData.username}
-                                                    onChange={e => setFormData({ ...formData, username: e.target.value })}
                                                     className="py-2 px-3 bg-light border-0"
                                                 />
                                             </Form.Group>

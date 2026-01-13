@@ -1,20 +1,14 @@
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
-load_dotenv(dotenv_path=env_path)
-
 class Config:
-    DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+    DEBUG = True
+    SECRET_KEY = 'dev_secret_key_123'
 
-    # Using the correct connection string format for Aiven MySQL
+    # Hardcoded connection string for Aiven MySQL
     SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{os.getenv('DB_USER', 'root')}:"
-        f"{os.getenv('DB_PASSWORD', '')}@"
-        f"{os.getenv('DB_HOST', 'localhost')}:"
-        f"{os.getenv('DB_PORT', '3306')}/"
-        f"{os.getenv('DB_NAME', 'ticketbookingdb')}"
+        "mysql+pymysql://avnadmin:"
+        "AVNS_Wyds9xpxDGzYAuRQ8Rm@"
+        "mysql-3b8d5202-dailyreport.i.aivencloud.com:"
+        "20325/"
+        "ticketbookingdb"
     )
 
     # SSL configuration for Aiven MySQL

@@ -1,12 +1,12 @@
-import os, pymysql
-from dotenv import load_dotenv
-load_dotenv()
+import pymysql
+
+# Hardcoded database credentials
 conn = pymysql.connect(
-    host=os.getenv('DB_HOST'), 
-    user=os.getenv('DB_USER'), 
-    password=os.getenv('DB_PASSWORD'), 
-    database=os.getenv('DB_NAME'), 
-    port=int(os.getenv('DB_PORT', 20325)), 
+    host='mysql-3b8d5202-dailyreport.i.aivencloud.com',
+    user='avnadmin',
+    password='AVNS_Wyds9xpxDGzYAuRQ8Rm',
+    database='ticketbookingdb',
+    port=20325,
     ssl={'ssl':{}}
 )
 cursor = conn.cursor()
