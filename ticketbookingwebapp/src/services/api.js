@@ -1,257 +1,414 @@
-// API service for backend communication
-const API_BASE_URL = 'http://localhost:5000/api';
-
-// Switch to real API now that backend is running
-const USE_MOCK_DATA = false;
+import { API_BASE_URL } from '../constants';
 
 export const api = {
+    // Auth APIs
+    async login(credentials) {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Login failed');
+        }
+        return await response.json();
+    },
+
+    async register(userData) {
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Registration failed');
+        }
+        return await response.json();
+    },
+
     // Get all events with optional filters
     async getEvents(params = {}) {
-        if (USE_MOCK_DATA) {
-            return mockData.getEvents(params);
-        }
-
         const queryString = new URLSearchParams(params).toString();
         const response = await fetch(`${API_BASE_URL}/events?${queryString}`);
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         return data;
     },
 
     // Get single event by ID
     async getEvent(eventId) {
-        if (USE_MOCK_DATA) {
-            return mockData.getEvent(eventId);
-        }
-
         const response = await fetch(`${API_BASE_URL}/events/${eventId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         return data;
     },
 
     // Get featured events
     async getFeaturedEvents(limit = 10) {
-        if (USE_MOCK_DATA) {
-            return mockData.getFeaturedEvents(limit);
-        }
-
         const response = await fetch(`${API_BASE_URL}/events/featured?limit=${limit}`);
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         return data;
     },
 
     // Get events by category
     async getEventsByCategory(categoryId, limit = 20) {
-        if (USE_MOCK_DATA) {
-            return mockData.getEventsByCategory(categoryId, limit);
-        }
-
         const response = await fetch(`${API_BASE_URL}/events?category_id=${categoryId}&limit=${limit}`);
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         return data;
     },
 
     // Search events
     async searchEvents(query) {
-        if (USE_MOCK_DATA) {
-            return mockData.searchEvents(query);
-        }
-
         const response = await fetch(`${API_BASE_URL}/events/search?q=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
+    },
+
+    // Get single category by ID
+    async getCategory(categoryId) {
+        const response = await fetch(`${API_BASE_URL}/categories/${categoryId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         return data;
     },
 
     // Get all categories
     async getCategories() {
-        if (USE_MOCK_DATA) {
-            return mockData.getCategories();
-        }
-
         const response = await fetch(`${API_BASE_URL}/categories`);
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         return data;
-    }
-};
+    },
 
-// Mock data service (temporary)
-const mockData = {
-    categories: [
-        { category_id: 1, category_name: 'Nhạc sống', is_active: true },
-        { category_id: 2, category_name: 'Sân khấu & Nghệ thuật', is_active: true },
-        { category_id: 3, category_name: 'Thể Thao', is_active: true },
-        { category_id: 4, category_name: 'Hội thảo & Workshop', is_active: true },
-        { category_id: 5, category_name: 'Tham quan & Trải nghiệm', is_active: true },
-        { category_id: 6, category_name: 'Khác', is_active: true }
-    ],
+    // Get all venues
+    async getVenues() {
+        const response = await fetch(`${API_BASE_URL}/venues`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
+    },
 
-    events: [
-        {
-            event_id: 1,
-            category_id: 1,
-            event_name: 'Chương trình Hòa nhạc Năm mới 2026',
-            description: 'Đón chào năm mới với đêm hòa nhạc đặc sắc cùng dàn nhạc giao hưởng',
-            start_datetime: '2025-12-31T20:00:00',
-            banner_image_url: 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400&h=300&fit=crop',
-            is_featured: true,
-            status: 'PUBLISHED',
-            category: { category_name: 'Nhạc sống' },
-            venue: { venue_name: 'Nhà hát Hòa Bình', city: 'TP.HCM' },
-            ticket_types: [{ type_name: 'VIP', price: 800000 }]
-        },
-        {
-            event_id: 2,
-            category_id: 1,
-            event_name: 'Live Concert - Sơn Tùng M-TP',
-            description: 'Đại nhạc hội của Sơn Tùng M-TP với những ca khúc hit đình đám',
-            start_datetime: '2026-01-15T19:30:00',
-            banner_image_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=300&fit=crop',
-            is_featured: true,
-            status: 'PUBLISHED',
-            category: { category_name: 'Nhạc sống' },
-            venue: { venue_name: 'Sân vận động Mỹ Đình', city: 'Hà Nội' },
-            ticket_types: [{ type_name: 'VIP', price: 1500000 }]
-        },
-        {
-            event_id: 3,
-            category_id: 1,
-            event_name: 'Đêm nhạc Trịnh Công Sơn',
-            description: 'Tưởng nhớ nhạc sĩ Trịnh Công Sơn với những ca khúc bất hủ',
-            start_datetime: '2026-01-20T20:00:00',
-            banner_image_url: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=400&h=300&fit=crop',
-            is_featured: false,
-            status: 'PUBLISHED',
-            category: { category_name: 'Nhạc sống' },
-            venue: { venue_name: 'Nhà hát Lớn Hà Nội', city: 'Hà Nội' },
-            ticket_types: [{ type_name: 'VIP', price: 500000 }]
-        },
-        {
-            event_id: 4,
-            category_id: 1,
-            event_name: 'Festival Âm nhạc Quốc tế',
-            description: 'Lễ hội âm nhạc quốc tế với sự tham gia của nhiều nghệ sĩ nổi tiếng',
-            start_datetime: '2026-01-25T18:00:00',
-            banner_image_url: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop',
-            is_featured: true,
-            status: 'PUBLISHED',
-            category: { category_name: 'Nhạc sống' },
-            venue: { venue_name: 'Công viên Hoàng Văn Thụ', city: 'TP.HCM' },
-            ticket_types: [{ type_name: 'General Admission', price: 0 }]
-        },
-        {
-            event_id: 5,
-            category_id: 1,
-            event_name: 'Anh Trai "Say Hi" Concert 2026',
-            description: 'Đại nhạc hội Anh Trai Say Hi với dàn line-up đình đám',
-            start_datetime: '2026-02-10T19:00:00',
-            banner_image_url: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=300&fit=crop',
-            is_featured: true,
-            status: 'PUBLISHED',
-            category: { category_name: 'Nhạc sống' },
-            venue: { venue_name: 'Sân vận động Quân khu 7', city: 'TP.HCM' },
-            ticket_types: [{ type_name: 'VIP', price: 2000000 }]
-        },
-        {
-            event_id: 6,
-            category_id: 1,
-            event_name: 'Liveshow Đen Vâu',
-            description: 'Đêm nhạc của rapper Đen Vâu với những ca khúc đầy cảm xúc',
-            start_datetime: '2026-02-18T19:30:00',
-            banner_image_url: 'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=400&h=300&fit=crop',
-            is_featured: true,
-            status: 'PUBLISHED',
-            category: { category_name: 'Nhạc sống' },
-            venue: { venue_name: 'Nhà thi đấu Phú Thọ', city: 'TP.HCM' },
-            ticket_types: [{ type_name: 'VIP', price: 1000000 }]
-        },
-        {
-            event_id: 7,
-            category_id: 2,
-            event_name: 'Kịch nói: Số Đỏ',
-            description: 'Vở kịch kinh điển Số Đỏ của nhà văn Vũ Trọng Phụng',
-            start_datetime: '2026-02-03T19:30:00',
-            banner_image_url: 'https://images.unsplash.com/photo-1507924538820-ede94a04019d?w=400&h=300&fit=crop',
-            is_featured: false,
-            status: 'PUBLISHED',
-            category: { category_name: 'Sân khấu & Nghệ thuật' },
-            venue: { venue_name: 'Nhà hát Kịch TP.HCM', city: 'TP.HCM' },
-            ticket_types: [{ type_name: 'Standard', price: 200000 }]
-        },
-        {
-            event_id: 8,
-            category_id: 3,
-            event_name: 'V.League: HAGL vs Hà Nội FC',
-            description: 'Trận đấu đỉnh cao giữa HAGL và Hà Nội FC tại V.League 2026',
-            start_datetime: '2026-02-06T18:00:00',
-            banner_image_url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&h=300&fit=crop',
-            is_featured: true,
-            status: 'PUBLISHED',
-            category: { category_name: 'Thể Thao' },
-            venue: { venue_name: 'Sân Pleiku', city: 'Gia Lai' },
-            ticket_types: [{ type_name: 'VIP', price: 200000 }]
+    // Organizer - Dashboard
+    async getDashboardStats(managerId = 1) {
+        const response = await fetch(`${API_BASE_URL}/organizer/dashboard?manager_id=${managerId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
+    },
+
+    // Organizer - Get events
+    async getOrganizerEvents(managerId = 1, status = null) {
+        const params = new URLSearchParams({ manager_id: managerId });
+        if (status) params.append('status', status);
+        const response = await fetch(`${API_BASE_URL}/organizer/events?${params}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
+    },
+
+    // Organizer - Create event
+    async createEvent(formData) {
+        const response = await fetch(`${API_BASE_URL}/organizer/events`, {
+            method: 'POST',
+            body: formData, // FormData object
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create event');
         }
-    ],
-
-    getCategories() {
-        return {
-            success: true,
-            data: this.categories
-        };
+        const data = await response.json();
+        return data;
     },
 
-    getEvents(params = {}) {
-        let filteredEvents = [...this.events];
-
-        if (params.category_id) {
-            filteredEvents = filteredEvents.filter(e => e.category_id == params.category_id);
+    // Organizer - Update event
+    async updateEvent(eventId, formData) {
+        const response = await fetch(`${API_BASE_URL}/organizer/events/${eventId}`, {
+            method: 'PUT',
+            body: formData, // FormData object
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update event');
         }
+        const data = await response.json();
+        return data;
+    },
 
-        if (params.is_featured !== undefined) {
-            filteredEvents = filteredEvents.filter(e => e.is_featured === params.is_featured);
+    // Organizer - Delete event
+    async deleteEvent(eventId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/events/${eventId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to delete event');
         }
-
-        const limit = params.limit || 20;
-        const offset = params.offset || 0;
-
-        return {
-            success: true,
-            data: filteredEvents.slice(offset, offset + limit),
-            total: filteredEvents.length
-        };
+        const data = await response.json();
+        return data;
     },
 
-    getEvent(eventId) {
-        const event = this.events.find(e => e.event_id == eventId);
-        return {
-            success: true,
-            data: event || null
-        };
+    // Organizer - Get ticket types for event
+    async getTicketTypes(eventId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/events/${eventId}/ticket-types`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
     },
 
-    getFeaturedEvents(limit = 10) {
-        const featured = this.events.filter(e => e.is_featured);
-        return {
-            success: true,
-            data: featured.slice(0, limit)
-        };
+    // Organizer - Create ticket type
+    async createTicketType(eventId, ticketData) {
+        const response = await fetch(`${API_BASE_URL}/organizer/events/${eventId}/ticket-types`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ticketData),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create ticket type');
+        }
+        const data = await response.json();
+        return data;
     },
 
-    getEventsByCategory(categoryId, limit = 20) {
-        const filtered = this.events.filter(e => e.category_id == categoryId);
-        return {
-            success: true,
-            data: filtered.slice(0, limit)
-        };
+    // Organizer - Update ticket type
+    async updateTicketType(ticketTypeId, ticketData) {
+        const response = await fetch(`${API_BASE_URL}/organizer/ticket-types/${ticketTypeId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ticketData),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update ticket type');
+        }
+        const data = await response.json();
+        return data;
     },
 
-    searchEvents(query) {
-        const lowerQuery = query.toLowerCase();
-        const results = this.events.filter(e =>
-            e.event_name.toLowerCase().includes(lowerQuery) ||
-            (e.description && e.description.toLowerCase().includes(lowerQuery))
-        );
-        return {
-            success: true,
-            data: results
-        };
+    // Organizer - Delete ticket type
+    async deleteTicketType(ticketTypeId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/ticket-types/${ticketTypeId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to delete ticket type');
+        }
+        const data = await response.json();
+        return data;
+    },
+
+    async getSeatsByTicketType(ticketTypeId) {
+        const response = await fetch(`${API_BASE_URL}/seats/ticket-type/${ticketTypeId}`);
+        if (!response.ok) throw new Error('Failed to fetch seats');
+        return await response.json();
+    },
+
+    async getSeat(seatId) {
+        const response = await fetch(`${API_BASE_URL}/seats/${seatId}`);
+        if (!response.ok) throw new Error('Failed to fetch seat info');
+        return await response.json();
+    },
+
+    async initializeSeats(data) {
+        const response = await fetch(`${API_BASE_URL}/seats/initialize-default`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to initialize seats');
+        }
+        return await response.json();
+    },
+
+    async getAllEventSeats(eventId) {
+        const response = await fetch(`${API_BASE_URL}/seats/event/${eventId}`);
+        if (!response.ok) throw new Error('Failed to fetch event seats');
+        return await response.json();
+    },
+
+    async assignSeatsFromTemplate(data) {
+        const response = await fetch(`${API_BASE_URL}/seats/assign-template`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to assign seats from template');
+        }
+        return await response.json();
+    },
+
+    // Orders API
+    async createOrder(orderData) {
+        const response = await fetch(`${API_BASE_URL}/orders/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create order');
+        }
+        const data = await response.json();
+        return data;
+    },
+
+    async getOrder(orderId) {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
+    },
+
+    async getOrderByCode(orderCode) {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderCode}/status`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
+    },
+
+    async getUserOrders(userId) {
+        const response = await fetch(`${API_BASE_URL}/orders/user/${userId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
+    },
+
+    async cancelOrder(orderId) {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
+            method: 'POST',
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to cancel order');
+        }
+        const data = await response.json();
+        return data;
+    },
+
+    // Payments API
+    async createPayment(paymentData) {
+        const response = await fetch(`${API_BASE_URL}/payments/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paymentData),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create payment');
+        }
+        const data = await response.json();
+        return data;
+    },
+
+    async createVNPayPaymentUrl(orderId) {
+        const response = await fetch(`${API_BASE_URL}/payments/vnpay/create-url`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create VNPay payment URL');
+        }
+        const data = await response.json();
+        return data;
+    },
+
+    async confirmCashPayment(paymentId) {
+        const response = await fetch(`${API_BASE_URL}/payments/cash/confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_id: paymentId }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to confirm cash payment');
+        }
+        const data = await response.json();
+        return data;
+    },
+
+    async getPayment(paymentId) {
+        const response = await fetch(`${API_BASE_URL}/payments/${paymentId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
+    },
+
+    async getPaymentByOrder(orderId) {
+        const response = await fetch(`${API_BASE_URL}/payments/order/${orderId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        return data;
+    },
+
+    // Admin API
+    async getAdminStats() {
+        const response = await fetch(`${API_BASE_URL}/admin/stats`);
+        if (!response.ok) throw new Error('Failed to fetch admin stats');
+        return await response.json();
+    },
+
+    async getAllUsers() {
+        const response = await fetch(`${API_BASE_URL}/admin/users`);
+        if (!response.ok) throw new Error('Failed to fetch users');
+        return await response.json();
+    },
+
+    async createUser(userData) {
+        const response = await fetch(`${API_BASE_URL}/admin/users/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create user');
+        }
+        return await response.json();
+    },
+
+    async getAllAdminEvents() {
+        const response = await fetch(`${API_BASE_URL}/admin/events`);
+        if (!response.ok) throw new Error('Failed to fetch admin events');
+        return await response.json();
+    },
+
+    async updateEventStatus(eventId, data) {
+        const response = await fetch(`${API_BASE_URL}/admin/events/${eventId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to update event status');
+        return await response.json();
+    },
+
+    async getAllAdminOrders() {
+        const response = await fetch(`${API_BASE_URL}/admin/orders`);
+        if (!response.ok) throw new Error('Failed to fetch admin orders');
+        return await response.json();
+    },
+
+    async resetUserPassword(userId) {
+        const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to reset password');
+        }
+        return await response.json();
     }
 };

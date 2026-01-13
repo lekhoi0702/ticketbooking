@@ -1,147 +1,139 @@
-import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
-import HeroBanner from './components/HeroBanner';
-import EventSection from './components/EventSection';
-import TrendingSection from './components/TrendingSection';
-import Footer from './components/Footer';
-import { api } from './services/api';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import Home from './pages/user/Home';
+import EventDetail from './pages/user/EventDetail';
+import Checkout from './pages/user/Checkout';
+import OrderSuccess from './pages/user/OrderSuccess';
+import VNPayReturn from './pages/user/VNPayReturn';
+import MyOrders from './pages/user/MyOrders';
+import SearchResults from './pages/user/SearchResults';
+import CategoryEvents from './pages/user/CategoryEvents';
+
+// Organizer Imports
+import OrganizerLayout from './components/Organizer/OrganizerLayout';
+import OrganizerDashboard from './pages/organizer/Dashboard';
+import EventList from './pages/organizer/EventList';
+import CreateEvent from './pages/organizer/CreateEvent';
+import OrganizerLogin from './pages/organizer/Login';
+
+import ManageSeats from './pages/organizer/ManageSeats';
+
+// Admin Imports
+import AdminLayout from './components/Admin/AdminLayout';
+import AdminDashboard from './pages/admin/Dashboard';
+import UsersManagement from './pages/admin/Users';
+import AdminEventsManagement from './pages/admin/Events';
+import AdminOrdersManagement from './pages/admin/Orders';
+import AdminLogin from './pages/admin/Login';
+
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
-function App() {
-  const [featuredEvents, setFeaturedEvents] = useState([]);
-  const [trendingEvents, setTrendingEvents] = useState([]);
-  const [musicEvents, setMusicEvents] = useState([]);
-  const [theaterEvents, setTheaterEvents] = useState([]);
-  const [sportsEvents, setSportsEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Login from './pages/user/Login';
 
-  useEffect(() => {
-    loadEvents();
-  }, []);
-
-  const loadEvents = async () => {
-    try {
-      setLoading(true);
-
-      // Load featured events
-      const featuredResponse = await api.getFeaturedEvents(4);
-      if (featuredResponse.success) {
-        setFeaturedEvents(featuredResponse.data);
-      }
-
-      // Load trending events (first 3 featured)
-      const trendingResponse = await api.getFeaturedEvents(3);
-      if (trendingResponse.success) {
-        setTrendingEvents(trendingResponse.data);
-      }
-
-      // Load events by category
-      const musicResponse = await api.getEventsByCategory(1, 4); // Nhạc sống
-      if (musicResponse.success) {
-        setMusicEvents(musicResponse.data);
-      }
-
-      const theaterResponse = await api.getEventsByCategory(2, 4); // Sân khấu
-      if (theaterResponse.success) {
-        setTheaterEvents(theaterResponse.data);
-      }
-
-      const sportsResponse = await api.getEventsByCategory(3, 4); // Thể thao
-      if (sportsResponse.success) {
-        setSportsEvents(sportsResponse.data);
-      }
-
-    } catch (error) {
-      console.error('Error loading events:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Transform API data to match component props
-  const transformEvent = (event) => {
-    // Prepend backend URL to image paths
-    let imageUrl = event.banner_image_url;
-    if (imageUrl && imageUrl.startsWith('/uploads/')) {
-      imageUrl = `http://localhost:5000${imageUrl}`;
-    }
-
-    return {
-      id: event.event_id,
-      title: event.event_name,
-      date: new Date(event.start_datetime).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
-      location: event.venue ? `${event.venue.venue_name}, ${event.venue.city}` : 'TBA',
-      image: imageUrl,
-      price: event.ticket_types && event.ticket_types.length > 0
-        ? (event.ticket_types[0].price === 0 ? 'Miễn phí' : `${event.ticket_types[0].price.toLocaleString('vi-VN')}đ`)
-        : 'TBA',
-      badge: event.is_featured ? 'Hot' : null
-    };
-  };
-
-  if (loading) {
-    return (
-      <div className="App">
-        <Header />
-        <main style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center' }}>
-            <h2>Đang tải...</h2>
-            <p>Vui lòng đợi trong giây lát</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
+// Layout for regular users
+const UserLayout = () => {
   return (
-    <div className="App">
+    <div className="App d-flex flex-column min-vh-100">
       <Header />
-      <main>
-        <HeroBanner />
-
-        {featuredEvents.length > 0 && (
-          <EventSection
-            title="Sự kiện đặc biệt"
-            events={featuredEvents.map(transformEvent)}
-          />
-        )}
-
-        {trendingEvents.length > 0 && (
-          <TrendingSection
-            events={trendingEvents.map(transformEvent)}
-          />
-        )}
-
-        {musicEvents.length > 0 && (
-          <EventSection
-            title="Nhạc sống"
-            events={musicEvents.map(transformEvent)}
-          />
-        )}
-
-        {theaterEvents.length > 0 && (
-          <EventSection
-            title="Sân khấu & Nghệ thuật"
-            events={theaterEvents.map(transformEvent)}
-          />
-        )}
-
-        {sportsEvents.length > 0 && (
-          <EventSection
-            title="Thể Thao"
-            events={sportsEvents.map(transformEvent)}
-          />
-        )}
+      <main className="flex-grow-1">
+        <Outlet />
       </main>
       <Footer />
     </div>
+  );
+};
+
+// Protected Route Component with Role Support
+const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/login" }) => {
+  const { user, isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return null;
+
+  if (!isAuthenticated) {
+    return <Navigate to={redirectTo} state={{ from: location }} replace />;
+  }
+
+  // Check roles if specified
+  if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* User Routes */}
+          <Route element={<UserLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/event/:id" element={<EventDetail />} />
+            <Route path="/search" element={<SearchResults />} />
+            <Route path="/category/:id" element={<CategoryEvents />} />
+            <Route
+              path="/checkout/:eventId"
+              element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/order-success/:orderCode" element={<OrderSuccess />} />
+            <Route path="/payment/vnpay-return" element={<VNPayReturn />} />
+            <Route
+              path="/my-orders"
+              element={
+                <ProtectedRoute>
+                  <MyOrders />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']} redirectTo="/admin/login">
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<UsersManagement />} />
+            <Route path="events" element={<AdminEventsManagement />} />
+            <Route path="orders" element={<AdminOrdersManagement />} />
+          </Route>
+
+          {/* Organizer Routes */}
+          <Route path="/organizer/login" element={<OrganizerLogin />} />
+          <Route
+            path="/organizer"
+            element={
+              <ProtectedRoute allowedRoles={['ORGANIZER', 'ADMIN']} redirectTo="/organizer/login">
+                <OrganizerLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" />} />
+            <Route path="dashboard" element={<OrganizerDashboard />} />
+            <Route path="events" element={<EventList />} />
+            <Route path="create-event" element={<CreateEvent />} />
+            <Route path="manage-seats/:eventId" element={<ManageSeats />} />
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

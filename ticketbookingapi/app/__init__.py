@@ -32,9 +32,23 @@ def create_app():
     from app.routes.health import health_bp
     from app.routes.events import events_bp
     from app.routes.categories import categories_bp
+    from app.routes.organizer import organizer_bp
+    from app.routes.venues import venues_bp
+    from app.routes.orders import orders_bp
+    from app.routes.payments import payments_bp
+    from app.routes.admin import admin_bp
+    from app.routes.seats import seats_bp
+    from app.routes.auth import auth_bp
 
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(events_bp, url_prefix="/api")
     app.register_blueprint(categories_bp, url_prefix="/api")
+    app.register_blueprint(organizer_bp, url_prefix="/api")
+    app.register_blueprint(venues_bp, url_prefix="/api")
+    app.register_blueprint(orders_bp, url_prefix="/api")
+    app.register_blueprint(payments_bp, url_prefix="/api")
+    app.register_blueprint(admin_bp, url_prefix="/api")
+    app.register_blueprint(seats_bp, url_prefix="/api")
+    app.register_blueprint(auth_bp, url_prefix="/api")
 
     return app

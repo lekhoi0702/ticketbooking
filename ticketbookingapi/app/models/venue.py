@@ -9,6 +9,7 @@ class Venue(db.Model):
     address = db.Column(db.String(500), nullable=False)
     city = db.Column(db.String(100), nullable=False, index=True)
     capacity = db.Column(db.Integer, nullable=False)
+    seat_map_template = db.Column(db.JSON, nullable=True) # Template for seat layout
     contact_phone = db.Column(db.String(20))
     is_active = db.Column(db.Boolean, default=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -23,6 +24,7 @@ class Venue(db.Model):
             'address': self.address,
             'city': self.city,
             'capacity': self.capacity,
+            'seat_map_template': self.seat_map_template,
             'contact_phone': self.contact_phone,
             'is_active': self.is_active
         }
