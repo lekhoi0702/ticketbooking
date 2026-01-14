@@ -79,7 +79,7 @@ const AdminLayout = () => {
         <div>
             <Toolbar sx={{ px: 2, py: 3 }}>
                 <Typography variant="h5" noWrap component="div" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                    TicketBox
+                    TicketBooking
                 </Typography>
             </Toolbar>
             <Divider />

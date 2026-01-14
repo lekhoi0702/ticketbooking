@@ -17,6 +17,8 @@ import OrganizerLayout from './components/Organizer/OrganizerLayout';
 import OrganizerDashboard from './pages/organizer/Dashboard';
 import EventList from './pages/organizer/EventList';
 import CreateEvent from './pages/organizer/CreateEvent';
+import EditEvent from './pages/organizer/EditEvent';
+import OrganizerEventDetails from './pages/organizer/EventDetails';
 import OrganizerLogin from './pages/organizer/Login';
 import OrganizerHome from './pages/organizer/OrganizerHome';
 
@@ -84,7 +86,7 @@ function App() {
             <Route
               path="/checkout/:eventId"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <Checkout />
                 </ProtectedRoute>
               }
@@ -94,7 +96,7 @@ function App() {
             <Route
               path="/my-orders"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <MyOrders />
                 </ProtectedRoute>
               }
@@ -102,7 +104,7 @@ function App() {
             <Route
               path="/my-tickets"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <MyTickets />
                 </ProtectedRoute>
               }
@@ -135,6 +137,8 @@ function App() {
             <Route path="dashboard" element={<OrganizerDashboard />} />
             <Route path="events" element={<EventList />} />
             <Route path="create-event" element={<CreateEvent />} />
+            <Route path="edit-event/:eventId" element={<EditEvent />} />
+            <Route path="event/:eventId" element={<OrganizerEventDetails />} />
             <Route path="manage-seats/:eventId" element={<ManageSeats />} />
           </Route>
         </Routes>

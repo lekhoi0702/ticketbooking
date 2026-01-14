@@ -149,20 +149,12 @@ export const useCheckout = () => {
 
             const orderId = orderResponse.data.order.order_id;
 
-            // Handle payment based on method
-            if (paymentMethod === 'VNPAY') {
-                const paymentResponse = await api.createVNPayPaymentUrl(orderId);
-                if (paymentResponse.success) {
-                    window.location.href = paymentResponse.data.payment_url;
-                } else {
-                    throw new Error('Không thể tạo link thanh toán VNPay');
-                }
-            } else if (paymentMethod === 'CASH') {
-                await api.createPayment({
-                    order_id: orderId,
-                    payment_method: 'CASH'
-                });
-                navigate(`/order-success/${orderResponse.data.order.order_code}`);
+            // Handle payment (Always VNPAY)
+            const paymentResponse = await api.createVNPayPaymentUrl(orderId);
+            if (paymentResponse.success) {
+                window.location.href = paymentResponse.data.payment_url;
+            } else {
+                throw new Error('Không thể tạo link thanh toán VNPay');
             }
 
         } catch (err) {

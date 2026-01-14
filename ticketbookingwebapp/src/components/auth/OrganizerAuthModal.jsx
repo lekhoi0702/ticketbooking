@@ -1,9 +1,32 @@
 import React, { useState } from 'react';
-import { Modal, Form, Button, Alert, Spinner } from 'react-bootstrap';
-import { FaLock, FaEnvelope, FaUser, FaArrowRight, FaCalendarPlus } from 'react-icons/fa';
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    TextField,
+    Button,
+    Alert,
+    Box,
+    Typography,
+    Stack,
+    IconButton,
+    InputAdornment,
+    CircularProgress,
+    Divider
+} from '@mui/material';
+import {
+    Close as CloseIcon,
+    LockOutlined as LockIcon,
+    EmailOutlined as EmailIcon,
+    ArrowForward as ArrowForwardIcon,
+    CalendarToday as CalendarIcon,
+    Visibility,
+    VisibilityOff,
+    AccountCircle as AccountIcon
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
-import './AuthModal.css';
+import { useAuth } from '../../context/AuthContext';
 
 const OrganizerAuthModal = ({ show, onHide }) => {
     const [formData, setFormData] = useState({
@@ -12,7 +35,9 @@ const OrganizerAuthModal = ({ show, onHide }) => {
     });
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,21 +51,22 @@ const OrganizerAuthModal = ({ show, onHide }) => {
             });
 
             if (res.success) {
-                // Check if user is organizer or admin
                 if (res.user.role === 'ORGANIZER' || res.user.role === 'ADMIN') {
-                    // Store auth data
-                    localStorage.setItem('token', res.token);
-                    localStorage.setItem('user', JSON.stringify(res.user));
+                    // USE THE LOGIN FUNCTION FROM CONTEXT
+                    login(res.user, res.token);
 
                     // Close modal and redirect
                     onHide();
-                    navigate('/organizer/dashboard');
+                    // Small timeout to ensure context updates
+                    setTimeout(() => {
+                        navigate('/organizer/dashboard');
+                    }, 100);
                 } else {
-                    setError({ type: 'danger', msg: 'Tài khoản không có quyền tạo sự kiện. Vui lòng liên hệ admin để được cấp quyền.' });
+                    setError('Tài khoản không có quyền tạo sự kiện. Vui lòng liên hệ admin để được cấp quyền.');
                 }
             }
         } catch (err) {
-            setError({ type: 'danger', msg: err.message || 'Có lỗi xảy ra' });
+            setError(err.message || 'Có lỗi xảy ra trong quá trình đăng nhập.');
         } finally {
             setLoading(false);
         }
@@ -53,91 +79,192 @@ const OrganizerAuthModal = ({ show, onHide }) => {
     };
 
     return (
-        <Modal show={show} onHide={handleClose} centered size="md" className="auth-modal">
-            <Modal.Header closeButton className="border-0 pb-0">
-                <Modal.Title className="w-100 text-center">
-                    <div className="auth-modal-icon" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}>
-                        <FaCalendarPlus />
-                    </div>
-                </Modal.Title>
-            </Modal.Header>
-            <Modal.Body className="px-4 pb-4">
-                <div className="text-center mb-4 mt-3">
-                    <h4 className="fw-bold">Đăng nhập cho Nhà tổ chức</h4>
-                    <p className="text-muted small">Đăng nhập để tạo và quản lý sự kiện của bạn</p>
-                </div>
+        <Dialog
+            open={show}
+            onClose={handleClose}
+            maxWidth="xs"
+            fullWidth
+            PaperProps={{
+                sx: { borderRadius: 3, overflow: 'hidden' }
+            }}
+        >
+            <DialogTitle sx={{ p: 0 }}>
+                <Box
+                    sx={{
+                        py: 3,
+                        textAlign: 'center',
+                        background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
+                        color: 'white',
+                        position: 'relative'
+                    }}
+                >
+                    <IconButton
+                        onClick={handleClose}
+                        sx={{ position: 'absolute', right: 8, top: 8, color: 'white' }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                    <Box
+                        sx={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: '50%',
+                            bgcolor: 'rgba(255, 255, 255, 0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mx: 'auto',
+                            mb: 1
+                        }}
+                    >
+                        <CalendarIcon fontSize="large" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        TicketBooking Organizer
+                    </Typography>
+                </Box>
+            </DialogTitle>
+
+            <DialogContent sx={{ p: { xs: 3, md: 5 } }}>
+                <Box sx={{ textAlign: 'center', mb: 4 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: 'text.primary' }}>
+
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', opacity: 0.8 }}>
+
+                    </Typography>
+                </Box>
 
                 {error && (
-                    <Alert variant={error.type} className="rounded-3 border-0">
-                        {error.msg}
+                    <Alert
+                        severity="error"
+                        variant="filled"
+                        sx={{ mb: 3, borderRadius: 2, fontSize: '0.85rem' }}
+                        onClose={() => setError(null)}
+                    >
+                        {error}
                     </Alert>
                 )}
 
-                <Form onSubmit={handleSubmit}>
-                    <Form.Group className="mb-3">
-                        <Form.Label className="small fw-bold">
-                            <FaEnvelope className="me-2" />
-                            Email
-                        </Form.Label>
-                        <Form.Control
+                <Box component="form" onSubmit={handleSubmit}>
+                    <Stack spacing={2.5}>
+                        <TextField
+                            fullWidth
+                            label="Tên đăng nhập"
+                            variant="outlined"
                             required
-                            type="email"
-                            placeholder="organizer@example.com"
                             value={formData.email}
                             onChange={e => setFormData({ ...formData, email: e.target.value })}
-                            className="py-2 px-3"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <EmailIcon sx={{ color: 'primary.main', opacity: 0.7 }} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 3,
+                                    bgcolor: 'grey.50',
+                                    '&:hover fieldset': { borderColor: 'primary.main' },
+                                }
+                            }}
                         />
-                    </Form.Group>
 
-                    <Form.Group className="mb-3">
-                        <Form.Label className="small fw-bold">
-                            <FaLock className="me-2" />
-                            Mật khẩu
-                        </Form.Label>
-                        <Form.Control
+                        <TextField
+                            fullWidth
+                            label="Mật khẩu"
+                            type={showPassword ? 'text' : 'password'}
+                            variant="outlined"
                             required
-                            type="password"
-                            placeholder="********"
                             value={formData.password}
                             onChange={e => setFormData({ ...formData, password: e.target.value })}
-                            className="py-2 px-3"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <LockIcon sx={{ color: 'primary.main', opacity: 0.7 }} />
+                                    </InputAdornment>
+                                ),
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            edge="end"
+                                            sx={{ color: 'text.secondary' }}
+                                        >
+                                            {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                )
+                            }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 3,
+                                    bgcolor: 'grey.50',
+                                    '&:hover fieldset': { borderColor: 'primary.main' },
+                                }
+                            }}
                         />
-                    </Form.Group>
 
-                    <Button
-                        variant="primary"
-                        type="submit"
-                        className="w-100 py-2 fw-bold"
-                        disabled={loading}
-                        style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', border: 'none' }}
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            size="large"
+                            disabled={loading}
+                            endIcon={loading ? null : <ArrowForwardIcon />}
+                            sx={{
+                                py: 1.8,
+                                borderRadius: 3,
+                                fontWeight: 800,
+                                fontSize: '1rem',
+                                letterSpacing: '0.5px',
+                                background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
+                                boxShadow: '0 8px 20px rgba(45, 194, 117, 0.3)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #219d5c 0%, #17834a 100%)',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 12px 25px rgba(45, 194, 117, 0.4)',
+                                },
+                                '&:active': {
+                                    transform: 'translateY(0)',
+                                }
+                            }}
+                        >
+                            {loading ? <CircularProgress size={24} color="inherit" /> : 'ĐĂNG NHẬP HỆ THỐNG'}
+                        </Button>
+                    </Stack>
+                </Box>
+
+                <Divider sx={{ my: 4, opacity: 0.6 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', px: 1, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Thông tin thêm
+                    </Typography>
+                </Divider>
+
+                <Typography variant="body2" color="text.secondary" align="center">
+                    Chưa có tài khoản nhà tổ chức?{' '}
+                    <Typography
+                        component="span"
+                        variant="body2"
+                        sx={{
+                            color: 'primary.main',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                                textDecoration: 'underline',
+                                color: 'primary.dark'
+                            }
+                        }}
                     >
-                        {loading ? <Spinner size="sm" className="me-2" /> : null}
-                        ĐĂNG NHẬP
-                        {!loading && <FaArrowRight className="ms-2" />}
-                    </Button>
-                </Form>
-
-                <div className="mt-4 p-3 bg-light rounded-3">
-                    <p className="small mb-2 fw-bold text-center">
-                        <FaUser className="me-2" />
-                        Tài khoản demo
-                    </p>
-                    <div className="small text-muted text-center">
-                        <div>Email: <code>manager@ticketbox.vn</code></div>
-                        <div>Password: <code>manager123</code></div>
-                    </div>
-                </div>
-
-                <div className="text-center mt-3">
-                    <p className="small text-muted mb-0">
-                        Chưa có tài khoản?
-                        <a href="mailto:admin@ticketbox.vn" className="text-primary ms-1 fw-bold text-decoration-none">
-                            Liên hệ Admin
-                        </a>
-                    </p>
-                </div>
-            </Modal.Body>
-        </Modal>
+                        Liên hệ Admin
+                    </Typography>
+                </Typography>
+            </DialogContent>
+        </Dialog>
     );
 };
 

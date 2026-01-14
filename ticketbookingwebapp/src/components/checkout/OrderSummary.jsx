@@ -19,7 +19,7 @@ const OrderSummary = ({
     if (!event) return null;
 
     return (
-        <Card className="border-0 shadow-sm rounded-4 sticky-top overflow-hidden" style={{ top: '20px' }}>
+        <Card className="border-0 shadow-sm rounded-4 overflow-hidden order-summary-sidebar">
             <Card.Header className="bg-dark text-white py-3">
                 <h5 className="mb-0 fw-bold text-center">Tóm tắt đơn hàng</h5>
             </Card.Header>

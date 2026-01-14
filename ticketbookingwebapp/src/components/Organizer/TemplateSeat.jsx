@@ -3,7 +3,7 @@ import React from 'react';
 /**
  * Professional TemplateSeat Component for Organizer Management
  */
-const TemplateSeat = React.memo(({ t, isSelected, occupiedBy, activeTicketTypeId, onMouseDown, onMouseEnter }) => {
+const TemplateSeat = React.memo(({ t, isSelected, occupiedBy, activeTicketTypeId, onMouseDown, onMouseEnter, isLocked }) => {
     const isOtherType = occupiedBy && occupiedBy.ticket_type_id !== activeTicketTypeId;
 
     // Style determination
@@ -14,16 +14,21 @@ const TemplateSeat = React.memo(({ t, isSelected, occupiedBy, activeTicketTypeId
     let transform = 'none';
     let cursor = 'pointer';
 
-    if (isSelected) {
+    if (isLocked) {
+        bgColor = 'rgba(239, 68, 68, 0.1)';
+        textColor = '#ef4444';
+        borderColor = 'rgba(239, 68, 68, 0.5)';
+        cursor = 'not-allowed';
+    } else if (isSelected) {
         bgColor = '#2dc275';
         textColor = '#fff';
         borderColor = '#2dc275';
         shadow = '0 0 15px rgba(45, 194, 117, 0.5)';
         transform = 'scale(1.1)';
     } else if (isOtherType) {
-        bgColor = '#ef4444';
-        textColor = '#fff';
-        borderColor = '#ef4444';
+        bgColor = 'rgba(52, 152, 219, 0.2)'; // Blue-ish for occupied by others
+        textColor = '#3498db';
+        borderColor = 'rgba(52, 152, 219, 0.5)';
         cursor = 'not-allowed';
     }
 
@@ -45,11 +50,11 @@ const TemplateSeat = React.memo(({ t, isSelected, occupiedBy, activeTicketTypeId
                 transform: transform,
                 userSelect: 'none'
             }}
-            onMouseDown={(e) => !isOtherType && onMouseDown(e, t)}
-            onMouseEnter={() => !isOtherType && onMouseEnter(t)}
-            title={`Hàng ${t.row_name} - Ghế ${t.seat_number} ${isOtherType ? '(Đã gán hạng vé khác)' : ''}`}
+            onMouseDown={(e) => (!isOtherType && !isLocked) && onMouseDown(e, t)}
+            onMouseEnter={() => (!isOtherType && !isLocked) && onMouseEnter(t)}
+            title={`${t.area ? t.area + ' - ' : ''}Hàng ${t.row_name} - Ghế ${t.seat_number} ${isLocked ? '(Ghế hỏng/Khóa)' : isOtherType ? '(Đã gán hạng vé khác)' : ''}`}
         >
-            {t.seat_number}
+            {isLocked ? '✕' : t.seat_number}
         </div>
     );
 });

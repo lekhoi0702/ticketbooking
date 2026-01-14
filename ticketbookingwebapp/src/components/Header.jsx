@@ -11,7 +11,7 @@ const Header = () => {
                 <Container>
                     <div className="top-bar-content">
                         <div className="logo">
-                            <h1>ticketbox</h1>
+                            <h1>ticketbooking</h1>
                         </div>
 
                         <div className="search-bar">

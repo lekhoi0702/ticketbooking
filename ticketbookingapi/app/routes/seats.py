@@ -40,6 +40,7 @@ def get_all_event_seats(event_id):
             Seat.row_name, 
             Seat.seat_number, 
             Seat.ticket_type_id,
+            Seat.area_name,
             Seat.x_pos,
             Seat.y_pos
         ).join(TicketType).filter(TicketType.event_id == event_id).all()
@@ -51,6 +52,7 @@ def get_all_event_seats(event_id):
                     'row_name': s.row_name,
                     'seat_number': s.seat_number,
                     'ticket_type_id': s.ticket_type_id,
+                    'area_name': s.area_name,
                     'x_pos': s.x_pos,
                     'y_pos': s.y_pos
                 } for s in seats
@@ -111,6 +113,7 @@ def assign_seats_from_template():
                 ticket_type_id=ticket_type_id,
                 row_name=s_data.get('row_name'),
                 seat_number=str(s_data.get('seat_number')),
+                area_name=s_data.get('area'), # Changed to 'area' to match frontend key
                 status='AVAILABLE',
                 x_pos=s_data.get('x_pos'),
                 y_pos=s_data.get('y_pos')

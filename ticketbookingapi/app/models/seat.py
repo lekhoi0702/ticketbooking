@@ -10,6 +10,7 @@ class Seat(db.Model):
     seat_number = db.Column(db.String(10), nullable=False) # e.g., '1', '2'
     status = db.Column(db.Enum('AVAILABLE', 'LOCKED', 'BOOKED', 'RESERVED'), default='AVAILABLE', index=True)
     is_active = db.Column(db.Boolean, default=True)
+    area_name = db.Column(db.String(100), nullable=True) # e.g., 'Khán đài A', 'Khu vực VIP'
     
     # Optional: x, y coordinates for custom map drawing
     x_pos = db.Column(db.Integer)
@@ -21,7 +22,8 @@ class Seat(db.Model):
             'ticket_type_id': self.ticket_type_id,
             'row_name': self.row_name,
             'seat_number': self.seat_number,
-            'seat_label': f"{self.row_name}{self.seat_number}",
+            'area_name': self.area_name,
+            'seat_label': f"{self.area_name + ' ' if self.area_name else ''}{self.row_name}{self.seat_number}",
             'status': self.status,
             'is_active': self.is_active,
             'x_pos': self.x_pos,

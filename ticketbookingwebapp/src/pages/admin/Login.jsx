@@ -35,17 +35,13 @@ const AdminLogin = () => {
         setError(null);
 
         try {
-            const res = await api.login(formData);
+            const res = await api.login({ ...formData, required_role: 'ADMIN' });
             if (res.success) {
-                if (res.user.role === 'ADMIN') {
-                    login(res.user, res.token);
-                    navigate('/admin/dashboard');
-                } else {
-                    setError('Access denied. This area is for administrators only.');
-                }
+                login(res.user, res.token);
+                navigate('/admin/dashboard');
             }
         } catch (err) {
-            setError(err.message || 'Invalid credentials.');
+            setError(err.message || 'Tài khoản hoặc mật khẩu không đúng.');
         } finally {
             setLoading(false);
         }
@@ -78,10 +74,10 @@ const AdminLogin = () => {
                                     <LockOutlined />
                                 </Avatar>
                                 <Typography component="h1" variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
-                                    TicketBox Admin
+                                    TicketBooking Admin
                                 </Typography>
                                 <Typography variant="body2" color="textSecondary">
-                                    Sign in to continue to admin panel
+                                    Đăng nhập trang quản trị
                                 </Typography>
                             </Box>
 
@@ -96,10 +92,9 @@ const AdminLogin = () => {
                                     margin="normal"
                                     required
                                     fullWidth
-                                    id="email"
-                                    label="Email Address"
-                                    name="email"
-                                    autoComplete="email"
+                                    id="identifier"
+                                    label="Tài khoản"
+                                    name="identifier"
                                     autoFocus
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -139,7 +134,7 @@ const AdminLogin = () => {
                         </CardContent>
                     </Card>
                     <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 3 }}>
-                        © 2026 TicketBox. All rights reserved.
+                        © 2026 TicketBooking. All rights reserved.
                     </Typography>
                 </Container>
             </Box>

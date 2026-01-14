@@ -1,71 +1,123 @@
 import React from 'react';
-import { Form, Button } from 'react-bootstrap';
-import { FaCloudUploadAlt, FaTrashAlt, FaImage } from 'react-icons/fa';
+import {
+    Box,
+    Button,
+    Typography,
+    Stack,
+    Paper
+} from '@mui/material';
+import {
+    CloudUpload as CloudUploadIcon,
+    Delete as DeleteIcon,
+    Image as ImageIcon
+} from '@mui/icons-material';
 
 const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner }) => {
     return (
-        <div className="animate-fade-in">
-            <div
-                className={`banner-upload-container p-2 rounded-4 text-center d-flex flex-column align-items-center justify-content-center border-2 border-dashed ${bannerPreview ? 'border-success' : 'border-secondary'}`}
-                style={{
-                    minHeight: '280px',
-                    backgroundColor: '#121214',
+        <Box>
+            <Paper
+                elevation={0}
+                sx={{
+                    minHeight: 280,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    p: 2,
+                    border: 2,
                     borderStyle: bannerPreview ? 'solid' : 'dashed',
+                    borderColor: bannerPreview ? 'success.main' : 'divider',
+                    borderRadius: 3,
+                    bgcolor: 'background.default',
                     transition: 'all 0.3s'
                 }}
             >
                 {bannerPreview ? (
-                    <div className="position-relative w-100 h-100">
-                        <img
+                    <Box sx={{ width: '100%' }}>
+                        <Box
+                            component="img"
                             src={bannerPreview}
                             alt="Banner Preview"
-                            className="rounded-3 shadow-sm"
-                            style={{ width: '100%', height: '240px', objectFit: 'cover' }}
+                            sx={{
+                                width: '100%',
+                                height: 240,
+                                objectFit: 'cover',
+                                borderRadius: 2,
+                                mb: 2
+                            }}
                         />
-                        <div className="mt-3 d-flex justify-content-center gap-2">
+                        <Stack direction="row" spacing={1} justifyContent="center">
                             <Button
-                                variant="outline-danger"
-                                size="sm"
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                startIcon={<DeleteIcon />}
                                 onClick={removeBanner}
-                                className="px-3 border-danger border-opacity-25"
                             >
-                                <FaTrashAlt className="me-2" /> Xóa ảnh
+                                Xóa ảnh
                             </Button>
-                            <Form.Label
-                                htmlFor="banner-upload"
-                                className="btn btn-outline-success btn-sm mb-0 px-3 border-success border-opacity-25"
+                            <Button
+                                variant="outlined"
+                                color="success"
+                                size="small"
+                                startIcon={<ImageIcon />}
+                                component="label"
                             >
-                                <FaImage className="me-2" /> Thay đổi
-                            </Form.Label>
-                        </div>
-                    </div>
+                                Thay đổi
+                                <input
+                                    type="file"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                />
+                            </Button>
+                        </Stack>
+                    </Box>
                 ) : (
-                    <div className="p-4">
-                        <div className="bg-success bg-opacity-10 p-4 rounded-circle mb-3 d-inline-block">
-                            <FaCloudUploadAlt className="text-success display-4" />
-                        </div>
-                        <h6 className="text-white fw-bold mb-2">Tải lên ảnh bìa (Banner)</h6>
-                        <p className="text-muted small mb-4">
-                            Định dạng JPG, PNG, WEBP. <br />
+                    <Box sx={{ textAlign: 'center', p: 3 }}>
+                        <Box
+                            sx={{
+                                width: 80,
+                                height: 80,
+                                borderRadius: '50%',
+                                bgcolor: 'success.lighter',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mx: 'auto',
+                                mb: 2
+                            }}
+                        >
+                            <CloudUploadIcon sx={{ fontSize: 40, color: 'success.main' }} />
+                        </Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                            Tải lên ảnh bìa (Banner)
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                            Định dạng JPG, PNG, WEBP.<br />
                             Kích thước gợi ý: 1200x480px (Tỉ lệ 2.5:1)
-                        </p>
-                        <Form.Label
-                            htmlFor="banner-upload"
-                            className="btn btn-success px-4 py-2 fw-bold border-0 shadow-sm"
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            component="label"
+                            sx={{
+                                borderRadius: 2,
+                                px: 3,
+                                background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)'
+                            }}
                         >
                             Chọn Ảnh Từ Máy Tính
-                        </Form.Label>
-                    </div>
+                            <input
+                                type="file"
+                                hidden
+                                accept="image/*"
+                                onChange={handleImageChange}
+                            />
+                        </Button>
+                    </Box>
                 )}
-                <Form.Control
-                    type="file"
-                    id="banner-upload"
-                    className="d-none"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                />
-            </div>
-        </div>
+            </Paper>
+        </Box>
     );
 };
 

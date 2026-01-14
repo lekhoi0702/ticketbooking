@@ -1,4 +1,4 @@
-/* EventDetail.css - TicketBox Style */
+/* EventDetail.css - TicketBooking Style */
 
 .event-detail-page {
     background-color: #18181b;
@@ -11,7 +11,42 @@
     position: relative;
     padding: 60px 0;
     overflow: hidden;
-    margin-bottom: 40px;
+    margin-bottom: 0;
+}
+
+/* Sticky Navigation Bar */
+.event-detail-nav {
+    position: sticky;
+    top: 76px;
+    /* Below the top-bar header */
+    background: #1f1f23;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 0;
+}
+
+.event-detail-nav .nav-link {
+    color: #9ca3af !important;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 24px !important;
+    border-radius: 99px !important;
+    transition: all 0.2s;
+}
+
+.event-detail-nav .nav-link:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.event-detail-nav .nav-link:focus,
+.event-detail-nav .nav-link.active {
+    background-color: #2dc275 !important;
+    color: white !important;
+}
+
+.event-main-content {
+    padding-top: 40px;
 }
 
 .hero-blur-bg {
@@ -154,9 +189,16 @@
 }
 
 .sticky-booking-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 16px 0;
     background: #1f1f23;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .summary-total span {

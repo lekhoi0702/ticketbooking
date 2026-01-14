@@ -6,11 +6,11 @@
     color: #f8fafc;
 }
 
-.text-ticketbox-green {
+.text-ticketbooking-green {
     color: #2dc275 !important;
 }
 
-.bg-ticketbox-green {
+.bg-ticketbooking-green {
     background-color: #2dc275 !important;
 }
 
@@ -20,7 +20,7 @@
     overflow: hidden;
 }
 
-.btn-ticketbox {
+.btn-ticketbooking {
     background: linear-gradient(135deg, #2dc275, #219d5c) !important;
     border: none !important;
     color: white !important;
@@ -29,7 +29,7 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.btn-ticketbox:hover {
+.btn-ticketbooking:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 8px 25px rgba(45, 194, 117, 0.4) !important;
 }
@@ -106,7 +106,7 @@
     background: radial-gradient(circle at center, rgba(45, 194, 117, 0.03) 0%, transparent 70%);
 }
 
-.ticketbox-divider {
+.ticketbooking-divider {
     width: 40px;
     height: 3px;
     background: #2dc275;

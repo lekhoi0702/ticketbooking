@@ -1,7 +1,30 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Button, Spinner, Alert, Container } from 'react-bootstrap';
-import { FaArrowLeft, FaSave, FaChair, FaInfoCircle } from 'react-icons/fa';
+import {
+    Box,
+    Card,
+    CardContent,
+    CardHeader,
+    Typography,
+    Button,
+    Grid,
+    CircularProgress,
+    Alert,
+    IconButton,
+    Stack,
+    Paper,
+    Divider,
+    Tooltip,
+    Breadcrumbs,
+    Link
+} from '@mui/material';
+import {
+    ArrowBack as ArrowBackIcon,
+    Save as SaveIcon,
+    Chair as ChairIcon,
+    Info as InfoIcon,
+    NavigateNext as NavigateNextIcon
+} from '@mui/icons-material';
 
 // Components
 import SeatMap from '../../components/event/SeatMap';
@@ -12,11 +35,6 @@ import SeatGridInitializer from '../../components/Organizer/SeatGridInitializer'
 // Hooks
 import { useManageSeats } from '../../hooks/useManageSeats';
 
-import '../../components/Organizer/OrganizerDashboard.css';
-
-/**
- * ManageSeats page component refactored for professional dark theme.
- */
 const ManageSeats = () => {
     const { eventId } = useParams();
     const navigate = useNavigate();
@@ -42,47 +60,112 @@ const ManageSeats = () => {
         setHasSeats
     } = useManageSeats(eventId);
 
-    if (loading) return (
-        <div className="text-center py-5 min-vh-100 d-flex flex-column align-items-center justify-content-center">
-            <Spinner animation="border" variant="success" />
-            <p className="mt-3 text-muted">Đang tải cấu hình sơ đồ ghế...</p>
-        </div>
-    );
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <Stack alignItems="center" spacing={2}>
+                    <CircularProgress size={60} thickness={4} />
+                    <Typography variant="h6" color="text.secondary">
+                        Đang tải cấu hình sơ đồ ghế...
+                    </Typography>
+                </Stack>
+            </Box>
+        );
+    }
 
     return (
-        <div className="animate-fade-in pb-5">
-            <div className="d-flex align-items-center justify-content-between mb-4">
-                <div className="d-flex align-items-center">
-                    <Button
-                        variant="link"
-                        className="text-muted p-0 me-3 hover-text-white"
-                        onClick={() => navigate(-1)}
+        <Box>
+            {/* Header / Breadcrumbs */}
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 4 }}>
+                <Box>
+                    <Breadcrumbs
+                        separator={<NavigateNextIcon fontSize="small" />}
+                        sx={{ mb: 1 }}
                     >
-                        <FaArrowLeft size={20} />
-                    </Button>
-                    <div>
-                        <h2 className="text-white fw-bold mb-0">Thiết Lập Sơ Đồ Ghế</h2>
-                        <p className="text-muted mb-0">
-                            {event?.event_name} <span className="mx-2 opacity-25">|</span> {event?.venue?.venue_name}
-                        </p>
-                    </div>
-                </div>
+                        <Link
+                            underline="hover"
+                            color="inherit"
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); navigate('/organizer/events'); }}
+                            sx={{ fontSize: '0.875rem' }}
+                        >
+                            Sự kiện
+                        </Link>
+                        <Typography color="text.primary" sx={{ fontSize: '0.875rem' }}>
+                            Thiết lập ghế
+                        </Typography>
+                    </Breadcrumbs>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                        <IconButton
+                            onClick={() => navigate(-1)}
+                            sx={{
+                                bgcolor: 'background.paper',
+                                boxShadow: 1,
+                                '&:hover': { bgcolor: 'action.hover' }
+                            }}
+                        >
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Box>
+                            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                                Thiết Lập Sơ Đồ Ghế
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {event?.event_name} • {event?.venue?.venue_name}
+                            </Typography>
+                        </Box>
+                    </Stack>
+                </Box>
 
                 {venueTemplate && (
-                    <Button
-                        className="organizer-btn-primary px-4 shadow-sm"
-                        onClick={handleSaveTemplateAssignment}
-                        disabled={initializing}
-                    >
-                        <FaSave className="me-2" /> LƯU CẤU HÌNH GHẾ
-                    </Button>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                        {activeTicketType && (
+                            <Typography variant="body2" sx={{
+                                color: selectedTemplateSeats.length === activeTicketType.quantity ? 'success.main' : 'error.main',
+                                fontWeight: 700
+                            }}>
+                                {selectedTemplateSeats.length === activeTicketType.quantity
+                                    ? '✓ Đủ số lượng ghế'
+                                    : `Cần chọn: ${activeTicketType.quantity} ghế (Đang: ${selectedTemplateSeats.length})`}
+                            </Typography>
+                        )}
+                        <Button
+                            variant="contained"
+                            startIcon={<SaveIcon />}
+                            onClick={() => {
+                                if (selectedTemplateSeats.length !== activeTicketType.quantity) {
+                                    alert(`Vui lòng chọn đúng ${activeTicketType.quantity} ghế cho hạng vé ${activeTicketType.type_name}. Bạn đang chọn ${selectedTemplateSeats.length} ghế.`);
+                                    return;
+                                }
+                                handleSaveTemplateAssignment();
+                            }}
+                            disabled={initializing || !activeTicketType}
+                            sx={{
+                                borderRadius: 2,
+                                px: 3,
+                                py: 1,
+                                background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
+                                boxShadow: '0 4px 12px rgba(45, 194, 117, 0.2)',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #219d5c 0%, #17834a 100%)'
+                                }
+                            }}
+                        >
+                            LƯU CẤU HÌNH GHẾ
+                        </Button>
+                    </Stack>
                 )}
-            </div>
+            </Stack>
 
-            {error && <Alert variant="danger" className="border-0 rounded-4 shadow-sm mb-4">{error}</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                    {error}
+                </Alert>
+            )}
 
-            <Row className="g-4">
-                <Col lg={3}>
+            <Grid container spacing={3}>
+                {/* Sidebar */}
+                <Grid item xs={12} lg={3}>
                     <TicketTypeSidebar
                         ticketTypes={ticketTypes}
                         activeTicketType={activeTicketType}
@@ -91,29 +174,52 @@ const ManageSeats = () => {
                         venueTemplate={venueTemplate}
                         venueName={event?.venue?.venue_name}
                     />
-                </Col>
+                </Grid>
 
-                <Col lg={9}>
-                    <Card className="content-card">
-                        <Card.Header className="content-card-header d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 className="mb-0 fw-bold text-white">
-                                    Ghế {activeTicketType?.type_name}
-                                </h5>
-                                <div className="text-muted small mt-1 d-flex align-items-center">
-                                    <FaChair className="me-1 opacity-50" />
+                {/* Main View Area */}
+                <Grid item xs={12} lg={9}>
+                    <Card sx={{ borderRadius: 3, overflow: 'hidden', minHeight: 600, display: 'flex', flexDirection: 'column' }}>
+                        <CardHeader
+                            title={
+                                <Stack direction="row" alignItems="center" spacing={1}>
+                                    <ChairIcon color="primary" />
+                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                        Ghế {activeTicketType?.type_name}
+                                    </Typography>
+                                </Stack>
+                            }
+                            subheader={
+                                <Typography variant="caption" color="text.secondary">
                                     {selectedTemplateSeats.length} ghế đã chọn / {activeTicketType?.quantity} tổng số vé
-                                </div>
-                            </div>
+                                </Typography>
+                            }
+                            action={
+                                !venueTemplate && (
+                                    <Paper
+                                        sx={{
+                                            bgcolor: 'warning.lighter',
+                                            color: 'warning.dark',
+                                            px: 1.5,
+                                            py: 0.5,
+                                            borderRadius: 1,
+                                            border: 1,
+                                            borderColor: 'warning.light',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1
+                                        }}
+                                    >
+                                        <InfoIcon fontSize="small" />
+                                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                            CHẾ ĐỘ LƯỚI TỰ DO
+                                        </Typography>
+                                    </Paper>
+                                )
+                            }
+                            sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
+                        />
 
-                            {!venueTemplate && (
-                                <div className="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2">
-                                    <FaInfoCircle className="me-2" /> Chế độ lưới tự do
-                                </div>
-                            )}
-                        </Card.Header>
-
-                        <Card.Body className="p-0 position-relative" style={{ minHeight: '600px' }}>
+                        <CardContent sx={{ p: 0, flex: 1, position: 'relative', bgcolor: '#f8f9fa' }}>
                             {venueTemplate ? (
                                 <SeatMapTemplateView
                                     venueTemplate={venueTemplate}
@@ -124,50 +230,90 @@ const ManageSeats = () => {
                                     handleSeatMouseEnter={handleSeatMouseEnter}
                                 />
                             ) : (
-                                <div className="p-5 text-center">
+                                <Box sx={{ p: 5, textAlign: 'center' }}>
                                     {!hasSeats && !initializing ? (
-                                        <div className="max-w-500 mx-auto">
+                                        <Box sx={{ maxWidth: 500, mx: 'auto' }}>
                                             <SeatGridInitializer
                                                 initData={initData}
                                                 setInitData={setInitData}
                                                 handleInitializeSeats={handleInitializeSeats}
                                             />
-                                        </div>
+                                        </Box>
                                     ) : (
-                                        <div className="bg-dark rounded-4 p-4">
+                                        <Paper
+                                            elevation={0}
+                                            sx={{
+                                                p: 4,
+                                                borderRadius: 4,
+                                                bgcolor: 'background.default',
+                                                border: 1,
+                                                borderColor: 'divider'
+                                            }}
+                                        >
                                             <SeatMap
                                                 key={activeTicketType?.ticket_type_id}
                                                 ticketType={activeTicketType}
                                                 onSeatsLoaded={setHasSeats}
                                                 onSelectionChange={() => { }}
                                             />
-                                        </div>
+                                        </Paper>
                                     )}
-                                </div>
+                                </Box>
                             )}
 
                             {initializing && (
-                                <div className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-black bg-opacity-50 rounded-4" style={{ zIndex: 100, backdropFilter: 'blur(4px)' }}>
-                                    <Spinner animation="grow" variant="success" />
-                                    <p className="mt-3 fw-bold text-white">Đang thực hiện gán ghế...</p>
-                                </div>
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        bgcolor: 'rgba(255, 255, 255, 0.7)',
+                                        backdropFilter: 'blur(4px)',
+                                        zIndex: 10
+                                    }}
+                                >
+                                    <CircularProgress color="success" />
+                                    <Typography variant="body1" sx={{ mt: 2, fontWeight: 700 }}>
+                                        Đang thực hiện gán ghế...
+                                    </Typography>
+                                </Box>
                             )}
-                        </Card.Body>
+                        </CardContent>
                     </Card>
 
-                    <div className="mt-4 p-4 bg-info bg-opacity-5 rounded-4 border border-info border-opacity-10 d-flex align-items-start">
-                        <FaInfoCircle className="text-info mt-1 me-3 fs-5" />
-                        <div>
-                            <h6 className="text-white fw-bold mb-1">Ghi chú từ hệ thống</h6>
-                            <p className="text-muted small mb-0">
+                    {/* Footer Legend / Info */}
+                    <Paper
+                        variant="outlined"
+                        sx={{
+                            mt: 3,
+                            p: 3,
+                            borderRadius: 3,
+                            bgcolor: 'primary.lighter',
+                            borderColor: 'primary.light',
+                            display: 'flex',
+                            gap: 2
+                        }}
+                    >
+                        <InfoIcon color="primary" />
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'primary.dark' }}>
+                                Ghi chú từ hệ thống
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
                                 Sơ đồ ghế được hiển thị dựa trên thiết kế của quản trị viên (Admin) cho khu vực <strong>{event?.venue?.venue_name}</strong>.
                                 Bạn chỉ cần chọn/hủy tập hợp ghế tương ứng với từng hạng vé để khách hàng có thể chọn chỗ khi mua vé.
-                            </p>
-                        </div>
-                    </div>
-                </Col>
-            </Row>
-        </div>
+                            </Typography>
+                        </Box>
+                    </Paper>
+                </Grid>
+            </Grid>
+        </Box>
     );
 };
 

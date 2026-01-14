@@ -1,72 +1,149 @@
-import React from 'react';
-import { Row, Col, Button, Spinner } from 'react-bootstrap';
-import { FaPlus, FaSearch, FaSync } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import {
+    Box,
+    Card,
+    CardContent,
+    Typography,
+    Button,
+    TextField,
+    InputAdornment,
+    Stack,
+    IconButton,
+    Chip,
+    CircularProgress,
+    Alert
+} from '@mui/material';
+import {
+    Add as AddIcon,
+    Search as SearchIcon,
+    Refresh as RefreshIcon
+} from '@mui/icons-material';
 import EventTable from '../../components/Organizer/EventTable';
 import { useEventList } from '../../hooks/useEventList';
 
 const EventList = () => {
     const { events, loading, error, handlePublishEvent, fetchEvents } = useEventList();
+    const [searchTerm, setSearchTerm] = useState('');
 
-    if (loading) return (
-        <div className="text-center py-5">
-            <Spinner animation="border" variant="success" />
-            <p className="mt-3 text-muted">Đang tải danh sách sự kiện...</p>
-        </div>
+    const filteredEvents = events.filter(event =>
+        event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <Stack alignItems="center" spacing={2}>
+                    <CircularProgress size={60} thickness={4} />
+                    <Typography variant="h6" color="text.secondary">
+                        Đang tải danh sách sự kiện...
+                    </Typography>
+                </Stack>
+            </Box>
+        );
+    }
+
     return (
-        <div className="pb-5">
-            {/* Header Area */}
-            <div className="row mb-4 align-items-end">
-                <div className="col-md-6">
-                    <h5 className="text-muted small fw-bold text-uppercase letter-spacing-1 mb-2">Quản lý nội dung</h5>
-                    <h3 className="fw-black text-white mb-0">Sự kiện của tôi</h3>
-                </div>
-                <div className="col-md-6 d-flex justify-content-md-end gap-2 mt-3 mt-md-0">
-                    <Button variant="outline-light" size="sm" className="rounded-pill px-3 border-opacity-10" onClick={fetchEvents}>
-                        <FaSync className="me-2" /> TẢI LẠI
+        <Box>
+            {/* Header Section */}
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+                <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+                        Sự kiện của tôi
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        Quản lý và theo dõi tất cả sự kiện của bạn
+                    </Typography>
+                </Box>
+
+                <Stack direction="row" spacing={2}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<RefreshIcon />}
+                        onClick={fetchEvents}
+                        sx={{ borderRadius: 2 }}
+                    >
+                        Làm mới
                     </Button>
-                    <Link to="/organizer/create-event" className="btn btn-success btn-sm rounded-pill px-4 fw-bold shadow-sm">
-                        <FaPlus className="me-2" /> TẠO MỚI
-                    </Link>
-                </div>
-            </div>
+                    <Button
+                        component={RouterLink}
+                        to="/organizer/create-event"
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        sx={{
+                            borderRadius: 2,
+                            px: 3,
+                            background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #219d5c 0%, #17834a 100%)'
+                            }
+                        }}
+                    >
+                        Tạo sự kiện mới
+                    </Button>
+                </Stack>
+            </Stack>
 
-            {/* Main Content */}
-            <div className="card content-card border-0 shadow-lg mb-0">
-                <div className="card-header border-bottom border-white border-opacity-5 py-4 px-4 overflow-hidden position-relative">
-                    <div className="row align-items-center">
-                        <div className="col-md-5">
-                            <div className="input-group input-group-sm">
-                                <span className="input-group-text bg-dark border-0 text-muted"><FaSearch /></span>
-                                <input type="text" className="form-control bg-dark border-0 text-white" placeholder="Tìm kiếm tên sự kiện..." />
-                            </div>
-                        </div>
-                        <div className="col-md-7 text-md-end mt-2 mt-md-0">
-                            <div className="small text-muted">Tổng cộng: <strong className="text-success">{events.length}</strong> sự kiện</div>
-                        </div>
-                    </div>
-                </div>
-                <div className="card-body p-0">
-                    <EventTable
-                        events={events}
-                        handlePublishEvent={handlePublishEvent}
-                    />
-                </div>
-            </div>
-
+            {/* Error Alert */}
             {error && (
-                <div className="alert alert-danger mt-4 bg-danger bg-opacity-10 border-danger border-opacity-25 text-white">
+                <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
                     <strong>Lỗi:</strong> {error}
-                </div>
+                </Alert>
             )}
 
-            <style>{`
-                .fw-black { font-weight: 900; }
-                .letter-spacing-1 { letter-spacing: 1px; }
-            `}</style>
-        </div>
+            {/* Main Card */}
+            <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                    {/* Search and Stats */}
+                    <Stack
+                        direction={{ xs: 'column', md: 'row' }}
+                        justifyContent="space-between"
+                        alignItems={{ xs: 'stretch', md: 'center' }}
+                        spacing={2}
+                        sx={{ mb: 3 }}
+                    >
+                        <TextField
+                            placeholder="Tìm kiếm tên sự kiện..."
+                            variant="outlined"
+                            size="small"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            sx={{
+                                maxWidth: { md: 400 },
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2
+                                }
+                            }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon color="action" />
+                                    </InputAdornment>
+                                )
+                            }}
+                        />
+
+                        <Stack direction="row" spacing={1} alignItems="center">
+                            <Typography variant="body2" color="text.secondary">
+                                Tổng cộng:
+                            </Typography>
+                            <Chip
+                                label={`${filteredEvents.length} sự kiện`}
+                                color="primary"
+                                size="small"
+                                sx={{ fontWeight: 600 }}
+                            />
+                        </Stack>
+                    </Stack>
+
+                    {/* Event Table */}
+                    <EventTable
+                        events={filteredEvents}
+                        handlePublishEvent={handlePublishEvent}
+                    />
+                </CardContent>
+            </Card>
+        </Box>
     );
 };
 

@@ -7,6 +7,8 @@ import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/eventUtils';
 import './MyTickets.css';
 
+import { QRCodeSVG } from 'qrcode.react';
+
 const MyTickets = () => {
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
@@ -51,6 +53,31 @@ const MyTickets = () => {
     const handleCloseQR = () => {
         setShowQRModal(false);
         setSelectedTicket(null);
+    };
+
+    const downloadQR = () => {
+        const svg = document.getElementById('ticket-qr-code');
+        if (!svg) return;
+
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+
+        img.onload = () => {
+            canvas.width = 500;
+            canvas.height = 500;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 50, 50, 400, 400);
+            const pngFile = canvas.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.download = `Ticket_${selectedTicket.ticket_code}.png`;
+            downloadLink.href = pngFile;
+            downloadLink.click();
+        };
+
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
     };
 
     const getStatusBadge = (status) => {
@@ -234,7 +261,7 @@ const MyTickets = () => {
                                             <div className="ticket-footer">
                                                 <Button
                                                     variant="success"
-                                                    className="w-100 qr-button"
+                                                    className="w-100 qr-button shadow-sm fw-bold"
                                                     onClick={() => handleShowQR(ticket)}
                                                     disabled={ticket.ticket_status === 'CANCELLED'}
                                                 >
@@ -251,50 +278,70 @@ const MyTickets = () => {
                 )}
             </Container>
 
-            {/* QR Code Modal */}
+            {/* QR Code Modal - Premium Design */}
             <Modal show={showQRModal} onHide={handleCloseQR} centered size="md">
                 <Modal.Header closeButton className="border-0 pb-0">
-                    <Modal.Title>Mã QR vé điện tử</Modal.Title>
+                    <Modal.Title className="fw-bold">Vé Điện Tử</Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="text-center p-4">
                     {selectedTicket && (
-                        <>
-                            <div className="qr-code-container mb-4">
-                                {selectedTicket.qr_code_url ? (
-                                    <img
-                                        src={selectedTicket.qr_code_url}
-                                        alt="QR Code"
-                                        className="qr-code-image"
-                                    />
-                                ) : (
-                                    <div className="qr-placeholder">
-                                        <FaQrcode size={150} className="text-muted" />
-                                        <p className="mt-3 text-muted">Mã QR đang được tạo...</p>
-                                    </div>
-                                )}
+                        <div className="qr-modal-content">
+                            <div className="qr-code-wrapper mb-4 p-4 bg-white rounded-4 shadow-sm border border-success border-opacity-10 d-inline-block">
+                                <QRCodeSVG
+                                    id="ticket-qr-code"
+                                    value={selectedTicket.ticket_code}
+                                    size={256}
+                                    level="H"
+                                    includeMargin={false}
+                                    imageSettings={{
+                                        src: "/favicon.ico", // Attempt to use favicon as center logo for premium feel
+                                        x: undefined,
+                                        y: undefined,
+                                        height: 40,
+                                        width: 40,
+                                        excavate: true,
+                                    }}
+                                />
                             </div>
 
-                            <div className="qr-ticket-info">
-                                <h5 className="mb-3">{selectedTicket.event_name}</h5>
-                                <div className="qr-code-text mb-3">
-                                    <strong>Mã vé:</strong> {selectedTicket.ticket_code}
+                            <div className="qr-ticket-details border-top pt-4">
+                                <Badge bg="success" className="mb-3 px-3 py-2 rounded-pill">
+                                    {selectedTicket.ticket_type_name || 'Hợp lệ'}
+                                </Badge>
+                                <h4 className="fw-bold mb-2 text-dark">{selectedTicket.event_name}</h4>
+                                <div className="text-secondary small mb-3">
+                                    <div className="mb-1"><FaCalendarAlt className="me-2" />{formatDate(selectedTicket.event_date)}</div>
+                                    <div><FaMapMarkerAlt className="me-2" />{selectedTicket.venue_name}</div>
                                 </div>
-                                <p className="text-muted small mb-0">
-                                    Vui lòng xuất trình mã QR này tại cổng vào sự kiện
-                                </p>
-                            </div>
+                                <div className="qr-code-display p-3 bg-light rounded-3 mb-4">
+                                    <div className="text-muted x-small mb-1">Mã xác nhận</div>
+                                    <div className="h5 mb-0 fw-bold font-monospace letter-spacing-1">{selectedTicket.ticket_code}</div>
+                                </div>
 
-                            {selectedTicket.qr_code_url && (
-                                <Button
-                                    variant="outline-success"
-                                    className="mt-4 px-4"
-                                    onClick={() => window.open(selectedTicket.qr_code_url, '_blank')}
-                                >
-                                    <FaDownload className="me-2" />
-                                    Tải xuống mã QR
-                                </Button>
-                            )}
-                        </>
+                                <p className="text-muted small mb-4 italic">
+                                    Vui lòng xuất trình mã QR này để nhân viên quét khi vào cổng
+                                </p>
+
+                                <div className="d-grid gap-2">
+                                    <Button
+                                        variant="success"
+                                        size="lg"
+                                        className="rounded-3 shadow-sm fw-bold"
+                                        onClick={downloadQR}
+                                    >
+                                        <FaDownload className="me-2" />
+                                        Tải vé về điện thoại
+                                    </Button>
+                                    <Button
+                                        variant="outline-secondary"
+                                        onClick={handleCloseQR}
+                                        className="border-0"
+                                    >
+                                        Đóng
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </Modal.Body>
             </Modal>

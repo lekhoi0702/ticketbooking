@@ -1,17 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --ticketbox-green: #2dc275;
-  --ticketbox-dark: #18181b;
-  --ticketbox-surface: #27272a;
-  --ticketbox-grey: #9ca3af;
-  --ticketbox-white: #ffffff;
+  --ticketbooking-green: #2dc275;
+  --ticketbooking-dark: #18181b;
+  --ticketbooking-surface: #27272a;
+  --ticketbooking-grey: #9ca3af;
+  --ticketbooking-white: #ffffff;
 }
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--ticketbox-dark);
-  color: var(--ticketbox-white);
+  background-color: var(--ticketbooking-dark);
+  color: var(--ticketbooking-white);
   margin: 0;
   padding: 0;
 }
@@ -42,8 +42,8 @@ h6 {
 }
 
 .btn-primary {
-  background-color: var(--ticketbox-green) !important;
-  border-color: var(--ticketbox-green) !important;
+  background-color: var(--ticketbooking-green) !important;
+  border-color: var(--ticketbooking-green) !important;
 }
 
 .btn-primary:hover {
@@ -52,12 +52,12 @@ h6 {
 }
 
 .btn-outline-primary {
-  color: var(--ticketbox-green) !important;
-  border-color: var(--ticketbox-green) !important;
+  color: var(--ticketbooking-green) !important;
+  border-color: var(--ticketbooking-green) !important;
 }
 
 .btn-outline-primary:hover {
-  background-color: var(--ticketbox-green) !important;
+  background-color: var(--ticketbooking-green) !important;
   color: white !important;
 }
 
@@ -67,14 +67,14 @@ h6 {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--ticketbox-dark);
+  background: var(--ticketbooking-dark);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--ticketbox-surface);
+  background: var(--ticketbooking-surface);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--ticketbox-grey);
+  background: var(--ticketbooking-grey);
 }

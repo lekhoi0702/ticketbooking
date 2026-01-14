@@ -1,178 +1,355 @@
-import React, { useEffect } from 'react';
-import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import '../../assets/adminlte-custom.css';
+import { ThemeProvider } from '@mui/material/styles';
+import {
+    Box,
+    Drawer,
+    AppBar,
+    Toolbar,
+    List,
+    Typography,
+    Divider,
+    IconButton,
+    ListItem,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Avatar,
+    Menu,
+    MenuItem,
+    CssBaseline,
+    useMediaQuery,
+    useTheme as useMuiTheme,
+    Chip,
+    Stack
+} from '@mui/material';
+import {
+    Menu as MenuIcon,
+    Dashboard as DashboardIcon,
+    Event as EventIcon,
+    AddCircleOutline as AddIcon,
+    AccountCircle as AccountIcon,
+    Logout as LogoutIcon,
+    Notifications as NotificationsIcon,
+    ConfirmationNumber as TicketIcon
+} from '@mui/icons-material';
+import organizerTheme from '../../theme/organizer-theme';
+
+const drawerWidth = 260;
 
 const OrganizerLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const muiTheme = useMuiTheme();
+    const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
 
-    useEffect(() => {
-        document.body.className = 'hold-transition sidebar-mini layout-fixed organizer-theme';
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
 
-        return () => {
-            document.body.className = '';
-        };
-    }, []);
+    const handleDrawerToggle = () => {
+        setMobileOpen(!mobileOpen);
+    };
+
+    const handleProfileMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleProfileMenuClose = () => {
+        setAnchorEl(null);
+    };
 
     const handleLogout = () => {
+        handleProfileMenuClose();
         logout();
         navigate('/');
     };
 
     const menuItems = [
-        { path: '/organizer/dashboard', icon: 'fas fa-tachometer-alt', label: 'Bảng điều khiển' },
-        { path: '/organizer/events', icon: 'fas fa-list', label: 'Quản lý sự kiện' },
-        { path: '/organizer/create-event', icon: 'fas fa-calendar-plus', label: 'Tạo sự kiện mới' },
-        { path: '/organizer/profile', icon: 'fas fa-user-cog', label: 'Cài đặt tài khoản' },
+        {
+            path: '/organizer/dashboard',
+            icon: <DashboardIcon />,
+            label: 'Bảng điều khiển',
+            color: '#2dc275'
+        },
+        {
+            path: '/organizer/events',
+            icon: <EventIcon />,
+            label: 'Quản lý sự kiện',
+            color: '#ff6f00'
+        }
     ];
 
-    return (
-        <div className="wrapper">
-            {/* Navbar */}
-            <nav className="main-header navbar navbar-expand navbar-white navbar-light">
-                <ul className="navbar-nav">
-                    <li className="nav-item">
-                        <a className="nav-link" data-widget="pushmenu" href="#" role="button">
-                            <i className="fas fa-bars"></i>
-                        </a>
-                    </li>
-                    <li className="nav-item d-none d-sm-inline-block">
-                        <Link to="/organizer/dashboard" className="nav-link">Trang chủ</Link>
-                    </li>
-                </ul>
+    const drawer = (
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            {/* Logo Section */}
+            <Box
+                sx={{
+                    p: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
+                    color: 'white'
+                }}
+            >
+                <TicketIcon sx={{ fontSize: 32 }} />
+                <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }}>
+                        TicketBooking
+                    </Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                        Organizer Panel
+                    </Typography>
+                </Box>
+            </Box>
 
-                <ul className="navbar-nav ml-auto">
-                    <li className="nav-item">
-                        <a className="nav-link" data-widget="navbar-search" href="#" role="button">
-                            <i className="fas fa-search"></i>
-                        </a>
-                    </li>
-                    <li className="nav-item dropdown">
-                        <a className="nav-link" data-toggle="dropdown" href="#">
-                            <i className="far fa-bell"></i>
-                            <span className="badge badge-success navbar-badge">2</span>
-                        </a>
-                        <div className="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                            <span className="dropdown-item dropdown-header">2 Thông báo</span>
-                            <div className="dropdown-divider"></div>
-                            <a href="#" className="dropdown-item">
-                                <i className="fas fa-ticket-alt mr-2 text-success"></i> Vé mới được đặt
-                                <span className="float-right text-muted text-sm">5 phút</span>
-                            </a>
-                            <div className="dropdown-divider"></div>
-                            <a href="#" className="dropdown-item dropdown-footer">Xem tất cả</a>
-                        </div>
-                    </li>
-                    <li className="nav-item dropdown user-menu">
-                        <a href="#" className="nav-link dropdown-toggle" data-toggle="dropdown">
-                            <img
-                                src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=10b981&color=fff`}
-                                className="user-image img-circle elevation-2"
-                                alt="User"
-                            />
-                            <span className="d-none d-md-inline">{user?.full_name || 'Nhà tổ chức'}</span>
-                        </a>
-                        <ul className="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                            <li className="user-header bg-success">
-                                <img
-                                    src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=fff&color=10b981`}
-                                    className="img-circle elevation-2"
-                                    alt="User"
+            {/* User Info Card */}
+            {/* <Box
+                sx={{
+                    p: 2,
+                    m: 2,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%)',
+                    border: '1px solid',
+                    borderColor: 'divider'
+                }}
+            >
+                <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar
+                        src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=2dc275&color=fff`}
+                        sx={{ width: 48, height: 48 }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }} noWrap>
+                            {user?.full_name || 'Nhà tổ chức'}
+                        </Typography>
+                        <Chip
+                            label="Organizer"
+                            size="small"
+                            sx={{
+                                mt: 0.5,
+                                height: 20,
+                                fontSize: '0.7rem',
+                                bgcolor: 'primary.main',
+                                color: 'white'
+                            }}
+                        />
+                    </Box>
+                </Stack>
+            </Box> */}
+
+            <Divider />
+
+            {/* Menu Items */}
+            <List sx={{ px: 2, py: 1, flex: 1 }}>
+                <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            px: 2,
+                            py: 1,
+                            color: 'text.secondary',
+                            fontWeight: 600,
+                            letterSpacing: 0.5
+                        }}
+                    >
+                        MENU CHÍNH
+                    </Typography>
+                </ListItem>
+                {menuItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                        <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+                            <ListItemButton
+                                onClick={() => {
+                                    navigate(item.path);
+                                    if (isMobile) setMobileOpen(false);
+                                }}
+                                sx={{
+                                    borderRadius: 2,
+                                    py: 1.5,
+                                    bgcolor: isActive ? 'primary.main' : 'transparent',
+                                    color: isActive ? 'white' : 'text.primary',
+                                    '&:hover': {
+                                        bgcolor: isActive ? 'primary.dark' : 'action.hover'
+                                    },
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <ListItemIcon
+                                    sx={{
+                                        color: isActive ? 'white' : item.color,
+                                        minWidth: 40
+                                    }}
+                                >
+                                    {item.icon}
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={item.label}
+                                    primaryTypographyProps={{
+                                        fontSize: '0.875rem',
+                                        fontWeight: isActive ? 600 : 500
+                                    }}
                                 />
-                                <p>
-                                    {user?.full_name}
-                                    <small>Professional Organizer</small>
-                                </p>
-                            </li>
-                            <li className="user-footer">
-                                <Link to="/organizer/profile" className="btn btn-default btn-flat">Hồ sơ</Link>
-                                <button onClick={handleLogout} className="btn btn-default btn-flat float-right">Đăng xuất</button>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </nav>
+                            </ListItemButton>
+                        </ListItem>
+                    );
+                })}
+            </List>
 
-            {/* Main Sidebar */}
-            <aside className="main-sidebar sidebar-light-success elevation-4">
-                <Link to="/organizer/dashboard" className="brand-link">
-                    <i className="fas fa-ticket-alt brand-image" style={{ fontSize: '2rem', marginLeft: '0.5rem', color: '#10b981' }}></i>
-                    <span className="brand-text font-weight-light">TicketBox Organizer</span>
-                </Link>
-
-                <div className="sidebar">
-                    <div className="user-panel mt-3 pb-3 mb-3 d-flex">
-                        <div className="image">
-                            <img
-                                src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=10b981&color=fff`}
-                                className="img-circle elevation-2"
-                                alt="User"
-                            />
-                        </div>
-                        <div className="info">
-                            <Link to="#" className="d-block">{user?.full_name || 'Nhà tổ chức'}</Link>
-                        </div>
-                    </div>
-
-                    <nav className="mt-2">
-                        <ul className="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                            <li className="nav-header">MENU CHÍNH</li>
-                            {menuItems.map(item => (
-                                <li key={item.path} className="nav-item">
-                                    <Link
-                                        to={item.path}
-                                        className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
-                                    >
-                                        <i className={`nav-icon ${item.icon}`}></i>
-                                        <p>{item.label}</p>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </nav>
-                </div>
-            </aside>
-
-            {/* Content Wrapper */}
-            <div className="content-wrapper">
-                <div className="content-header">
-                    <div className="container-fluid">
-                        <div className="row mb-2">
-                            <div className="col-sm-6">
-                                <h1 className="m-0">
-                                    {menuItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
-                                </h1>
-                            </div>
-                            <div className="col-sm-6">
-                                <ol className="breadcrumb float-sm-right">
-                                    <li className="breadcrumb-item"><Link to="/organizer/dashboard">TCB</Link></li>
-                                    <li className="breadcrumb-item active">
-                                        {menuItems.find(i => i.path === location.pathname)?.label || 'Overview'}
-                                    </li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <section className="content">
-                    <div className="container-fluid">
-                        <Outlet />
-                    </div>
-                </section>
-            </div>
+            <Divider />
 
             {/* Footer */}
-            <footer className="main-footer">
-                <strong>Copyright &copy; 2026 <a href="#" className="text-success">TicketBox</a>.</strong>
-                All rights reserved.
-                <div className="float-right d-none d-sm-inline-block">
-                    <b>Organizer Panel</b>
-                </div>
-            </footer>
-        </div>
+            {/* <Box sx={{ p: 2 }}>
+                <Typography variant="caption" color="text.secondary" align="center" display="block">
+                    © 2026 TicketBooking
+                </Typography>
+                <Typography variant="caption" color="text.secondary" align="center" display="block">
+                    Version 2.0
+                </Typography>
+            </Box> */}
+        </Box>
+    );
+
+    return (
+        <ThemeProvider theme={organizerTheme}>
+            <CssBaseline />
+            <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+                {/* AppBar */}
+                <AppBar
+                    position="fixed"
+                    sx={{
+                        width: { md: `calc(100% - ${drawerWidth}px)` },
+                        ml: { md: `${drawerWidth}px` },
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        boxShadow: 1
+                    }}
+                >
+                    <Toolbar>
+                        <IconButton
+                            color="inherit"
+                            edge="start"
+                            onClick={handleDrawerToggle}
+                            sx={{ mr: 2, display: { md: 'none' } }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+
+                        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
+                            {menuItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
+                        </Typography>
+
+                        <Stack direction="row" spacing={1}>
+                            <IconButton color="inherit">
+                                <NotificationsIcon />
+                            </IconButton>
+
+                            <IconButton
+                                onClick={handleProfileMenuOpen}
+                                sx={{ p: 0.5 }}
+                            >
+                                <Avatar
+                                    src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=2dc275&color=fff`}
+                                    sx={{ width: 36, height: 36 }}
+                                />
+                            </IconButton>
+                        </Stack>
+
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleProfileMenuClose}
+                            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                            PaperProps={{
+                                sx: {
+                                    mt: 1.5,
+                                    minWidth: 200,
+                                    borderRadius: 2,
+                                    boxShadow: 3
+                                }
+                            }}
+                        >
+                            <Box sx={{ px: 2, py: 1.5 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                    {user?.full_name}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {user?.email}
+                                </Typography>
+                            </Box>
+                            <Divider />
+                            <MenuItem onClick={() => { navigate('/organizer/profile'); handleProfileMenuClose(); }}>
+                                <ListItemIcon>
+                                    <AccountIcon fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Hồ sơ</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={handleLogout}>
+                                <ListItemIcon>
+                                    <LogoutIcon fontSize="small" color="error" />
+                                </ListItemIcon>
+                                <ListItemText>Đăng xuất</ListItemText>
+                            </MenuItem>
+                        </Menu>
+                    </Toolbar>
+                </AppBar>
+
+                {/* Drawer */}
+                <Box
+                    component="nav"
+                    sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+                >
+                    {/* Mobile drawer */}
+                    <Drawer
+                        variant="temporary"
+                        open={mobileOpen}
+                        onClose={handleDrawerToggle}
+                        ModalProps={{ keepMounted: true }}
+                        sx={{
+                            display: { xs: 'block', md: 'none' },
+                            '& .MuiDrawer-paper': {
+                                boxSizing: 'border-box',
+                                width: drawerWidth
+                            }
+                        }}
+                    >
+                        {drawer}
+                    </Drawer>
+
+                    {/* Desktop drawer */}
+                    <Drawer
+                        variant="permanent"
+                        sx={{
+                            display: { xs: 'none', md: 'block' },
+                            '& .MuiDrawer-paper': {
+                                boxSizing: 'border-box',
+                                width: drawerWidth
+                            }
+                        }}
+                        open
+                    >
+                        {drawer}
+                    </Drawer>
+                </Box>
+
+                {/* Main Content */}
+                <Box
+                    component="main"
+                    sx={{
+                        flexGrow: 1,
+                        p: 3,
+                        width: { md: `calc(100% - ${drawerWidth}px)` },
+                        mt: 8
+                    }}
+                >
+                    <Outlet />
+                </Box>
+            </Box>
+        </ThemeProvider>
     );
 };
 

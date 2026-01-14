@@ -10,7 +10,7 @@ const Footer = () => {
                 <Row className="footer-content">
                     {/* Company Info */}
                     <Col md={3} sm={6} className="footer-column">
-                        <h3 className="footer-logo">ticketbox</h3>
+                        <h3 className="footer-logo">ticketbooking</h3>
                         <div className="contact-info">
                             <div className="contact-item">
                                 <FaPhone className="contact-icon" />
@@ -18,7 +18,7 @@ const Footer = () => {
                             </div>
                             <div className="contact-item">
                                 <FaEnvelope className="contact-icon" />
-                                <span>support@ticketbox.vn</span>
+                                <span>support@ticketbooking.vn</span>
                             </div>
                             <div className="contact-item">
                                 <FaMapMarkerAlt className="contact-icon" />
@@ -75,14 +75,15 @@ const Footer = () => {
                     </Col>
                 </Row>
 
-                <div className="footer-bottom">
+                {/* <div className="footer-bottom">
                     <div className="footer-brand">
-                        <span className="brand-text">ticketbox by VNPAY</span>
-                    </div>
-                    <div className="footer-copyright">
-                        <p>© 2026 TicketBox. All rights reserved.</p>
-                    </div>
-                </div>
+                        <div className="footer-brand">
+                            <span className="brand-text">ticketbooking by TEAM</span>
+                        </div>
+                        <div className="footer-copyright">
+                            <p>© 2026 TicketBooking. All rights reserved.</p>
+                        </div>
+                    </div> */}
             </Container>
         </footer>
     );

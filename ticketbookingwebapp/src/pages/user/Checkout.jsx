@@ -73,10 +73,7 @@ const Checkout = () => {
                         />
 
                         {/* Payment Method */}
-                        <PaymentMethodSelector
-                            paymentMethod={paymentMethod}
-                            setPaymentMethod={setPaymentMethod}
-                        />
+                        <PaymentMethodSelector />
                     </Col>
 
                     <Col lg={4}>

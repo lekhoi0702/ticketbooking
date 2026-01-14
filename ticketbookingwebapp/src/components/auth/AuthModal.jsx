@@ -153,7 +153,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 </Form.Label>
                                 <Form.Control
                                     required
-                                    placeholder="Nguyễn Văn A"
+                                    // placeholder="Nguyễn Văn A"
                                     value={formData.full_name}
                                     onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                                     className="py-2 px-3"
@@ -168,7 +168,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 <Form.Control
                                     required
                                     type="tel"
-                                    placeholder="0901234567"
+                                    // placeholder="0901234567"
                                     value={formData.phone}
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                     className="py-2 px-3"
@@ -185,7 +185,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 <Form.Control
                                     required
                                     type="email"
-                                    placeholder="example@gmail.com"
+                                    // placeholder="example@gmail.com"
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     className="py-2 px-3"

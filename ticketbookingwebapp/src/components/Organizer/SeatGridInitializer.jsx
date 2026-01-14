@@ -1,49 +1,84 @@
 import React from 'react';
-import { Form, Button } from 'react-bootstrap';
-import { FaTh } from 'react-icons/fa';
+import {
+    Box,
+    Typography,
+    TextField,
+    Button,
+    Paper,
+    Stack
+} from '@mui/material';
+import { GridView as GridIcon } from '@mui/icons-material';
 
-/**
- * Professional SeatGridInitializer for Fallback scenarios
- */
 const SeatGridInitializer = ({ initData, setInitData, handleInitializeSeats }) => {
     return (
-        <div className="text-center py-5 bg-dark bg-opacity-25 rounded-5 border border-secondary border-opacity-10 border-dashed">
-            <div className="stat-icon-wrapper bg-secondary bg-opacity-10 mx-auto mb-4" style={{ width: '80px', height: '80px' }}>
-                <FaTh size={32} className="text-muted" />
-            </div>
-            <h4 className="text-white fw-bold">Khởi tạo lưới ghế tự do</h4>
-            <p className="text-muted small mb-4">Dùng khi khu vực không có sơ đồ mẫu từ Admin</p>
+        <Paper
+            variant="outlined"
+            sx={{
+                p: 5,
+                textAlign: 'center',
+                borderRadius: 4,
+                borderStyle: 'dashed',
+                borderColor: 'divider',
+                bgcolor: 'action.hover'
+            }}
+        >
+            <Box
+                sx={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: '50%',
+                    bgcolor: 'action.selected',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 3
+                }}
+            >
+                <GridIcon sx={{ fontSize: 32, color: 'text.secondary' }} />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                Khởi tạo lưới ghế tự do
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+                Dùng khi khu vực không có sơ đồ mẫu từ Admin
+            </Typography>
 
-            <div className="d-flex justify-content-center gap-3 mt-4 mx-auto" style={{ maxWidth: '400px' }}>
-                <div className="w-100">
-                    <label className="organizer-form-label d-block text-start">Số hàng</label>
-                    <Form.Control
-                        type="number"
-                        placeholder="VD: 10"
-                        className="organizer-form-control"
-                        value={initData.rows || ''}
-                        onChange={e => setInitData({ ...initData, rows: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                    />
-                </div>
-                <div className="w-100">
-                    <label className="organizer-form-label d-block text-start">Ghế mỗi hàng</label>
-                    <Form.Control
-                        type="number"
-                        placeholder="VD: 15"
-                        className="organizer-form-control"
-                        value={initData.seats_per_row || ''}
-                        onChange={e => setInitData({ ...initData, seats_per_row: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                    />
-                </div>
-            </div>
+            <Stack direction="row" spacing={2} sx={{ maxWidth: 400, mx: 'auto', mb: 4 }}>
+                <TextField
+                    fullWidth
+                    label="Số hàng"
+                    type="number"
+                    placeholder="VD: 10"
+                    value={initData.rows || ''}
+                    onChange={e => setInitData({ ...initData, rows: e.target.value === '' ? '' : parseInt(e.target.value) })}
+                />
+                <TextField
+                    fullWidth
+                    label="Ghế mỗi hàng"
+                    type="number"
+                    placeholder="VD: 15"
+                    value={initData.seats_per_row || ''}
+                    onChange={e => setInitData({ ...initData, seats_per_row: e.target.value === '' ? '' : parseInt(e.target.value) })}
+                />
+            </Stack>
 
             <Button
-                className="organizer-btn-primary mt-5 px-5"
+                variant="contained"
+                size="large"
                 onClick={handleInitializeSeats}
+                sx={{
+                    px: 6,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
+                    '&:hover': {
+                        background: 'linear-gradient(135deg, #219d5c 0%, #17834a 100%)'
+                    }
+                }}
             >
                 TẠO LƯỚI MẶC ĐỊNH
             </Button>
-        </div>
+        </Paper>
     );
 };
 

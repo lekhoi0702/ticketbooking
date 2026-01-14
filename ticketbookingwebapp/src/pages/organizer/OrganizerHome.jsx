@@ -1,22 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import { FaCalendarPlus, FaChartLine, FaUsers, FaTicketAlt, FaRocket, FaShieldAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import {
+    Box,
+    Button,
+    Container,
+    Typography,
+    Stack,
+    Grid,
+    Card,
+    CardContent,
+    AppBar,
+    Toolbar,
+    useScrollTrigger,
+    Fade,
+    Paper,
+    ThemeProvider,
+    CssBaseline
+} from '@mui/material';
+import {
+    ConfirmationNumber as TicketIcon,
+    RocketLaunch as RocketIcon,
+    ShowChart as ChartIcon,
+    Groups as GroupsIcon,
+    SupportAgent as SupportIcon,
+    AddCircleOutline as PlusIcon
+} from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import OrganizerAuthModal from '../../components/auth/OrganizerAuthModal';
-import './OrganizerHome.css';
+import organizerTheme from '../../theme/organizer-theme';
 
-/**
- * OrganizerHome landing page.
- * Redirects to dashboard if logged in, otherwise shows promotional content.
- */
+// Scroll to top button or elevation trigger
+function ElevationScroll(props) {
+    const { children, window } = props;
+    const trigger = useScrollTrigger({
+        disableHysteresis: true,
+        threshold: 0,
+        target: window ? window() : undefined,
+    });
+
+    return React.cloneElement(children, {
+        elevation: trigger ? 4 : 0,
+        sx: {
+            bgcolor: trigger ? 'background.paper' : 'transparent',
+            color: trigger ? 'text.primary' : 'white',
+            transition: 'all 0.3s'
+        }
+    });
+}
+
 const OrganizerHome = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
-    const { isAuthenticated, user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
-        // If already logged in as organizer, redirect to dashboard
         const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'ADMIN';
         if (isAuthenticated && isOrganizer) {
             navigate('/organizer/dashboard');
@@ -25,148 +62,240 @@ const OrganizerHome = () => {
 
     const features = [
         {
-            icon: <FaCalendarPlus />,
-            title: 'Tạo sự kiện nhanh chóng',
-            description: 'Công cụ kéo thả và điền thông tin trực quan giúp bạn tạo sự kiện trong 5 phút.'
+            title: 'Tạo Sự Kiện Dễ Dàng',
+            desc: 'Quy trình tạo sự kiện chuyên nghiệp với đầy đủ cấu hình loại vé và sơ đồ ghế.',
+            icon: <PlusIcon fontSize="large" color="primary" />,
         },
         {
-            icon: <FaTicketAlt />,
-            title: 'Quản lý vé linh hoạt',
-            description: 'Thiết lập nhiều loại vé (VIP, Standard), mã giảm giá và số lượng vé giới hạn.'
+            title: 'Phân Tích Doanh Thu',
+            desc: 'Theo dõi báo cáo doanh thu và lượng vé bán ra theo thời gian thực.',
+            icon: <ChartIcon fontSize="large" color="primary" />,
         },
         {
-            icon: <FaChartLine />,
-            title: 'Thống kê thời gian thực',
-            description: 'Theo dõi doanh thu, số lượng vé đã bán và biểu đồ tăng trưởng ngay trên dashboard.'
+            title: 'Quản Lý Khách Hàng',
+            desc: 'Dễ dàng quản lý thông tin người mua vé và các yêu cầu hỗ trợ.',
+            icon: <GroupsIcon fontSize="large" color="primary" />,
         },
         {
-            icon: <FaUsers />,
-            title: 'Kết nối khán giả',
-            description: 'Tiếp cận hàng triệu khách hàng tiềm năng đang tìm kiếm sự kiện trên TicketBox.'
+            title: 'Hỗ Trợ 24/7',
+            desc: 'Đội ngũ kỹ thuật luôn sẵn sàng hỗ trợ bạn trong mọi khâu tổ chức.',
+            icon: <SupportIcon fontSize="large" color="primary" />,
         }
     ];
 
     return (
-        <div className="organizer-home-v2">
-            {/* Hero Section */}
-            <section className="organizer-hero">
-                <div className="hero-overlay"></div>
-                <Container className="position-relative" style={{ zIndex: 2 }}>
-                    <Row className="align-items-center min-vh-100">
-                        <Col lg={7}>
-                            <div className="mb-3">
-                                <span className="badge rounded-pill bg-success px-3 py-2 fw-bold bg-opacity-75">
-                                    <FaRocket className="me-2" /> DÀNH CHO NHÀ TỔ CHỨC
-                                </span>
-                            </div>
-                            <h1 className="display-3 fw-bold mb-4 text-white">
-                                Giải pháp quản lý <br />
-                                <span className="text-ticketbox-green">Sự kiện toàn diện</span>
-                            </h1>
-                            <p className="lead mb-5 text-gray-300 fs-4">
-                                Nền tảng bán vé và quản lý sự kiện hàng đầu Việt Nam.
-                                Chúng tôi giúp bạn tối ưu quy trình và tăng doanh thu vượt trội.
-                            </p>
-                            <div className="d-flex gap-3">
-                                <Button
-                                    size="lg"
-                                    className="btn-ticketbox px-5 py-3 fw-bold"
-                                    onClick={() => setShowAuthModal(true)}
-                                >
-                                    BẮT ĐẦU NGAY
-                                </Button>
-                                <Button
-                                    size="lg"
-                                    variant="outline-light"
-                                    className="px-5 py-3 fw-bold border-2"
-                                >
-                                    LIÊN HỆ TƯ VẤN
-                                </Button>
-                            </div>
-                        </Col>
-                        <Col lg={5} className="d-none d-lg-block">
-                            <div className="hero-visual-card p-4 rounded-4 shadow-lg animate-float">
-                                <div className="d-flex justify-content-between mb-4">
-                                    <div className="fw-bold text-white fs-5">Doanh thu tháng này</div>
-                                    <div className="text-ticketbox-green fw-bold">+24%</div>
-                                </div>
-                                <div className="h-150px bg-dark rounded-3 mb-4 d-flex align-items-end p-3 gap-2">
-                                    <div className="bg-success opacity-50 flex-grow-1 rounded-top" style={{ height: '40%' }}></div>
-                                    <div className="bg-success opacity-75 flex-grow-1 rounded-top" style={{ height: '60%' }}></div>
-                                    <div className="bg-success flex-grow-1 rounded-top" style={{ height: '90%' }}></div>
-                                    <div className="bg-success opacity-60 flex-grow-1 rounded-top" style={{ height: '50%' }}></div>
-                                    <div className="bg-success opacity-80 flex-grow-1 rounded-top" style={{ height: '75%' }}></div>
-                                </div>
-                                <div className="d-flex align-items-center">
-                                    <div className="bg-success bg-opacity-20 p-2 rounded-circle me-3">
-                                        <FaShieldAlt className="text-ticketbox-green" />
-                                    </div>
-                                    <div className="text-muted small">Hệ thống bảo mật tiêu chuẩn quốc tế</div>
-                                </div>
-                            </div>
-                        </Col>
-                    </Row>
-                </Container>
-            </section>
+        <ThemeProvider theme={organizerTheme}>
+            <CssBaseline />
+            <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+                {/* Navbar */}
+                <ElevationScroll>
+                    <AppBar position="fixed">
+                        <Container maxWidth="lg">
+                            <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
+                                <Stack direction="row" spacing={1} alignItems="center" onClick={() => navigate('/')} sx={{ cursor: 'pointer' }}>
+                                    <TicketIcon sx={{ fontSize: 32, color: '#2dc275' }} />
+                                    <Typography variant="h5" sx={{ fontWeight: 800, color: 'inherit' }}>
+                                        TicketBooking
+                                    </Typography>
+                                </Stack>
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                    <Button
+                                        color="inherit"
+                                        onClick={() => navigate('/')}
+                                        sx={{
+                                            fontWeight: 600,
+                                            px: 2,
+                                            borderRadius: 2,
+                                            transition: 'all 0.2s',
+                                            '&:hover': {
+                                                bgcolor: 'rgba(45, 194, 117, 0.08)',
+                                                color: 'primary.main',
+                                                transform: 'translateY(-1px)'
+                                            }
+                                        }}
+                                    >
+                                        Trang chủ TicketBooking
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => setShowAuthModal(true)}
+                                        sx={{ borderRadius: 2, fontWeight: 700, px: 3 }}
+                                    >
+                                        Đăng nhập
+                                    </Button>
+                                </Stack>
+                            </Toolbar>
+                        </Container>
+                    </AppBar>
+                </ElevationScroll>
 
-            {/* Features Section */}
-            <section className="features-v2 py-5">
-                <Container className="py-5">
-                    <div className="text-center mb-5 pb-3">
-                        <h2 className="text-white fw-bold mb-3 display-5">Tại sao nên chọn TicketBox?</h2>
-                        <div className="ticketbox-divider mx-auto mb-4"></div>
-                        <p className="text-muted fs-5">Cung cấp bộ công cụ mạnh mẽ nhất cho nhà tổ chức chuyên nghiệp</p>
-                    </div>
-                    <Row>
-                        {features.map((feature, index) => (
-                            <Col key={index} md={6} lg={3} className="mb-4">
-                                <Card className="organizer-feature-card h-100 border-0">
-                                    <Card.Body className="p-4">
-                                        <div className="feature-icon-v2 mb-4">
-                                            {feature.icon}
-                                        </div>
-                                        <h4 className="text-white fw-bold mb-3">{feature.title}</h4>
-                                        <p className="text-muted mb-0">{feature.description}</p>
-                                    </Card.Body>
+                {/* Hero Section */}
+                <Box
+                    sx={{
+                        height: '70vh',
+                        minHeight: 500,
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'white',
+                        background: 'linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80")',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        mb: 8
+                    }}
+                >
+                    <Container maxWidth="lg">
+                        <Grid container spacing={4} justifyContent="center">
+                            <Grid item xs={12} md={10} lg={8}>
+                                <Fade in timeout={1000}>
+                                    <Box sx={{ textAlign: 'center' }}>
+                                        <Typography variant="h2" sx={{ fontWeight: 900, mb: 2, textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+                                            Nền Tảng Quản Lý Sự Kiện Số 1 Việt Nam
+                                        </Typography>
+                                        <Typography variant="h5" sx={{ mb: 4, opacity: 0.9 }}>
+                                            Giải pháp toàn diện giúp bạn tổ chức, quảng bá và bán vé sự kiện hiệu quả nhất.
+                                        </Typography>
+                                        <Stack direction="row" spacing={2} justifyContent="center">
+                                            <Button
+                                                variant="contained"
+                                                size="large"
+                                                startIcon={<RocketIcon />}
+                                                onClick={() => setShowAuthModal(true)}
+                                                sx={{
+                                                    py: 1.5,
+                                                    px: 4,
+                                                    borderRadius: 2,
+                                                    fontSize: '1.1rem',
+                                                    fontWeight: 700,
+                                                    bgcolor: '#2dc275',
+                                                    '&:hover': { bgcolor: '#219d5c' }
+                                                }}
+                                            >
+                                                BẮT ĐẦU NGAY
+                                            </Button>
+                                            <Button
+                                                variant="outlined"
+                                                size="large"
+                                                sx={{
+                                                    py: 1.5,
+                                                    px: 4,
+                                                    borderRadius: 2,
+                                                    fontSize: '1.1rem',
+                                                    fontWeight: 700,
+                                                    color: 'white',
+                                                    borderColor: 'white',
+                                                    '&:hover': { borderColor: '#2dc275', bgcolor: 'rgba(45, 194, 117, 0.1)' }
+                                                }}
+                                            >
+                                                TÌM HIỂU THÊM
+                                            </Button>
+                                        </Stack>
+                                    </Box>
+                                </Fade>
+                            </Grid>
+                        </Grid>
+                    </Container>
+                </Box>
+
+                {/* Features Section */}
+                <Container maxWidth="lg" sx={{ mb: 12 }}>
+                    <Box sx={{ textAlign: 'center', mb: 8 }}>
+                        <Typography variant="h3" sx={{ fontWeight: 800, mb: 2 }}>
+                            Tại sao chọn <Box component="span" sx={{ color: 'primary.main' }}>TicketBooking</Box>?
+                        </Typography>
+                        <Box sx={{ width: 80, height: 4, bgcolor: 'primary.main', mx: 'auto', borderRadius: 2 }} />
+                    </Box>
+
+                    <Grid container spacing={4} justifyContent="center">
+                        {features.map((f, i) => (
+                            <Grid item xs={12} sm={6} md={3} key={i}>
+                                <Card
+                                    elevation={0}
+                                    sx={{
+                                        height: '100%',
+                                        textAlign: 'center',
+                                        borderRadius: 4,
+                                        p: 2,
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        transition: 'transform 0.3s, box-shadow 0.3s',
+                                        '&:hover': {
+                                            transform: 'translateY(-8px)',
+                                            boxShadow: 4,
+                                            borderColor: 'primary.light'
+                                        }
+                                    }}
+                                >
+                                    <CardContent>
+                                        <Box sx={{ mb: 3 }}>{f.icon}</Box>
+                                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
+                                            {f.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {f.desc}
+                                        </Typography>
+                                    </CardContent>
                                 </Card>
-                            </Col>
+                            </Grid>
                         ))}
-                    </Row>
+                    </Grid>
                 </Container>
-            </section>
 
-            {/* CTA Section */}
-            <section className="cta-v2 py-5 text-center position-relative overflow-hidden">
-                <div className="cta-bg-blur"></div>
-                <Container className="py-5 position-relative" style={{ zIndex: 1 }}>
-                    <h2 className="display-4 fw-bold text-white mb-4">Sẵn sàng để tổ chức sự kiện?</h2>
-                    <p className="fs-4 text-gray-300 mb-5 max-w-700 mx-auto">
-                        Gia nhập cộng đồng hơn 5.000+ nhà tổ chức sự kiện chuyên nghiệp tại Việt Nam.
-                    </p>
-                    <Button
-                        size="lg"
-                        className="btn-ticketbox px-5 py-3 fw-bold shadow-lg"
-                        onClick={() => setShowAuthModal(true)}
-                    >
-                        ĐĂNG KÝ NHÀ TỔ CHỨC NGAY
-                    </Button>
-                </Container>
-            </section>
+                {/* CTA Section */}
+                <Box sx={{ bgcolor: 'action.hover', py: 12 }}>
+                    <Container maxWidth="md">
+                        <Paper
+                            sx={{
+                                p: 6,
+                                textAlign: 'center',
+                                borderRadius: 6,
+                                background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
+                                color: 'white',
+                                boxShadow: '0 20px 40px rgba(45, 194, 117, 0.2)'
+                            }}
+                        >
+                            <Typography variant="h4" sx={{ fontWeight: 800, mb: 2 }}>
+                                Sẵn sàng bắt đầu sự kiện của bạn?
+                            </Typography>
+                            <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
+                                Tham gia cùng hơn 1.000 nhà tổ chức sự kiện chuyên nghiệp khác ngay hôm nay.
+                            </Typography>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                onClick={() => setShowAuthModal(true)}
+                                sx={{
+                                    bgcolor: 'white',
+                                    color: 'primary.main',
+                                    fontWeight: 800,
+                                    px: 5,
+                                    py: 2,
+                                    borderRadius: 3,
+                                    '&:hover': { bgcolor: '#f5f5f5', transform: 'scale(1.05)' },
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                ĐĂNG KÝ NGAY
+                            </Button>
+                        </Paper>
+                    </Container>
+                </Box>
 
-            {/* Footer Placeholder for Organizer Home */}
-            <footer className="py-4 border-top border-secondary border-opacity-10 text-center">
-                <div className="container">
-                    <div className="text-ticketbox-green fw-bold mb-2">TICKETBOX ORGANIZER</div>
-                    <div className="text-muted small">© 2026 TicketBooking . All rights reserved.</div>
-                </div>
-            </footer>
+                {/* Footer */}
+                <Box sx={{ py: 6, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="body2" color="text.secondary">
+                        © 2026 TicketBooking Organizer Portal. Một sản phẩm chất lượng dành cho nhà tổ chức.
+                    </Typography>
+                </Box>
 
-            {/* Auth Modal */}
-            <OrganizerAuthModal
-                show={showAuthModal}
-                onHide={() => setShowAuthModal(false)}
-            />
-        </div>
+                {/* Auth Modal */}
+                <OrganizerAuthModal
+                    show={showAuthModal}
+                    onHide={() => setShowAuthModal(false)}
+                />
+            </Box>
+        </ThemeProvider>
     );
 };
 

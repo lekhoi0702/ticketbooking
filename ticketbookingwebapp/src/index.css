@@ -65,3 +65,8 @@ img {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary-teal-dark);
 }
+
+/* Hide AdminLTE auto-injected accessibility links */
+.skip-links {
+  display: none !important;
+}

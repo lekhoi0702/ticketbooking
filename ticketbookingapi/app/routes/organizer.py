@@ -4,10 +4,12 @@ from app.models.event import Event
 from app.models.ticket_type import TicketType
 from app.models.order import Order
 from app.models.ticket import Ticket
+from app.models.payment import Payment
 from sqlalchemy import func, and_
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
+import json
 
 organizer_bp = Blueprint("organizer", __name__)
 
@@ -58,13 +60,17 @@ def get_dashboard_stats():
             Order.order_status,
             Order.created_at,
             Event.event_name,
-            Order.customer_name
+            Order.customer_name,
+            Order.customer_email,
+            Payment.payment_method
         ).join(
             Ticket, Order.order_id == Ticket.order_id
         ).join(
             TicketType, Ticket.ticket_type_id == TicketType.ticket_type_id
         ).join(
             Event, TicketType.event_id == Event.event_id
+        ).outerjoin(
+            Payment, Order.order_id == Payment.order_id
         ).filter(
             Event.manager_id == manager_id
         ).distinct().order_by(Order.created_at.desc()).limit(10).all()
@@ -76,8 +82,10 @@ def get_dashboard_stats():
                 'order_code': order.order_code,
                 'event_name': order.event_name,
                 'customer_name': order.customer_name,
+                'customer_email': order.customer_email,
                 'total_amount': float(order.total_amount),
                 'status': order.order_status,
+                'payment_method': order.payment_method,
                 'created_at': order.created_at.isoformat() if order.created_at else None
             })
         
@@ -260,11 +268,39 @@ def update_event(event_id):
             if new_status == 'PUBLISHED' and event.status != 'APPROVED':
                 return jsonify({'success': False, 'message': 'Sự kiện cần được Admin phê duyệt trước khi đăng'}), 400
             event.status = new_status
+
         if 'is_featured' in data:
             event.is_featured = data.get('is_featured', 'false').lower() == 'true'
-        
+
+        # Handle Ticket Types if provided
+        ticket_types_data = request.form.getlist('ticket_types')
+        if ticket_types_data:
+            for tt_json in ticket_types_data:
+                tt_data = json.loads(tt_json)
+                tt_id = tt_data.get('ticket_type_id')
+                
+                if tt_id:
+                    # Update existing ticket type
+                    tt = TicketType.query.get(tt_id)
+                    if tt and tt.event_id == event_id:
+                        if 'type_name' in tt_data:
+                            tt.type_name = tt_data.get('type_name')
+                        if 'price' in tt_data:
+                            tt.price = float(tt_data.get('price'))
+                        if 'description' in tt_data:
+                            tt.description = tt_data.get('description')
+                else:
+                    # Create new ticket type
+                    new_tt = TicketType(
+                        event_id=event_id,
+                        type_name=tt_data.get('type_name'),
+                        price=float(tt_data.get('price', 0)),
+                        quantity=int(tt_data.get('quantity', 0)),
+                        description=tt_data.get('description', '')
+                    )
+                    db.session.add(new_tt)
+
         event.updated_at = datetime.utcnow()
-        
         db.session.commit()
         
         return jsonify({

@@ -11,13 +11,17 @@ class Config:
         "ticketbookingdb"
     )
 
-    # SSL configuration for Aiven MySQL
+    # SSL configuration and connection pooling for Aiven MySQL
     SQLALCHEMY_ENGINE_OPTIONS = {
         'connect_args': {
             'ssl': {
                 'ssl_mode': 'REQUIRED'
             }
-        }
+        },
+        'pool_recycle': 280,
+        'pool_pre_ping': True,
+        'pool_size': 10,
+        'max_overflow': 20
     }
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -23,7 +23,7 @@ const CustomerInfoForm = ({ customerInfo, setCustomerInfo }) => {
                 </div>
                 {isPreFilled && (
                     <p className="text-muted small mb-0 mt-2">
-                        Thông tin đã được điền tự động từ tài khoản của bạn. Bạn có thể chỉnh sửa nếu cần.
+
                     </p>
                 )}
             </Card.Header>
@@ -37,7 +37,7 @@ const CustomerInfoForm = ({ customerInfo, setCustomerInfo }) => {
                             </Form.Label>
                             <Form.Control
                                 type="text"
-                                placeholder="Nhập họ và tên"
+
                                 value={customerInfo.name}
                                 onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
                                 required
@@ -53,7 +53,7 @@ const CustomerInfoForm = ({ customerInfo, setCustomerInfo }) => {
                             </Form.Label>
                             <Form.Control
                                 type="email"
-                                placeholder="example@email.com"
+
                                 value={customerInfo.email}
                                 onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
                                 required
@@ -69,7 +69,7 @@ const CustomerInfoForm = ({ customerInfo, setCustomerInfo }) => {
                             </Form.Label>
                             <Form.Control
                                 type="tel"
-                                placeholder="0123456789"
+
                                 value={customerInfo.phone}
                                 onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                                 required

@@ -53,12 +53,24 @@ const UsersManagement = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState(null);
-    const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
     const [newUser, setNewUser] = useState({
         email: '',
         password: '',
         full_name: '',
         role: 'ORGANIZER' // Restricted according to user request
+    });
+    const [confirmDialog, setConfirmDialog] = useState({
+        open: false,
+        userId: null,
+        fullName: '',
+        type: 'RESET', // 'RESET' or 'LOCK'
+        currentlyLocked: false
+    });
+    const [resultDialog, setResultDialog] = useState({
+        open: false,
+        title: '',
+        message: '',
+        severity: 'success'
     });
 
     useEffect(() => {
@@ -78,8 +90,8 @@ const UsersManagement = () => {
         }
     };
 
-    const showToast = (message, variant = 'success') => {
-        setToast({ show: true, message, variant });
+    const showResult = (title, message, severity = 'success') => {
+        setResultDialog({ open: true, title, message, severity });
     };
 
     const handleCreateUser = async (e) => {
@@ -93,47 +105,56 @@ const UsersManagement = () => {
             if (res.success) {
                 setShowCreateModal(false);
                 setNewUser({ email: '', password: '', full_name: '', role: 'ORGANIZER' });
-                showToast("Organizer account created successfully!");
+                showResult("Thành công", "Đã tạo tài khoản nhà tổ chức thành công!");
                 fetchUsers();
             }
         } catch (err) {
-            setError(err.message);
+            showResult("Lỗi", err.message, "error");
         } finally {
             setCreating(false);
         }
     };
 
-    const handleResetPassword = async (userId, fullName) => {
-        if (!window.confirm(`Are you sure you want to reset the password for "${fullName}" to default (123456)?`)) {
-            return;
-        }
-
-        try {
-            const res = await api.resetUserPassword(userId);
-            if (res.success) {
-                showToast(`Password for ${fullName} has been reset to 123456`);
-            }
-        } catch (err) {
-            console.error("Error resetting password:", err);
-            showToast("Error resetting password: " + err.message, "error");
-        }
+    const handleResetPassword = (userId, fullName) => {
+        setConfirmDialog({
+            open: true,
+            userId,
+            fullName,
+            type: 'RESET'
+        });
     };
 
-    const handleToggleLock = async (userId, fullName, currentlyLocked) => {
-        const action = currentlyLocked ? "unlock" : "lock";
-        if (!window.confirm(`Are you sure you want to ${action} the account of "${fullName}"?`)) {
-            return;
-        }
+    const handleToggleLock = (userId, fullName, currentlyLocked) => {
+        setConfirmDialog({
+            open: true,
+            userId,
+            fullName,
+            type: 'LOCK',
+            currentlyLocked
+        });
+    };
+
+    const processConfirmAction = async () => {
+        const { userId, fullName, type, currentlyLocked } = confirmDialog;
+        setConfirmDialog({ ...confirmDialog, open: false });
 
         try {
-            const res = await api.toggleUserLock(userId, !currentlyLocked);
-            if (res.success) {
-                showToast(`Account for ${fullName} has been ${currentlyLocked ? 'unlocked' : 'locked'}`);
-                fetchUsers();
+            if (type === 'RESET') {
+                const res = await api.resetUserPassword(userId);
+                if (res.success) {
+                    showResult("Thành công", "Đã khôi phục mật khẩu thành công!");
+                }
+            } else if (type === 'LOCK') {
+                const res = await api.toggleUserLock(userId, !currentlyLocked);
+                if (res.success) {
+                    const actionText = currentlyLocked ? 'mở khóa' : 'khóa';
+                    showResult("Thành công", `Đã ${actionText} tài khoản thành công!`);
+                    fetchUsers();
+                }
             }
         } catch (err) {
-            console.error("Error toggling lock:", err);
-            showToast("Error toggling lock: " + err.message, "error");
+            console.error(`Error in ${type}:`, err);
+            showResult("Lỗi", err.message, "error");
         }
     };
 
@@ -264,7 +285,7 @@ const UsersManagement = () => {
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                {user.is_locked ? (
+                                                {!user.is_active ? (
                                                     <Chip
                                                         label="Locked"
                                                         color="error"
@@ -291,13 +312,13 @@ const UsersManagement = () => {
                                             </TableCell>
                                             <TableCell align="right" sx={{ pr: 2 }}>
                                                 <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                    <Tooltip title={user.is_locked ? "Unlock User" : "Lock User"}>
+                                                    <Tooltip title={!user.is_active ? "Unlock User" : "Lock User"}>
                                                         <IconButton
                                                             size="small"
-                                                            color={user.is_locked ? "success" : "warning"}
-                                                            onClick={() => handleToggleLock(user.user_id, user.full_name, user.is_locked)}
+                                                            color={!user.is_active ? "success" : "warning"}
+                                                            onClick={() => handleToggleLock(user.user_id, user.full_name, !user.is_active)}
                                                         >
-                                                            {user.is_locked ? <LockOpen fontSize="small" /> : <Block fontSize="small" />}
+                                                            {!user.is_active ? <LockOpen fontSize="small" /> : <Block fontSize="small" />}
                                                         </IconButton>
                                                     </Tooltip>
                                                     <Tooltip title="Reset Password">
@@ -400,17 +421,64 @@ const UsersManagement = () => {
                 </form>
             </Dialog>
 
-            <Snackbar
-                open={toast.show}
-                autoHideDuration={4000}
-                onClose={() => setToast({ ...toast, show: false })}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            {/* Confirmation Dialog */}
+            <Dialog
+                open={confirmDialog.open}
+                onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
+                PaperProps={{ sx: { borderRadius: 2, minWidth: 320 } }}
             >
-                <Alert severity={toast.variant} sx={{ width: '100%', borderRadius: 2, boxShadow: 3 }}>
-                    {toast.message}
-                </Alert>
-            </Snackbar>
-        </Box>
+                <DialogTitle sx={{ fontWeight: 700 }}>
+                    {confirmDialog.type === 'RESET' ? 'Xác nhận khôi phục mật khẩu' : 'Xác nhận thay đổi trạng thái'}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        {confirmDialog.type === 'RESET' ? (
+                            <>Bạn có chắc chắn muốn khôi phục mật khẩu cho tài khoản <strong>{confirmDialog.fullName}</strong> về mặc định?</>
+                        ) : (
+                            <>Bạn có chắc chắn muốn <strong>{confirmDialog.currentlyLocked ? 'mở khóa' : 'khóa'}</strong> tài khoản của <strong>{confirmDialog.fullName}</strong>?</>
+                        )}
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setConfirmDialog({ ...confirmDialog, open: false })} color="inherit">
+                        Hủy
+                    </Button>
+                    <Button onClick={processConfirmAction} variant="contained" color="primary" sx={{ borderRadius: 1.5 }}>
+                        Xác nhận
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Result Dialog */}
+            <Dialog
+                open={resultDialog.open}
+                onClose={() => setResultDialog({ ...resultDialog, open: false })}
+                PaperProps={{ sx: { borderRadius: 2, minWidth: 320 } }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+                    {resultDialog.severity === 'success' ? (
+                        <CheckCircle color="success" />
+                    ) : (
+                        <Block color="error" />
+                    )}
+                    {resultDialog.title}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography>{resultDialog.message}</Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button
+                        fullWidth
+                        onClick={() => setResultDialog({ ...resultDialog, open: false })}
+                        variant="contained"
+                        color="primary"
+                        sx={{ borderRadius: 1.5 }}
+                    >
+                        Đóng
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box >
     );
 };
 

@@ -17,7 +17,7 @@ class Event(db.Model):
     banner_image_url = db.Column(db.String(500))
     total_capacity = db.Column(db.Integer, nullable=False)
     sold_tickets = db.Column(db.Integer, default=0)
-    status = db.Column(db.Enum('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED'), default='PENDING_APPROVAL', index=True)
+    status = db.Column(db.Enum('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION'), default='PENDING_APPROVAL', index=True)
     is_featured = db.Column(db.Boolean, default=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

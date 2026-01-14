@@ -21,6 +21,16 @@ export const useManageSeats = (eventId) => {
     const [isDragging, setIsDragging] = useState(false);
     const [dragMode, setDragMode] = useState(null); // 'select' or 'deselect'
 
+    // Handle global mouse up to stop dragging anywhere
+    useEffect(() => {
+        const handleGlobalMouseUp = () => {
+            setIsDragging(false);
+            setDragMode(null);
+        };
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+        return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    }, []);
+
     // Grid initialization form
     const [initData, setInitData] = useState({
         rows: 5,
@@ -63,18 +73,26 @@ export const useManageSeats = (eventId) => {
 
     // Update selection when active ticket type or occupied seats change
     useEffect(() => {
-        if (activeTicketType && allOccupiedSeats.length > 0) {
-            const currentTypeSeats = allOccupiedSeats.filter(s => s.ticket_type_id === activeTicketType.ticket_type_id);
+        if (activeTicketType) {
+            // Find seats for THIS specific ticket type
+            const currentTypeSeats = allOccupiedSeats.filter(s =>
+                String(s.ticket_type_id) === String(activeTicketType.ticket_type_id)
+            );
+
             setSelectedTemplateSeats(currentTypeSeats.map(s => ({
                 row_name: s.row_name,
-                seat_number: s.seat_number,
+                seat_number: String(s.seat_number),
+                area: s.area_name,
                 x_pos: s.x_pos,
                 y_pos: s.y_pos
             })));
-            setHasSeats(currentTypeSeats.length > 0);
+
+            // hasSeats should be true if the event has ANY seats, 
+            // to avoid showing the grid initializer when data exists
+            setHasSeats(allOccupiedSeats.length > 0);
         } else {
             setSelectedTemplateSeats([]);
-            setHasSeats(false);
+            setHasSeats(allOccupiedSeats.length > 0);
         }
     }, [activeTicketType, allOccupiedSeats]);
 
@@ -90,30 +108,41 @@ export const useManageSeats = (eventId) => {
         setSelectedTemplateSeats(prev => {
             const isSelected = prev.some(s =>
                 s.row_name === templateItem.row_name &&
-                s.seat_number === templateItem.seat_number
+                String(s.seat_number) === String(templateItem.seat_number) &&
+                s.area === templateItem.area
             );
 
             const mode = forceMode || (isSelected ? 'deselect' : 'select');
 
             if (mode === 'deselect' && isSelected) {
-                return prev.filter(s => !(s.row_name === templateItem.row_name && s.seat_number === templateItem.seat_number));
+                return prev.filter(s => !(
+                    s.row_name === templateItem.row_name &&
+                    String(s.seat_number) === String(templateItem.seat_number) &&
+                    s.area === templateItem.area
+                ));
             } else if (mode === 'select' && !isSelected) {
-                return [...prev, templateItem];
+                return [...prev, { ...templateItem, seat_number: String(templateItem.seat_number) }];
             }
             return prev;
         });
     }, [allOccupiedSeats, activeTicketType]);
 
-    const handleSeatMouseDown = useCallback((e, templateItem) => {
+    const handleSeatMouseDown = useCallback((e, t) => {
         e.preventDefault();
+
+        // Determine mode based on current state of the clicked seat
         const isSelected = selectedTemplateSeats.some(s =>
-            s.row_name === templateItem.row_name &&
-            s.seat_number === templateItem.seat_number
+            s.row_name === t.row_name &&
+            String(s.seat_number) === String(t.seat_number) &&
+            s.area === t.area
         );
+
         const mode = isSelected ? 'deselect' : 'select';
-        toggleTemplateSeat(templateItem, mode);
         setDragMode(mode);
         setIsDragging(true);
+
+        // Perform initial toggle
+        toggleTemplateSeat(t, mode);
     }, [toggleTemplateSeat, selectedTemplateSeats]);
 
     const handleSeatMouseEnter = useCallback((templateItem) => {
@@ -157,7 +186,18 @@ export const useManageSeats = (eventId) => {
         }
     };
 
-    const venueTemplate = useMemo(() => event?.venue?.seat_map_template, [event]);
+    const venueTemplate = useMemo(() => {
+        const template = event?.venue?.seat_map_template;
+        if (typeof template === 'string') {
+            try {
+                return JSON.parse(template);
+            } catch (e) {
+                console.error("Failed to parse seat_map_template", e);
+                return null;
+            }
+        }
+        return template;
+    }, [event]);
 
     return {
         // States

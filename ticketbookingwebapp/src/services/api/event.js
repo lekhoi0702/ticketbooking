@@ -49,4 +49,10 @@ export const eventApi = {
         if (!response.ok) throw new Error('Network response was not ok');
         return await response.json();
     },
+
+    async getVenueById(venueId) {
+        const response = await fetch(`${API_BASE_URL}/venues/${venueId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+    },
 };

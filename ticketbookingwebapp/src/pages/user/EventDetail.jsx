@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, Card } from 'react-bootstrap';
+import { Container, Row, Col, Button, Card, Nav } from 'react-bootstrap';
 import { FaMapMarkerAlt } from 'react-icons/fa';
 
 // Hooks
@@ -73,31 +73,42 @@ function EventDetail() {
         <div className="event-detail-page">
             <EventHero event={event} />
 
+            {/* Sticky Navigation Bar */}
+            <div className="event-detail-nav">
+                <Container>
+                    <Nav className="nav-pills">
+                        <Nav.Link href="#description" className="nav-item">Giới thiệu</Nav.Link>
+                        <Nav.Link href="#tickets" className="nav-item">Thông tin vé</Nav.Link>
+                        <Nav.Link href="#venue" className="nav-item">Địa điểm</Nav.Link>
+                        <Nav.Link href="#organizer" className="nav-item d-lg-none">Ban tổ chức</Nav.Link>
+                    </Nav>
+                </Container>
+            </div>
+
             <Container className="event-main-content">
                 <Row>
                     <Col lg={8}>
-                        {/* Description Section */}
-                        <section className="detail-section">
+                        <section className="detail-section" id="description">
                             <h3 className="section-title">Giới thiệu</h3>
                             <div className="event-description">
                                 {event.description || 'Chưa có mô tả cho sự kiện này.'}
                             </div>
                         </section>
 
-                        {/* Ticket Selection Section with Seat Map */}
-                        <TicketSelection
-                            event={event}
-                            activeTicketType={activeTicketType}
-                            setActiveTicketType={setActiveTicketType}
-                            selectedTickets={selectedTickets}
-                            handleTicketQuantityChange={handleTicketQuantityChange}
-                            handleSeatSelection={handleSeatSelection}
-                            hasSeatMap={hasSeatMap}
-                            setHasSeatMap={setHasSeatMap}
-                        />
+                        <div id="tickets">
+                            <TicketSelection
+                                event={event}
+                                activeTicketType={activeTicketType}
+                                setActiveTicketType={setActiveTicketType}
+                                selectedTickets={selectedTickets}
+                                handleTicketQuantityChange={handleTicketQuantityChange}
+                                handleSeatSelection={handleSeatSelection}
+                                hasSeatMap={hasSeatMap}
+                                setHasSeatMap={setHasSeatMap}
+                            />
+                        </div>
 
-                        {/* Venue Section */}
-                        <section className="detail-section">
+                        <section className="detail-section" id="venue">
                             <h3 className="section-title">Địa điểm</h3>
                             <div className="venue-info">
                                 <h5>{event.venue?.venue_name}</h5>
@@ -118,7 +129,7 @@ function EventDetail() {
 
                     <Col lg={4}>
                         {/* Sidebar Info */}
-                        <Card className="sidebar-card">
+                        <Card className="sidebar-card" id="organizer">
                             <Card.Header className="bg-white">
                                 <h5 className="mb-0">Thông tin ban tổ chức</h5>
                             </Card.Header>

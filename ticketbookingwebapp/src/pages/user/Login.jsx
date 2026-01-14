@@ -39,7 +39,8 @@ const Login = () => {
             } else {
                 const res = await api.login({
                     email: formData.email,
-                    password: formData.password
+                    password: formData.password,
+                    required_role: 'USER'
                 });
                 if (res.success) {
                     login(res.user, res.token);

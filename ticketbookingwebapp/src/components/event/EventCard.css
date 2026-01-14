@@ -1,4 +1,4 @@
-/* EventCard.css - TicketBox Clone */
+/* EventCard.css - TicketBooking Clone */
 
 .event-card-link {
     text-decoration: none;
@@ -37,7 +37,7 @@
     transform: scale(1.05);
 }
 
-/* Badge matches TicketBox styling */
+/* Badge matches TicketBooking styling */
 .event-badge {
     position: absolute;
     top: 12px;

@@ -167,26 +167,36 @@ const Header = () => {
                                 <div className="d-flex align-items-center gap-2">
                                     <NavDropdown
                                         title={
-                                            <span className="d-flex align-items-center">
-                                                <FaUser className="me-2 text-primary" />
-                                                <span className="fw-bold">{user?.full_name || 'Tài khoản'}</span>
-                                            </span>
+                                            <div className="user-profile-trigger d-flex align-items-center">
+                                                <div className="user-avatar-circle me-md-2">
+                                                    {user?.full_name?.charAt(0).toUpperCase() || 'U'}
+                                                </div>
+                                                <div className="user-info-text d-none d-md-block text-start">
+                                                    <div className="user-display-name fw-bold text-white small">{user?.full_name}</div>
+                                                    <div className="user-status x-small text-white-50">Thành viên</div>
+                                                </div>
+                                            </div>
                                         }
                                         id="user-dropdown"
                                         align="end"
-                                        className="user-dropdown"
+                                        className="user-dropdown-premium"
                                     >
+                                        <div className="px-3 py-2 border-bottom mb-2 d-md-none">
+                                            <div className="fw-bold">{user?.full_name}</div>
+                                            <div className="text-muted small">{user?.email}</div>
+                                        </div>
                                         <NavDropdown.Item as={Link} to="/my-tickets">
-                                            <FaTicketAlt className="me-2 text-success" />
-                                            Vé của tôi
+                                            <FaTicketAlt className="text-success" />
+                                            <span>Vé của tôi</span>
                                         </NavDropdown.Item>
                                         <NavDropdown.Item as={Link} to="/my-orders">
-                                            <FaHistory className="me-2 text-info" />
-                                            Lịch sử đơn hàng
+                                            <FaHistory className="text-info" />
+                                            <span>Lịch sử đặt vé</span>
                                         </NavDropdown.Item>
                                         <NavDropdown.Divider />
                                         <NavDropdown.Item onClick={handleLogout} className="text-danger">
-                                            Đăng xuất
+                                            <i className="bi bi-box-arrow-right"></i>
+                                            <span>Đăng xuất</span>
                                         </NavDropdown.Item>
                                     </NavDropdown>
                                 </div>
