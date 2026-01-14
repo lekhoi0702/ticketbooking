@@ -17,30 +17,30 @@ const VNPayReturn = () => {
 
     const processPaymentResult = async () => {
         try {
-            // Get VNPay response parameters
-            const responseCode = searchParams.get('vnp_ResponseCode');
-            const txnRef = searchParams.get('vnp_TxnRef'); // This is our payment_code
-            const transactionNo = searchParams.get('vnp_TransactionNo');
-            const amount = searchParams.get('vnp_Amount');
+            // Get all VNPay response parameters
+            const vnpParams = {};
+            for (const [key, value] of searchParams.entries()) {
+                vnpParams[key] = value;
+            }
 
-            // Check if payment was successful
-            if (responseCode === '00') {
+            const responseCode = searchParams.get('vnp_ResponseCode');
+
+            // Call backend to verify and update payment/order status
+            const verifyResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/payments/vnpay/return?${searchParams.toString()}`);
+            const verifyData = await verifyResponse.json();
+
+            if (verifyResponse.ok && verifyData.success) {
                 setSuccess(true);
                 setMessage('Thanh toán thành công!');
+                setOrderCode(verifyData.data.order_code);
 
-                // The backend webhook should have already updated the payment status
-                // We just need to get the order code to redirect
-
-                // Wait a bit for backend to process
+                // Redirect to order success page
                 setTimeout(() => {
-                    // Redirect to order success page
-                    // We need to get order code from payment code
-                    // For now, we'll redirect to a generic success page
-                    navigate(`/payment-success?payment_code=${txnRef}`);
+                    navigate(`/order-success/${verifyData.data.order_code}`);
                 }, 2000);
             } else {
                 setSuccess(false);
-                setMessage(getErrorMessage(responseCode));
+                setMessage(verifyData.message || getErrorMessage(responseCode));
 
                 setTimeout(() => {
                     navigate('/');
@@ -50,6 +50,10 @@ const VNPayReturn = () => {
             console.error('Error processing payment result:', err);
             setSuccess(false);
             setMessage('Có lỗi xảy ra khi xử lý kết quả thanh toán');
+
+            setTimeout(() => {
+                navigate('/');
+            }, 5000);
         } finally {
             setProcessing(false);
         }

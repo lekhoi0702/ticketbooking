@@ -3,44 +3,42 @@ import { Form, Row, Col } from 'react-bootstrap';
 
 const EventBasicInfo = ({ formData, handleInputChange, categories, venues }) => {
     return (
-        <>
-            <h5 className="mb-3 text-primary">Thông Tin Sự Kiện</h5>
-
-            <Form.Group className="mb-3">
-                <Form.Label className="fw-medium">Tên Sự Kiện <span className="text-danger">*</span></Form.Label>
+        <div className="animate-fade-in">
+            <Form.Group className="mb-4">
+                <Form.Label className="organizer-form-label">Tên Sự Kiện <span className="text-danger">*</span></Form.Label>
                 <Form.Control
                     type="text"
                     name="event_name"
                     value={formData.event_name}
                     onChange={handleInputChange}
-                    placeholder="Nhập tên sự kiện"
-                    className="py-2"
+                    placeholder="VD: Live Concert Rap Việt 2024"
+                    className="organizer-form-control py-3"
                     required
                 />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-                <Form.Label className="fw-medium">Mô Tả</Form.Label>
+            <Form.Group className="mb-4">
+                <Form.Label className="organizer-form-label">Mô Tả Chi Tiết</Form.Label>
                 <Form.Control
                     as="textarea"
-                    rows={5}
+                    rows={6}
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    placeholder="Mô tả chi tiết về sự kiện..."
-                    className="py-2"
+                    placeholder="Giới thiệu về sự kiện, dàn nghệ sĩ, lịch trình..."
+                    className="organizer-form-control"
                 />
             </Form.Group>
 
             <Row>
                 <Col md={6}>
-                    <Form.Group className="mb-3">
-                        <Form.Label className="fw-medium">Danh Mục <span className="text-danger">*</span></Form.Label>
+                    <Form.Group className="mb-4">
+                        <Form.Label className="organizer-form-label">Danh Mục <span className="text-danger">*</span></Form.Label>
                         <Form.Select
                             name="category_id"
                             value={formData.category_id}
                             onChange={handleInputChange}
-                            className="py-2"
+                            className="organizer-form-control py-2"
                             required
                         >
                             <option value="">Chọn danh mục</option>
@@ -53,19 +51,19 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues }) => 
                     </Form.Group>
                 </Col>
                 <Col md={6}>
-                    <Form.Group className="mb-3">
-                        <Form.Label className="fw-medium">Địa Điểm <span className="text-danger">*</span></Form.Label>
+                    <Form.Group className="mb-4">
+                        <Form.Label className="organizer-form-label">Địa Điểm Tổ Chức <span className="text-danger">*</span></Form.Label>
                         <Form.Select
                             name="venue_id"
                             value={formData.venue_id}
                             onChange={handleInputChange}
-                            className="py-2"
+                            className="organizer-form-control py-2"
                             required
                         >
                             <option value="">Chọn địa điểm</option>
                             {venues.map(venue => (
                                 <option key={venue.venue_id} value={venue.venue_id}>
-                                    {venue.venue_name}
+                                    {venue.venue_name} - {venue.city}
                                 </option>
                             ))}
                         </Form.Select>
@@ -73,35 +71,34 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues }) => 
                 </Col>
             </Row>
 
-            <Row>
+            <Row className="align-items-center">
                 <Col md={6}>
-                    <Form.Group className="mb-3">
-                        <Form.Label className="fw-medium">Trạng Thái</Form.Label>
+                    <Form.Group className="mb-4">
+                        <Form.Label className="organizer-form-label">Trạng Thái Đăng</Form.Label>
                         <Form.Select
                             name="status"
                             value={formData.status}
                             onChange={handleInputChange}
-                            className="py-2"
+                            className="organizer-form-control py-2"
                         >
-                            <option value="DRAFT">Nháp</option>
-                            <option value="PUBLISHED">Đã Đăng</option>
+                            <option value="DRAFT">Lưu bản nháp</option>
+                            <option value="PENDING_APPROVAL">Gửi yêu cầu phê duyệt</option>
                         </Form.Select>
                     </Form.Group>
                 </Col>
                 <Col md={6}>
-                    <Form.Group className="mb-3">
-                        <Form.Check
-                            type="checkbox"
-                            name="is_featured"
-                            checked={formData.is_featured}
-                            onChange={handleInputChange}
-                            label="Sự kiện nổi bật"
-                            className="mt-4"
-                        />
-                    </Form.Group>
+                    <Form.Check
+                        type="switch"
+                        id="is-featured-switch"
+                        name="is_featured"
+                        checked={formData.is_featured}
+                        onChange={handleInputChange}
+                        label="Đề xuất sự kiện nổi bật"
+                        className="ms-2 mt-2 text-muted fw-bold"
+                    />
                 </Col>
             </Row>
-        </>
+        </div>
     );
 };
 

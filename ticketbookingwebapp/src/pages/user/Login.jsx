@@ -10,7 +10,8 @@ const Login = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        full_name: ''
+        full_name: '',
+        phone: ''
     });
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -88,18 +89,33 @@ const Login = () => {
                                                     className="py-2 px-3 bg-light border-0"
                                                 />
                                             </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label className="small fw-bold">Số điện thoại</Form.Label>
+                                                <Form.Control
+                                                    required
+                                                    type="tel"
+                                                    placeholder="0901234567"
+                                                    value={formData.phone}
+                                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                                    className="py-2 px-3 bg-light border-0"
+                                                    pattern="[0-9]{10}"
+                                                    title="Vui lòng nhập số điện thoại 10 chữ số"
+                                                />
+                                            </Form.Group>
                                         </>
                                     )}
 
                                     <Form.Group className="mb-3">
                                         <div className="d-flex justify-content-between align-items-center mb-1">
-                                            <Form.Label className="small fw-bold">Email</Form.Label>
+                                            <Form.Label className="small fw-bold">
+                                                {isRegister ? 'Email' : 'Email hoặc Số điện thoại'}
+                                            </Form.Label>
                                             <FaEnvelope className="text-muted small" />
                                         </div>
                                         <Form.Control
                                             required
-                                            type="email"
-                                            placeholder="example@gmail.com"
+                                            type={isRegister ? "email" : "text"}
+                                            placeholder={isRegister ? "example@gmail.com" : "Email hoặc SĐT"}
                                             value={formData.email}
                                             onChange={e => setFormData({ ...formData, email: e.target.value })}
                                             className="py-2 px-3 bg-light border-0"

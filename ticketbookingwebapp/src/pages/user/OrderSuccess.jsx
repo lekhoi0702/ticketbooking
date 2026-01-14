@@ -69,14 +69,27 @@ const OrderSuccess = () => {
             <Row className="justify-content-center">
                 <Col lg={9}>
                     <Card className="border-0 shadow-sm mb-4 text-center rounded-4 py-4 overflow-hidden position-relative">
-                        <div className="position-absolute top-0 start-0 w-100 h-100 bg-success bg-opacity-10" style={{ zIndex: 0 }}></div>
+                        <div className={`position-absolute top-0 start-0 w-100 h-100 ${order.order_status === 'PAID' ? 'bg-success' : 'bg-warning'} bg-opacity-10`} style={{ zIndex: 0 }}></div>
                         <Card.Body className="position-relative" style={{ zIndex: 1 }}>
-                            <FaCheckCircle className="text-success mb-3" size={70} />
-                            <h2 className="fw-bold mb-2">Thanh toán thành công!</h2>
-                            <p className="text-muted">Cảm ơn bạn. Chúc bạn có những giây phút tuyệt vời tại sự kiện.</p>
-                            <Badge bg="success" className="px-4 py-2 fs-6 pill shadow-sm">
-                                {order.order_status === 'PAID' ? 'Đã thanh toán' : 'Chờ xử lý'}
-                            </Badge>
+                            {order.order_status === 'PAID' ? (
+                                <>
+                                    <FaCheckCircle className="text-success mb-3" size={70} />
+                                    <h2 className="fw-bold mb-2">Thanh toán thành công!</h2>
+                                    <p className="text-muted">Giao dịch của bạn đã được xác nhận. Chúc bạn có những giây phút tuyệt vời.</p>
+                                    <Badge bg="success" className="px-4 py-2 fs-6 pill shadow-sm">
+                                        Đã thanh toán
+                                    </Badge>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="spinner-border text-warning mb-3" role="status" style={{ width: '70px', height: '70px' }}></div>
+                                    <h2 className="fw-bold mb-2">Đang xử lý thanh toán</h2>
+                                    <p className="text-muted">Hệ thống đang cập nhật trạng thái đơn hàng. Vui lòng đợi trong giây lát hoặc kiểm tra lịch sử đơn hàng.</p>
+                                    <Badge bg="warning" text="dark" className="px-4 py-2 fs-6 pill shadow-sm">
+                                        Đang xử lý
+                                    </Badge>
+                                </>
+                            )}
                         </Card.Body>
                     </Card>
 
@@ -146,9 +159,6 @@ const OrderSuccess = () => {
                                         <span className="text-muted">Tổng cộng:</span>
                                         <span className="fw-bold fs-5 text-primary">{formatCurrency(order.final_amount)}</span>
                                     </div>
-                                    <Button variant="dark" className="w-100 mt-3 rounded-pill d-flex align-items-center justify-content-center shadow-sm">
-                                        <FaDownload className="me-2" /> Tải vé PDF
-                                    </Button>
                                 </Card.Body>
                             </Card>
                         </Col>

@@ -1,3 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --ticketbox-green: #2dc275;
+  --ticketbox-dark: #18181b;
+  --ticketbox-surface: #27272a;
+  --ticketbox-grey: #9ca3af;
+  --ticketbox-white: #ffffff;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--ticketbox-dark);
+  color: var(--ticketbox-white);
+  margin: 0;
+  padding: 0;
+}
+
 .App {
   min-height: 100vh;
   display: flex;
@@ -6,4 +24,57 @@
 
 main {
   flex: 1;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #2dc275 0%, #29a664 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.btn-primary {
+  background-color: var(--ticketbox-green) !important;
+  border-color: var(--ticketbox-green) !important;
+}
+
+.btn-primary:hover {
+  background-color: #29a664 !important;
+  border-color: #29a664 !important;
+}
+
+.btn-outline-primary {
+  color: var(--ticketbox-green) !important;
+  border-color: var(--ticketbox-green) !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--ticketbox-green) !important;
+  color: white !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ticketbox-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ticketbox-surface);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ticketbox-grey);
 }

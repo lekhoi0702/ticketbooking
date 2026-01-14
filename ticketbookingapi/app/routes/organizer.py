@@ -170,7 +170,7 @@ def create_event():
             sale_end_datetime=datetime.fromisoformat(data.get('sale_end_datetime')) if data.get('sale_end_datetime') else None,
             banner_image_url=banner_image_url,
             total_capacity=int(data.get('total_capacity', 0)),
-            status=data.get('status', 'DRAFT'),
+            status='PENDING_APPROVAL',
             is_featured=data.get('is_featured', 'false').lower() == 'true'
         )
         
@@ -256,7 +256,10 @@ def update_event(event_id):
         if data.get('total_capacity'):
             event.total_capacity = int(data.get('total_capacity'))
         if data.get('status'):
-            event.status = data.get('status')
+            new_status = data.get('status')
+            if new_status == 'PUBLISHED' and event.status != 'APPROVED':
+                return jsonify({'success': False, 'message': 'Sự kiện cần được Admin phê duyệt trước khi đăng'}), 400
+            event.status = new_status
         if 'is_featured' in data:
             event.is_featured = data.get('is_featured', 'false').lower() == 'true'
         

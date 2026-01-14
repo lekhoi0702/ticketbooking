@@ -27,6 +27,16 @@ export const paymentApi = {
         return await response.json();
     },
 
+    async verifyVNPayReturn(queryParams) {
+        const queryString = new URLSearchParams(queryParams).toString();
+        const response = await fetch(`${API_BASE_URL}/payments/vnpay/return?${queryString}`);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Payment verification failed');
+        }
+        return await response.json();
+    },
+
     async confirmCashPayment(paymentId) {
         const response = await fetch(`${API_BASE_URL}/payments/cash/confirm`, {
             method: 'POST',

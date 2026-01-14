@@ -10,13 +10,21 @@ SECRET_KEY = os.getenv("SECRET_KEY", "ticket_secret_key_2026")
 
 @auth_bp.route("/auth/login", methods=["POST"])
 def login():
-    """Đăng nhập người dùng"""
+    """Đăng nhập người dùng bằng email hoặc số điện thoại"""
     try:
         data = request.get_json()
-        email = data.get('email')
+        email_or_phone = data.get('email')  # Can be email or phone
         password = data.get('password')
         
-        user = User.query.filter_by(email=email).first()
+        # Try to find user by email or phone
+        user = None
+        if '@' in email_or_phone:
+            # It's an email
+            user = User.query.filter_by(email=email_or_phone).first()
+        else:
+            # It's a phone number
+            user = User.query.filter_by(phone=email_or_phone).first()
+        
         if user and user.check_password(password):
             user_data = user.to_dict()
             token = jwt.encode({
@@ -31,7 +39,7 @@ def login():
                 'user': user_data
             }), 200
             
-        return jsonify({'success': False, 'message': 'Email hoặc mật khẩu không chính xác'}), 401
+        return jsonify({'success': False, 'message': 'Email/SĐT hoặc mật khẩu không chính xác'}), 401
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -41,13 +49,19 @@ def register():
     try:
         data = request.get_json()
         
+        # Check if email already exists
         if User.query.filter_by(email=data['email']).first():
             return jsonify({'success': False, 'message': 'Email đã tồn tại'}), 400
+        
+        # Check if phone already exists
+        if data.get('phone') and User.query.filter_by(phone=data['phone']).first():
+            return jsonify({'success': False, 'message': 'Số điện thoại đã tồn tại'}), 400
             
         new_user = User(
             email=data['email'],
             full_name=data['full_name'],
-            role_id=3, # Default to Customer (USER)
+            phone=data.get('phone'),  # Add phone
+            role_id=3,  # Default to Customer (USER)
             is_active=True
         )
         new_user.set_password(data['password'])

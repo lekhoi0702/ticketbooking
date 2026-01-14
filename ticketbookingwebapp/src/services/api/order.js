@@ -32,6 +32,12 @@ export const orderApi = {
         return await response.json();
     },
 
+    async getUserTickets(userId) {
+        const response = await fetch(`${API_BASE_URL}/tickets/user/${userId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+    },
+
     async cancelOrder(orderId) {
         const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
             method: 'POST',

@@ -1,0 +1,115 @@
+/* OrganizerHome.css - Refined Modern Style */
+
+.organizer-home-v2 {
+    background-color: #0c0c0e;
+    font-family: 'Inter', sans-serif;
+    color: #f8fafc;
+}
+
+.text-ticketbox-green {
+    color: #2dc275 !important;
+}
+
+.bg-ticketbox-green {
+    background-color: #2dc275 !important;
+}
+
+.organizer-hero {
+    position: relative;
+    background: radial-gradient(circle at top right, rgba(45, 194, 117, 0.05) 0%, #0c0c0e 60%);
+    overflow: hidden;
+}
+
+.btn-ticketbox {
+    background: linear-gradient(135deg, #2dc275, #219d5c) !important;
+    border: none !important;
+    color: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 14px rgba(45, 194, 117, 0.3) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn-ticketbox:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(45, 194, 117, 0.4) !important;
+}
+
+.hero-visual-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+/* Features */
+.features-v2 {
+    background-color: #0c0c0e;
+}
+
+.organizer-feature-card {
+    background: #16161a !important;
+    border: none !important;
+    border-radius: 24px !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.organizer-feature-card:hover {
+    transform: translateY(-12px);
+    background: #1c1c21 !important;
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6) !important;
+}
+
+.feature-icon-v2 {
+    width: 56px;
+    height: 56px;
+    background: rgba(45, 194, 117, 0.08);
+    color: #2dc275;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.organizer-feature-card:hover .feature-icon-v2 {
+    background: #2dc275;
+    color: white;
+    transform: rotate(10deg);
+}
+
+/* CTA */
+.cta-v2 {
+    background: linear-gradient(to bottom, #0c0c0e, #111114);
+}
+
+.cta-bg-blur {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(45, 194, 117, 0.03) 0%, transparent 70%);
+}
+
+.ticketbox-divider {
+    width: 40px;
+    height: 3px;
+    background: #2dc275;
+    margin: 0 auto;
+    border-radius: 2px;
+}

@@ -8,6 +8,7 @@ import Checkout from './pages/user/Checkout';
 import OrderSuccess from './pages/user/OrderSuccess';
 import VNPayReturn from './pages/user/VNPayReturn';
 import MyOrders from './pages/user/MyOrders';
+import MyTickets from './pages/user/MyTickets';
 import SearchResults from './pages/user/SearchResults';
 import CategoryEvents from './pages/user/CategoryEvents';
 
@@ -17,6 +18,7 @@ import OrganizerDashboard from './pages/organizer/Dashboard';
 import EventList from './pages/organizer/EventList';
 import CreateEvent from './pages/organizer/CreateEvent';
 import OrganizerLogin from './pages/organizer/Login';
+import OrganizerHome from './pages/organizer/OrganizerHome';
 
 import ManageSeats from './pages/organizer/ManageSeats';
 
@@ -96,18 +98,19 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/my-tickets"
+              element={
+                <ProtectedRoute>
+                  <MyTickets />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={['ADMIN']} redirectTo="/admin/login">
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
+          <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<UsersManagement />} />
@@ -116,11 +119,12 @@ function App() {
           </Route>
 
           {/* Organizer Routes */}
+          <Route path="/organizer/home" element={<OrganizerHome />} />
           <Route path="/organizer/login" element={<OrganizerLogin />} />
           <Route
             path="/organizer"
             element={
-              <ProtectedRoute allowedRoles={['ORGANIZER', 'ADMIN']} redirectTo="/organizer/login">
+              <ProtectedRoute allowedRoles={['ORGANIZER', 'ADMIN']} redirectTo="/organizer/home">
                 <OrganizerLayout />
               </ProtectedRoute>
             }
@@ -138,3 +142,4 @@ function App() {
 }
 
 export default App;
+

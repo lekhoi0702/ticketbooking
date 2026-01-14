@@ -1,10 +1,12 @@
-import React from 'react';
-import { Container, Navbar, Nav, Form, InputGroup, Button } from 'react-bootstrap';
-import { FaSearch, FaUser, FaGlobe } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { Container, Navbar, Nav, Form, InputGroup, Button, NavDropdown } from 'react-bootstrap';
+import { FaSearch, FaUser, FaGlobe, FaTicketAlt, FaHistory } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { getImageUrl } from '../../utils/eventUtils';
+import AuthModal from '../auth/AuthModal';
+import OrganizerAuthModal from '../auth/OrganizerAuthModal';
 import './Header.css';
 
 const Header = () => {
@@ -15,6 +17,8 @@ const Header = () => {
     const { user, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const suggestionRef = React.useRef(null);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [showOrganizerModal, setShowOrganizerModal] = useState(false);
 
     // Debounced search for suggestions
     React.useEffect(() => {
@@ -160,18 +164,59 @@ const Header = () => {
 
                         <div className="top-bar-actions d-flex align-items-center">
                             {isAuthenticated ? (
-                                <div className="d-flex align-items-center">
-                                    <Link to="/my-orders" className="action-item me-3 text-decoration-none text-dark small fw-bold d-flex align-items-center">
-                                        <FaUser className="me-2 text-primary" /> {user?.full_name || 'Tài khoản'}
-                                    </Link>
-                                    <Button variant="outline-danger" size="sm" onClick={handleLogout} className="rounded-pill px-3 py-1 small fw-bold">
-                                        Đăng xuất
-                                    </Button>
+                                <div className="d-flex align-items-center gap-2">
+                                    <NavDropdown
+                                        title={
+                                            <span className="d-flex align-items-center">
+                                                <FaUser className="me-2 text-primary" />
+                                                <span className="fw-bold">{user?.full_name || 'Tài khoản'}</span>
+                                            </span>
+                                        }
+                                        id="user-dropdown"
+                                        align="end"
+                                        className="user-dropdown"
+                                    >
+                                        <NavDropdown.Item as={Link} to="/my-tickets">
+                                            <FaTicketAlt className="me-2 text-success" />
+                                            Vé của tôi
+                                        </NavDropdown.Item>
+                                        <NavDropdown.Item as={Link} to="/my-orders">
+                                            <FaHistory className="me-2 text-info" />
+                                            Lịch sử đơn hàng
+                                        </NavDropdown.Item>
+                                        <NavDropdown.Divider />
+                                        <NavDropdown.Item onClick={handleLogout} className="text-danger">
+                                            Đăng xuất
+                                        </NavDropdown.Item>
+                                    </NavDropdown>
                                 </div>
                             ) : (
-                                <Link to="/login" className="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm">
-                                    Đăng nhập
-                                </Link>
+
+                                <div className="d-flex gap-2">
+
+                                    <Button
+
+                                        onClick={() => navigate('/organizer')}
+
+                                        variant="outline-primary"
+
+                                        className="btn-sm rounded-pill px-3 fw-bold"
+
+                                    >
+
+                                        Tạo sự kiện
+
+                                    </Button>
+
+                                    <Button
+                                        onClick={() => setShowAuthModal(true)}
+                                        className="btn btn-login-highlight btn-sm rounded-pill px-4 fw-bold shadow-sm"
+                                    >
+                                        Đăng nhập
+                                    </Button>
+
+                                </div>
+
                             )}
                         </div>
                     </div>
@@ -198,8 +243,28 @@ const Header = () => {
                     </Navbar.Collapse>
                 </Container>
             </Navbar>
+
+            {/* Auth Modal */}
+            <AuthModal
+                show={showAuthModal}
+                onHide={() => setShowAuthModal(false)}
+            />
+
+            {/* Organizer Auth Modal */}
+            <OrganizerAuthModal
+                show={showOrganizerModal}
+                onHide={() => setShowOrganizerModal(false)}
+            />
         </header>
     );
 };
 
 export default Header;
+
+
+
+
+
+
+
+

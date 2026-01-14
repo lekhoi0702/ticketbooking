@@ -1,175 +1,185 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Spinner, Alert } from 'react-bootstrap';
-import { FaTicketAlt, FaDollarSign, FaCalendarCheck } from 'react-icons/fa';
+import { Row, Col, Table, Badge, Button, Spinner } from 'react-bootstrap';
+import {
+    FaCalendarAlt, FaMoneyBillWave, FaTicketAlt,
+    FaChartLine, FaArrowRight, FaSync
+} from 'react-icons/fa';
 import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
+    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [stats, setStats] = useState({
-        total_revenue: 0,
-        total_tickets_sold: 0,
-        ongoing_events: 0,
-        recent_orders: []
+        totalEvents: 0,
+        totalRevenue: 0,
+        totalTicketsSold: 0,
+        recentOrders: []
     });
 
     useEffect(() => {
-        fetchDashboardData();
-    }, []);
+        if (user?.user_id) {
+            fetchStats();
+        }
+    }, [user]);
 
-    const fetchDashboardData = async () => {
+    const fetchStats = async () => {
         try {
             setLoading(true);
-            setError(null);
-            const response = await api.getDashboardStats();
-
-            if (response.success) {
-                setStats(response.data);
-            } else {
-                setError(response.message || 'Không thể tải dữ liệu');
+            const res = await api.getDashboardStats(user.user_id);
+            if (res.success) {
+                setStats({
+                    totalEvents: res.data.total_events,
+                    totalRevenue: res.data.total_revenue,
+                    totalTicketsSold: res.data.total_tickets_sold,
+                    recentOrders: res.data.recent_orders
+                });
             }
-        } catch (err) {
-            console.error('Error fetching dashboard data:', err);
-            setError('Không thể kết nối đến server');
+        } catch (error) {
+            console.error("Error fetching stats:", error);
         } finally {
             setLoading(false);
         }
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND'
-        }).format(amount);
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const getStatusBadge = (status) => {
-        const statusMap = {
-            'PAID': { bg: 'success', text: 'Hoàn Thành' },
-            'PENDING': { bg: 'warning', text: 'Chờ Xử Lý' },
-            'CANCELLED': { bg: 'danger', text: 'Đã Hủy' },
-            'REFUNDED': { bg: 'secondary', text: 'Đã Hoàn Tiền' }
-        };
-        const statusInfo = statusMap[status] || { bg: 'secondary', text: status };
-        return (
-            <span className={`badge bg-${statusInfo.bg} rounded-pill px-3`}>
-                {statusInfo.text}
-            </span>
-        );
-    };
-
-    if (loading) {
-        return (
-            <div className="text-center py-5">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">Đang tải dữ liệu...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <Alert variant="danger">
-                <Alert.Heading>Lỗi!</Alert.Heading>
-                <p>{error}</p>
-            </Alert>
-        );
-    }
+    if (loading) return (
+        <div className="text-center py-5">
+            <Spinner animation="border" variant="success" />
+            <p className="mt-3 text-muted">Đang chuẩn bị dữ liệu thống kê...</p>
+        </div>
+    );
 
     return (
-        <div>
-            <h2 className="mb-4 text-dark fw-bold">Tổng Quan Hệ Thống</h2>
-            <Row className="mb-4">
-                <Col md={4}>
-                    <Card className="border-0 shadow-sm mb-3">
-                        <Card.Body className="d-flex align-items-center p-4">
-                            <div className="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
-                                <FaDollarSign className="text-primary h3 mb-0" />
-                            </div>
-                            <div>
-                                <h6 className="text-muted mb-1 text-uppercase small fw-bold">Tổng Doanh Thu</h6>
-                                <h3 className="mb-0 fw-bold">{formatCurrency(stats.total_revenue)}</h3>
-                            </div>
-                        </Card.Body>
-                    </Card>
+        <div className="pb-5">
+            {/* Action Header */}
+            <div className="row mb-4">
+                <div className="col-12 d-flex justify-content-between align-items-center">
+                    <h5 className="text-muted small fw-bold text-uppercase letter-spacing-1 mb-0">Tổng quan hiệu suất</h5>
+                    <Button variant="outline-success" size="sm" className="rounded-pill px-3" onClick={fetchStats}>
+                        <FaSync className="me-2" /> LÀM MỚI
+                    </Button>
+                </div>
+            </div>
+
+            {/* Small Boxes - Organizer Style */}
+            <Row className="g-4 mb-5">
+                <Col lg={4} md={6}>
+                    <div className="small-box bg-success shadow-sm h-100 rounded-4 overflow-hidden position-relative border border-white border-opacity-5">
+                        <div className="inner p-4">
+                            <h2 className="fw-black text-white mb-1">{stats.totalEvents}</h2>
+                            <p className="text-white opacity-75 mb-0">Sự kiện đang quản lý</p>
+                        </div>
+                        <div className="icon position-absolute top-0 end-0 p-4 opacity-25">
+                            <FaCalendarAlt size={60} className="text-white" />
+                        </div>
+                        <Link to="/organizer/events" className="small-box-footer bg-black bg-opacity-20 text-center py-2 text-decoration-none text-white d-block small">
+                            Xem chi tiết <FaArrowRight className="ms-1" />
+                        </Link>
+                    </div>
                 </Col>
-                <Col md={4}>
-                    <Card className="border-0 shadow-sm mb-3">
-                        <Card.Body className="d-flex align-items-center p-4">
-                            <div className="bg-success bg-opacity-10 p-3 rounded-circle me-3">
-                                <FaTicketAlt className="text-success h3 mb-0" />
-                            </div>
-                            <div>
-                                <h6 className="text-muted mb-1 text-uppercase small fw-bold">Vé Đã Bán</h6>
-                                <h3 className="mb-0 fw-bold">{stats.total_tickets_sold}</h3>
-                            </div>
-                        </Card.Body>
-                    </Card>
+                <Col lg={4} md={6}>
+                    <div className="small-box bg-dark shadow-sm h-100 rounded-4 overflow-hidden position-relative border border-white border-opacity-5">
+                        <div className="inner p-4">
+                            <h2 className="fw-black text-success mb-1">{formatCurrency(stats.totalRevenue).slice(0, -2)}</h2>
+                            <p className="text-muted mb-0">Tổng doanh thu (VNĐ)</p>
+                        </div>
+                        <div className="icon position-absolute top-0 end-0 p-4 opacity-10">
+                            <FaMoneyBillWave size={60} className="text-success" />
+                        </div>
+                        <a href="#" className="small-box-footer bg-white bg-opacity-5 text-center py-2 text-decoration-none text-muted d-block small">
+                            Báo cáo tài chính <FaArrowRight className="ms-1" />
+                        </a>
+                    </div>
                 </Col>
-                <Col md={4}>
-                    <Card className="border-0 shadow-sm mb-3">
-                        <Card.Body className="d-flex align-items-center p-4">
-                            <div className="bg-warning bg-opacity-10 p-3 rounded-circle me-3">
-                                <FaCalendarCheck className="text-warning h3 mb-0" />
-                            </div>
-                            <div>
-                                <h6 className="text-muted mb-1 text-uppercase small fw-bold">Sự Kiện Đang Chạy</h6>
-                                <h3 className="mb-0 fw-bold">{stats.ongoing_events}</h3>
-                            </div>
-                        </Card.Body>
-                    </Card>
+                <Col lg={4} md={12}>
+                    <div className="small-box bg-primary shadow-sm h-100 rounded-4 overflow-hidden position-relative border border-white border-opacity-5">
+                        <div className="inner p-4">
+                            <h2 className="fw-black text-white mb-1">{stats.totalTicketsSold.toLocaleString()}</h2>
+                            <p className="text-white opacity-75 mb-0">Vé đã được đặt thành công</p>
+                        </div>
+                        <div className="icon position-absolute top-0 end-0 p-4 opacity-25">
+                            <FaTicketAlt size={60} className="text-white" />
+                        </div>
+                        <Link to="/organizer/events" className="small-box-footer bg-black bg-opacity-20 text-center py-2 text-decoration-none text-white d-block small">
+                            Thống kê vé <FaArrowRight className="ms-1" />
+                        </Link>
+                    </div>
                 </Col>
             </Row>
 
-            <Card className="border-0 shadow-sm">
-                <Card.Header className="bg-white py-3 border-bottom-0">
-                    <h5 className="mb-0 fw-bold">Đơn Hàng Mới Nhất</h5>
-                </Card.Header>
-                <Card.Body className="p-0">
-                    {stats.recent_orders && stats.recent_orders.length > 0 ? (
-                        <Table hover responsive className="mb-0 align-middle">
-                            <thead className="bg-light">
+            {/* Recent Orders Table */}
+            <div className="card content-card border-0 shadow-lg mb-0 animate-fade-in">
+                <div className="card-header border-bottom border-white border-opacity-5 py-4 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 className="mb-0 fw-bold text-white">Giao dịch gần nhất</h5>
+                        <small className="text-muted">Các đơn hàng vừa được thanh toán trên hệ thống</small>
+                    </div>
+                    <FaChartLine className="text-success opacity-50" size={24} />
+                </div>
+                <div className="card-body p-0">
+                    <div className="table-responsive">
+                        <Table hover className="organizer-table mb-0 align-middle">
+                            <thead>
                                 <tr>
-                                    <th className="ps-4">Mã Đơn</th>
-                                    <th>Sự Kiện</th>
+                                    <th className="px-4">Mã Đơn</th>
                                     <th>Khách Hàng</th>
-                                    <th>Ngày Đặt</th>
-                                    <th>Thành Tiền</th>
-                                    <th className="pe-4">Trạng Thái</th>
+                                    <th>Sự Kiện</th>
+                                    <th>Tổng Tiền</th>
+                                    <th>Thanh Toán</th>
+                                    <th>Ngày</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {stats.recent_orders.map((order) => (
+                                {stats.recentOrders.length > 0 ? stats.recentOrders.map(order => (
                                     <tr key={order.order_id}>
-                                        <td className="ps-4 fw-medium">{order.order_code}</td>
-                                        <td>{order.event_name}</td>
-                                        <td>{order.customer_name || 'N/A'}</td>
-                                        <td>{formatDate(order.created_at)}</td>
-                                        <td>{formatCurrency(order.total_amount)}</td>
-                                        <td className="pe-4">{getStatusBadge(order.status)}</td>
+                                        <td className="px-4">
+                                            <code className="text-success fw-bold">{order.order_code}</code>
+                                        </td>
+                                        <td>
+                                            <div className="text-white fw-semibold small">{order.customer_name}</div>
+                                            <div className="text-muted" style={{ fontSize: '10px' }}>{order.customer_email}</div>
+                                        </td>
+                                        <td>
+                                            <div className="text-truncate small text-muted" style={{ maxWidth: '200px' }}>
+                                                {order.event_name}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className="text-white fw-bold small">{formatCurrency(order.total_amount)}</span>
+                                        </td>
+                                        <td>
+                                            <Badge bg={order.payment_method === 'VNPAY' ? 'info' : 'secondary'} className="rounded-pill px-2 py-1" style={{ fontSize: '10px' }}>
+                                                {order.payment_method}
+                                            </Badge>
+                                        </td>
+                                        <td>
+                                            <span className="text-muted small">{new Date(order.created_at).toLocaleDateString('vi-VN')}</span>
+                                        </td>
                                     </tr>
-                                ))}
+                                )) : (
+                                    <tr>
+                                        <td colSpan="6" className="text-center py-5 text-muted fst-italic">
+                                            Chưa có giao dịch nào được ghi nhận
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </Table>
-                    ) : (
-                        <div className="text-center py-5 text-muted">
-                            <p>Chưa có đơn hàng nào</p>
-                        </div>
-                    )}
-                </Card.Body>
-            </Card>
+                    </div>
+                </div>
+            </div>
+
+            <style>{`
+                .fw-black { font-weight: 900; }
+                .letter-spacing-1 { letter-spacing: 1px; }
+                .small-box .icon { transition: all 0.3s ease; }
+                .small-box:hover .icon { transform: scale(1.1); }
+            `}</style>
         </div>
     );
 };

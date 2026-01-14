@@ -15,7 +15,7 @@ payments_bp = Blueprint("payments", __name__)
 VNPAY_TMN_CODE = "53A85ZOT"  
 VNPAY_HASH_SECRET = "4QL0OQ8BXVB0SLF5KK7Y42AXDPJNOJ37"
 VNPAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"  
-VNPAY_RETURN_URL = "http://localhost:5174/payment/vnpay-return"  
+VNPAY_RETURN_URL = "http://localhost:5173/payment/vnpay-return"  
 VNPAY_API_URL = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
 
 def generate_payment_code():
@@ -209,7 +209,7 @@ def vnpay_callback():
         
         # Update payment status
         if response_code == '00':
-            payment.payment_status = 'COMPLETED'
+            payment.payment_status = 'SUCCESS'
             payment.transaction_id = transaction_no
             payment.paid_at = datetime.now()
             
@@ -262,7 +262,7 @@ def confirm_cash_payment():
             }), 400
         
         # Update payment status
-        payment.payment_status = 'COMPLETED'
+        payment.payment_status = 'SUCCESS'
         payment.paid_at = datetime.now()
         
         # Update order status
@@ -331,3 +331,94 @@ def get_payment_by_order(order_id):
             'success': False,
             'message': str(e)
         }), 500
+
+@payments_bp.route("/payments/vnpay/return", methods=["GET"])
+def vnpay_return():
+    """Verify VNPay payment return and update order status"""
+    try:
+        # Get all parameters
+        vnp_params = dict(request.args)
+        
+        # Get secure hash
+        vnp_secure_hash = vnp_params.pop('vnp_SecureHash', None)
+        
+        # Sort and create hash data
+        sorted_params = sorted(vnp_params.items())
+        hash_data = '&'.join([f"{key}={urllib.parse.quote_plus(str(val))}" for key, val in sorted_params])
+        
+        # Verify secure hash
+        calculated_hash = hmac.new(
+            VNPAY_HASH_SECRET.encode('utf-8'),
+            hash_data.encode('utf-8'),
+            hashlib.sha512
+        ).hexdigest()
+        
+        if vnp_secure_hash != calculated_hash:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid signature'
+            }), 400
+        
+        # Get payment info
+        payment_code = vnp_params.get('vnp_TxnRef')
+        response_code = vnp_params.get('vnp_ResponseCode')
+        transaction_no = vnp_params.get('vnp_TransactionNo')
+        
+        payment = Payment.query.filter_by(payment_code=payment_code).first()
+        if not payment:
+            return jsonify({
+                'success': False,
+                'message': 'Payment not found'
+            }), 404
+        
+        # Get order
+        order = Order.query.get(payment.order_id)
+        if not order:
+            return jsonify({
+                'success': False,
+                'message': 'Order not found'
+            }), 404
+        
+        # Update payment and order status
+        print(f"VNPay Return: Code={payment_code}, Response={response_code}")
+        if response_code == '00':
+            payment.payment_status = 'SUCCESS'
+            payment.transaction_id = transaction_no
+            payment.paid_at = datetime.now()
+            
+            order.order_status = 'PAID'
+            order.paid_at = datetime.now()
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Payment verified successfully',
+                'data': {
+                    'order_code': order.order_code,
+                    'order_id': order.order_id,
+                    'payment_status': payment.payment_status,
+                    'order_status': order.order_status
+                }
+            }), 200
+        else:
+            payment.payment_status = 'FAILED'
+            order.order_status = 'CANCELLED'
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': False,
+                'message': 'Payment failed',
+                'data': {
+                    'response_code': response_code
+                }
+            }), 400
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+

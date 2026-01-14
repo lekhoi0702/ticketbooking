@@ -10,7 +10,7 @@ class Payment(db.Model):
     payment_method = db.Column(db.Enum('CREDIT_CARD', 'BANK_TRANSFER', 'E_WALLET', 'MOMO', 'VNPAY', 'CASH'), nullable=False)
     transaction_id = db.Column(db.String(255))
     amount = db.Column(db.Numeric(15, 2), nullable=False)
-    payment_status = db.Column(db.Enum('PENDING', 'COMPLETED', 'SUCCESS', 'FAILED', 'REFUNDED'), default='PENDING', index=True)
+    payment_status = db.Column(db.Enum('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED'), default='PENDING', index=True)
     payment_date = db.Column(db.DateTime)
     paid_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

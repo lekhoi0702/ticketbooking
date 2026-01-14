@@ -8,6 +8,7 @@ from app.models.payment import Payment
 from datetime import datetime
 import random
 import string
+from app.utils import generate_ticket_qr
 
 orders_bp = Blueprint("orders", __name__)
 
@@ -139,6 +140,15 @@ def create_order():
                     holder_email=data.get('customer_email')
                 )
                 db.session.add(ticket)
+                db.session.flush()  # Get ticket_id
+                
+                # Generate QR code for ticket
+                try:
+                    qr_url = generate_ticket_qr(ticket.ticket_code, ticket.ticket_id)
+                    ticket.qr_code_url = qr_url
+                except Exception as qr_err:
+                    print(f"Error generating QR code: {qr_err}")
+                
                 created_tickets.append(ticket)
                 
                 # Mark seat as BOOKED
@@ -248,16 +258,19 @@ def get_order_by_code(order_code):
 
 @orders_bp.route("/orders/user/<int:user_id>", methods=["GET"])
 def get_user_orders(user_id):
-    """Get all orders for a user"""
+    """Get all orders for a user with full details"""
     try:
+        from app.models.venue import Venue
+        
         orders = Order.query.filter_by(user_id=user_id).order_by(Order.created_at.desc()).all()
         
         orders_data = []
         for order in orders:
             tickets = Ticket.query.filter_by(order_id=order.order_id).all()
             
-            # Get event info
+            # Get event info with venue details
             event_info = None
+            venue_info = None
             if tickets:
                 ticket_type = TicketType.query.get(tickets[0].ticket_type_id)
                 if ticket_type:
@@ -267,14 +280,50 @@ def get_user_orders(user_id):
                             'event_id': event.event_id,
                             'event_name': event.event_name,
                             'start_datetime': event.start_datetime.isoformat() if event.start_datetime else None,
-                            'banner_image_url': event.banner_image_url
+                            'end_datetime': event.end_datetime.isoformat() if event.end_datetime else None,
+                            'banner_image_url': event.banner_image_url,
+                            'status': event.status
                         }
+                        
+                        # Get venue info
+                        venue = Venue.query.get(event.venue_id)
+                        if venue:
+                            venue_info = {
+                                'venue_id': venue.venue_id,
+                                'venue_name': venue.venue_name,
+                                'address': venue.address,
+                                'city': venue.city
+                            }
             
-            orders_data.append({
-                'order': order.to_dict(),
-                'tickets_count': len(tickets),
-                'event': event_info
-            })
+            # Build detailed tickets list with ticket_type info
+            tickets_data = []
+            for ticket in tickets:
+                ticket_dict = ticket.to_dict()
+                
+                # Add ticket type info
+                ticket_type = TicketType.query.get(ticket.ticket_type_id)
+                if ticket_type:
+                    ticket_dict['ticket_type_name'] = ticket_type.type_name
+                    ticket_dict['ticket_type_description'] = ticket_type.description
+                
+                # Add event and venue info to each ticket
+                ticket_dict['event_name'] = event_info['event_name'] if event_info else None
+                ticket_dict['event_date'] = event_info['start_datetime'] if event_info else None
+                ticket_dict['venue_name'] = venue_info['venue_name'] if venue_info else None
+                ticket_dict['venue_address'] = venue_info['address'] if venue_info else None
+                
+                tickets_data.append(ticket_dict)
+            
+            # Build order data
+            order_dict = order.to_dict()
+            order_dict['event_name'] = event_info['event_name'] if event_info else None
+            order_dict['event_date'] = event_info['start_datetime'] if event_info else None
+            order_dict['venue_name'] = venue_info['venue_name'] if venue_info else None
+            order_dict['venue_address'] = venue_info['address'] if venue_info else None
+            order_dict['tickets'] = tickets_data
+            order_dict['tickets_count'] = len(tickets)
+            
+            orders_data.append(order_dict)
         
         return jsonify({
             'success': True,
@@ -349,3 +398,65 @@ def cancel_order(order_id):
             'success': False,
             'message': str(e)
         }), 500
+
+@orders_bp.route("/tickets/user/<int:user_id>", methods=["GET"])
+def get_user_tickets(user_id):
+    """Get all tickets for a user (for MyTickets page)"""
+    try:
+        from app.models.venue import Venue
+        
+        # Get all orders for user
+        orders = Order.query.filter_by(user_id=user_id).all()
+        
+        all_tickets = []
+        
+        for order in orders:
+            tickets = Ticket.query.filter_by(order_id=order.order_id).all()
+            
+            for ticket in tickets:
+                ticket_dict = ticket.to_dict()
+                
+                # Add ticket type info
+                ticket_type = TicketType.query.get(ticket.ticket_type_id)
+                if ticket_type:
+                    ticket_dict['ticket_type_name'] = ticket_type.type_name
+                    ticket_dict['ticket_type_description'] = ticket_type.description
+                    
+                    # Get event info
+                    event = Event.query.get(ticket_type.event_id)
+                    if event:
+                        ticket_dict['event_id'] = event.event_id
+                        ticket_dict['event_name'] = event.event_name
+                        ticket_dict['event_date'] = event.start_datetime.isoformat() if event.start_datetime else None
+                        ticket_dict['event_status'] = event.status
+                        ticket_dict['banner_image_url'] = event.banner_image_url
+                        
+                        # Get venue info
+                        venue = Venue.query.get(event.venue_id)
+                        if venue:
+                            ticket_dict['venue_name'] = venue.venue_name
+                            ticket_dict['venue_address'] = f"{venue.address}, {venue.city}"
+                
+                # Add order info
+                ticket_dict['order_code'] = order.order_code
+                ticket_dict['order_status'] = order.order_status
+                ticket_dict['order_date'] = order.created_at.isoformat() if order.created_at else None
+                
+                all_tickets.append(ticket_dict)
+        
+        # Sort by created_at descending
+        all_tickets.sort(key=lambda x: x.get('order_date', ''), reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'data': all_tickets
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
+

@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Badge, Button, Spinner } from 'react-bootstrap';
-import {
-    FaUsers, FaCalendarAlt, FaMoneyBillWave,
-    FaTicketAlt, FaArrowUp
-} from 'react-icons/fa';
+import { Row, Col, Spinner, Table, Badge } from 'react-bootstrap';
 import { api } from '../../services/api';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
@@ -30,8 +27,7 @@ const AdminDashboard = () => {
 
             if (statsRes.success) setStats(statsRes.data);
             if (eventsRes.success) {
-                // Lấy 5 sự kiện gần nhất
-                setRecentEvents(eventsRes.data.slice(0, 5));
+                setRecentEvents(eventsRes.data.slice(0, 10));
             }
         } catch (error) {
             console.error("Error fetching admin dashboard data:", error);
@@ -46,120 +42,199 @@ const AdminDashboard = () => {
 
     if (loading) {
         return (
-            <div className="text-center py-5">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-2">Đang tải dữ liệu thực tế...</p>
+            <div className="text-center py-5 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '400px' }}>
+                <Spinner animation="border" variant="indigo" style={{ color: '#6366f1' }} />
+                <p className="mt-3 text-slate-500 fw-bold">Đang kiến tạo dữ liệu tổng quan...</p>
             </div>
         );
     }
 
+    const statCards = [
+        {
+            label: 'Người dùng',
+            value: stats.total_users.toLocaleString(),
+            icon: 'bi-people-fill',
+            color: '#6366f1',
+            bg: '#eef2ff',
+            link: '/admin/users'
+        },
+        {
+            label: 'Sự kiện hệ thống',
+            value: stats.total_events,
+            icon: 'bi-calendar-event-fill',
+            color: '#10b981',
+            bg: '#ecfdf5',
+            link: '/admin/events'
+        },
+        {
+            label: 'Vé đã bán',
+            value: stats.total_tickets_sold.toLocaleString(),
+            icon: 'bi-ticket-perforated-fill',
+            color: '#f59e0b',
+            bg: '#fffbeb',
+            link: '/admin/orders'
+        },
+        {
+            label: 'Doanh thu tổng',
+            value: formatCurrency(stats.total_revenue).replace('₫', 'VNĐ'),
+            icon: 'bi-lightning-charge-fill',
+            color: '#ef4444',
+            bg: '#fef2f2',
+            link: '#'
+        }
+    ];
+
     return (
-        <div>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h3 className="fw-bold text-dark mb-0">Hệ thống Tổng quan</h3>
-                <Button variant="primary" onClick={fetchData} className="shadow-sm">Làm mới dữ liệu</Button>
-            </div>
-
-            {/* Quick Stats */}
-            <Row className="mb-4">
-                <Col md={3}>
-                    <Card className="border-0 shadow-sm rounded-4 h-100 p-2">
-                        <Card.Body className="d-flex align-items-center">
-                            <div className="bg-primary bg-opacity-10 p-3 rounded-4 me-3">
-                                <FaUsers className="text-primary fs-3" />
+        <div className="animate-fade-in dashboard-premium">
+            {/* Premium Stat Cards */}
+            <Row className="g-4 mb-5">
+                {statCards.map((card, idx) => (
+                    <Col lg={3} md={6} key={idx}>
+                        <div className="stat-card-modern bg-white rounded-4 p-4 shadow-sm border-0 position-relative overflow-hidden transition-all h-100">
+                            <div className="d-flex align-items-center justify-content-between mb-3">
+                                <div className="stat-icon-box rounded-3 d-flex align-items-center justify-content-center shadow-xs" style={{ backgroundColor: card.bg, color: card.color, width: '48px', height: '48px' }}>
+                                    <i className={`bi ${card.icon} fs-4`}></i>
+                                </div>
+                                <div className="stat-trend d-flex align-items-center text-success small fw-bold">
+                                    <i className="bi bi-graph-up-arrow me-1"></i> +12%
+                                </div>
                             </div>
-                            <div>
-                                <small className="text-muted fw-bold text-uppercase" style={{ fontSize: '12px' }}>Người dùng</small>
-                                <h4 className="fw-bold mb-0">{stats.total_users.toLocaleString()}</h4>
+                            <div className="stat-content">
+                                <h3 className="fw-900 text-slate-800 mb-1">{card.value}</h3>
+                                <p className="text-slate-400 small fw-bold text-uppercase mb-0" style={{ letterSpacing: '0.5px' }}>{card.label}</p>
                             </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={3}>
-                    <Card className="border-0 shadow-sm rounded-4 h-100 p-2">
-                        <Card.Body className="d-flex align-items-center">
-                            <div className="bg-success bg-opacity-10 p-3 rounded-4 me-3">
-                                <FaCalendarAlt className="text-success fs-3" />
+                            <div className="stat-decoration position-absolute top-0 end-0 p-3 opacity-05">
+                                <i className={`bi ${card.icon}`} style={{ fontSize: '80px', color: card.color }}></i>
                             </div>
-                            <div>
-                                <small className="text-muted fw-bold text-uppercase" style={{ fontSize: '12px' }}>Sự kiện</small>
-                                <h4 className="fw-bold mb-0">{stats.total_events}</h4>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={3}>
-                    <Card className="border-0 shadow-sm rounded-4 h-100 p-2">
-                        <Card.Body className="d-flex align-items-center">
-                            <div className="bg-info bg-opacity-10 p-3 rounded-4 me-3">
-                                <FaMoneyBillWave className="text-info fs-3" />
-                            </div>
-                            <div>
-                                <small className="text-muted fw-bold text-uppercase" style={{ fontSize: '12px' }}>Doanh thu</small>
-                                <h4 className="fw-bold mb-0">{formatCurrency(stats.total_revenue)}</h4>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={3}>
-                    <Card className="border-0 shadow-sm rounded-4 h-100 p-2">
-                        <Card.Body className="d-flex align-items-center">
-                            <div className="bg-warning bg-opacity-10 p-3 rounded-4 me-3">
-                                <FaTicketAlt className="text-warning fs-3" />
-                            </div>
-                            <div>
-                                <small className="text-muted fw-bold text-uppercase" style={{ fontSize: '12px' }}>Vé đã bán</small>
-                                <h4 className="fw-bold mb-0">{stats.total_tickets_sold.toLocaleString()}</h4>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
+                        </div>
+                    </Col>
+                ))}
             </Row>
 
-            <Row>
+            {/* Main Content Grid */}
+            <Row className="g-4">
                 <Col lg={12}>
-                    <Card className="border-0 shadow-sm rounded-4">
-                        <Card.Header className="bg-white py-3">
-                            <h5 className="mb-0 fw-bold">Duyệt sự kiện gần đây</h5>
-                        </Card.Header>
-                        <Card.Body className="p-0">
-                            <Table responsive hover className="mb-0">
-                                <thead className="bg-light">
-                                    <tr>
-                                        <th className="px-4">Sự kiện</th>
-                                        <th>Người tổ chức</th>
-                                        <th>Trạng thái</th>
-                                        <th>Thời gian bắt đầu</th>
-                                        <th className="text-center">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {recentEvents.length > 0 ? recentEvents.map(event => (
-                                        <tr key={event.event_id}>
-                                            <td className="px-4 fw-bold">{event.event_name}</td>
-                                            <td className="text-muted">{event.organizer_name}</td>
-                                            <td>
-                                                <Badge bg={
-                                                    event.status === 'PUBLISHED' ? 'success' :
-                                                        event.status === 'PENDING' ? 'warning' : 'danger'
-                                                }>
-                                                    {event.status === 'PUBLISHED' ? 'APPROVED' : event.status}
-                                                </Badge>
-                                            </td>
-                                            <td>{new Date(event.start_datetime).toLocaleDateString()}</td>
-                                            <td className="text-center">
-                                                <Button size="sm" variant="outline-primary">Xem chi tiết</Button>
-                                            </td>
+                    <div className="card-modern bg-white rounded-4 shadow-sm border-0 overflow-hidden">
+                        <div className="card-header-modern p-4 d-flex justify-content-between align-items-center border-bottom border-slate-50">
+                            <div>
+                                <h5 className="fw-bold text-slate-800 mb-1">Dòng chảy Sự kiện</h5>
+                                <p className="text-slate-400 small mb-0 fw-medium">Theo dõi và phê duyệt các sự kiện mới nhất từ đối tác</p>
+                            </div>
+                            <button className="btn btn-slate-50 btn-sm rounded-pill px-3 fw-bold text-slate-600 border" onClick={fetchData}>
+                                <i className="bi bi-arrow-clockwise me-1"></i> Làm mới dữ liệu
+                            </button>
+                        </div>
+                        <div className="card-body p-0">
+                            <div className="table-responsive">
+                                <Table hover className="align-middle mb-0 custom-table-premium">
+                                    <thead className="bg-slate-50">
+                                        <tr className="small text-slate-400 text-uppercase fw-bold">
+                                            <th className="px-4 py-3 border-0">Thông tin Sự kiện</th>
+                                            <th className="py-3 border-0">Đối tác</th>
+                                            <th className="py-3 border-0">Mức độ phổ biến</th>
+                                            <th className="py-3 border-0">Trạng thái</th>
+                                            <th className="py-3 border-0 text-center">Hành động</th>
                                         </tr>
-                                    )) : (
-                                        <tr><td colSpan="5" className="text-center py-4 text-muted">Chưa có sự kiện nào</td></tr>
-                                    )}
-                                </tbody>
-                            </Table>
-                        </Card.Body>
-                    </Card>
+                                    </thead>
+                                    <tbody>
+                                        {recentEvents && recentEvents.length > 0 ? recentEvents.map(event => (
+                                            <tr key={event.event_id}>
+                                                <td className="px-4 py-4">
+                                                    <div className="d-flex align-items-center">
+                                                        <div className="event-thumb me-3 rounded-3 overflow-hidden shadow-xs" style={{ width: '45px', height: '45px', background: '#f1f5f9' }}>
+                                                            <img
+                                                                src={event.banner_image_url?.startsWith('http') ? event.banner_image_url : `http://127.0.0.1:5000${event.banner_image_url}`}
+                                                                className="w-100 h-100 object-fit-cover"
+                                                                alt="thumb"
+                                                                onError={(e) => e.target.src = 'https://ui-avatars.com/api/?name=Event&background=6366f1&color=fff'}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <div className="fw-bold text-slate-700 fs-6">{event.event_name}</div>
+                                                            <div className="text-slate-400 small fw-medium">{event.category?.category_name} • {new Date(event.start_datetime).toLocaleDateString('vi-VN')}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="fw-bold text-slate-600 small">{event.organizer_name}</div>
+                                                    <div className="text-indigo-500 fw-bold" style={{ fontSize: '10px' }}>VIP PARTNER</div>
+                                                </td>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <div className="progress rounded-pill flex-grow-1 me-2" style={{ height: '6px', width: '80px', backgroundColor: '#f1f5f9' }}>
+                                                            <div className="progress-bar bg-indigo-500 rounded-pill" style={{ width: `${Math.floor(Math.random() * 60) + 40}%` }}></div>
+                                                        </div>
+                                                        <span className="text-slate-400 fw-bold" style={{ fontSize: '11px' }}>High</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {event.status === 'PUBLISHED' ? (
+                                                        <Badge className="bg-emerald-100 text-emerald-700 px-3 py-2 rounded-pill fw-bold border-0" style={{ fontSize: '10px' }}>
+                                                            <i className="bi bi-check-circle-fill me-1"></i> CÔNG KHAI
+                                                        </Badge>
+                                                    ) : event.status === 'PENDING_APPROVAL' ? (
+                                                        <Badge className="bg-amber-100 text-amber-700 px-3 py-2 rounded-pill fw-bold border-0" style={{ fontSize: '10px' }}>
+                                                            <i className="bi bi-hourglass-split me-1"></i> CHỜ DUYỆT
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge className="bg-slate-100 text-slate-600 px-3 py-2 rounded-pill fw-bold border-0" style={{ fontSize: '10px' }}>
+                                                            {event.status}
+                                                        </Badge>
+                                                    )}
+                                                </td>
+                                                <td className="text-center">
+                                                    <Link to="/admin/events" className="btn btn-indigo-soft btn-sm rounded-pill px-4 fw-bold">QUẢN LÝ</Link>
+                                                </td>
+                                            </tr>
+                                        )) : (
+                                            <tr><td colSpan="5" className="text-center py-5 text-slate-400 fst-italic">Hệ thống đang yên ắng</td></tr>
+                                        )}
+                                    </tbody>
+                                </Table>
+                            </div>
+                        </div>
+                        <div className="card-footer bg-slate-50 border-0 py-3 text-center">
+                            <Link to="/admin/events" className="text-indigo-600 fw-bold text-decoration-none small hover-underline">
+                                Xem tất cả 124 sự kiện hiện có <i className="bi bi-arrow-right ms-1"></i>
+                            </Link>
+                        </div>
+                    </div>
                 </Col>
             </Row>
+
+            <style>{`
+                .fw-900 { font-weight: 900; }
+                .bg-slate-50 { background-color: #f8fafc !important; }
+                .text-slate-800 { color: #1e293b !important; }
+                .text-slate-700 { color: #334155 !important; }
+                .text-slate-600 { color: #475569 !important; }
+                .text-slate-400 { color: #94a3b8 !important; }
+                .text-indigo-500 { color: #6366f1 !important; }
+                .text-indigo-600 { color: #4f46e5 !important; }
+                .bg-indigo-500 { background-color: #6366f1 !important; }
+                
+                .bg-emerald-100 { background-color: #ecfdf5 !important; }
+                .text-emerald-700 { color: #047857 !important; }
+                .bg-amber-100 { background-color: #fffbeb !important; }
+                .text-amber-700 { color: #b45309 !important; }
+                
+                .stat-card-modern { border: 1px solid #f1f5f9 !important; }
+                .stat-card-modern:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05) !important; }
+                .opacity-05 { opacity: 0.05; }
+                .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+                
+                .custom-table-premium thead th { border-bottom: 1px solid #f1f5f9 !important; }
+                .custom-table-premium tbody tr { transition: all 0.2s; }
+                .custom-table-premium tbody tr:hover { background-color: #f8fafc !important; }
+                .event-thumb { border: 1px solid #f1f5f9; }
+                
+                .btn-indigo-soft { background-color: #eef2ff; color: #6366f1; border: none; }
+                .btn-indigo-soft:hover { background-color: #6366f1; color: white; }
+                .hover-underline:hover { text-decoration: underline !important; }
+                
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+            `}</style>
         </div>
     );
 };

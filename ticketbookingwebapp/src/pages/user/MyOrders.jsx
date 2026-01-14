@@ -1,26 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button, Spinner, Alert } from 'react-bootstrap';
 import { FaTicketAlt, FaHistory, FaEye, FaCalendarAlt, FaMapMarkerAlt } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/eventUtils';
 
 const MyOrders = () => {
+    const { user, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [orders, setOrders] = useState([]);
     const [error, setError] = useState(null);
 
-    // Mock user ID (In real app, get from auth context)
-    const userId = 1;
-
     useEffect(() => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
         fetchUserOrders();
-    }, []);
+    }, [isAuthenticated]);
 
     const fetchUserOrders = async () => {
         try {
             setLoading(true);
-            const res = await api.getUserOrders(userId);
+            const res = await api.getUserOrders(user?.user_id || 0);
             if (res.success) {
                 setOrders(res.data);
             }

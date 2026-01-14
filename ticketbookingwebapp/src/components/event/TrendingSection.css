@@ -1,62 +1,47 @@
+/* TrendingSection.css - TicketBox Clone */
+
 .trending-section {
-    padding: 50px 0;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 80px 0;
+    background-color: #121214;
+    /* Slightly darker than 18181b */
 }
 
 .trending-header {
-    text-align: center;
-    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 48px;
 }
 
 .awards-badge {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    background: linear-gradient(90deg, var(--primary-teal), var(--primary-teal-dark));
+    gap: 12px;
+    background: linear-gradient(90deg, #f59e0b, #d97706);
     color: white;
-    padding: 10px 24px;
-    border-radius: 25px;
-    font-weight: 600;
-    font-size: 14px;
+    padding: 8px 24px;
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 13px;
     margin-bottom: 16px;
-    box-shadow: 0 4px 12px rgba(38, 188, 143, 0.3);
-}
-
-.awards-icon {
-    font-size: 20px;
-}
-
-.awards-text {
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .trending-title {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--text-dark);
+    font-size: 36px;
+    font-weight: 800;
+    color: #ffffff;
     margin: 0;
+    letter-spacing: -1px;
 }
 
-/* Responsive Styles */
 @media (max-width: 768px) {
     .trending-section {
-        padding: 40px 0;
-    }
-
-    .trending-header {
-        margin-bottom: 30px;
-    }
-
-    .awards-badge {
-        font-size: 12px;
-        padding: 8px 20px;
-    }
-
-    .awards-icon {
-        font-size: 18px;
+        padding: 60px 0;
     }
 
     .trending-title {
-        font-size: 24px;
+        font-size: 28px;
     }
 }

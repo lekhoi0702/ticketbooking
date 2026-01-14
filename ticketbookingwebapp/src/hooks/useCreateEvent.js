@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Custom hook for creating a new event
  */
 export const useCreateEvent = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState(null);
@@ -25,9 +27,9 @@ export const useCreateEvent = () => {
         sale_start_datetime: '',
         sale_end_datetime: '',
         total_capacity: 0,
-        status: 'DRAFT',
+        status: 'PENDING_APPROVAL',
         is_featured: false,
-        manager_id: 1 // Default manager ID
+        manager_id: user?.user_id || 1
     });
 
     const [bannerImage, setBannerImage] = useState(null);
