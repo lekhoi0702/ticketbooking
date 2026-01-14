@@ -208,3 +208,71 @@ def get_all_orders():
         }), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+@admin_bp.route("/admin/users/<int:user_id>/toggle-lock", methods=["POST"])
+def toggle_user_lock(user_id):
+    """Khóa hoặc mở khóa tài khoản người dùng"""
+    try:
+        data = request.get_json()
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'Không tìm thấy người dùng'}), 404
+        
+        is_locked = data.get('is_locked', False)
+        # is_active = not is_locked
+        user.is_active = not is_locked
+        db.session.commit()
+        
+        status_text = "khóa" if is_locked else "mở khóa"
+        return jsonify({
+            'success': True,
+            'message': f'Đã {status_text} tài khoản thành công',
+            'data': {'is_active': user.is_active}
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@admin_bp.route("/admin/venues", methods=["GET"])
+def admin_get_venues():
+    """Lấy danh sách địa điểm để quản lý"""
+    try:
+        venues = Venue.query.all()
+        return jsonify({
+            'success': True,
+            'data': [v.to_dict() for v in venues]
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@admin_bp.route("/admin/venues/<int:venue_id>/seats", methods=["PUT"])
+def admin_update_venue_seats(venue_id):
+    """Thiết lập số lượng ghế và sơ đồ cho các khu vực của địa điểm"""
+    try:
+        data = request.get_json()
+        venue = Venue.query.get(venue_id)
+        if not venue:
+            return jsonify({'success': False, 'message': 'Không tìm thấy địa điểm'}), 404
+            
+        # Update seat map template if provided
+        if 'seat_map_template' in data:
+            venue.seat_map_template = data['seat_map_template']
+            
+        # Update capacity if provided
+        if 'capacity' in data:
+            venue.capacity = data['capacity']
+        
+        # Backward compatibility for fixed columns if needed based on template
+        if venue.seat_map_template and 'areas' in venue.seat_map_template:
+            # We can optionally sync the first few areas to the legacy columns
+            # But normally we just rely on the JSON now.
+            pass
+            
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Đã cập nhật sơ đồ ghế ngồi thành công',
+            'data': venue.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500

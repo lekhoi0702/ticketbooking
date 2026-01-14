@@ -28,6 +28,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import UsersManagement from './pages/admin/Users';
 import AdminEventsManagement from './pages/admin/Events';
 import AdminOrdersManagement from './pages/admin/Orders';
+import VenuesManagement from './pages/admin/Venues';
 import AdminLogin from './pages/admin/Login';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -116,6 +117,7 @@ function App() {
             <Route path="users" element={<UsersManagement />} />
             <Route path="events" element={<AdminEventsManagement />} />
             <Route path="orders" element={<AdminOrdersManagement />} />
+            <Route path="venues" element={<VenuesManagement />} />
           </Route>
 
           {/* Organizer Routes */}

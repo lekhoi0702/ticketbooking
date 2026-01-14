@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import { Card, Form, Button, Alert, Row, Col, Container, Spinner } from 'react-bootstrap';
-import { FaCalendarCheck, FaLock, FaEnvelope, FaBuilding } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
@@ -12,6 +10,15 @@ const OrganizerLogin = () => {
 
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        // AdminLTE login page body class
+        document.body.className = 'hold-transition login-page';
+
+        return () => {
+            document.body.className = '';
+        };
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -29,79 +36,91 @@ const OrganizerLogin = () => {
                 }
             }
         } catch (err) {
-            setError(err.message || 'Lỗi kết nối cổng đối tác');
+            setError(err.message || 'Thông tin đăng nhập không chính xác.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="organizer-login-wrapper vh-100 d-flex align-items-center">
-            <Container>
-                <Row className="justify-content-center">
-                    <Col md={8} lg={6}>
-                        <Card className="border-0 shadow rounded-4 overflow-hidden">
-                            <Row className="g-0">
-                                <Col md={5} className="bg-primary d-flex flex-column justify-content-center align-items-center text-white p-4">
-                                    <FaBuilding size={60} className="mb-3 opacity-75" />
-                                    <h4 className="fw-bold text-center">DÀNH CHO ĐỐI TÁC</h4>
-                                    <p className="small text-center opacity-75">Quản lý sự kiện và doanh thu của bạn tại đây.</p>
-                                </Col>
-                                <Col md={7} className="p-4 bg-white">
-                                    <div className="mb-4">
-                                        <h3 className="fw-bold text-dark mb-1">Đăng nhập</h3>
-                                        <p className="text-muted small">Cổng thông tin Ban Tổ Chức</p>
-                                    </div>
+        <div className="login-box">
+            <div className="card card-outline card-success">
+                <div className="card-header text-center">
+                    <a href="#" className="h1">
+                        <b>TicketBox</b> Organizer
+                    </a>
+                </div>
+                <div className="card-body">
+                    <p className="login-box-msg">Đăng nhập để quản lý sự kiện</p>
 
-                                    {error && <Alert variant="danger" className="py-2 small">{error}</Alert>}
+                    {error && (
+                        <div className="alert alert-danger alert-dismissible">
+                            <button type="button" className="close" onClick={() => setError(null)}>
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <i className="icon fas fa-ban"></i> {error}
+                        </div>
+                    )}
 
-                                    <Form onSubmit={handleSubmit}>
-                                        <Form.Group className="mb-3">
-                                            <Form.Label className="small fw-semibold">Email Đối Tác</Form.Label>
-                                            <Form.Control
-                                                type="email"
-                                                required
-                                                className="py-2 border-0 bg-light rounded-3"
-                                                placeholder="partner@event.com"
-                                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                            />
-                                        </Form.Group>
-                                        <Form.Group className="mb-4">
-                                            <Form.Label className="small fw-semibold">Mật Khẩu</Form.Label>
-                                            <Form.Control
-                                                type="password"
-                                                required
-                                                className="py-2 border-0 bg-light rounded-3"
-                                                placeholder="••••••••"
-                                                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                            />
-                                        </Form.Group>
-                                        <Button
-                                            variant="primary"
-                                            type="submit"
-                                            className="w-100 py-2 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center"
-                                            disabled={loading}
-                                        >
-                                            {loading ? <Spinner size="sm" className="me-2" /> : <FaCalendarCheck className="me-2" />}
-                                            VÀO TRANG QUẢN LÝ
-                                        </Button>
-                                    </Form>
-                                    <div className="mt-4 text-center">
-                                        <small className="text-muted">Bạn muốn trở thành đối tác? <a href="#" className="text-primary text-decoration-none fw-bold">Đăng ký ngay</a></small>
-                                    </div>
-                                </Col>
-                            </Row>
-                        </Card>
-                    </Col>
-                </Row>
-            </Container>
-            <style>{`
-                .organizer-login-wrapper {
-                    background-color: #f0f2f5;
-                    background-image: radial-gradient(#007bff 0.5px, #f0f2f5 0.5px);
-                    background-size: 20px 20px;
-                }
-            `}</style>
+                    <form onSubmit={handleSubmit}>
+                        <div className="input-group mb-3">
+                            <input
+                                type="email"
+                                className="form-control"
+                                placeholder="Email"
+                                required
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                            />
+                            <div className="input-group-append">
+                                <div className="input-group-text">
+                                    <span className="fas fa-envelope"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="input-group mb-3">
+                            <input
+                                type="password"
+                                className="form-control"
+                                placeholder="Mật khẩu"
+                                required
+                                value={formData.password}
+                                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                            />
+                            <div className="input-group-append">
+                                <div className="input-group-text">
+                                    <span className="fas fa-lock"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col-8">
+                                <div className="icheck-primary">
+                                    <input type="checkbox" id="remember" />
+                                    <label htmlFor="remember">
+                                        Ghi nhớ đăng nhập
+                                    </label>
+                                </div>
+                            </div>
+                            <div className="col-4">
+                                <button type="submit" className="btn btn-success btn-block" disabled={loading}>
+                                    {loading ? (
+                                        <span className="spinner-border spinner-border-sm mr-1"></span>
+                                    ) : null}
+                                    Đăng nhập
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <p className="mb-1 mt-3">
+                        <a href="#">Quên mật khẩu?</a>
+                    </p>
+                    <p className="mb-0">
+                        <a href="#" className="text-center">Đăng ký làm đối tác</a>
+                    </p>
+                </div>
+            </div>
         </div>
     );
 };

@@ -32,11 +32,11 @@ export const adminApi = {
         return await response.json();
     },
 
-    async updateEventStatus(eventId, data) {
+    async adminUpdateEventStatus(eventId, data) {
         const response = await fetch(`${API_BASE_URL}/admin/events/${eventId}/status`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(Object.fromEntries(data instanceof FormData ? data : Object.entries(data)))
         });
         if (!response.ok) throw new Error('Failed to update event status');
         return await response.json();
@@ -57,6 +57,35 @@ export const adminApi = {
             const error = await response.json();
             throw new Error(error.message || 'Failed to reset password');
         }
+        return await response.json();
+    },
+
+    async toggleUserLock(userId, isLocked) {
+        const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/toggle-lock`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_locked: isLocked })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to toggle user lock');
+        }
+        return await response.json();
+    },
+
+    async getAllVenues() {
+        const response = await fetch(`${API_BASE_URL}/admin/venues`);
+        if (!response.ok) throw new Error('Failed to fetch venues');
+        return await response.json();
+    },
+
+    async updateVenueSeats(venueId, areaData) {
+        const response = await fetch(`${API_BASE_URL}/admin/venues/${venueId}/seats`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(areaData)
+        });
+        if (!response.ok) throw new Error('Failed to update venue seats');
         return await response.json();
     }
 };

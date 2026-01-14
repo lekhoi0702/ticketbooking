@@ -1,0 +1,35 @@
+/* AdminLTE 4 Bootstrap 5 - Minimal Custom Styles */
+@import 'admin-lte/dist/css/adminlte.min.css';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+/* Admin Theme - Primary Sidebar */
+.admin-theme .app-sidebar {
+    background-color: #343a40;
+}
+
+.admin-theme .brand-link {
+    background-color: #343a40;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Organizer Theme - Success/Green Light Theme */
+.organizer-theme .main-sidebar {
+    border-right: 1px solid #dee2e6;
+}
+
+.organizer-theme .brand-link {
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Minimal utilities */
+.text-gradient-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

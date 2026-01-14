@@ -1,22 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Form, InputGroup, Button, Badge, Spinner, Modal, Alert } from 'react-bootstrap';
+import {
+    Box,
+    Card,
+    CardContent,
+    Typography,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    Button,
+    IconButton,
+    Chip,
+    Avatar,
+    TextField,
+    InputAdornment,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Grid,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    CircularProgress,
+    Alert,
+    Tooltip,
+    Stack,
+    Snackbar
+} from '@mui/material';
+import {
+    Search,
+    PersonAdd,
+    Refresh,
+    Edit,
+    VpnKey,
+    Block,
+    CheckCircle,
+    DeleteOutline,
+    LockOpen,
+    Lock
+} from '@mui/icons-material';
 import { api } from '../../services/api';
 
 const UsersManagement = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [users, setUsers] = useState([]);
-
-    // Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState(null);
+    const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
     const [newUser, setNewUser] = useState({
-        username: '',
         email: '',
         password: '',
         full_name: '',
-        role: 'ORGANIZER'
+        role: 'ORGANIZER' // Restricted according to user request
     });
 
     useEffect(() => {
@@ -30,9 +72,14 @@ const UsersManagement = () => {
             if (res.success) setUsers(res.data);
         } catch (error) {
             console.error("Error fetching users:", error);
+            setError("Failed to load users data.");
         } finally {
             setLoading(false);
         }
+    };
+
+    const showToast = (message, variant = 'success') => {
+        setToast({ show: true, message, variant });
     };
 
     const handleCreateUser = async (e) => {
@@ -40,10 +87,13 @@ const UsersManagement = () => {
         try {
             setCreating(true);
             setError(null);
-            const res = await api.createUser(newUser);
+            // We send a dummy username or modify backend to not require it. 
+            // For now, let's assume email can be used as username or backend handles it.
+            const res = await api.createUser({ ...newUser, username: newUser.email });
             if (res.success) {
                 setShowCreateModal(false);
-                setNewUser({ username: '', email: '', password: '', full_name: '', role: 'ORGANIZER' });
+                setNewUser({ email: '', password: '', full_name: '', role: 'ORGANIZER' });
+                showToast("Organizer account created successfully!");
                 fetchUsers();
             }
         } catch (err) {
@@ -53,245 +103,314 @@ const UsersManagement = () => {
         }
     };
 
-    const filteredUsers = users.filter(user =>
-        (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (user.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (user.username?.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-    const getRoleStyles = (role) => {
-        const roles = {
-            'ADMIN': { bg: '#fef2f2', color: '#b91c1c', text: 'QUẢN TRỊ VIÊN' },
-            'ORGANIZER': { bg: '#eef2ff', color: '#4f46e5', text: 'NHÀ TỔ CHỨC' },
-            'USER': { bg: '#f0f9ff', color: '#0369a1', text: 'THÀNH VIÊN' }
-        };
-        return roles[role] || { bg: '#f1f5f9', color: '#475569', text: role };
-    };
-
     const handleResetPassword = async (userId, fullName) => {
-        if (!window.confirm(`Bạn có chắc chắn muốn reset mật khẩu của "${fullName}" về mặc định (123456)?`)) {
+        if (!window.confirm(`Are you sure you want to reset the password for "${fullName}" to default (123456)?`)) {
             return;
         }
 
         try {
             const res = await api.resetUserPassword(userId);
             if (res.success) {
-                alert(res.message);
+                showToast(`Password for ${fullName} has been reset to 123456`);
             }
         } catch (err) {
             console.error("Error resetting password:", err);
-            alert("Lỗi khi reset mật khẩu: " + err.message);
+            showToast("Error resetting password: " + err.message, "error");
         }
     };
 
-    if (loading && users.length === 0) return (
-        <div className="text-center py-5 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '400px' }}>
-            <Spinner animation="border" style={{ color: '#6366f1' }} />
-            <p className="mt-3 text-slate-500 fw-bold">Đang tải cơ sở dữ liệu người dùng...</p>
-        </div>
+    const handleToggleLock = async (userId, fullName, currentlyLocked) => {
+        const action = currentlyLocked ? "unlock" : "lock";
+        if (!window.confirm(`Are you sure you want to ${action} the account of "${fullName}"?`)) {
+            return;
+        }
+
+        try {
+            const res = await api.toggleUserLock(userId, !currentlyLocked);
+            if (res.success) {
+                showToast(`Account for ${fullName} has been ${currentlyLocked ? 'unlocked' : 'locked'}`);
+                fetchUsers();
+            }
+        } catch (err) {
+            console.error("Error toggling lock:", err);
+            showToast("Error toggling lock: " + err.message, "error");
+        }
+    };
+
+    const filteredUsers = users.filter(user =>
+        (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    const getRoleColor = (role) => {
+        const roles = {
+            'ADMIN': 'error',
+            'ORGANIZER': 'primary',
+            'USER': 'secondary'
+        };
+        return roles[role] || 'default';
+    };
+
+    const getRoleLabel = (role) => {
+        const roles = {
+            'ADMIN': 'Administrator',
+            'ORGANIZER': 'Organizer',
+            'USER': 'Customer'
+        };
+        return roles[role] || role;
+    };
+
+    if (loading && users.length === 0) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
     return (
-        <div className="animate-fade-in pb-5 users-management-premium">
-            <div className="d-flex justify-content-end mb-4 gap-3">
-                <Button variant="white" onClick={fetchUsers} className="rounded-pill px-4 border text-slate-600 fw-bold small shadow-xs">
-                    <i className="bi bi-arrow-clockwise me-2"></i> LÀM MỚI
-                </Button>
-                <Button variant="indigo-gradient" onClick={() => setShowCreateModal(true)} className="rounded-pill px-4 border-0 text-white fw-900 small shadow-indigo">
-                    <i className="bi bi-person-plus-fill me-2"></i> THÊM TÀI KHOẢN
-                </Button>
-            </div>
+        <Box>
+            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 600 }}>
+                        Users Management
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                        Manage Organizer accounts and monitor user activity
+                    </Typography>
+                </Box>
+                <Stack direction="row" spacing={2}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<Refresh />}
+                        onClick={fetchUsers}
+                        sx={{ borderRadius: 1.5 }}
+                    >
+                        Refresh
+                    </Button>
+                    <Button
+                        variant="contained"
+                        startIcon={<PersonAdd />}
+                        onClick={() => setShowCreateModal(true)}
+                        sx={{ borderRadius: 1.5 }}
+                    >
+                        Create Organizer
+                    </Button>
+                </Stack>
+            </Stack>
 
-            <Card className="card-modern bg-white rounded-4 shadow-sm border-0 border-slate-50 overflow-hidden mt-4">
-                <div className="card-header-modern p-4 border-bottom border-slate-50">
-                    <Row className="align-items-center">
-                        <Col lg={4}>
-                            <h5 className="fw-900 text-slate-800 mb-1 tracking-tightest">Danh sách Quản trị</h5>
-                            <p className="text-slate-400 small mb-0 fw-medium">Quản lý phân quyền và thông tin định danh toàn hệ thống</p>
-                        </Col>
-                        <Col lg={8}>
-                            <InputGroup className="bg-slate-50 rounded-pill px-3 py-1 border border-slate-100 ms-auto" style={{ maxWidth: '400px' }}>
-                                <span className="input-group-text bg-transparent border-0 text-slate-400"><i className="bi bi-search"></i></span>
-                                <Form.Control
-                                    placeholder="Tìm tài khoản, email hoặc tên..."
-                                    className="bg-transparent border-0 shadow-none text-slate-600 fw-medium small"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </InputGroup>
-                        </Col>
-                    </Row>
-                </div>
-
-                <div className="table-responsive">
-                    <Table hover className="align-middle mb-0 custom-table-premium">
-                        <thead className="bg-slate-50">
-                            <tr className="small text-slate-400 text-uppercase fw-bold">
-                                <th className="px-4 py-3 border-0">Thành viên / Định danh</th>
-                                <th className="py-3 border-0">Tên đăng nhập</th>
-                                <th className="py-3 border-0">Vai trò / Quyền hạn</th>
-                                <th className="py-3 border-0">Tham gia từ</th>
-                                <th className="py-3 border-0 text-end px-4">Tác vụ Quản trị</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredUsers.length > 0 ? filteredUsers.map(user => {
-                                const st = getRoleStyles(user.role);
-                                return (
-                                    <tr key={user.user_id}>
-                                        <td className="px-4 py-4">
-                                            <div className="d-flex align-items-center">
-                                                <div className="user-avatar-premium me-3 rounded-circle d-flex align-items-center justify-content-center shadow-xs" style={{ width: '40px', height: '40px', background: st.bg, color: st.color, border: `2px solid #fff` }}>
-                                                    <span className="fw-black fs-6">{user.full_name?.charAt(0) || 'U'}</span>
-                                                </div>
-                                                <div>
-                                                    <div className="fw-bold text-slate-800">{user.full_name || 'Anonymous User'}</div>
-                                                    <div className="text-slate-400 small fw-medium">{user.email}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span className="bg-slate-50 text-indigo-500 px-2 py-1 rounded-3 small fw-bold border border-slate-100">{user.username}</span>
-                                        </td>
-                                        <td>
-                                            <span className="premium-role-badge d-inline-flex align-items-center rounded-pill px-3 py-1 fw-bold" style={{ backgroundColor: st.bg, color: st.color, fontSize: '10px' }}>
-                                                <i className="bi bi-shield-check me-1"></i> {st.text}
-                                            </span>
-                                        </td>
-                                        <td className="text-slate-400 small fw-medium">
-                                            {user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'Mặc định'}
-                                        </td>
-                                        <td className="text-end px-4">
-                                            <div className="d-flex justify-content-end gap-2">
-                                                <button
-                                                    className="btn btn-slate-50 btn-sm rounded-circle shadow-xs border"
-                                                    title="Chỉnh sửa hồ sơ"
-                                                    style={{ width: '34px', height: '34px', padding: 0 }}
-                                                >
-                                                    <i className="bi bi-pencil-square text-slate-600"></i>
-                                                </button>
-                                                <button
-                                                    className="btn btn-slate-50 btn-sm rounded-circle shadow-xs border"
-                                                    title="Đặt lại mật khẩu"
-                                                    style={{ width: '34px', height: '34px', padding: 0 }}
-                                                    onClick={() => handleResetPassword(user.user_id, user.full_name)}
-                                                >
-                                                    <i className="bi bi-key-fill text-danger text-opacity-75"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            }) : (
-                                <tr><td colSpan="5" className="text-center py-5 text-slate-400 fst-italic">Không tìm thấy tài khoản phù hợp với tiêu chí</td></tr>
-                            )}
-                        </tbody>
-                    </Table>
-                </div>
+            <Card sx={{ boxShadow: 2, borderRadius: 2 }}>
+                <CardContent sx={{ p: 0 }}>
+                    <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            size="small"
+                            placeholder="Search by name or email..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Search color="disabled" fontSize="small" />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{ maxWidth: 400 }}
+                        />
+                    </Box>
+                    <TableContainer>
+                        <Table sx={{ minWidth: 800 }}>
+                            <TableHead sx={{ bgcolor: 'grey.50' }}>
+                                <TableRow>
+                                    <TableCell sx={{ fontWeight: 600 }}>Full Name & Email</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Joined Date</TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 600, pr: 3 }}>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredUsers.length > 0 ? (
+                                    filteredUsers.map((user) => (
+                                        <TableRow key={user.user_id} hover>
+                                            <TableCell>
+                                                <Stack direction="row" spacing={2} alignItems="center">
+                                                    <Avatar
+                                                        sx={{
+                                                            bgcolor: `${getRoleColor(user.role)}.lighter`,
+                                                            color: `${getRoleColor(user.role)}.main`,
+                                                            fontWeight: 700
+                                                        }}
+                                                    >
+                                                        {user.full_name?.charAt(0) || 'U'}
+                                                    </Avatar>
+                                                    <Box>
+                                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                            {user.full_name || 'Anonymous'}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="textSecondary">
+                                                            {user.email}
+                                                        </Typography>
+                                                    </Box>
+                                                </Stack>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={getRoleLabel(user.role)}
+                                                    color={getRoleColor(user.role)}
+                                                    size="small"
+                                                    sx={{ borderRadius: 1, fontWeight: 600, minWidth: 100 }}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                {user.is_locked ? (
+                                                    <Chip
+                                                        label="Locked"
+                                                        color="error"
+                                                        size="small"
+                                                        variant="outlined"
+                                                        icon={<Lock style={{ fontSize: 14 }} />}
+                                                        sx={{ borderRadius: 1 }}
+                                                    />
+                                                ) : (
+                                                    <Chip
+                                                        label="Active"
+                                                        color="success"
+                                                        size="small"
+                                                        variant="outlined"
+                                                        icon={<CheckCircle style={{ fontSize: 14 }} />}
+                                                        sx={{ borderRadius: 1 }}
+                                                    />
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2" color="textSecondary">
+                                                    {user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'Default'}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell align="right" sx={{ pr: 2 }}>
+                                                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                                    <Tooltip title={user.is_locked ? "Unlock User" : "Lock User"}>
+                                                        <IconButton
+                                                            size="small"
+                                                            color={user.is_locked ? "success" : "warning"}
+                                                            onClick={() => handleToggleLock(user.user_id, user.full_name, user.is_locked)}
+                                                        >
+                                                            {user.is_locked ? <LockOpen fontSize="small" /> : <Block fontSize="small" />}
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Reset Password">
+                                                        <IconButton
+                                                            size="small"
+                                                            color="primary"
+                                                            onClick={() => handleResetPassword(user.user_id, user.full_name)}
+                                                        >
+                                                            <VpnKey fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                                            <Typography color="textSecondary">No users found matching your search.</Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </CardContent>
             </Card>
 
-            {/* Premium Create Modal */}
-            <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)} centered contentClassName="border-0 shadow-2xl rounded-5 overflow-hidden transition-all">
-                <Form onSubmit={handleCreateUser}>
-                    <Modal.Header closeButton className="bg-slate-50 py-4 px-5 border-0">
-                        <Modal.Title className="fw-900 text-slate-800 tracking-tightest">TẠO TÀI KHOẢN MỚI</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body className="p-5 bg-white pt-0">
-                        {error && <div className="alert alert-danger rounded-4 py-3 small border-0 mb-4 shadow-sm animate-fade-in"><i className="bi bi-exclamation-circle me-2"></i> {error}</div>}
-
-                        <div className="mb-4">
-                            <label className="form-label small fw-900 text-slate-400 text-uppercase tracking-widest mb-2">Họ và tên chủ sở hữu</label>
-                            <Form.Control
-                                required
-                                placeholder="Nhập tên hiển thị..."
-                                className="bg-slate-50 border-0 rounded-4 py-3 px-4 text-slate-700 shadow-none hover-slate-100 transition-all fw-bold fs-6"
-                                value={newUser.full_name}
-                                onChange={e => setNewUser({ ...newUser, full_name: e.target.value })}
-                            />
-                        </div>
-
-                        <Row className="g-4 mb-4">
-                            <Col md={6}>
-                                <label className="form-label small fw-900 text-slate-400 text-uppercase tracking-widest mb-2">Tên đăng nhập</label>
-                                <Form.Control
+            {/* Create Organizer Dialog */}
+            <Dialog
+                open={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                maxWidth="xs"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 2 } }}
+            >
+                <form onSubmit={handleCreateUser}>
+                    <DialogTitle sx={{ px: 3, pt: 3, pb: 1 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                            Create Organizer Account
+                        </Typography>
+                    </DialogTitle>
+                    <DialogContent sx={{ px: 3 }}>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                            Enter the details for the new event organizer. They will be able to host and manage events.
+                        </Typography>
+                        {error && (
+                            <Alert severity="error" sx={{ mb: 3 }}>
+                                {error}
+                            </Alert>
+                        )}
+                        <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Full Name"
                                     required
-                                    placeholder="Username..."
-                                    className="bg-slate-50 border-0 rounded-4 py-3 px-4 text-slate-700 shadow-none transition-all fw-bold"
-                                    value={newUser.username}
-                                    onChange={e => setNewUser({ ...newUser, username: e.target.value })}
+                                    placeholder="e.g. John Doe / Company Name"
+                                    value={newUser.full_name}
+                                    onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
                                 />
-                            </Col>
-                            <Col md={6}>
-                                <label className="form-label small fw-900 text-slate-400 text-uppercase tracking-widest mb-2">Vai trò hệ thống</label>
-                                <Form.Select
-                                    className="bg-slate-50 border-0 rounded-4 py-3 px-4 text-slate-700 shadow-none transition-all fw-bold"
-                                    value={newUser.role}
-                                    onChange={e => setNewUser({ ...newUser, role: e.target.value })}
-                                >
-                                    <option value="ORGANIZER">NHÀ TỔ CHỨC</option>
-                                    <option value="ADMIN">QUẢN TRỊ VIÊN</option>
-                                    <option value="USER">KHÁCH HÀNG</option>
-                                </Form.Select>
-                            </Col>
-                        </Row>
-
-                        <div className="mb-4">
-                            <label className="form-label small fw-900 text-slate-400 text-uppercase tracking-widest mb-2">Địa chỉ Email xác thực</label>
-                            <Form.Control
-                                required
-                                type="email"
-                                placeholder="email@example.com"
-                                className="bg-slate-50 border-0 rounded-4 py-3 px-4 text-slate-700 shadow-none transition-all fw-medium"
-                                value={newUser.email}
-                                onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="mb-0">
-                            <label className="form-label small fw-900 text-slate-400 text-uppercase tracking-widest mb-2">Mật khẩu khởi tạo</label>
-                            <Form.Control
-                                required
-                                type="password"
-                                placeholder="••••••••"
-                                className="bg-slate-50 border-0 rounded-4 py-3 px-4 text-slate-700 shadow-none transition-all"
-                                value={newUser.password}
-                                onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                            />
-                        </div>
-                    </Modal.Body>
-                    <Modal.Footer className="bg-slate-50 p-5 pt-0 border-0 d-flex justify-content-between">
-                        <Button variant="link" className="text-slate-400 text-decoration-none fw-bold small" onClick={() => setShowCreateModal(false)}>HỦY BỎ</Button>
-                        <Button variant="indigo-gradient" type="submit" disabled={creating} className="px-5 rounded-pill shadow-indigo border-0 text-white fw-900 py-3 active-scale transition-all">
-                            {creating ? <Spinner animation="border" size="sm" /> : 'XÁC NHẬN KHỞI TẠO'}
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Email Address"
+                                    type="email"
+                                    required
+                                    placeholder="organizer@example.com"
+                                    value={newUser.email}
+                                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Initial Password"
+                                    type="password"
+                                    required
+                                    placeholder="••••••••"
+                                    value={newUser.password}
+                                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions sx={{ p: 3 }}>
+                        <Button onClick={() => setShowCreateModal(false)} color="inherit">
+                            Cancel
                         </Button>
-                    </Modal.Footer>
-                </Form>
-            </Modal>
+                        <Button
+                            variant="contained"
+                            type="submit"
+                            disabled={creating}
+                            sx={{ px: 4, borderRadius: 1.5 }}
+                        >
+                            {creating ? <CircularProgress size={24} /> : 'Create Organizer'}
+                        </Button>
+                    </DialogActions>
+                </form>
+            </Dialog>
 
-            <style>{`
-                .fw-900 { font-weight: 900; }
-                .tracking-tightest { letter-spacing: -0.05em; }
-                .tracking-widest { letter-spacing: 0.1em; }
-                .bg-indigo-gradient { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important; }
-                .shadow-indigo { box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
-                .text-indigo-500 { color: #6366f1 !important; }
-                .bg-slate-50 { background-color: #f8fafc !important; }
-                .hover-slate-100:hover { background-color: #f1f5f9 !important; }
-                .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
-                
-                .custom-table-premium tbody tr { transition: all 0.2s; border-color: #f1f5f9; }
-                .custom-table-premium tbody tr:hover { background-color: #f8fafc !important; transform: scale(1.001); }
-                .user-avatar-premium { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-                tr:hover .user-avatar-premium { transform: scale(1.1) rotate(5deg); }
-                
-                .active-scale:active { transform: scale(0.96); }
-                .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-                .btn-white { background-color: white !important; }
-                
-                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-                .animate-fade-in { animation: fadeIn 0.4s ease-out; }
-            `}</style>
-        </div>
+            <Snackbar
+                open={toast.show}
+                autoHideDuration={4000}
+                onClose={() => setToast({ ...toast, show: false })}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert severity={toast.variant} sx={{ width: '100%', borderRadius: 2, boxShadow: 3 }}>
+                    {toast.message}
+                </Alert>
+            </Snackbar>
+        </Box>
     );
 };
 

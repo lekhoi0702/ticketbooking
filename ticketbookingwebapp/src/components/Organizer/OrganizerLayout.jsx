@@ -1,12 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import {
-    FaTachometerAlt, FaCalendarPlus, FaList,
-    FaUserCog, FaSignOutAlt, FaUser, FaBars,
-    FaBell, FaSearch
-} from 'react-icons/fa';
-import './OrganizerDashboard.css';
+import '../../assets/adminlte-custom.css';
 
 const OrganizerLayout = () => {
     const location = useLocation();
@@ -14,13 +9,10 @@ const OrganizerLayout = () => {
     const { user, logout } = useAuth();
 
     useEffect(() => {
-        // Apply AdminLTE classes for Organizer (dark theme)
-        document.body.classList.add('layout-fixed', 'sidebar-expand-lg', 'bg-body-tertiary');
-        document.body.setAttribute('data-bs-theme', 'dark');
+        document.body.className = 'hold-transition sidebar-mini layout-fixed organizer-theme';
 
         return () => {
-            document.body.classList.remove('layout-fixed', 'sidebar-expand-lg', 'bg-body-tertiary');
-            document.body.removeAttribute('data-bs-theme');
+            document.body.className = '';
         };
     }, []);
 
@@ -30,115 +22,132 @@ const OrganizerLayout = () => {
     };
 
     const menuItems = [
-        { path: '/organizer/dashboard', icon: <FaTachometerAlt />, label: 'Bảng điều khiển' },
-        { path: '/organizer/events', icon: <FaList />, label: 'Quản lý sự kiện' },
-        { path: '/organizer/create-event', icon: <FaCalendarPlus />, label: 'Tạo sự kiện mới' },
-        { path: '/organizer/profile', icon: <FaUserCog />, label: 'Cài đặt tài khoản' },
+        { path: '/organizer/dashboard', icon: 'fas fa-tachometer-alt', label: 'Bảng điều khiển' },
+        { path: '/organizer/events', icon: 'fas fa-list', label: 'Quản lý sự kiện' },
+        { path: '/organizer/create-event', icon: 'fas fa-calendar-plus', label: 'Tạo sự kiện mới' },
+        { path: '/organizer/profile', icon: 'fas fa-user-cog', label: 'Cài đặt tài khoản' },
     ];
 
     return (
-        <div className="app-wrapper organizer-layout shadow-lg">
-            {/* Header */}
-            <nav className="app-header navbar navbar-expand">
-                <div className="container-fluid">
-                    <ul className="navbar-nav">
-                        <li className="nav-item">
-                            <a className="nav-link text-white" data-lte-toggle="sidebar-full" href="#" role="button">
-                                <FaBars />
-                            </a>
-                        </li>
-                    </ul>
+        <div className="wrapper">
+            {/* Navbar */}
+            <nav className="main-header navbar navbar-expand navbar-white navbar-light">
+                <ul className="navbar-nav">
+                    <li className="nav-item">
+                        <a className="nav-link" data-widget="pushmenu" href="#" role="button">
+                            <i className="fas fa-bars"></i>
+                        </a>
+                    </li>
+                    <li className="nav-item d-none d-sm-inline-block">
+                        <Link to="/organizer/dashboard" className="nav-link">Trang chủ</Link>
+                    </li>
+                </ul>
 
-                    <ul className="navbar-nav ms-auto">
-                        <li className="nav-item dropdown">
-                            <a className="nav-link text-white" href="#" data-bs-toggle="dropdown">
-                                <FaSearch />
+                <ul className="navbar-nav ml-auto">
+                    <li className="nav-item">
+                        <a className="nav-link" data-widget="navbar-search" href="#" role="button">
+                            <i className="fas fa-search"></i>
+                        </a>
+                    </li>
+                    <li className="nav-item dropdown">
+                        <a className="nav-link" data-toggle="dropdown" href="#">
+                            <i className="far fa-bell"></i>
+                            <span className="badge badge-success navbar-badge">2</span>
+                        </a>
+                        <div className="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                            <span className="dropdown-item dropdown-header">2 Thông báo</span>
+                            <div className="dropdown-divider"></div>
+                            <a href="#" className="dropdown-item">
+                                <i className="fas fa-ticket-alt mr-2 text-success"></i> Vé mới được đặt
+                                <span className="float-right text-muted text-sm">5 phút</span>
                             </a>
-                        </li>
-                        <li className="nav-item dropdown">
-                            <a className="nav-link text-white position-relative" href="#" data-bs-toggle="dropdown">
-                                <FaBell />
-                                <span className="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '8px' }}>
-                                    2
-                                </span>
-                            </a>
-                        </li>
-
-                        <li className="nav-item dropdown user-menu">
-                            <a href="#" className="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown">
-                                <div className="bg-success rounded-circle me-2 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
-                                    <FaUser size={14} className="text-white" />
-                                </div>
-                                <span className="d-none d-md-inline text-white fw-bold">{user?.full_name || 'Nhà tổ chức'}</span>
-                            </a>
-                            <ul className="dropdown-menu dropdown-menu-lg dropdown-menu-end border-0 shadow-lg">
-                                <li className="user-header bg-dark text-center p-4">
-                                    <div className="bg-success rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center shadow-lg" style={{ width: '60px', height: '60px' }}>
-                                        <FaUser size={30} className="text-white" />
-                                    </div>
-                                    <p className="text-white fw-bold mb-0">
-                                        {user?.full_name}
-                                        <small className="d-block text-muted mt-1">Professional Organizer</small>
-                                    </p>
-                                </li>
-                                <li className="user-footer bg-secondary bg-opacity-10 d-flex justify-content-between p-3">
-                                    <Link to="/organizer/profile" className="btn btn-outline-light btn-sm rounded-pill px-3">Hồ sơ</Link>
-                                    <button onClick={handleLogout} className="btn btn-danger btn-sm rounded-pill px-3">Đăng xuất</button>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
+                            <div className="dropdown-divider"></div>
+                            <a href="#" className="dropdown-item dropdown-footer">Xem tất cả</a>
+                        </div>
+                    </li>
+                    <li className="nav-item dropdown user-menu">
+                        <a href="#" className="nav-link dropdown-toggle" data-toggle="dropdown">
+                            <img
+                                src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=10b981&color=fff`}
+                                className="user-image img-circle elevation-2"
+                                alt="User"
+                            />
+                            <span className="d-none d-md-inline">{user?.full_name || 'Nhà tổ chức'}</span>
+                        </a>
+                        <ul className="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                            <li className="user-header bg-success">
+                                <img
+                                    src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=fff&color=10b981`}
+                                    className="img-circle elevation-2"
+                                    alt="User"
+                                />
+                                <p>
+                                    {user?.full_name}
+                                    <small>Professional Organizer</small>
+                                </p>
+                            </li>
+                            <li className="user-footer">
+                                <Link to="/organizer/profile" className="btn btn-default btn-flat">Hồ sơ</Link>
+                                <button onClick={handleLogout} className="btn btn-default btn-flat float-right">Đăng xuất</button>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
             </nav>
 
-            {/* Sidebar */}
-            <aside className="app-sidebar shadow-lg">
-                <div className="sidebar-brand">
-                    <Link to="/organizer/dashboard" className="brand-link text-center w-100 py-4">
-                        <span className="brand-text fw-black sidebar-logo">TICKETBOX</span>
-                        <div className="text-muted small mt-1" style={{ fontSize: '9px', letterSpacing: '2px' }}>ORGANIZER PANEL</div>
-                    </Link>
-                </div>
+            {/* Main Sidebar */}
+            <aside className="main-sidebar sidebar-light-success elevation-4">
+                <Link to="/organizer/dashboard" className="brand-link">
+                    <i className="fas fa-ticket-alt brand-image" style={{ fontSize: '2rem', marginLeft: '0.5rem', color: '#10b981' }}></i>
+                    <span className="brand-text font-weight-light">TicketBox Organizer</span>
+                </Link>
 
-                <div className="sidebar-wrapper mt-3">
-                    <nav>
-                        <ul className="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">
+                <div className="sidebar">
+                    <div className="user-panel mt-3 pb-3 mb-3 d-flex">
+                        <div className="image">
+                            <img
+                                src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=10b981&color=fff`}
+                                className="img-circle elevation-2"
+                                alt="User"
+                            />
+                        </div>
+                        <div className="info">
+                            <Link to="#" className="d-block">{user?.full_name || 'Nhà tổ chức'}</Link>
+                        </div>
+                    </div>
+
+                    <nav className="mt-2">
+                        <ul className="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                            <li className="nav-header">MENU CHÍNH</li>
                             {menuItems.map(item => (
-                                <li key={item.path} className="nav-item px-3 mb-1">
+                                <li key={item.path} className="nav-item">
                                     <Link
                                         to={item.path}
-                                        className={`nav-link d-flex align-items-center rounded-3 py-3 ${location.pathname === item.path ? 'active' : 'text-muted'}`}
+                                        className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
                                     >
-                                        <i className="nav-icon me-3">{item.icon}</i>
-                                        <p className="mb-0 fw-500">{item.label}</p>
+                                        <i className={`nav-icon ${item.icon}`}></i>
+                                        <p>{item.label}</p>
                                     </Link>
                                 </li>
                             ))}
                         </ul>
                     </nav>
                 </div>
-
-                <div className="sidebar-footer p-4 mt-auto border-top border-secondary border-opacity-10">
-                    <div className="bg-success bg-opacity-5 rounded-4 p-3 border border-success border-opacity-10 text-center">
-                        <div className="small text-muted mb-1">Hệ thống đối tác</div>
-                        <div className="fw-bold text-success small">Verified Partner</div>
-                    </div>
-                </div>
             </aside>
 
-            {/* Main Content */}
-            <main className="app-main pt-4">
-                <div className="app-content-header py-3 mb-4">
-                    <div className="container-fluid px-4">
-                        <div className="row">
+            {/* Content Wrapper */}
+            <div className="content-wrapper">
+                <div className="content-header">
+                    <div className="container-fluid">
+                        <div className="row mb-2">
                             <div className="col-sm-6">
-                                <h3 className="mb-0 fw-bold animate-fade-in">
+                                <h1 className="m-0">
                                     {menuItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
-                                </h3>
+                                </h1>
                             </div>
                             <div className="col-sm-6">
-                                <ol className="breadcrumb float-sm-end mb-0 px-0 bg-transparent small">
-                                    <li className="breadcrumb-item"><Link to="/organizer">TCB</Link></li>
+                                <ol className="breadcrumb float-sm-right">
+                                    <li className="breadcrumb-item"><Link to="/organizer/dashboard">TCB</Link></li>
                                     <li className="breadcrumb-item active">
                                         {menuItems.find(i => i.path === location.pathname)?.label || 'Overview'}
                                     </li>
@@ -148,26 +157,21 @@ const OrganizerLayout = () => {
                     </div>
                 </div>
 
-                <div className="app-content px-4">
-                    <div className="container-fluid px-4">
-                        <div className="animate-fade-in">
-                            <Outlet />
-                        </div>
+                <section className="content">
+                    <div className="container-fluid">
+                        <Outlet />
                     </div>
-                </div>
-            </main>
+                </section>
+            </div>
 
-            <footer className="app-footer py-3 text-center border-top border-secondary border-opacity-10">
-                <div className="small text-muted">
-                    <strong>Copyright &copy; 2026 <span className="text-success">TicketBox</span>.</strong> All rights reserved.
+            {/* Footer */}
+            <footer className="main-footer">
+                <strong>Copyright &copy; 2026 <a href="#" className="text-success">TicketBox</a>.</strong>
+                All rights reserved.
+                <div className="float-right d-none d-sm-inline-block">
+                    <b>Organizer Panel</b>
                 </div>
             </footer>
-
-            <style>{`
-                .fw-black { font-weight: 900; }
-                .fw-500 { font-weight: 500; }
-                .sidebar-logo { color: var(--accent-green) !important; letter-spacing: -1px; }
-            `}</style>
         </div>
     );
 };
