@@ -4,7 +4,7 @@ import { FaLock, FaEnvelope, FaUser, FaPhone, FaArrowRight } from 'react-icons/f
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
-import '../../components/auth/AuthModal.css';
+import '../../components/Customer/Auth/AuthModal.css';
 
 const Login = () => {
     const [activeTab, setActiveTab] = useState('login');

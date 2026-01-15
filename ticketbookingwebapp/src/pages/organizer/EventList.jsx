@@ -1,29 +1,26 @@
 import React, { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
-    Box,
     Card,
-    CardContent,
-    Typography,
     Button,
-    TextField,
-    InputAdornment,
-    Stack,
-    IconButton,
-    Chip,
-    CircularProgress,
+    Input,
+    Typography,
+    Space,
     Alert,
-    Dialog,
-    DialogActions,
-    DialogContent
-} from '@mui/material';
+    Modal,
+    Spin,
+    message
+} from 'antd';
 import {
-    Add as AddIcon,
-    Search as SearchIcon,
-    Refresh as RefreshIcon
-} from '@mui/icons-material';
+    PlusOutlined,
+    SearchOutlined,
+    ReloadOutlined,
+    ExclamationCircleOutlined
+} from '@ant-design/icons';
 import EventTable from '../../components/Organizer/EventTable';
 import { useEventList } from '../../hooks/useEventList';
+
+const { Text } = Typography;
 
 const EventList = () => {
     const {
@@ -48,161 +45,85 @@ const EventList = () => {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <Stack alignItems="center" spacing={2}>
-                    <CircularProgress size={60} thickness={4} />
-                    <Typography variant="h6" color="text.secondary">
-                        Đang tải danh sách sự kiện...
-                    </Typography>
-                </Stack>
-            </Box>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <Spin size="large" tip="Đang tải dữ liệu..." />
+            </div>
         );
     }
 
     return (
-        <Box>
-            {/* Header Section */}
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
-                <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                        Sự kiện của tôi
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                        Quản lý và theo dõi tất cả sự kiện của bạn
-                    </Typography>
-                </Box>
-
-                <Stack direction="row" spacing={2}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<RefreshIcon />}
-                        onClick={fetchEvents}
-                        sx={{ borderRadius: 2 }}
-                    >
+        <Spin spinning={loading || deleting} tip={deleting ? "Đang xóa sự kiện..." : "Vui lòng đợi..."}>
+            <div>
+                {/* Header Actions */}
+                <Space style={{ marginBottom: 24 }}>
+                    <Link to="/organizer/create-event">
+                        <Button type="primary" icon={<PlusOutlined />} disabled={loading || deleting}>
+                            Tạo sự kiện mới
+                        </Button>
+                    </Link>
+                    <Button icon={<ReloadOutlined />} onClick={fetchEvents} disabled={loading || deleting}>
                         Làm mới
                     </Button>
-                    <Button
-                        component={RouterLink}
-                        to="/organizer/create-event"
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        sx={{
-                            borderRadius: 2,
-                            px: 3,
-                            background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
-                            '&:hover': {
-                                background: 'linear-gradient(135deg, #219d5c 0%, #17834a 100%)'
-                            }
-                        }}
-                    >
-                        Tạo sự kiện mới
-                    </Button>
-                </Stack>
-            </Stack>
+                </Space>
 
-            {/* Error Alert */}
-            {error && (
-                <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                    <strong>Lỗi:</strong> {error}
-                </Alert>
-            )}
+                {error && (
+                    <Alert
+                        message="Lỗi"
+                        description={error}
+                        type="error"
+                        showIcon
+                        style={{ marginBottom: 24 }}
+                    />
+                )}
 
-            {/* Main Card */}
-            <Card sx={{ borderRadius: 3 }}>
-                <CardContent>
-                    {/* Search and Stats */}
-                    <Stack
-                        direction={{ xs: 'column', md: 'row' }}
-                        justifyContent="space-between"
-                        alignItems={{ xs: 'stretch', md: 'center' }}
-                        spacing={2}
-                        sx={{ mb: 3 }}
-                    >
-                        <TextField
-                            placeholder="Tìm kiếm tên sự kiện..."
-                            variant="outlined"
-                            size="small"
+                <Card
+                    styles={{ body: { padding: 0 } }}
+                    extra={
+                        <Text type="secondary">
+                            Tổng số: <Text strong style={{ color: '#52c41a' }}>{filteredEvents.length}</Text> sự kiện
+                        </Text>
+                    }
+                    title={
+                        <Input
+                            prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            sx={{
-                                maxWidth: { md: 400 },
-                                '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2
-                                }
-                            }}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon color="action" />
-                                    </InputAdornment>
-                                )
-                            }}
+                            style={{ width: 300 }}
+                            allowClear
                         />
+                    }
+                >
+                    <div style={{ padding: '0 0px' }}>
+                        <EventTable
+                            events={filteredEvents}
+                            handlePublishEvent={handlePublishEvent}
+                            handleCancelApproval={handleCancelApproval}
+                            handleDeleteClick={handleDeleteClick}
+                        />
+                    </div>
+                </Card>
 
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="body2" color="text.secondary">
-                                Tổng cộng:
-                            </Typography>
-                            <Chip
-                                label={`${filteredEvents.length} sự kiện`}
-                                color="primary"
-                                size="small"
-                                sx={{ fontWeight: 600 }}
-                            />
-                        </Stack>
-                    </Stack>
-
-                    {/* Event Table */}
-                    <EventTable
-                        events={filteredEvents}
-                        handlePublishEvent={handlePublishEvent}
-                        handleCancelApproval={handleCancelApproval}
-                        handleDeleteClick={handleDeleteClick}
-                    />
-                </CardContent>
-            </Card>
-
-            {/* Delete Confirmation Dialog */}
-            <Dialog
-                open={showDeleteModal}
-                onClose={() => !deleting && setShowDeleteModal(false)}
-                PaperProps={{ sx: { borderRadius: 3, maxWidth: 400 } }}
-            >
-                <DialogContent sx={{ textAlign: 'center', pt: 4, pb: 2 }}>
-                    <Box sx={{ color: 'error.main', mb: 2 }}>
-                        <Box sx={{ fontSize: 60, mb: 1 }}>⚠️</Box>
-                    </Box>
-                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-                        Xác nhận xóa sự kiện
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                        Bạn có chắc chắn muốn xóa sự kiện <strong>{eventToDelete?.event_name}</strong>?
-                        Hành động này không thể hoàn tác.
-                    </Typography>
-                </DialogContent>
-                <DialogActions sx={{ p: 3, gap: 2 }}>
-                    <Button
-                        fullWidth
-                        variant="outlined"
-                        onClick={() => setShowDeleteModal(false)}
-                        disabled={deleting}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        Bỏ qua
-                    </Button>
-                    <Button
-                        fullWidth
-                        variant="contained"
-                        color="error"
-                        onClick={handleDeleteConfirm}
-                        disabled={deleting}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        {deleting ? <CircularProgress size={24} color="inherit" /> : 'Xóa ngay'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
+                <Modal
+                    title={
+                        <Space>
+                            <ExclamationCircleOutlined style={{ color: '#faad14' }} />
+                            <span>Xác nhận xóa</span>
+                        </Space>
+                    }
+                    open={showDeleteModal}
+                    onOk={handleDeleteConfirm}
+                    onCancel={() => setShowDeleteModal(false)}
+                    confirmLoading={deleting}
+                    okText="Xác nhận"
+                    cancelText="Hủy bỏ"
+                    okButtonProps={{ danger: true }}
+                >
+                    <p>
+                        Bạn có chắc chắn muốn xóa sự kiện <strong>{eventToDelete?.event_name}</strong>? Hành động này không thể hoàn tác.
+                    </p>
+                </Modal>
+            </div>
+        </Spin>
     );
 };
 

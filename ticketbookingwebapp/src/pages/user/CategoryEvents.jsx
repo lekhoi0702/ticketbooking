@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Container, Row, Col, Spinner, Breadcrumb } from 'react-bootstrap';
 import { api } from '../../services/api';
-import EventCard from '../../components/event/EventCard';
+import EventCard from '../../components/Customer/Event/EventCard';
 import { transformEvent } from '../../utils/eventUtils';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const CategoryEvents = () => {
     const { id } = useParams();
@@ -40,12 +41,7 @@ const CategoryEvents = () => {
     };
 
     if (loading) {
-        return (
-            <Container className="py-5 text-center" style={{ minHeight: '60vh' }}>
-                <Spinner animation="border" variant="primary" />
-                <h4 className="mt-3">Đang tải sự kiện...</h4>
-            </Container>
-        );
+        return <LoadingSpinner tip={`Đang tải sự kiện ${categoryName}...`} />;
     }
 
     return (

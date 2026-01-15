@@ -7,12 +7,13 @@ import { FaMapMarkerAlt } from 'react-icons/fa';
 import { useEventDetail } from '../../hooks/useEventDetail';
 
 // Sub-components
-import EventHero from '../../components/event/EventHero';
-import TicketSelection from '../../components/event/TicketSelection';
-import StickyBookingBar from '../../components/event/StickyBookingBar';
+import EventHero from '../../components/Customer/Event/EventHero';
+import TicketSelection from '../../components/Customer/Event/TicketSelection';
+import StickyBookingBar from '../../components/Customer/Event/StickyBookingBar';
 
 // Utils & Styles
 import './EventDetail.css';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 function EventDetail() {
     const { id } = useParams();
@@ -35,13 +36,7 @@ function EventDetail() {
     } = useEventDetail(id);
 
     if (loading) {
-        return (
-            <div className="event-detail-loading">
-                <div className="spinner-border text-success" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        );
+        return <LoadingSpinner tip="Đang tải thông tin sự kiện..." />;
     }
 
     if (!event) {

@@ -9,6 +9,8 @@ import './MyTickets.css';
 
 import { QRCodeSVG } from 'qrcode.react';
 
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+
 const MyTickets = () => {
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
@@ -117,12 +119,7 @@ const MyTickets = () => {
     };
 
     if (loading) {
-        return (
-            <Container className="py-5 text-center">
-                <Spinner animation="border" variant="success" size="lg" />
-                <p className="mt-3 text-muted">Đang tải vé của bạn...</p>
-            </Container>
-        );
+        return <LoadingSpinner tip="Đang tải vé của bạn..." />;
     }
 
     return (

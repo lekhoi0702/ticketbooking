@@ -1,0 +1,149 @@
+/* MyOrders Page - Premium Design */
+.my-orders-page {
+    background: #18181b;
+    min-height: 100vh;
+    padding: 60px 0;
+}
+
+/* Page Header */
+.orders-page-header {
+    margin-bottom: 40px;
+}
+
+.orders-header-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #2dc275 0%, #29a664 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.orders-header-icon:hover {
+    transform: scale(1.05);
+}
+
+.orders-page-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.orders-page-subtitle {
+    color: #9ca3af;
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Order Card */
+.order-card {
+    background: #27272a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.order-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(45, 194, 117, 0.15) !important;
+    border-color: rgba(45, 194, 117, 0.3) !important;
+}
+
+.order-card .bg-light {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.order-card .text-muted {
+    color: #9ca3af !important;
+}
+
+.order-card .text-primary {
+    color: #60a5fa !important;
+}
+
+.order-card h5 {
+    color: #ffffff !important;
+}
+
+.order-card .hover-text-success:hover {
+    color: #2dc275 !important;
+}
+
+.order-card hr {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.order-card .bg-info {
+    background: rgba(96, 165, 250, 0.1) !important;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.order-card .bg-warning {
+    background: rgba(251, 191, 36, 0.1) !important;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+/* Empty State */
+.empty-orders-card {
+    background: #27272a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+}
+
+.empty-orders-card h4 {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.empty-orders-card .text-muted {
+    color: #9ca3af !important;
+}
+
+.empty-orders-icon {
+    color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Status Badges */
+.badge {
+    font-weight: 600;
+    padding: 8px 16px;
+}
+
+/* Buttons */
+.btn-outline-primary {
+    border-color: #60a5fa;
+    color: #60a5fa;
+}
+
+.btn-outline-primary:hover {
+    background: #60a5fa;
+    border-color: #60a5fa;
+    color: #ffffff;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #2dc275 0%, #29a664 100%);
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #29a664 0%, #228b50 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .my-orders-page {
+        padding: 40px 0;
+    }
+
+    .orders-page-title {
+        font-size: 24px;
+    }
+}

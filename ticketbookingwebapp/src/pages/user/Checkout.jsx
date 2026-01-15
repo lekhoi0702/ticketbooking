@@ -6,10 +6,11 @@ import { FaShoppingCart } from 'react-icons/fa';
 import { useCheckout } from '../../hooks/useCheckout';
 
 // Components
-import SelectedTicketsReview from '../../components/checkout/SelectedTicketsReview';
-import CustomerInfoForm from '../../components/checkout/CustomerInfoForm';
-import PaymentMethodSelector from '../../components/checkout/PaymentMethodSelector';
-import OrderSummary from '../../components/checkout/OrderSummary';
+import SelectedTicketsReview from '../../components/Customer/Checkout/SelectedTicketsReview';
+import CustomerInfoForm from '../../components/Customer/Checkout/CustomerInfoForm';
+import PaymentMethodSelector from '../../components/Customer/Checkout/PaymentMethodSelector';
+import OrderSummary from '../../components/Customer/Checkout/OrderSummary';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 /**
  * Checkout Page Component
@@ -37,12 +38,7 @@ const Checkout = () => {
     } = useCheckout();
 
     if (loading) {
-        return (
-            <Container className="py-5 text-center">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">Đang tải thông tin...</p>
-            </Container>
-        );
+        return <LoadingSpinner tip="Đang chuẩn bị đơn hàng..." />;
     }
 
     return (

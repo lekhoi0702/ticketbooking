@@ -1,52 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Box,
+    Layout,
     Button,
-    Container,
     Typography,
-    Stack,
-    Grid,
+    Row,
+    Col,
     Card,
-    CardContent,
-    AppBar,
-    Toolbar,
-    useScrollTrigger,
-    Fade,
-    Paper,
-    ThemeProvider,
-    CssBaseline
-} from '@mui/material';
+    Space,
+    ConfigProvider,
+    Divider
+} from 'antd';
 import {
-    ConfirmationNumber as TicketIcon,
-    RocketLaunch as RocketIcon,
-    ShowChart as ChartIcon,
-    Groups as GroupsIcon,
-    SupportAgent as SupportIcon,
-    AddCircleOutline as PlusIcon
-} from '@mui/icons-material';
+    RocketOutlined,
+    BarChartOutlined,
+    TeamOutlined,
+    CustomerServiceOutlined,
+    PlusCircleOutlined,
+    ArrowRightOutlined,
+    CheckCircleFilled
+} from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
-import OrganizerAuthModal from '../../components/auth/OrganizerAuthModal';
-import organizerTheme from '../../theme/organizer-theme';
+import OrganizerAuthModal from '../../components/Customer/Auth/OrganizerAuthModal';
+import { AntdThemeConfig } from '../../theme/AntdThemeConfig';
 
-// Scroll to top button or elevation trigger
-function ElevationScroll(props) {
-    const { children, window } = props;
-    const trigger = useScrollTrigger({
-        disableHysteresis: true,
-        threshold: 0,
-        target: window ? window() : undefined,
-    });
-
-    return React.cloneElement(children, {
-        elevation: trigger ? 4 : 0,
-        sx: {
-            bgcolor: trigger ? 'background.paper' : 'transparent',
-            color: trigger ? 'text.primary' : 'white',
-            transition: 'all 0.3s'
-        }
-    });
-}
+const { Header, Content, Footer } = Layout;
+const { Title, Text, Paragraph } = Typography;
 
 const OrganizerHome = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
@@ -56,7 +35,7 @@ const OrganizerHome = () => {
     useEffect(() => {
         const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'ADMIN';
         if (isAuthenticated && isOrganizer) {
-            navigate('/organizer/dashboard');
+            navigate('/organizer/events');
         }
     }, [isAuthenticated, user, navigate]);
 
@@ -64,238 +43,188 @@ const OrganizerHome = () => {
         {
             title: 'Tạo Sự Kiện Dễ Dàng',
             desc: 'Quy trình tạo sự kiện chuyên nghiệp với đầy đủ cấu hình loại vé và sơ đồ ghế.',
-            icon: <PlusIcon fontSize="large" color="primary" />,
+            icon: <PlusCircleOutlined style={{ fontSize: 40, color: '#52c41a' }} />,
         },
         {
             title: 'Phân Tích Doanh Thu',
             desc: 'Theo dõi báo cáo doanh thu và lượng vé bán ra theo thời gian thực.',
-            icon: <ChartIcon fontSize="large" color="primary" />,
+            icon: <BarChartOutlined style={{ fontSize: 40, color: '#52c41a' }} />,
         },
         {
             title: 'Quản Lý Khách Hàng',
             desc: 'Dễ dàng quản lý thông tin người mua vé và các yêu cầu hỗ trợ.',
-            icon: <GroupsIcon fontSize="large" color="primary" />,
+            icon: <TeamOutlined style={{ fontSize: 40, color: '#52c41a' }} />,
         },
         {
             title: 'Hỗ Trợ 24/7',
             desc: 'Đội ngũ kỹ thuật luôn sẵn sàng hỗ trợ bạn trong mọi khâu tổ chức.',
-            icon: <SupportIcon fontSize="large" color="primary" />,
+            icon: <CustomerServiceOutlined style={{ fontSize: 40, color: '#52c41a' }} />,
         }
     ];
 
     return (
-        <ThemeProvider theme={organizerTheme}>
-            <CssBaseline />
-            <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        <ConfigProvider theme={AntdThemeConfig}>
+            <Layout style={{ background: '#fff' }}>
                 {/* Navbar */}
-                <ElevationScroll>
-                    <AppBar position="fixed">
-                        <Container maxWidth="lg">
-                            <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
-                                <Stack direction="row" spacing={1} alignItems="center" onClick={() => navigate('/')} sx={{ cursor: 'pointer' }}>
-                                    <TicketIcon sx={{ fontSize: 32, color: '#2dc275' }} />
-                                    <Typography variant="h5" sx={{ fontWeight: 800, color: 'inherit' }}>
-                                        TicketBooking
-                                    </Typography>
-                                </Stack>
-                                <Stack direction="row" spacing={2} alignItems="center">
-                                    <Button
-                                        color="inherit"
-                                        onClick={() => navigate('/')}
-                                        sx={{
-                                            fontWeight: 600,
-                                            px: 2,
-                                            borderRadius: 2,
-                                            transition: 'all 0.2s',
-                                            '&:hover': {
-                                                bgcolor: 'rgba(45, 194, 117, 0.08)',
-                                                color: 'primary.main',
-                                                transform: 'translateY(-1px)'
-                                            }
-                                        }}
-                                    >
-                                        Trang chủ TicketBooking
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        onClick={() => setShowAuthModal(true)}
-                                        sx={{ borderRadius: 2, fontWeight: 700, px: 3 }}
-                                    >
-                                        Đăng nhập
-                                    </Button>
-                                </Stack>
-                            </Toolbar>
-                        </Container>
-                    </AppBar>
-                </ElevationScroll>
+                <Header style={{
+                    position: 'fixed',
+                    zIndex: 1000,
+                    width: '100%',
+                    background: 'rgba(255,255,255,0.8)',
+                    backdropFilter: 'blur(8px)',
+                    borderBottom: '1px solid #f0f0f0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0 50px'
+                }}>
+                    <div
+                        style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                        onClick={() => navigate('/')}
+                    >
+                        <Title level={4} style={{ margin: 0, color: '#52c41a', fontWeight: 800 }}>TICKETBOOKING</Title>
+                    </div>
+                    <Space size={24}>
+                        <Button type="text" onClick={() => navigate('/')} style={{ fontWeight: 600 }}>Tới trang bán vé</Button>
+                        <Button
+                            type="primary"
+                            onClick={() => setShowAuthModal(true)}
+                            style={{ borderRadius: 6, fontWeight: 600 }}
+                        >
+                            Đăng nhập
+                        </Button>
+                    </Space>
+                </Header>
 
-                {/* Hero Section */}
-                <Box
-                    sx={{
-                        height: '70vh',
-                        minHeight: 500,
+                <Content>
+                    {/* Hero Section */}
+                    <div style={{
+                        height: '80vh',
+                        minHeight: 600,
                         position: 'relative',
                         display: 'flex',
                         alignItems: 'center',
                         color: 'white',
-                        background: 'linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80")',
+                        background: 'linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url("https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80")',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        mb: 8
-                    }}
-                >
-                    <Container maxWidth="lg">
-                        <Grid container spacing={4} justifyContent="center">
-                            <Grid item xs={12} md={10} lg={8}>
-                                <Fade in timeout={1000}>
-                                    <Box sx={{ textAlign: 'center' }}>
-                                        <Typography variant="h2" sx={{ fontWeight: 900, mb: 2, textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
-                                            Nền Tảng Quản Lý Sự Kiện Số 1 Việt Nam
-                                        </Typography>
-                                        <Typography variant="h5" sx={{ mb: 4, opacity: 0.9 }}>
-                                            Giải pháp toàn diện giúp bạn tổ chức, quảng bá và bán vé sự kiện hiệu quả nhất.
-                                        </Typography>
-                                        <Stack direction="row" spacing={2} justifyContent="center">
-                                            <Button
-                                                variant="contained"
-                                                size="large"
-                                                startIcon={<RocketIcon />}
-                                                onClick={() => setShowAuthModal(true)}
-                                                sx={{
-                                                    py: 1.5,
-                                                    px: 4,
-                                                    borderRadius: 2,
-                                                    fontSize: '1.1rem',
-                                                    fontWeight: 700,
-                                                    bgcolor: '#2dc275',
-                                                    '&:hover': { bgcolor: '#219d5c' }
-                                                }}
-                                            >
-                                                BẮT ĐẦU NGAY
-                                            </Button>
-                                            <Button
-                                                variant="outlined"
-                                                size="large"
-                                                sx={{
-                                                    py: 1.5,
-                                                    px: 4,
-                                                    borderRadius: 2,
-                                                    fontSize: '1.1rem',
-                                                    fontWeight: 700,
-                                                    color: 'white',
-                                                    borderColor: 'white',
-                                                    '&:hover': { borderColor: '#2dc275', bgcolor: 'rgba(45, 194, 117, 0.1)' }
-                                                }}
-                                            >
-                                                TÌM HIỂU THÊM
-                                            </Button>
-                                        </Stack>
-                                    </Box>
-                                </Fade>
-                            </Grid>
-                        </Grid>
-                    </Container>
-                </Box>
-
-                {/* Features Section */}
-                <Container maxWidth="lg" sx={{ mb: 12 }}>
-                    <Box sx={{ textAlign: 'center', mb: 8 }}>
-                        <Typography variant="h3" sx={{ fontWeight: 800, mb: 2 }}>
-                            Tại sao chọn <Box component="span" sx={{ color: 'primary.main' }}>TicketBooking</Box>?
-                        </Typography>
-                        <Box sx={{ width: 80, height: 4, bgcolor: 'primary.main', mx: 'auto', borderRadius: 2 }} />
-                    </Box>
-
-                    <Grid container spacing={4} justifyContent="center">
-                        {features.map((f, i) => (
-                            <Grid item xs={12} sm={6} md={3} key={i}>
-                                <Card
-                                    elevation={0}
-                                    sx={{
-                                        height: '100%',
-                                        textAlign: 'center',
-                                        borderRadius: 4,
-                                        p: 2,
-                                        border: '1px solid',
-                                        borderColor: 'divider',
-                                        transition: 'transform 0.3s, box-shadow 0.3s',
-                                        '&:hover': {
-                                            transform: 'translateY(-8px)',
-                                            boxShadow: 4,
-                                            borderColor: 'primary.light'
-                                        }
-                                    }}
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', padding: '0 20px' }}>
+                            <Title style={{ color: 'white', fontSize: '3.5rem', fontWeight: 900, marginBottom: 24 }}>
+                                Giải Pháp Tổ Chức<br /><span style={{ color: '#52c41a' }}>Sự Kiện Toàn Diện</span>
+                            </Title>
+                            <Paragraph style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.25rem', marginBottom: 40 }}>
+                                Nền tảng chuyên nghiệp giúp nhà tổ chức quản lý, quảng bá và phân phối vé sự kiện một cách hiệu quả nhất tại Việt Nam.
+                            </Paragraph>
+                            <Space size={16}>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    icon={<RocketOutlined />}
+                                    onClick={() => setShowAuthModal(true)}
+                                    style={{ height: 56, padding: '0 40px', fontSize: 18, fontWeight: 700, borderRadius: 8 }}
                                 >
-                                    <CardContent>
-                                        <Box sx={{ mb: 3 }}>{f.icon}</Box>
-                                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
-                                            {f.title}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {f.desc}
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
-                </Container>
+                                    BẮT ĐẦU NGAY
+                                </Button>
+                                <Button
+                                    ghost
+                                    size="large"
+                                    style={{ height: 56, padding: '0 40px', fontSize: 18, fontWeight: 700, borderRadius: 8, color: 'white', borderColor: 'white' }}
+                                >
+                                    TÌM HIỂU THÊM
+                                </Button>
+                            </Space>
+                        </div>
+                    </div>
 
-                {/* CTA Section */}
-                <Box sx={{ bgcolor: 'action.hover', py: 12 }}>
-                    <Container maxWidth="md">
-                        <Paper
-                            sx={{
-                                p: 6,
-                                textAlign: 'center',
-                                borderRadius: 6,
-                                background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
-                                color: 'white',
-                                boxShadow: '0 20px 40px rgba(45, 194, 117, 0.2)'
+                    {/* Features Section */}
+                    <div style={{ padding: '100px 50px', backgroundColor: '#fff' }}>
+                        <div style={{ textAlign: 'center', marginBottom: 80 }}>
+                            <Title level={2} style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: 8 }}>
+                                Tại sao chọn <span style={{ color: '#52c41a' }}>TicketBooking</span>?
+                            </Title>
+                            <div style={{ width: 60, height: 4, background: '#52c41a', margin: '0 auto', borderRadius: 2 }}></div>
+                        </div>
+
+                        <Row gutter={[40, 40]} justify="center">
+                            {features.map((f, i) => (
+                                <Col xs={24} sm={12} md={6} key={i}>
+                                    <Card
+                                        bordered={false}
+                                        style={{
+                                            textAlign: 'center',
+                                            background: '#fafafa',
+                                            borderRadius: 20,
+                                            height: '100%',
+                                            transition: 'transform 0.3s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-10px)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                    >
+                                        <div style={{ marginBottom: 24 }}>{f.icon}</div>
+                                        <Title level={4} style={{ marginBottom: 16 }}>{f.title}</Title>
+                                        <Text type="secondary" style={{ fontSize: 15, lineHeight: 1.6 }}>{f.desc}</Text>
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Row>
+                    </div>
+
+                    {/* Simple CTA Section */}
+                    <div style={{ padding: '100px 50px', backgroundColor: '#f9f9f9', textAlign: 'center' }}>
+                        <Card
+                            style={{
+                                maxWidth: 1000,
+                                margin: '0 auto',
+                                borderRadius: 32,
+                                background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                                border: 'none',
+                                overflow: 'hidden',
+                                boxShadow: '0 20px 40px rgba(82, 196, 26, 0.2)'
                             }}
+                            styles={{ body: { padding: '80px 40px' } }}
                         >
-                            <Typography variant="h4" sx={{ fontWeight: 800, mb: 2 }}>
-                                Sẵn sàng bắt đầu sự kiện của bạn?
-                            </Typography>
-                            <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
-                                Tham gia cùng hơn 1.000 nhà tổ chức sự kiện chuyên nghiệp khác ngay hôm nay.
-                            </Typography>
+                            <Title style={{ color: 'white', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16 }}>Sẵn sàng nâng tầm sự kiện của bạn?</Title>
+                            <Paragraph style={{ color: 'rgba(255,255,255,0.9)', fontSize: '1.2rem', marginBottom: 40 }}>
+                                Tham gia cộng đồng nhà tổ chức chuyên nghiệp và trải nghiệm những tính năng ưu việt nhất.
+                            </Paragraph>
                             <Button
-                                variant="contained"
                                 size="large"
-                                onClick={() => setShowAuthModal(true)}
-                                sx={{
-                                    bgcolor: 'white',
-                                    color: 'primary.main',
+                                ghost
+                                style={{
+                                    height: 60,
+                                    padding: '0 60px',
+                                    fontSize: 18,
                                     fontWeight: 800,
-                                    px: 5,
-                                    py: 2,
-                                    borderRadius: 3,
-                                    '&:hover': { bgcolor: '#f5f5f5', transform: 'scale(1.05)' },
-                                    transition: 'all 0.2s'
+                                    borderRadius: 12,
+                                    backgroundColor: 'white',
+                                    color: '#52c41a',
+                                    border: 'none'
                                 }}
+                                onClick={() => setShowAuthModal(true)}
                             >
-                                ĐĂNG KÝ NGAY
+                                ĐĂNG KÝ HỢP TÁC
                             </Button>
-                        </Paper>
-                    </Container>
-                </Box>
+                        </Card>
+                    </div>
+                </Content>
 
-                {/* Footer */}
-                <Box sx={{ py: 6, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
-                    <Typography variant="body2" color="text.secondary">
-                        © 2026 TicketBooking Organizer Portal. Một sản phẩm chất lượng dành cho nhà tổ chức.
-                    </Typography>
-                </Box>
+                <Footer style={{ textAlign: 'center', padding: '60px 0', borderTop: '1px solid #f0f0f0', background: '#fff' }}>
+                    <div style={{ marginBottom: 16 }}>
+                        <Title level={4} style={{ color: '#52c41a', margin: 0, fontWeight: 800 }}>TICKETBOOKING</Title>
+                    </div>
+                    <Text type="secondary" style={{ fontSize: 13 }}>
+                        © 2026 TicketBooking Organizer Portal. Giải pháp quản lý sự kiện chuyên nghiệp bậc nhất.
+                    </Text>
+                </Footer>
 
-                {/* Auth Modal */}
                 <OrganizerAuthModal
                     show={showAuthModal}
                     onHide={() => setShowAuthModal(false)}
                 />
-            </Box>
-        </ThemeProvider>
+            </Layout>
+        </ConfigProvider>
     );
 };
 

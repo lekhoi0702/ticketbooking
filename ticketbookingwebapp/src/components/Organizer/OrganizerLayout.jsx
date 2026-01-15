@@ -1,355 +1,175 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ThemeProvider } from '@mui/material/styles';
 import {
-    Box,
-    Drawer,
-    AppBar,
-    Toolbar,
-    List,
-    Typography,
-    Divider,
-    IconButton,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Avatar,
+    Layout,
     Menu,
-    MenuItem,
-    CssBaseline,
-    useMediaQuery,
-    useTheme as useMuiTheme,
-    Chip,
-    Stack
-} from '@mui/material';
+    Typography,
+    Avatar,
+    Dropdown,
+    Button,
+    ConfigProvider,
+    Breadcrumb,
+    Space
+} from 'antd';
 import {
-    Menu as MenuIcon,
-    Dashboard as DashboardIcon,
-    Event as EventIcon,
-    AddCircleOutline as AddIcon,
-    AccountCircle as AccountIcon,
-    Logout as LogoutIcon,
-    Notifications as NotificationsIcon,
-    ConfirmationNumber as TicketIcon
-} from '@mui/icons-material';
-import organizerTheme from '../../theme/organizer-theme';
+    UserOutlined,
+    CalendarOutlined,
+    LogoutOutlined,
+    BellOutlined,
+    HomeOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
+    AppstoreOutlined
+} from '@ant-design/icons';
+import { AntdThemeConfig } from '../../theme/AntdThemeConfig';
 
-const drawerWidth = 260;
+const { Header, Sider, Content } = Layout;
+const { Title, Text } = Typography;
 
 const OrganizerLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const muiTheme = useMuiTheme();
-    const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
-
-    const [mobileOpen, setMobileOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState(null);
-
-    const handleDrawerToggle = () => {
-        setMobileOpen(!mobileOpen);
-    };
-
-    const handleProfileMenuOpen = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleProfileMenuClose = () => {
-        setAnchorEl(null);
-    };
+    const [collapsed, setCollapsed] = useState(false);
 
     const handleLogout = () => {
-        handleProfileMenuClose();
         logout();
         navigate('/');
     };
 
     const menuItems = [
         {
-            path: '/organizer/dashboard',
-            icon: <DashboardIcon />,
-            label: 'Bảng điều khiển',
-            color: '#2dc275'
-        },
-        {
-            path: '/organizer/events',
-            icon: <EventIcon />,
+            key: '/organizer/events',
+            icon: <CalendarOutlined />,
             label: 'Quản lý sự kiện',
-            color: '#ff6f00'
+            onClick: () => navigate('/organizer/events'),
         }
     ];
 
-    const drawer = (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            {/* Logo Section */}
-            <Box
-                sx={{
-                    p: 3,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
-                    color: 'white'
-                }}
-            >
-                <TicketIcon sx={{ fontSize: 32 }} />
-                <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }}>
-                        TicketBooking
-                    </Typography>
-                    <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                        Organizer Panel
-                    </Typography>
-                </Box>
-            </Box>
+    const userMenuItems = [
+        {
+            key: 'profile',
+            icon: <UserOutlined />,
+            label: 'Hồ sơ cá nhân',
+            onClick: () => navigate('/organizer/profile'),
+        },
+        {
+            type: 'divider',
+        },
+        {
+            key: 'logout',
+            icon: <LogoutOutlined />,
+            label: 'Đăng xuất',
+            danger: true,
+            onClick: handleLogout,
+        },
+    ];
 
-            {/* User Info Card */}
-            {/* <Box
-                sx={{
-                    p: 2,
-                    m: 2,
-                    borderRadius: 2,
-                    background: 'linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%)',
-                    border: '1px solid',
-                    borderColor: 'divider'
-                }}
-            >
-                <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar
-                        src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=2dc275&color=fff`}
-                        sx={{ width: 48, height: 48 }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }} noWrap>
-                            {user?.full_name || 'Nhà tổ chức'}
-                        </Typography>
-                        <Chip
-                            label="Organizer"
-                            size="small"
-                            sx={{
-                                mt: 0.5,
-                                height: 20,
-                                fontSize: '0.7rem',
-                                bgcolor: 'primary.main',
-                                color: 'white'
-                            }}
-                        />
-                    </Box>
-                </Stack>
-            </Box> */}
-
-            <Divider />
-
-            {/* Menu Items */}
-            <List sx={{ px: 2, py: 1, flex: 1 }}>
-                <ListItem disablePadding sx={{ mb: 0.5 }}>
-                    <Typography
-                        variant="caption"
-                        sx={{
-                            px: 2,
-                            py: 1,
-                            color: 'text.secondary',
-                            fontWeight: 600,
-                            letterSpacing: 0.5
-                        }}
-                    >
-                        MENU CHÍNH
-                    </Typography>
-                </ListItem>
-                {menuItems.map((item) => {
-                    const isActive = location.pathname === item.path;
-                    return (
-                        <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
-                            <ListItemButton
-                                onClick={() => {
-                                    navigate(item.path);
-                                    if (isMobile) setMobileOpen(false);
-                                }}
-                                sx={{
-                                    borderRadius: 2,
-                                    py: 1.5,
-                                    bgcolor: isActive ? 'primary.main' : 'transparent',
-                                    color: isActive ? 'white' : 'text.primary',
-                                    '&:hover': {
-                                        bgcolor: isActive ? 'primary.dark' : 'action.hover'
-                                    },
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <ListItemIcon
-                                    sx={{
-                                        color: isActive ? 'white' : item.color,
-                                        minWidth: 40
-                                    }}
-                                >
-                                    {item.icon}
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary={item.label}
-                                    primaryTypographyProps={{
-                                        fontSize: '0.875rem',
-                                        fontWeight: isActive ? 600 : 500
-                                    }}
-                                />
-                            </ListItemButton>
-                        </ListItem>
-                    );
-                })}
-            </List>
-
-            <Divider />
-
-            {/* Footer */}
-            {/* <Box sx={{ p: 2 }}>
-                <Typography variant="caption" color="text.secondary" align="center" display="block">
-                    © 2026 TicketBooking
-                </Typography>
-                <Typography variant="caption" color="text.secondary" align="center" display="block">
-                    Version 2.0
-                </Typography>
-            </Box> */}
-        </Box>
-    );
+    const currentMenuItem = menuItems.find(item => item.key === location.pathname);
 
     return (
-        <ThemeProvider theme={organizerTheme}>
-            <CssBaseline />
-            <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-                {/* AppBar */}
-                <AppBar
-                    position="fixed"
-                    sx={{
-                        width: { md: `calc(100% - ${drawerWidth}px)` },
-                        ml: { md: `${drawerWidth}px` },
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        boxShadow: 1
+        <ConfigProvider theme={AntdThemeConfig}>
+            <Layout style={{ minHeight: '100vh' }}>
+                <Sider
+                    trigger={null}
+                    collapsible
+                    collapsed={collapsed}
+                    theme="light"
+                    width={220}
+                    style={{
+                        overflow: 'auto',
+                        height: '100vh',
+                        position: 'fixed',
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        borderRight: '1px solid #f0f0f0',
+                        zIndex: 100,
                     }}
                 >
-                    <Toolbar>
-                        <IconButton
-                            color="inherit"
-                            edge="start"
-                            onClick={handleDrawerToggle}
-                            sx={{ mr: 2, display: { md: 'none' } }}
-                        >
-                            <MenuIcon />
-                        </IconButton>
+                    <div style={{ height: 64, display: 'flex', alignItems: 'center', padding: '0 24px', gap: 12 }}>
+                        <AppstoreOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+                        {!collapsed && (
+                            <Title level={4} style={{ margin: 0, fontSize: '1.2rem', color: '#303133', fontWeight: 700 }}>
+                                Organizer
+                            </Title>
+                        )}
+                    </div>
+                    <Menu
+                        mode="inline"
+                        selectedKeys={[location.pathname]}
+                        items={menuItems}
+                        style={{ borderRight: 0, padding: '8px 0' }}
+                    />
+                </Sider>
+                <Layout style={{ marginLeft: collapsed ? 80 : 220, transition: 'margin-left 0.2s' }}>
+                    <Header
+                        style={{
+                            padding: '0 24px',
+                            background: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            borderBottom: '1px solid #f0f0f0',
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 99,
+                            height: 64,
+                        }}
+                    >
+                        <Space size={16}>
+                            <Button
+                                type="text"
+                                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                                onClick={() => setCollapsed(!collapsed)}
+                                style={{ fontSize: 16, width: 40, height: 40 }}
+                            />
+                            <Breadcrumb
+                                items={[
+                                    {
+                                        title: <HomeOutlined />,
+                                        href: '/organizer/events',
+                                        onClick: (e) => { e.preventDefault(); navigate('/organizer/events'); }
+                                    },
+                                    ...(currentMenuItem ? [{ title: currentMenuItem.label }] : [])
+                                ]}
+                            />
+                        </Space>
 
-                        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-                            {menuItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
-                        </Typography>
+                        <Space size={20}>
+                            <Button type="text" icon={<BellOutlined />} style={{ fontSize: 18, color: '#606266' }} />
 
-                        <Stack direction="row" spacing={1}>
-                            <IconButton color="inherit">
-                                <NotificationsIcon />
-                            </IconButton>
-
-                            <IconButton
-                                onClick={handleProfileMenuOpen}
-                                sx={{ p: 0.5 }}
-                            >
+                            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow><Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 4, transition: 'background 0.3s' }} className="user-dropdown-hover">
                                 <Avatar
-                                    src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=2dc275&color=fff`}
-                                    sx={{ width: 36, height: 36 }}
+                                    src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=52c41a&color=fff`}
+                                    size="small"
                                 />
-                            </IconButton>
-                        </Stack>
-
-                        <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl)}
-                            onClose={handleProfileMenuClose}
-                            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                            PaperProps={{
-                                sx: {
-                                    mt: 1.5,
-                                    minWidth: 200,
-                                    borderRadius: 2,
-                                    boxShadow: 3
-                                }
-                            }}
-                        >
-                            <Box sx={{ px: 2, py: 1.5 }}>
-                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                    {user?.full_name}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    {user?.email}
-                                </Typography>
-                            </Box>
-                            <Divider />
-                            <MenuItem onClick={() => { navigate('/organizer/profile'); handleProfileMenuClose(); }}>
-                                <ListItemIcon>
-                                    <AccountIcon fontSize="small" />
-                                </ListItemIcon>
-                                <ListItemText>Hồ sơ</ListItemText>
-                            </MenuItem>
-                            <MenuItem onClick={handleLogout}>
-                                <ListItemIcon>
-                                    <LogoutIcon fontSize="small" color="error" />
-                                </ListItemIcon>
-                                <ListItemText>Đăng xuất</ListItemText>
-                            </MenuItem>
-                        </Menu>
-                    </Toolbar>
-                </AppBar>
-
-                {/* Drawer */}
-                <Box
-                    component="nav"
-                    sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-                >
-                    {/* Mobile drawer */}
-                    <Drawer
-                        variant="temporary"
-                        open={mobileOpen}
-                        onClose={handleDrawerToggle}
-                        ModalProps={{ keepMounted: true }}
-                        sx={{
-                            display: { xs: 'block', md: 'none' },
-                            '& .MuiDrawer-paper': {
-                                boxSizing: 'border-box',
-                                width: drawerWidth
-                            }
+                                <Text strong style={{ color: '#606266' }}>{user?.full_name || 'Nhà tổ chức'}</Text>
+                            </Space></Dropdown>
+                        </Space>
+                    </Header>
+                    <Content
+                        style={{
+                            margin: '24px',
+                            minHeight: 280,
+                            padding: 0
                         }}
                     >
-                        {drawer}
-                    </Drawer>
-
-                    {/* Desktop drawer */}
-                    <Drawer
-                        variant="permanent"
-                        sx={{
-                            display: { xs: 'none', md: 'block' },
-                            '& .MuiDrawer-paper': {
-                                boxSizing: 'border-box',
-                                width: drawerWidth
-                            }
-                        }}
-                        open
-                    >
-                        {drawer}
-                    </Drawer>
-                </Box>
-
-                {/* Main Content */}
-                <Box
-                    component="main"
-                    sx={{
-                        flexGrow: 1,
-                        p: 3,
-                        width: { md: `calc(100% - ${drawerWidth}px)` },
-                        mt: 8
-                    }}
-                >
-                    <Outlet />
-                </Box>
-            </Box>
-        </ThemeProvider>
+                        <Outlet />
+                    </Content>
+                    <div style={{ textAlign: 'center', paddingBottom: 24, color: '#909399' }}>
+                        <Text type="secondary">© 2026 TicketBooking - Ant Design Redesign</Text>
+                    </div>
+                </Layout>
+            </Layout>
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .user-dropdown-hover:hover {
+                    background: #f5f5f5;
+                }
+            `}} />
+        </ConfigProvider>
     );
 };
 

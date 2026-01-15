@@ -100,6 +100,16 @@ export const adminApi = {
         return await response.json();
     },
 
+    async updateVenueStatus(venueId, status) {
+        const response = await fetch(`${API_BASE_URL}/admin/venues/${venueId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (!response.ok) throw new Error('Failed to update venue status');
+        return await response.json();
+    },
+
     async processOrderCancellation(orderId, action) {
         const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/cancellation`, {
             method: 'POST',

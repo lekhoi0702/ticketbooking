@@ -1,124 +1,108 @@
 import React from 'react';
 import {
-    Box,
+    Card,
     Button,
     Typography,
-    Stack,
-    Paper
-} from '@mui/material';
+    Space,
+    Image,
+    message
+} from 'antd';
 import {
-    CloudUpload as CloudUploadIcon,
-    Delete as DeleteIcon,
-    Image as ImageIcon
-} from '@mui/icons-material';
+    CloudUploadOutlined,
+    DeleteOutlined,
+    PictureOutlined
+} from '@ant-design/icons';
+
+const { Text } = Typography;
 
 const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner }) => {
     return (
-        <Box>
-            <Paper
-                elevation={0}
-                sx={{
-                    minHeight: 280,
+        <div>
+            <div
+                style={{
+                    minHeight: 240,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    p: 2,
-                    border: 2,
-                    borderStyle: bannerPreview ? 'solid' : 'dashed',
-                    borderColor: bannerPreview ? 'success.main' : 'divider',
-                    borderRadius: 3,
-                    bgcolor: 'background.default',
-                    transition: 'all 0.3s'
+                    padding: 24,
+                    border: '1px dashed #d9d9d9',
+                    borderRadius: 8,
+                    backgroundColor: '#fafafa',
+                    transition: 'all 0.3s',
+                    textAlign: 'center'
                 }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#52c41a'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#d9d9d9'}
             >
                 {bannerPreview ? (
-                    <Box sx={{ width: '100%' }}>
-                        <Box
-                            component="img"
+                    <div style={{ width: '100%' }}>
+                        <Image
                             src={bannerPreview}
                             alt="Banner Preview"
-                            sx={{
-                                width: '100%',
-                                height: 240,
+                            width="100%"
+                            height={180}
+                            style={{
                                 objectFit: 'cover',
-                                borderRadius: 2,
-                                mb: 2
+                                borderRadius: 8,
+                                marginBottom: 16,
+                                border: '1px solid #f0f0f0'
                             }}
                         />
-                        <Stack direction="row" spacing={1} justifyContent="center">
+                        <Space size={12}>
                             <Button
-                                variant="outlined"
-                                color="error"
-                                size="small"
-                                startIcon={<DeleteIcon />}
+                                danger
+                                icon={<DeleteOutlined />}
                                 onClick={removeBanner}
                             >
-                                Xóa ảnh
+                                Gỡ bỏ
                             </Button>
                             <Button
-                                variant="outlined"
-                                color="success"
-                                size="small"
-                                startIcon={<ImageIcon />}
-                                component="label"
+                                icon={<PictureOutlined />}
+                                style={{ color: '#52c41a', borderColor: '#52c41a' }}
                             >
-                                Thay đổi
+                                <label style={{ cursor: 'pointer' }}>
+                                    Đổi ảnh
+                                    <input
+                                        type="file"
+                                        hidden
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                    />
+                                </label>
+                            </Button>
+                        </Space>
+                    </div>
+                ) : (
+                    <div>
+                        <CloudUploadOutlined style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} />
+                        <Title level={5} style={{ margin: '0 0 8px 0', fontSize: 14 }}>Tải lên ảnh bìa sự kiện</Title>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 20 }}>
+                            Kích thước gợi ý 1200x480px (Tỉ lệ 2.5:1)
+                        </Text>
+                        <Button
+                            type="primary"
+                            icon={<CloudUploadOutlined />}
+                            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                        >
+                            <label style={{ cursor: 'pointer' }}>
+                                Chọn tệp
                                 <input
                                     type="file"
                                     hidden
                                     accept="image/*"
                                     onChange={handleImageChange}
                                 />
-                            </Button>
-                        </Stack>
-                    </Box>
-                ) : (
-                    <Box sx={{ textAlign: 'center', p: 3 }}>
-                        <Box
-                            sx={{
-                                width: 80,
-                                height: 80,
-                                borderRadius: '50%',
-                                bgcolor: 'success.lighter',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                mx: 'auto',
-                                mb: 2
-                            }}
-                        >
-                            <CloudUploadIcon sx={{ fontSize: 40, color: 'success.main' }} />
-                        </Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                            Tải lên ảnh bìa (Banner)
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                            Định dạng JPG, PNG, WEBP.<br />
-                            Kích thước gợi ý: 1200x480px (Tỉ lệ 2.5:1)
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            component="label"
-                            sx={{
-                                borderRadius: 2,
-                                px: 3,
-                                background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)'
-                            }}
-                        >
-                            Chọn Ảnh Từ Máy Tính
-                            <input
-                                type="file"
-                                hidden
-                                accept="image/*"
-                                onChange={handleImageChange}
-                            />
+                            </label>
                         </Button>
-                    </Box>
+                    </div>
                 )}
-            </Paper>
-        </Box>
+            </div>
+        </div>
     );
 };
+
+// Need Title for the component
+const { Title } = Typography;
 
 export default EventBannerUpload;

@@ -1,28 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
     Card,
-    CardContent,
-    TextField,
+    Input,
     Button,
-    IconButton,
-    Grid,
+    Row,
+    Col,
     Typography,
-    Stack,
+    Space,
+    Collapse,
     Divider,
-    Paper,
-    Collapse
-} from '@mui/material';
-import Alert from '@mui/material/Alert';
+    Badge,
+    InputNumber,
+    Tooltip
+} from 'antd';
 import {
-    Add as AddIcon,
-    Delete as DeleteIcon,
-    ConfirmationNumber as TicketIcon,
-    Chair as ChairIcon,
-    ExpandMore as ExpandMoreIcon,
-    ExpandLess as ExpandLessIcon
-} from '@mui/icons-material';
+    PlusOutlined,
+    DeleteOutlined,
+    AppstoreOutlined,
+    InfoCircleOutlined,
+    EditOutlined
+} from '@ant-design/icons';
 import SeatMapTemplateView from './SeatMapTemplateView';
+
+const { Text, Title } = Typography;
+const { Panel } = Collapse;
 
 const TicketConfig = ({
     ticketTypes,
@@ -33,11 +34,10 @@ const TicketConfig = ({
     toggleSeatSelection,
     toggleAreaSelection
 }) => {
-    const [expandedIndex, setExpandedIndex] = useState(0);
+    const [expandedKeys, setExpandedKeys] = useState(['0']);
     const [isDragging, setIsDragging] = useState(false);
     const [dragMode, setDragMode] = useState(null);
 
-    // Stop dragging globally
     useEffect(() => {
         const handleGlobalMouseUp = () => {
             setIsDragging(false);
@@ -67,131 +67,132 @@ const TicketConfig = ({
         }
     };
 
-    return (
-        <Box>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                    <TicketIcon color="primary" />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Thiết lập các loại vé & Chọn chỗ
-                    </Typography>
-                </Stack>
-                <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<AddIcon />}
-                    onClick={addTicketType}
-                    sx={{ borderRadius: 2 }}
-                >
-                    Thêm loại vé mới
-                </Button>
-            </Stack>
+    const formatCurrency = (val) => {
+        if (!val) return '0đ';
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+    };
 
-            <Stack spacing={3}>
+    return (
+        <div style={{ marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <Space>
+                    <AppstoreOutlined style={{ color: '#52c41a' }} />
+                    <Title level={5} style={{ margin: 0 }}>Các hạng vé & Sơ đồ ghế</Title>
+                </Space>
+                <Button
+                    type="link"
+                    icon={<PlusOutlined />}
+                    onClick={addTicketType}
+                    style={{ fontWeight: 600 }}
+                >
+                    Thêm hạng vé
+                </Button>
+            </div>
+
+            <Collapse
+                activeKey={expandedKeys}
+                onChange={setExpandedKeys}
+                expandIconPosition="end"
+                ghost
+                style={{ backgroundColor: 'transparent' }}
+            >
                 {ticketTypes.map((tt, index) => (
-                    <Card key={index} sx={{ borderRadius: 3, border: 1, borderColor: expandedIndex === index ? 'primary.main' : 'divider', boxShadow: expandedIndex === index ? 3 : 1 }}>
-                        <CardContent sx={{ p: 0 }}>
-                            <Box
-                                onClick={() => setExpandedIndex(expandedIndex === index ? -1 : index)}
-                                sx={{
-                                    p: 2,
-                                    cursor: 'pointer',
+                    <Panel
+                        key={String(index)}
+                        header={
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '95%', alignItems: 'center' }}>
+                                <Space size={16}>
+                                    <Text strong style={{ fontSize: 14 }}>{tt.type_name || `Hạng vé mới`}</Text>
+                                    <Text type="secondary" style={{ fontSize: 13 }}>{formatCurrency(tt.price)}</Text>
+                                    <Badge
+                                        count={`${tt.selectedSeats?.length || 0} Ghế`}
+                                        style={{ backgroundColor: '#52c41a' }}
+                                    />
+                                </Space>
+                                {ticketTypes.length > 1 && (
+                                    <Tooltip title="Xóa hạng vé">
+                                        <Button
+                                            type="text"
+                                            danger
+                                            icon={<DeleteOutlined />}
+                                            onClick={(e) => { e.stopPropagation(); removeTicketType(index); }}
+                                        />
+                                    </Tooltip>
+                                )}
+                            </div>
+                        }
+                        style={{
+                            background: '#fff',
+                            borderRadius: 8,
+                            marginBottom: 16,
+                            border: '1px solid #f0f0f0',
+                            overflow: 'hidden'
+                        }}
+                    >
+                        <div style={{ padding: '0 8px 16px 8px' }}>
+                            <Row gutter={16} style={{ marginBottom: 24 }}>
+                                <Col xs={24} md={12}>
+                                    <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 12 }}>TÊN HẠNG VÉ</Text></div>
+                                    <Input
+                                        value={tt.type_name}
+                                        onChange={(e) => handleTicketTypeChange(index, 'type_name', e.target.value)}
+                                        size="large"
+                                    />
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 12 }}>GIÁ VÉ (VND)</Text></div>
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        value={tt.price}
+                                        onChange={(val) => handleTicketTypeChange(index, 'price', val)}
+                                        size="large"
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    />
+                                </Col>
+                            </Row>
+
+                            <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, overflow: 'hidden' }}>
+                                <div style={{
+                                    padding: '12px 20px',
+                                    backgroundColor: '#fafafa',
+                                    borderBottom: '1px solid #f0f0f0',
                                     display: 'flex',
                                     justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    bgcolor: expandedIndex === index ? 'primary.lighter' : 'transparent'
-                                }}
-                            >
-                                <Stack direction="row" alignItems="center" spacing={2}>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.dark' }}>
-                                        {tt.type_name || `Loại vé ${index + 1}`}
-                                    </Typography>
-                                    <Paper sx={{ px: 1.5, py: 0.2, bgcolor: 'primary.main', color: 'white', borderRadius: 10, fontSize: '0.75rem', fontWeight: 700 }}>
-                                        {tt.selectedSeats?.length || 0} Ghế
-                                    </Paper>
-                                </Stack>
-                                <Stack direction="row" spacing={1}>
-                                    {ticketTypes.length > 1 && (
-                                        <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); removeTicketType(index); }}>
-                                            <DeleteIcon fontSize="small" />
-                                        </IconButton>
+                                    alignItems: 'center'
+                                }}>
+                                    <Space>
+                                        <AppstoreOutlined style={{ color: '#8c8c8c' }} />
+                                        <Text strong style={{ fontSize: 11, color: '#8c8c8c' }}>CHỌN GHẾ TRÊN SƠ ĐỒ ĐỊA ĐIỂM</Text>
+                                    </Space>
+                                </div>
+
+                                <div style={{ padding: 16, backgroundColor: '#f5f5f5' }}>
+                                    {venueTemplate ? (
+                                        <div style={{ background: '#333', borderRadius: 8, padding: 16 }}>
+                                            <SeatMapTemplateView
+                                                venueTemplate={venueTemplate}
+                                                selectedTemplateSeats={tt.selectedSeats || []}
+                                                allOccupiedSeats={ticketTypes.filter((_, i) => i !== index).flatMap(t => t.selectedSeats || []).map(s => ({ ...s, ticket_type_id: 'other' }))}
+                                                activeTicketType={{ ticket_type_id: 'current' }}
+                                                handleSeatMouseDown={(e, t) => handleSeatMouseDown(e, t, index)}
+                                                handleSeatMouseEnter={(t) => handleSeatMouseEnter(t, index)}
+                                                toggleAreaSeats={(areaName, seatsInArea) => toggleAreaSelection(index, areaName, seatsInArea)}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div style={{ padding: '48px 0', textAlign: 'center' }}>
+                                            <InfoCircleOutlined style={{ fontSize: 32, color: '#ff4d4f', marginBottom: 16, opacity: 0.5 }} /><br />
+                                            <Text type="danger">* Vui lòng chọn địa điểm tổ chức để hiển thị sơ đồ ghế.</Text>
+                                        </div>
                                     )}
-                                    <IconButton size="small">
-                                        {expandedIndex === index ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                                    </IconButton>
-                                </Stack>
-                            </Box>
-
-                            <Collapse in={expandedIndex === index}>
-                                <Divider />
-                                <Box sx={{ p: 3 }}>
-                                    <Stack spacing={4}>
-                                        <Grid container spacing={3}>
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Tên Loại Vé"
-                                                    size="small"
-                                                    value={tt.type_name}
-                                                    onChange={(e) => handleTicketTypeChange(index, 'type_name', e.target.value)}
-                                                    required
-                                                />
-                                            </Grid>
-                                            <Grid item xs={12} md={3}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Giá Vé (VND)"
-                                                    type="number"
-                                                    size="small"
-                                                    value={tt.price}
-                                                    onChange={(e) => handleTicketTypeChange(index, 'price', e.target.value)}
-                                                    required
-                                                />
-                                            </Grid>
-                                            <Grid item xs={12} md={3}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Số Lượng (Tự động)"
-                                                    type="number"
-                                                    size="small"
-                                                    disabled
-                                                    value={tt.quantity}
-                                                    helperText="Dựa trên số ghế đã chọn"
-                                                />
-                                            </Grid>
-                                        </Grid>
-
-                                        <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                            <Typography variant="subtitle2" sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, fontWeight: 700 }}>
-                                                <ChairIcon fontSize="small" color="primary" /> Sơ đồ chọn chỗ cho hạng "{tt.type_name || 'này'}"
-                                            </Typography>
-
-                                            {venueTemplate ? (
-                                                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                                                    <Box sx={{ width: '100%', maxWidth: '900px', borderRadius: 2, overflow: 'hidden' }}>
-                                                        <SeatMapTemplateView
-                                                            venueTemplate={venueTemplate}
-                                                            selectedTemplateSeats={tt.selectedSeats || []}
-                                                            allOccupiedSeats={ticketTypes.filter((_, i) => i !== index).flatMap(t => t.selectedSeats || []).map(s => ({ ...s, ticket_type_id: 'other' }))}
-                                                            activeTicketType={{ ticket_type_id: 'current' }}
-                                                            handleSeatMouseDown={(e, t) => handleSeatMouseDown(e, t, index)}
-                                                            handleSeatMouseEnter={(t) => handleSeatMouseEnter(t, index)}
-                                                            toggleAreaSeats={(areaName, seatsInArea) => toggleAreaSelection(index, areaName, seatsInArea)}
-                                                        />
-                                                    </Box>
-                                                </Box>
-                                            ) : (
-                                                <Alert severity="warning" sx={{ width: '100%' }}>Vui lòng chọn địa điểm tổ chức để hiển thị sơ đồ ghế.</Alert>
-                                            )}
-                                        </Box>
-                                    </Stack>
-                                </Box>
-                            </Collapse>
-                        </CardContent>
-                    </Card>
+                                </div>
+                            </div>
+                        </div>
+                    </Panel>
                 ))}
-            </Stack>
-        </Box>
+            </Collapse>
+        </div>
     );
 };
 

@@ -1,7 +1,13 @@
 import React from 'react';
-import { Typography, Button } from '@mui/material';
-import { CheckBox as CheckBoxIcon, IndeterminateCheckBox as IndeterminateIcon } from '@mui/icons-material';
+import { Typography, Button, Space, Badge } from 'antd';
+import {
+    CheckSquareOutlined,
+    BorderOutlined,
+    AppstoreOutlined
+} from '@ant-design/icons';
 import TemplateSeat from './TemplateSeat';
+
+const { Text } = Typography;
 
 /**
  * Premium SeatMapTemplateView for selecting seats from venue template.
@@ -16,57 +22,43 @@ const SeatMapTemplateView = ({
     toggleAreaSeats
 }) => {
     return (
-        <div className="template-picker-view p-3 p-md-4 text-center bg-black bg-opacity-25" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-            <div className="mb-4 d-flex flex-column align-items-center">
-                <div className="stage-element mb-2 py-2 px-5 bg-secondary bg-opacity-10 rounded-bottom d-inline-block border-bottom border-start border-end border-secondary border-opacity-25 text-muted fw-bold small letter-spacing-2" style={{ width: '250px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', userSelect: 'none' }}>
+            {/* Stage element */}
+            <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{
+                    width: 250,
+                    padding: '8px 40px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '0 0 20px 20px',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderTop: 'none',
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    fontWeight: 'bold',
+                    fontSize: 12,
+                    textAlign: 'center',
+                    letterSpacing: 2
+                }}>
                     SÂN KHẤU / STAGE
                 </div>
-                <div className="text-muted extra-small opacity-50 fst-italic" style={{ fontSize: '0.7rem' }}>Cáp nhìn từ phía sân khấu</div>
             </div>
 
             <div
-                className="seats-map-interaction-area d-flex flex-column align-items-center gap-4 mx-auto w-100"
+                className="seats-map-interaction-area"
                 style={{
-                    maxWidth: '100%',
-                    padding: '20px',
-                    backgroundColor: 'rgba(255,255,255,0.02)',
-                    borderRadius: '24px',
-                    boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)',
-                    overflowX: 'auto'
+                    width: '100%',
+                    padding: 24,
+                    backgroundColor: 'rgba(0,0,0,0.2)',
+                    borderRadius: 12,
+                    overflowX: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 32
                 }}
             >
-                {/* Case 1: Standard Flat Array */}
-                {Array.isArray(venueTemplate) && (
-                    <div className="d-flex flex-wrap justify-content-center gap-2">
-                        {venueTemplate.map((t, idx) => {
-                            const isSelected = selectedTemplateSeats.some(s =>
-                                String(s.row_name) === String(t.row_name) &&
-                                String(s.seat_number) === String(t.seat_number)
-                            );
-                            const occupiedBy = allOccupiedSeats.find(s =>
-                                String(s.row_name) === String(t.row_name) &&
-                                String(s.seat_number) === String(t.seat_number)
-                            );
-
-                            return (
-                                <TemplateSeat
-                                    key={`${t.row_name}-${t.seat_number}`}
-                                    t={t}
-                                    isSelected={isSelected}
-                                    occupiedBy={occupiedBy}
-                                    activeTicketTypeId={activeTicketType?.ticket_type_id}
-                                    onMouseDown={handleSeatMouseDown}
-                                    onMouseEnter={handleSeatMouseEnter}
-                                />
-                            );
-                        })}
-                    </div>
-                )}
-
                 {/* Case 2: Grouped by areas (Admin Venue Designer Structure) */}
-                {venueTemplate && venueTemplate.areas && Array.isArray(venueTemplate.areas) && (
+                {venueTemplate && venueTemplate.areas && Array.isArray(venueTemplate.areas) ? (
                     venueTemplate.areas.map((area, areaIdx) => {
-                        // Pre-calculate all seats in this area for the toggle function
                         const seatsInArea = [];
                         for (let r = 0; r < area.rows; r++) {
                             const rowName = String.fromCharCode(65 + r);
@@ -79,12 +71,11 @@ const SeatMapTemplateView = ({
                             }
                         }
 
-                        // Check if all available seats in this area are selected
                         const availableSeatsCount = seatsInArea.filter(t =>
                             !allOccupiedSeats.some(s =>
                                 s.row_name === t.row_name &&
                                 String(s.seat_number) === String(t.seat_number) &&
-                                s.ticket_type_id !== activeTicketType?.ticket_type_id
+                                String(s.ticket_type_id) !== String(activeTicketType?.ticket_type_id)
                             )
                         ).length;
 
@@ -95,44 +86,54 @@ const SeatMapTemplateView = ({
                         const isAllSelected = selectedInAreaCount >= availableSeatsCount && availableSeatsCount > 0;
 
                         return (
-                            <div key={areaIdx} className="venue-area-block w-100" style={{ maxWidth: '800px', margin: '0 auto', alignSelf: 'center' }}>
-                                <div className="area-header d-flex flex-column flex-sm-row justify-content-between align-items-center mb-3 pb-2 border-bottom border-white border-opacity-10 text-center">
-                                    <div className="d-flex align-items-center mb-2 mb-sm-0">
-                                        <span className="badge bg-primary px-3 py-2 rounded-pill shadow-sm" style={{ background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)' }}>
-                                            KHU VỰC: {area.name}
-                                        </span>
-                                        <Typography variant="caption" sx={{ ml: 2, color: 'text.secondary', opacity: 0.7 }}>
+                            <div key={areaIdx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{
+                                    width: '100%',
+                                    maxWidth: 800,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: 16,
+                                    paddingBottom: 8,
+                                    borderBottom: '1px solid rgba(255,255,255,0.05)'
+                                }}>
+                                    <Space size={12}>
+                                        <Badge status="processing" color="#52c41a" text={
+                                            <Text strong style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>KHU VỰC: {area.name}</Text>
+                                        } />
+                                        <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>
                                             {area.rows} hàng x {area.cols} ghế
-                                        </Typography>
-                                    </div>
+                                        </Text>
+                                    </Space>
+
                                     {toggleAreaSeats && (
                                         <Button
                                             size="small"
-                                            variant="outlined"
-                                            startIcon={isAllSelected ? <IndeterminateIcon /> : <CheckBoxIcon />}
+                                            type="text"
+                                            icon={isAllSelected ? <BorderOutlined /> : <CheckSquareOutlined />}
                                             onClick={() => toggleAreaSeats(area.name, seatsInArea)}
-                                            sx={{
-                                                borderRadius: '20px',
-                                                textTransform: 'none',
-                                                fontSize: '0.75rem',
-                                                color: isAllSelected ? '#ef4444' : 'rgba(255,255,255,0.7)',
-                                                borderColor: isAllSelected ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.2)',
-                                                '&:hover': {
-                                                    borderColor: isAllSelected ? '#ef4444' : '#2dc275',
-                                                    color: isAllSelected ? '#ef4444' : '#2dc275',
-                                                    bgcolor: isAllSelected ? 'rgba(239,68,68,0.05)' : 'rgba(45,194,117,0.05)'
-                                                }
+                                            style={{
+                                                color: isAllSelected ? '#ff4d4f' : 'rgba(255,255,255,0.45)',
+                                                fontSize: 12
                                             }}
                                         >
-                                            {isAllSelected ? 'Hủy chọn tất cả' : 'Chọn nhanh tất cả'}
+                                            {isAllSelected ? 'Hủy chọn tất cả' : 'Chọn nhanh'}
                                         </Button>
                                     )}
                                 </div>
-                                <div className="d-flex flex-column align-items-center gap-2 p-4 bg-black bg-opacity-10 rounded-4 overflow-auto">
+
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 8,
+                                    padding: 16,
+                                    backgroundColor: 'rgba(255,255,255,0.02)',
+                                    borderRadius: 8
+                                }}>
                                     {[...Array(area.rows)].map((_, rIdx) => {
                                         const rowName = String.fromCharCode(65 + rIdx);
                                         return (
-                                            <div key={rowName} className="d-flex justify-content-center gap-2">
+                                            <div key={rowName} style={{ display: 'flex', gap: 8 }}>
                                                 {[...Array(area.cols)].map((_, cIdx) => {
                                                     const seatNumber = String(cIdx + 1);
                                                     const seatId = `${rIdx + 1}-${cIdx + 1}`;
@@ -141,9 +142,7 @@ const SeatMapTemplateView = ({
                                                     const t = {
                                                         row_name: rowName,
                                                         seat_number: seatNumber,
-                                                        area: area.name,
-                                                        x_pos: (cIdx + 1) * 40,
-                                                        y_pos: (rIdx + 1) * 40
+                                                        area: area.name
                                                     };
 
                                                     const isSelected = selectedTemplateSeats.some(s =>
@@ -177,52 +176,38 @@ const SeatMapTemplateView = ({
                             </div>
                         );
                     })
-                )}
+                ) : Array.isArray(venueTemplate) ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+                        {venueTemplate.map((t, idx) => {
+                            const isSelected = selectedTemplateSeats.some(s =>
+                                String(s.row_name) === String(t.row_name) &&
+                                String(s.seat_number) === String(t.seat_number)
+                            );
+                            const occupiedBy = allOccupiedSeats.find(s =>
+                                String(s.row_name) === String(t.row_name) &&
+                                String(s.seat_number) === String(t.seat_number)
+                            );
 
-                {/* Case 3: No Template Data */}
-                {(!venueTemplate || (!Array.isArray(venueTemplate) && !venueTemplate.areas)) && (
-                    <div className="text-white opacity-50 py-5">
-                        Không có dữ liệu sơ đồ mẫu cho địa điểm này.
+                            return (
+                                <TemplateSeat
+                                    key={`${t.row_name}-${t.seat_number}`}
+                                    t={t}
+                                    isSelected={isSelected}
+                                    occupiedBy={occupiedBy}
+                                    activeTicketTypeId={activeTicketType?.ticket_type_id}
+                                    onMouseDown={handleSeatMouseDown}
+                                    onMouseEnter={handleSeatMouseEnter}
+                                />
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div style={{ padding: '64px 0', textAlign: 'center' }}>
+                        <AppstoreOutlined style={{ fontSize: 48, color: 'rgba(255,255,255,0.1)', marginBottom: 16 }} />
+                        <Text type="secondary" style={{ display: 'block' }}>Không có dữ liệu sơ đồ mẫu cho địa điểm này.</Text>
                     </div>
                 )}
             </div>
-
-            <div className="legend-area d-flex justify-content-center gap-5 mt-5 pt-4 border-top border-white border-opacity-5 w-100">
-                <div className="d-flex align-items-center">
-                    <span className="legend-dot me-2" style={{ width: '14px', height: '14px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}></span>
-                    <span className="text-white opacity-75 small">Ghế trống</span>
-                </div>
-                <div className="d-flex align-items-center">
-                    <span className="legend-dot me-2 shadow-success" style={{ width: '14px', height: '14px', borderRadius: '4px', backgroundColor: '#f59e0b', boxShadow: '0 0 10px rgba(245, 158, 11, 0.4)' }}></span>
-                    <span className="text-white fw-bold small">Đã gán & Đã đặt</span>
-                </div>
-                <div className="d-flex align-items-center">
-                    <span className="legend-dot me-2 shadow-danger" style={{ width: '14px', height: '14px', borderRadius: '4px', backgroundColor: '#3498db', boxShadow: '0 0 10px rgba(52, 152, 219, 0.4)' }}></span>
-                    <span className="text-white opacity-75 small">Đã gán (Còn trống)</span>
-                </div>
-                <div className="d-flex align-items-center">
-                    <span className="legend-dot me-2 shadow-danger" style={{ width: '14px', height: '14px', borderRadius: '4px', backgroundColor: '#ef4444', boxShadow: '0 0 10px rgba(239,68,68,0.4)' }}></span>
-                    <span className="text-white opacity-75 small">Khóa/Hỏng</span>
-                </div>
-            </div>
-
-            <style>{`
-                .stage-element {
-                    border-top: none;
-                }
-                .seats-map-interaction-area {
-                    user-select: none;
-                }
-                .shadow-success {
-                    box-shadow: 0 0 10px rgba(45,194,117,0.4);
-                }
-                .shadow-danger {
-                    box-shadow: 0 0 10px rgba(239,68,68,0.4);
-                }
-                .letter-spacing-2 {
-                    letter-spacing: 2px;
-                }
-            `}</style>
         </div>
     );
 };

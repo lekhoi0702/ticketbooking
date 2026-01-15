@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import {
     Grid,
     Card,
-    CardContent,
     Typography,
     Box,
     Avatar,
@@ -17,63 +16,14 @@ import {
     TableRow,
     Chip,
     IconButton,
-    Paper,
     CircularProgress
 } from '@mui/material';
 import {
-    TrendingUp,
-    People,
-    Event,
-    ConfirmationNumber,
-    AttachMoney,
     Visibility,
     Refresh
 } from '@mui/icons-material';
 
-const StatCard = ({ title, value, icon: Icon, color, trend }) => {
-    return (
-        <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ p: 2.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Avatar
-                        sx={{
-                            bgcolor: `${color}.light`,
-                            color: `${color}.main`,
-                            width: 48,
-                            height: 48,
-                            borderRadius: 1.5
-                        }}
-                    >
-                        <Icon />
-                    </Avatar>
-                    <Box sx={{ ml: 'auto' }}>
-                        {trend && (
-                            <Typography
-                                variant="caption"
-                                sx={{
-                                    color: 'success.main',
-                                    fontWeight: 600,
-                                    bgcolor: 'success.light',
-                                    px: 1,
-                                    py: 0.5,
-                                    borderRadius: 1
-                                }}
-                            >
-                                +{trend}%
-                            </Typography>
-                        )}
-                    </Box>
-                </Box>
-                <Typography color="text.secondary" variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-                    {title}
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                    {value}
-                </Typography>
-            </CardContent>
-        </Card>
-    );
-};
+
 
 const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
@@ -154,45 +104,7 @@ const AdminDashboard = () => {
                 </Button>
             </Box>
 
-            {/* Stats Row */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
-                        title="Người dùng hệ thống"
-                        value={stats.total_users.toLocaleString()}
-                        icon={People}
-                        color="primary"
-                        trend={12}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
-                        title="Sự kiện tổ chức"
-                        value={stats.total_events}
-                        icon={Event}
-                        color="success"
-                        trend={8}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
-                        title="Vé đã bán ra"
-                        value={stats.total_tickets_sold.toLocaleString()}
-                        icon={ConfirmationNumber}
-                        color="warning"
-                        trend={15}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
-                        title="Tổng doanh thu"
-                        value={formatCurrency(stats.total_revenue).replace('₫', 'đ')}
-                        icon={AttachMoney}
-                        color="error"
-                        trend={20}
-                    />
-                </Grid>
-            </Grid>
+
 
             {/* Main Content Sections */}
             <Grid container spacing={3}>

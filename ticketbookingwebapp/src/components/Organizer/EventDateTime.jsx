@@ -1,82 +1,84 @@
 import React from 'react';
 import {
-    TextField,
-    Grid,
+    Row,
+    Col,
     Typography,
-    Box
-} from '@mui/material';
+    DatePicker,
+    Space
+} from 'antd';
+import dayjs from 'dayjs';
+
+const { Text } = Typography;
 
 const EventDateTime = ({ formData, handleInputChange }) => {
-    return (
-        <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.secondary' }}>
-                Thời gian thực hiện sự kiện
-            </Typography>
-            <Grid container spacing={2} sx={{ mb: 4 }}>
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        fullWidth
-                        label="Ngày & Giờ Bắt Đầu"
-                        type="datetime-local"
-                        name="start_datetime"
-                        value={formData.start_datetime}
-                        onChange={handleInputChange}
-                        required
-                        InputLabelProps={{
-                            shrink: true
-                        }}
-                    />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        fullWidth
-                        label="Ngày & Giờ Kết Thúc"
-                        type="datetime-local"
-                        name="end_datetime"
-                        value={formData.end_datetime}
-                        onChange={handleInputChange}
-                        required
-                        InputLabelProps={{
-                            shrink: true
-                        }}
-                    />
-                </Grid>
-            </Grid>
+    const handleDateChange = (name, dateString) => {
+        handleInputChange({ target: { name, value: dateString } });
+    };
 
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.secondary' }}>
-                Thời gian mở bán gói vé
-            </Typography>
-            <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        fullWidth
-                        label="Ngày Mở Bán"
-                        type="datetime-local"
-                        name="sale_start_datetime"
-                        value={formData.sale_start_datetime}
-                        onChange={handleInputChange}
-                        InputLabelProps={{
-                            shrink: true
-                        }}
-                        helperText="Mặc định là thời điểm đăng sự kiện"
-                    />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        fullWidth
-                        label="Ngày Kết Thúc Bán"
-                        type="datetime-local"
-                        name="sale_end_datetime"
-                        value={formData.sale_end_datetime}
-                        onChange={handleInputChange}
-                        InputLabelProps={{
-                            shrink: true
-                        }}
-                        helperText="Mặc định là thời điểm kết thúc sự kiện"
-                    />
-                </Grid>
-            </Grid>
-        </Box>
+    return (
+        <div style={{ marginTop: 16 }}>
+            <Space direction="vertical" size={32} style={{ width: '100%' }}>
+                <div>
+                    <div style={{ marginBottom: 16 }}>
+                        <Text strong style={{ fontSize: 13, color: '#8c8c8c' }}>THỜI GIAN DIỄN RA SỰ KIỆN</Text>
+                    </div>
+                    <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                            <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 13 }}>BẮT ĐẦU</Text></div>
+                            <DatePicker
+                                showTime
+                                style={{ width: '100%' }}
+                                size="large"
+                                value={formData.start_datetime ? dayjs(formData.start_datetime) : null}
+                                onChange={(date, dateString) => handleDateChange('start_datetime', dateString)}
+                                format="YYYY-MM-DD HH:mm:ss"
+                            />
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 13 }}>KẾT THÚC</Text></div>
+                            <DatePicker
+                                showTime
+                                style={{ width: '100%' }}
+                                size="large"
+                                value={formData.end_datetime ? dayjs(formData.end_datetime) : null}
+                                onChange={(date, dateString) => handleDateChange('end_datetime', dateString)}
+                                format="YYYY-MM-DD HH:mm:ss"
+                            />
+                        </Col>
+                    </Row>
+                </div>
+
+                <div>
+                    <div style={{ marginBottom: 16 }}>
+                        <Text strong style={{ fontSize: 13, color: '#8c8c8c' }}>THỜI GIAN MỞ BÁN VÉ</Text>
+                    </div>
+                    <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                            <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 13 }}>MỞ BÁN</Text></div>
+                            <DatePicker
+                                showTime
+                                style={{ width: '100%' }}
+                                size="large"
+                                value={formData.sale_start_datetime ? dayjs(formData.sale_start_datetime) : null}
+                                onChange={(date, dateString) => handleDateChange('sale_start_datetime', dateString)}
+                                format="YYYY-MM-DD HH:mm:ss"
+                            />
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 13 }}>KẾT THÚC BÁN</Text></div>
+                            <DatePicker
+                                showTime
+                                style={{ width: '100%' }}
+                                size="large"
+                                value={formData.sale_end_datetime ? dayjs(formData.sale_end_datetime) : null}
+                                onChange={(date, dateString) => handleDateChange('sale_end_datetime', dateString)}
+                                format="YYYY-MM-DD HH:mm:ss"
+                            />
+                        </Col>
+                    </Row>
+                </div>
+            </Space>
+        </div>
     );
 };
 

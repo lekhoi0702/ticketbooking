@@ -242,17 +242,22 @@ def confirm_cash_payment():
         data = request.get_json()
         
         payment_id = data.get('payment_id')
-        if not payment_id:
-            return jsonify({
-                'success': False,
-                'message': 'payment_id is required'
-            }), 400
+        order_id = data.get('order_id')
         
-        payment = Payment.query.get(payment_id)
+        payment = None
+        if payment_id:
+            # Try as payment_id first
+            payment = Payment.query.get(payment_id)
+            if not payment:
+                # If not found, frontend might have passed order_id in payment_id field
+                payment = Payment.query.filter_by(order_id=payment_id, payment_method='CASH').first()
+        elif order_id:
+            payment = Payment.query.filter_by(order_id=order_id, payment_method='CASH').first()
+            
         if not payment:
             return jsonify({
                 'success': False,
-                'message': 'Payment not found'
+                'message': 'Không tìm thấy thông tin thanh toán tiền mặt cho đơn hàng này'
             }), 404
         
         if payment.payment_method != 'CASH':

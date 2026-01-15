@@ -49,7 +49,6 @@ const SeatGridInitializer = ({ initData, setInitData, handleInitializeSeats }) =
                     fullWidth
                     label="Số hàng"
                     type="number"
-                    placeholder="VD: 10"
                     value={initData.rows || ''}
                     onChange={e => setInitData({ ...initData, rows: e.target.value === '' ? '' : parseInt(e.target.value) })}
                 />
@@ -57,7 +56,6 @@ const SeatGridInitializer = ({ initData, setInitData, handleInitializeSeats }) =
                     fullWidth
                     label="Ghế mỗi hàng"
                     type="number"
-                    placeholder="VD: 15"
                     value={initData.seats_per_row || ''}
                     onChange={e => setInitData({ ...initData, seats_per_row: e.target.value === '' ? '' : parseInt(e.target.value) })}
                 />

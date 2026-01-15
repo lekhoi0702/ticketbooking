@@ -5,6 +5,7 @@ from app.models.ticket_type import TicketType
 from app.models.order import Order
 from app.models.ticket import Ticket
 from app.models.payment import Payment
+from app.models.venue import Venue
 from sqlalchemy import func, and_
 from datetime import datetime
 import os
@@ -165,6 +166,14 @@ def create_event():
                 file.save(filepath)
                 banner_image_url = f"/uploads/{filename}"
         
+        # Validate venue status
+        venue_id = int(data.get('venue_id'))
+        venue = Venue.query.get(venue_id)
+        if not venue:
+            return jsonify({'success': False, 'message': 'Không tìm thấy địa điểm'}), 404
+        if venue.status != 'ACTIVE':
+            return jsonify({'success': False, 'message': f'Địa điểm "{venue.venue_name}" đang trong quá trình bảo trì hoặc không sẵn sàng.'}), 400
+
         # Create new event
         new_event = Event(
             category_id=int(data.get('category_id')),

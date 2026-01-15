@@ -1,17 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --ticketbooking-green: #2dc275;
-  --ticketbooking-dark: #18181b;
-  --ticketbooking-surface: #27272a;
-  --ticketbooking-grey: #9ca3af;
-  --ticketbooking-white: #ffffff;
+  --ticketbooking-green: #52c41a;
+  --ticketbooking-bg: #f5f7fa;
+  --ticketbooking-text: #303133;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--ticketbooking-dark);
-  color: var(--ticketbooking-white);
+  font-family: 'Inter', sans-serif !important;
+  background-color: var(--ticketbooking-bg) !important;
+  color: var(--ticketbooking-text) !important;
   margin: 0;
   padding: 0;
 }
@@ -26,55 +24,41 @@ main {
   flex: 1;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 600;
+/* Ant Design Overrides & Utilities */
+.text-primary-green {
+  color: #52c41a;
 }
 
-.text-gradient {
-  background: linear-gradient(90deg, #2dc275 0%, #29a664 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.btn-primary {
-  background-color: var(--ticketbooking-green) !important;
-  border-color: var(--ticketbooking-green) !important;
-}
-
-.btn-primary:hover {
-  background-color: #29a664 !important;
-  border-color: #29a664 !important;
-}
-
-.btn-outline-primary {
-  color: var(--ticketbooking-green) !important;
-  border-color: var(--ticketbooking-green) !important;
-}
-
-.btn-outline-primary:hover {
-  background-color: var(--ticketbooking-green) !important;
-  color: white !important;
+.bg-primary-green {
+  background-color: #52c41a;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--ticketbooking-dark);
+  background: #f1f1f1;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--ticketbooking-surface);
-  border-radius: 4px;
+  background: #ccc;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--ticketbooking-grey);
+  background: #999;
+}
+
+/* Bootstrap Button Overrides to match Ant Design */
+.btn-primary {
+  background-color: #52c41a !important;
+  border-color: #52c41a !important;
+  border-radius: 4px !important;
+}
+
+.btn-primary:hover {
+  background-color: #73d13d !important;
+  border-color: #73d13d !important;
 }

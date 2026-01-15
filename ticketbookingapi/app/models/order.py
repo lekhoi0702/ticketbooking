@@ -9,7 +9,7 @@ class Order(db.Model):
     order_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
     total_amount = db.Column(db.Numeric(15, 2), nullable=False)
     final_amount = db.Column(db.Numeric(15, 2), nullable=False)
-    order_status = db.Column(db.Enum('PENDING', 'PAID', 'CANCELLED', 'REFUNDED'), default='PENDING', index=True)
+    order_status = db.Column(db.Enum('PENDING', 'PAID', 'CANCELLED', 'REFUNDED', 'COMPLETED', 'CANCELLATION_PENDING'), default='PENDING', index=True)
     customer_name = db.Column(db.String(255))
     customer_email = db.Column(db.String(255))
     customer_phone = db.Column(db.String(20))

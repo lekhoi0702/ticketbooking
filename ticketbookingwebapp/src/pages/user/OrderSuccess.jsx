@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Container, Card, Alert, Spinner, Button, Row, Col, ListGroup, Badge } from 'react-bootstrap';
+import { Container, Card, Alert, Button, Row, Col, ListGroup, Badge } from 'react-bootstrap';
 import { FaCheckCircle, FaTicketAlt, FaCalendar, FaMapMarkerAlt, FaChair, FaDownload } from 'react-icons/fa';
 import { api } from '../../services/api';
 import { formatCurrency, getImageUrl } from '../../utils/eventUtils';
 import { QRCodeSVG } from 'qrcode.react';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const OrderSuccess = () => {
     const { orderCode } = useParams();
@@ -46,12 +47,7 @@ const OrderSuccess = () => {
         });
     };
 
-    if (loading) return (
-        <Container className="py-5 text-center">
-            <Spinner animation="border" variant="success" />
-            <p className="mt-3 text-muted">Đang tải thông tin vé...</p>
-        </Container>
-    );
+    if (loading) return <LoadingSpinner tip="Đang tải thông tin vé..." />;
 
     if (error || !orderData) return (
         <Container className="py-5">

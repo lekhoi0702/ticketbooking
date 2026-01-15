@@ -276,13 +276,22 @@ def get_user_orders(user_id):
                 if ticket_type:
                     event = Event.query.get(ticket_type.event_id)
                     if event:
+                        # Check if any ticket type has sales ended
+                        min_sale_end = None
+                        for tt in event.ticket_types:
+                            if tt.sale_end:
+                                if min_sale_end is None or tt.sale_end < min_sale_end:
+                                    min_sale_end = tt.sale_end
+                        
                         event_info = {
                             'event_id': event.event_id,
                             'event_name': event.event_name,
                             'start_datetime': event.start_datetime.isoformat() if event.start_datetime else None,
                             'end_datetime': event.end_datetime.isoformat() if event.end_datetime else None,
                             'banner_image_url': event.banner_image_url,
-                            'status': event.status
+                            'status': event.status,
+                            'sale_end': min_sale_end.isoformat() if min_sale_end else None,
+                            'is_sale_active': min_sale_end > datetime.utcnow() if min_sale_end else True
                         }
                         
                         # Get venue info
@@ -320,6 +329,7 @@ def get_user_orders(user_id):
             order_dict['event_date'] = event_info['start_datetime'] if event_info else None
             order_dict['venue_name'] = venue_info['venue_name'] if venue_info else None
             order_dict['venue_address'] = venue_info['address'] if venue_info else None
+            order_dict['is_sale_active'] = event_info['is_sale_active'] if event_info else True
             order_dict['tickets'] = tickets_data
             order_dict['tickets_count'] = len(tickets)
             
@@ -338,7 +348,7 @@ def get_user_orders(user_id):
 
 @orders_bp.route("/orders/<int:order_id>/cancel", methods=["POST"])
 def cancel_order(order_id):
-    """Cancel an order and refund tickets"""
+    """Request order cancellation or cancel immediately if pending"""
     try:
         order = Order.query.get(order_id)
         
@@ -349,15 +359,34 @@ def cancel_order(order_id):
             }), 404
         
         if order.order_status == 'CANCELLED':
-            return jsonify({
-                'success': False,
-                'message': 'Order is already cancelled'
-            }), 400
-        
+            return jsonify({'success': False, 'message': 'Đơn hàng đã được hủy trước đó.'}), 400
+            
+        if order.order_status == 'CANCELLATION_PENDING':
+            return jsonify({'success': False, 'message': 'Yêu cầu hủy đang được xử lý.'}), 400
+
         # Get tickets
         tickets = Ticket.query.filter_by(order_id=order_id).all()
         
-        # Refund tickets to inventory
+        # If order is PAID, check if it can be cancelled (sales not ended)
+        if order.order_status == 'PAID':
+            for ticket in tickets:
+                ticket_type = TicketType.query.get(ticket.ticket_type_id)
+                if ticket_type and ticket_type.sale_end:
+                    if datetime.utcnow() > ticket_type.sale_end:
+                        return jsonify({
+                            'success': False,
+                            'message': f'Rất tiếc, vé {ticket_type.type_name} đã qua thời hạn hỗ trợ hủy (kết thúc bán vé).'
+                        }), 400
+            
+            # Set to PENDING instead of immediate cancellation
+            order.order_status = 'CANCELLATION_PENDING'
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'message': 'Yêu cầu hủy của bạn đã được gửi. Chúng tôi sẽ sớm liên hệ để hoàn tiền.'
+            }), 200
+            
+        # If order is PENDING (not paid yet), cancel immediately
         from app.models.seat import Seat
         for ticket in tickets:
             ticket.ticket_status = 'CANCELLED'
@@ -380,16 +409,11 @@ def cancel_order(order_id):
         # Update order status
         order.order_status = 'CANCELLED'
         
-        # Update payment if exists
-        payment = Payment.query.filter_by(order_id=order_id).first()
-        if payment:
-            payment.payment_status = 'REFUNDED'
-        
         db.session.commit()
         
         return jsonify({
             'success': True,
-            'message': 'Order cancelled successfully'
+            'message': 'Đơn hàng đã được hủy thành công.'
         }), 200
         
     except Exception as e:

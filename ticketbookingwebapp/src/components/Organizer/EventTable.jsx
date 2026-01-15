@@ -1,263 +1,170 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    IconButton,
-    Chip,
-    Avatar,
-    Stack,
-    Typography,
-    LinearProgress,
-    Box,
-    Tooltip,
     Button,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    DialogContentText
-} from '@mui/material';
+    Tag,
+    Avatar,
+    Typography,
+    Space,
+    Tooltip,
+    Image,
+    Card
+} from 'antd';
 import {
-    Edit as EditIcon,
-    Delete as DeleteIcon,
-    EventSeat as SeatIcon,
-    Public as PublicIcon,
-    Warning as WarningIcon,
-    Visibility as ViewIcon,
-    Cancel as CancelIcon
-} from '@mui/icons-material';
-import { api } from '../../services/api';
+    EditOutlined,
+    DeleteOutlined,
+    EyeOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    ClockCircleOutlined,
+    StopOutlined,
+    SyncOutlined,
+    PlayCircleOutlined,
+    CloudUploadOutlined
+} from '@ant-design/icons';
+
+const { Text } = Typography;
 
 const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDeleteClick }) => {
     const navigate = useNavigate();
 
     const getStatusConfig = (status) => {
         const configs = {
-            'PENDING_APPROVAL': { color: 'warning' },
-            'APPROVED': { color: 'info' },
-            'REJECTED': { color: 'error' },
-            'PUBLISHED': { color: 'success' },
-            'DRAFT': { color: 'default' },
-            'ONGOING': { color: 'secondary' },
-            'COMPLETED': { color: 'default' },
-            'PENDING_DELETION': { color: 'error' }
+            'PENDING_APPROVAL': { color: 'warning', label: 'Đang duyệt', icon: <SyncOutlined spin /> },
+            'APPROVED': { color: 'cyan', label: 'Đã duyệt', icon: <CheckCircleOutlined /> },
+            'REJECTED': { color: 'error', label: 'Bị từ chối', icon: <CloseCircleOutlined /> },
+            'PUBLISHED': { color: 'success', label: 'Công khai', icon: <CloudUploadOutlined /> },
+            'DRAFT': { color: 'default', label: 'Nháp', icon: <ClockCircleOutlined /> },
+            'ONGOING': { color: 'processing', label: 'Đang diễn ra', icon: <PlayCircleOutlined /> },
+            'COMPLETED': { color: 'default', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
+            'PENDING_DELETION': { color: 'error', label: 'Chờ xóa', icon: <StopOutlined /> }
         };
-        const config = configs[status] || { color: 'default' };
-        return { ...config, label: status };
+        return configs[status] || { color: 'default', label: status, icon: null };
     };
 
+    const columns = [
+        {
+            title: 'SỰ KIỆN',
+            key: 'event',
+            render: (_, record) => (
+                <Space size={16}>
+                    <Image
+                        width={60}
+                        height={60}
+                        src={
+                            record.banner_image_url?.startsWith('http')
+                                ? record.banner_image_url
+                                : `http://127.0.0.1:5000${record.banner_image_url}`
+                        }
+                        fallback="/placeholder-event.png"
+                        style={{ borderRadius: 4, objectFit: 'cover', border: '1px solid #f0f0f0' }}
+                    />
+                    <Space direction="vertical" size={0}>
+                        <Text strong style={{ fontSize: 14, color: '#303133' }}>{record.event_name}</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            ID: #{record.event_id} • {record.category?.category_name}
+                        </Text>
+                    </Space>
+                </Space>
+            ),
+        },
+        {
+            title: 'THỜI GIAN / ĐỊA ĐIỂM',
+            key: 'info',
+            render: (_, record) => (
+                <Space direction="vertical" size={0}>
+                    <Text style={{ fontSize: 13 }}>{new Date(record.start_datetime).toLocaleDateString('vi-VN')}</Text>
+                    <Text type="secondary" style={{ fontSize: 12, maxWidth: 200 }} ellipsis>
+                        {record.venue?.venue_name}
+                    </Text>
+                </Space>
+            ),
+        },
+        {
+            title: 'TRẠNG THÁI',
+            key: 'status',
+            render: (_, record) => {
+                const config = getStatusConfig(record.status);
+                return (
+                    <Tag icon={config.icon} color={config.color}>
+                        {config.label.toUpperCase()}
+                    </Tag>
+                );
+            },
+        },
+        {
+            title: 'THAO TÁC',
+            key: 'actions',
+            align: 'right',
+            render: (_, record) => (
+                <Space size={8}>
+                    {record.status === 'APPROVED' && (
+                        <Button
+                            type="text"
+                            icon={<CloudUploadOutlined />}
+                            size="small"
+                            onClick={() => handlePublishEvent(record.event_id)}
+                            style={{ color: '#52c41a' }}
+                        >
+                            Đăng
+                        </Button>
+                    )}
+                    {record.status === 'PENDING_APPROVAL' && (
+                        <Button
+                            type="text"
+                            icon={<CloseCircleOutlined />}
+                            size="small"
+                            onClick={() => handleCancelApproval(record.event_id)}
+                            danger
+                        >
+                            Hủy
+                        </Button>
+                    )}
 
+                    <Tooltip title="Xem chi tiết">
+                        <Button
+                            type="text"
+                            icon={<EyeOutlined />}
+                            onClick={() => navigate(`/organizer/event/${record.event_id}`)}
+                            style={{ color: '#52c41a' }}
+                        />
+                    </Tooltip>
+
+                    <Tooltip title="Sửa">
+                        <Button
+                            type="text"
+                            icon={<EditOutlined />}
+                            onClick={() => navigate(`/organizer/edit-event/${record.event_id}`)}
+                            disabled={['REJECTED', 'PENDING_APPROVAL', 'ONGOING', 'COMPLETED'].includes(record.status)}
+                            style={{ color: '#52c41a' }}
+                        />
+                    </Tooltip>
+
+                    {['DRAFT', 'REJECTED'].includes(record.status) && (
+                        <Tooltip title="Xóa">
+                            <Button
+                                type="text"
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleDeleteClick(record)}
+                                danger
+                            />
+                        </Tooltip>
+                    )}
+                </Space>
+            ),
+        },
+    ];
 
     return (
-        <>
-            <TableContainer>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>Tên Sự Kiện</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Thời Gian / Địa Điểm</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Trạng Thái</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }} align="right">Thao Tác</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {events && events.length > 0 ? (
-                            events.map((event) => {
-                                const totalSold = event.total_tickets_sold || 0;
-                                const totalQty = event.total_quantity || 1;
-                                const soldPercent = Math.round((totalSold / totalQty) * 100);
-                                const statusConfig = getStatusConfig(event.status);
-
-                                return (
-                                    <TableRow
-                                        key={event.event_id}
-                                        sx={{
-                                            '&:hover': {
-                                                bgcolor: 'action.hover'
-                                            }
-                                        }}
-                                    >
-                                        {/* Event Name */}
-                                        <TableCell>
-                                            <Stack direction="row" spacing={2} alignItems="center">
-                                                <Avatar
-                                                    src={
-                                                        event.banner_image_url?.startsWith('http')
-                                                            ? event.banner_image_url
-                                                            : `http://127.0.0.1:5000${event.banner_image_url}`
-                                                    }
-                                                    variant="rounded"
-                                                    sx={{ width: 56, height: 56 }}
-                                                />
-                                                <Box>
-                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                        {event.event_name}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        ID: #{event.event_id} | {event.category?.category_name}
-                                                    </Typography>
-                                                </Box>
-                                            </Stack>
-                                        </TableCell>
-
-                                        {/* Time & Location */}
-                                        <TableCell>
-                                            <Box>
-                                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                    {new Date(event.start_datetime).toLocaleDateString('vi-VN')}
-                                                </Typography>
-                                                <Typography
-                                                    variant="caption"
-                                                    color="text.secondary"
-                                                    sx={{
-                                                        display: 'block',
-                                                        maxWidth: 200,
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}
-                                                >
-                                                    {event.venue?.venue_name}
-                                                </Typography>
-                                            </Box>
-                                        </TableCell>
-
-
-
-                                        {/* Status */}
-                                        <TableCell>
-                                            <Chip
-                                                label={statusConfig.label}
-                                                color={statusConfig.color}
-                                                size="small"
-                                                sx={{ fontWeight: 600, fontSize: '0.7rem' }}
-                                            />
-                                        </TableCell>
-
-                                        {/* Actions */}
-                                        <TableCell align="right">
-                                            <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                {event.status === 'APPROVED' && (
-                                                    <Button
-                                                        size="small"
-                                                        variant="contained"
-                                                        color="success"
-                                                        startIcon={<PublicIcon />}
-                                                        onClick={() => handlePublishEvent(event.event_id)}
-                                                        sx={{
-                                                            borderRadius: 2,
-                                                            textTransform: 'none',
-                                                            fontSize: '0.75rem',
-                                                            px: 2
-                                                        }}
-                                                    >
-                                                        Đăng
-                                                    </Button>
-                                                )}
-                                                {event.status === 'PENDING_APPROVAL' && (
-                                                    <Button
-                                                        size="small"
-                                                        variant="contained"
-                                                        color="error"
-                                                        startIcon={<CancelIcon />}
-                                                        onClick={() => handleCancelApproval(event.event_id)}
-                                                        sx={{
-                                                            borderRadius: 2,
-                                                            textTransform: 'none',
-                                                            fontSize: '0.75rem',
-                                                            px: 2
-                                                        }}
-                                                    >
-                                                        Hủy duyệt
-                                                    </Button>
-                                                )}
-                                                <Tooltip title="Xem chi tiết">
-                                                    <IconButton
-                                                        size="small"
-                                                        color="secondary"
-                                                        onClick={() => navigate(`/organizer/event/${event.event_id}`)}
-                                                        sx={{
-                                                            border: 1,
-                                                            borderColor: 'secondary.main',
-                                                            '&:hover': {
-                                                                bgcolor: 'secondary.light'
-                                                            }
-                                                        }}
-                                                    >
-                                                        <ViewIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title={
-                                                    event.status === 'REJECTED' ? "Không thể sửa sự kiện bị từ chối" :
-                                                        event.status === 'PENDING_APPROVAL' ? "Không thể sửa sự kiện đang chờ duyệt" :
-                                                            event.status === 'ONGOING' ? "Không thể sửa sự kiện đang diễn ra" :
-                                                                event.status === 'COMPLETED' ? "Không thể sửa sự kiện đã kết thúc" :
-                                                                    "Sửa"
-                                                }>
-                                                    <span>
-                                                        <IconButton
-                                                            size="small"
-                                                            color="primary"
-                                                            onClick={() => navigate(`/organizer/edit-event/${event.event_id}`)}
-                                                            disabled={['REJECTED', 'PENDING_APPROVAL', 'ONGOING', 'COMPLETED'].includes(event.status)}
-                                                            sx={{
-                                                                border: 1,
-                                                                borderColor: ['REJECTED', 'PENDING_APPROVAL', 'ONGOING', 'COMPLETED'].includes(event.status) ? 'action.disabledBackground' : 'primary.main',
-                                                                '&:hover': {
-                                                                    bgcolor: 'primary.light'
-                                                                }
-                                                            }}
-                                                        >
-                                                            <EditIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </span>
-                                                </Tooltip>
-                                                {['DRAFT', 'REJECTED'].includes(event.status) && (
-                                                    <Tooltip title="Xóa sự kiện">
-                                                        <IconButton
-                                                            size="small"
-                                                            color="error"
-                                                            onClick={() => handleDeleteClick(event)}
-                                                            sx={{
-                                                                border: 1,
-                                                                borderColor: 'error.main',
-                                                                '&:hover': {
-                                                                    bgcolor: 'error.lighter'
-                                                                }
-                                                            }}
-                                                        >
-                                                            <DeleteIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
-                                            </Stack>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={4}>
-                                    <Box sx={{ textAlign: 'center', py: 6 }}>
-                                        <Typography variant="h6" color="text.secondary">
-                                            Không có sự kiện nào
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Hãy tạo sự kiện đầu tiên của bạn
-                                        </Typography>
-                                    </Box>
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table >
-            </TableContainer >
-        </>
+        <Table
+            columns={columns}
+            dataSource={events}
+            rowKey="event_id"
+            pagination={{ pageSize: 10 }}
+            size="middle"
+            locale={{ emptyText: 'Không tìm thấy dữ liệu' }}
+        />
     );
 };
 

@@ -1,55 +1,49 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
-    Box,
     Card,
-    CardContent,
     Typography,
-    TextField,
+    Form,
+    Input,
     Button,
-    IconButton,
-    InputAdornment,
+    Space,
     Alert,
-    CircularProgress,
-    Container,
-    CssBaseline,
-    ThemeProvider,
-    Stack
-} from '@mui/material';
+    ConfigProvider,
+    Layout,
+    theme
+} from 'antd';
 import {
-    Visibility,
-    VisibilityOff,
-    LockOutlined as LockIcon,
-    EmailOutlined as EmailIcon,
-    ConfirmationNumber as TicketIcon
-} from '@mui/icons-material';
+    LockOutlined,
+    UserOutlined,
+    CoffeeOutlined,
+    RocketOutlined,
+    ArrowLeftOutlined
+} from '@ant-design/icons';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import organizerTheme from '../../theme/organizer-theme';
+import { AntdThemeConfig } from '../../theme/AntdThemeConfig';
+
+const { Title, Text } = Typography;
+const { Content } = Layout;
 
 const OrganizerLogin = () => {
-    const [formData, setFormData] = useState({ email: '', password: '' });
-    const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-
+    const [error, setError] = useState(null);
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const onFinish = async (values) => {
         setLoading(true);
         setError(null);
 
         try {
-            // Identifier can be email, phone or username
-            const res = await api.login({ ...formData, required_role: 'ORGANIZER' });
+            const res = await api.login({ ...values, required_role: 'ORGANIZER' });
             if (res.success) {
                 login(res.user, res.token);
-                // Force a small delay to ensure state is updated
+                message.success('Đăng nhập thành công!');
                 setTimeout(() => {
-                    navigate('/organizer/dashboard');
-                }, 100);
+                    navigate('/organizer/events');
+                }, 500);
             } else {
                 setError(res.message || 'Đăng nhập không thành công.');
             }
@@ -61,145 +55,102 @@ const OrganizerLogin = () => {
     };
 
     return (
-        <ThemeProvider theme={organizerTheme}>
-            <CssBaseline />
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'radial-gradient(circle at 20% 20%, rgba(45, 194, 117, 0.05) 0%, #ffffff 50%, rgba(45, 194, 117, 0.05) 100%)',
-                    p: 2
-                }}
-            >
-                <Container maxWidth="sm">
-                    <Card sx={{ borderRadius: 4, boxShadow: 6, overflow: 'hidden' }}>
-                        <Box
-                            sx={{
-                                py: 4,
-                                px: 3,
-                                textAlign: 'center',
-                                background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
-                                color: 'white'
-                            }}
-                        >
-                            <TicketIcon sx={{ fontSize: 48, mb: 1 }} />
-                            <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: 1 }}>
-                                TICKETBOOKING
-                            </Typography>
-                            <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                                Dành Cho Nhà Tổ Chức
-                            </Typography>
-                        </Box>
+        <ConfigProvider theme={AntdThemeConfig}>
+            <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
+                <Content style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 20px' }}>
+                    <Card
+                        style={{
+                            maxWidth: 420,
+                            width: '100%',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+                            borderRadius: 12,
+                            overflow: 'hidden'
+                        }}
+                        styles={{ body: { padding: 0 } }}
+                    >
+                        <div style={{
+                            padding: '40px 32px',
+                            background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                            color: 'white',
+                            textAlign: 'center'
+                        }}>
+                            <CoffeeOutlined style={{ fontSize: 40, marginBottom: 16 }} />
+                            <Title level={2} style={{ color: 'white', margin: 0, fontWeight: 800, letterSpacing: 1 }}>TICKETBOOKING</Title>
+                            <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>Organizer Platform</Text>
+                        </div>
 
-                        <CardContent sx={{ p: 4 }}>
-                            <Typography variant="h5" sx={{ fontWeight: 700, mb: 3, textAlign: 'center' }}>
-                                Đăng Nhập Hệ Thống
-                            </Typography>
+                        <div style={{ padding: '40px 32px' }}>
+                            <Title level={4} style={{ textAlign: 'center', marginBottom: 32 }}>Đối Tác Đăng Nhập</Title>
 
                             {error && (
-                                <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError(null)}>
-                                    {error}
-                                </Alert>
+                                <Alert
+                                    title={error}
+                                    type="error"
+                                    showIcon
+                                    closable
+                                    onClose={() => setError(null)}
+                                    style={{ marginBottom: 24 }}
+                                />
                             )}
 
-                            <form onSubmit={handleSubmit}>
-                                <Stack spacing={3}>
-                                    <TextField
-                                        fullWidth
-                                        label="Email hoặc Số điện thoại"
-                                        variant="outlined"
-                                        required
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <EmailIcon color="action" />
-                                                </InputAdornment>
-                                            ),
-                                        }}
+                            <Form
+                                name="organizer_login"
+                                layout="vertical"
+                                initialValues={{ remember: true }}
+                                onFinish={onFinish}
+                                size="large"
+                            >
+                                <Form.Item
+                                    name="email"
+                                    label="Email hoặc Số điện thoại"
+                                    rules={[{ required: true, message: 'Vui lòng nhập email hoặc SĐT!' }]}
+                                >
+                                    <Input
+                                        prefix={<UserOutlined style={{ color: '#bfbfbf' }} />}
                                     />
+                                </Form.Item>
 
-                                    <TextField
-                                        fullWidth
-                                        label="Mật khẩu"
-                                        type={showPassword ? 'text' : 'password'}
-                                        variant="outlined"
-                                        required
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <LockIcon color="action" />
-                                                </InputAdornment>
-                                            ),
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                                                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            )
-                                        }}
+                                <Form.Item
+                                    name="password"
+                                    label="Mật khẩu"
+                                    rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+                                >
+                                    <Input.Password
+                                        prefix={<LockOutlined style={{ color: '#bfbfbf' }} />}
                                     />
+                                </Form.Item>
 
+                                <Form.Item>
                                     <Button
-                                        type="submit"
-                                        fullWidth
-                                        size="large"
-                                        variant="contained"
-                                        disabled={loading}
-                                        sx={{
-                                            py: 1.5,
-                                            borderRadius: 2,
-                                            fontSize: '1rem',
-                                            fontWeight: 700,
-                                            background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
-                                            boxShadow: '0 4px 12px rgba(45, 194, 117, 0.3)',
-                                            '&:hover': {
-                                                background: 'linear-gradient(135deg, #219d5c 0%, #17834a 100%)',
-                                            }
-                                        }}
+                                        type="primary"
+                                        htmlType="submit"
+                                        block
+                                        loading={loading}
+                                        style={{ height: 48, fontWeight: 700 }}
                                     >
-                                        {loading ? (
-                                            <CircularProgress size={24} color="inherit" />
-                                        ) : (
-                                            'ĐĂNG NHẬP NGAY'
-                                        )}
+                                        ĐĂNG NHẬP
                                     </Button>
+                                </Form.Item>
 
-                                    <Box sx={{ textAlign: 'center', mt: 2 }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Chưa có tài khoản đối tác?{' '}
-                                            <Typography
-                                                component="span"
-                                                variant="body2"
-                                                sx={{
-                                                    color: 'primary.main',
-                                                    fontWeight: 600,
-                                                    cursor: 'pointer',
-                                                    '&:hover': { textDecoration: 'underline' }
-                                                }}
-                                            >
-                                                Đăng ký ngay
-                                            </Typography>
-                                        </Typography>
-                                    </Box>
-                                </Stack>
-                            </form>
-                        </CardContent>
+                                <div style={{ textAlign: 'center', marginTop: 24 }}>
+                                    <Text type="secondary" style={{ fontSize: 13 }}>
+                                        Chưa có tài khoản đối tác? <Link to="/organizer/home" style={{ color: '#52c41a', fontWeight: 600 }}>Liên hệ hợp tác</Link>
+                                    </Text>
+                                </div>
+                            </Form>
+                        </div>
                     </Card>
+                </Content>
 
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 4 }}>
-                        © 2026 TicketBooking Organizer Panel. All rights reserved.
-                    </Typography>
-                </Container>
-            </Box>
-        </ThemeProvider>
+                <footer style={{ textAlign: 'center', padding: '24px 0', opacity: 0.5 }}>
+                    <Text style={{ fontSize: 12 }}>© 2026 TicketBooking Organizer. All rights reserved.</Text>
+                </footer>
+            </Layout>
+        </ConfigProvider>
     );
 };
+
+// Import message from antd
+import { message } from 'antd';
 
 export default OrganizerLogin;

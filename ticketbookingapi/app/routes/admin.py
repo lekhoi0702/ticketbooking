@@ -305,3 +305,100 @@ def admin_update_venue_seats(venue_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@admin_bp.route("/admin/venues/<int:venue_id>/status", methods=["PUT"])
+def admin_update_venue_status(venue_id):
+    """Cập nhật trạng thái địa điểm (ACTIVE, MAINTENANCE, INACTIVE)"""
+    try:
+        data = request.get_json()
+        venue = Venue.query.get(venue_id)
+        if not venue:
+            return jsonify({'success': False, 'message': 'Không tìm thấy địa điểm'}), 404
+            
+        if 'status' in data:
+            new_status = data['status']
+            if new_status not in ['ACTIVE', 'MAINTENANCE', 'INACTIVE']:
+                return jsonify({'success': False, 'message': 'Trạng thái không hợp lệ'}), 400
+            venue.status = new_status
+            
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': f'Đã cập nhật trạng thái địa điểm thành {venue.status}',
+            'data': venue.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@admin_bp.route("/admin/orders/<int:order_id>/cancellation", methods=["POST"])
+def process_order_cancellation(order_id):
+    """Phê duyệt hoặc từ chối yêu cầu hủy đơn hàng"""
+    try:
+        from app.models.ticket import Ticket
+        from app.models.ticket_type import TicketType
+        from app.models.seat import Seat
+        
+        data = request.get_json()
+        action = data.get('action') # 'approve' or 'reject'
+        
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({'success': False, 'message': 'Đơn hàng không tồn tại'}), 404
+            
+        if order.order_status != 'CANCELLATION_PENDING':
+            return jsonify({'success': False, 'message': 'Đơn hàng không ở trạng thái chờ hủy'}), 400
+            
+        if action == 'approve':
+            # 1. Cập nhật trạng thái các vé và giải phóng ghế
+            tickets = Ticket.query.filter_by(order_id=order_id).all()
+            for ticket in tickets:
+                ticket.ticket_status = 'CANCELLED'
+                
+                # Release seat if exists
+                if ticket.seat_id:
+                    seat = Seat.query.get(ticket.seat_id)
+                    if seat:
+                        seat.status = 'AVAILABLE'
+                
+                # Update sold quantity
+                ticket_type = TicketType.query.get(ticket.ticket_type_id)
+                if ticket_type:
+                    ticket_type.sold_quantity -= 1
+                    
+                    # Update event sold tickets
+                    event = Event.query.get(ticket_type.event_id)
+                    if event:
+                        event.sold_tickets -= 1
+            
+            # 2. Cập nhật trạng thái đơn hàng
+            order.order_status = 'REFUNDED'
+            
+            # 3. Cập nhật trạng thái thanh toán
+            payment = Payment.query.filter_by(order_id=order_id).first()
+            if payment:
+                payment.payment_status = 'REFUNDED'
+                
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'message': 'Đã phê duyệt hủy đơn hàng và hoàn tiền thành công'
+            }), 200
+            
+        elif action == 'reject':
+            # Quay lại trạng thái PAID
+            order.order_status = 'PAID'
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'message': 'Đã từ chối yêu cầu hủy đơn hàng'
+            }), 200
+            
+        else:
+            return jsonify({'success': False, 'message': 'Hành động không hợp lệ'}), 400
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+

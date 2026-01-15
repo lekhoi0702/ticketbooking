@@ -1,46 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
     Card,
-    CardContent,
-    Typography,
     Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
     Button,
-    IconButton,
-    Chip,
-    Stack,
-    TextField,
-    InputAdornment,
-    CircularProgress,
+    Tag,
+    Input,
+    Space,
+    Typography,
     Tooltip,
-    Snackbar,
-    Alert
-} from '@mui/material';
+    message,
+    Spin,
+    Modal
+} from 'antd';
 import {
-    Search,
-    Refresh,
-    Visibility,
-    CheckCircle,
-    AccountBalanceWallet,
-    Payments,
-    History,
-    CancelOutlined,
-    CheckCircleOutline,
-    Close
-} from '@mui/icons-material';
+    SearchOutlined,
+    ReloadOutlined,
+    EyeOutlined,
+    CheckCircleOutlined,
+    WalletOutlined,
+    DollarOutlined,
+    HistoryOutlined,
+    CloseCircleOutlined,
+    CheckOutlined
+} from '@ant-design/icons';
 import { api } from '../../services/api';
+
+const { Text } = Typography;
 
 const AdminOrdersManagement = () => {
     const [loading, setLoading] = useState(true);
     const [orders, setOrders] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
 
     useEffect(() => {
         fetchOrders();
@@ -53,45 +43,53 @@ const AdminOrdersManagement = () => {
             if (res.success) setOrders(res.data);
         } catch (error) {
             console.error("Error fetching admin orders:", error);
-            showToast("Error loading transaction logs", "error");
+            message.error("Lỗi khi tải danh sách đơn hàng");
         } finally {
             setLoading(false);
         }
     };
 
-    const showToast = (message, variant = 'success') => {
-        setToast({ show: true, message, variant });
+    const handleConfirmCash = (orderId) => {
+        Modal.confirm({
+            title: 'Xác nhận thanh toán tiền mặt',
+            content: 'Bạn có chắc chắn muốn xác nhận thanh toán cho đơn hàng này? Trạng thái sẽ được cập nhật thành ĐÃ THANH TOÁN.',
+            okText: 'Xác nhận',
+            cancelText: 'Hủy',
+            onOk: async () => {
+                try {
+                    const res = await api.confirmCashPayment(orderId);
+                    if (res.success) {
+                        message.success("Xác nhận thanh toán thành công!");
+                        fetchOrders();
+                    }
+                } catch (error) {
+                    message.error(error.message);
+                }
+            }
+        });
     };
 
-    const handleConfirmCash = async (orderId) => {
-        if (!window.confirm("Confirm cash payment for this order? The state will be updated to PAID.")) return;
-        try {
-            const res = await api.confirmCashPayment(orderId);
-            if (res.success) {
-                showToast("Payment confirmed successfully!");
-                fetchOrders();
+    const handleProcessCancellation = (orderId, action) => {
+        const isApprove = action === 'approve';
+        Modal.confirm({
+            title: isApprove ? 'Duyệt yêu cầu hủy' : 'Từ chối yêu cầu hủy',
+            content: isApprove
+                ? 'Bạn có chắc chắn muốn duyệt yêu cầu hủy này? Đơn hàng sẽ được đánh dấu là ĐÃ HỦY.'
+                : 'Bạn có chắc chắn muốn từ chối yêu cầu hủy này? Đơn hàng sẽ quay lại trạng thái ĐÃ THANH TOÁN.',
+            okText: 'Xác nhận',
+            cancelText: 'Hủy',
+            onOk: async () => {
+                try {
+                    const res = await api.processOrderCancellation(orderId, action);
+                    if (res.success) {
+                        message.success(isApprove ? "Đã duyệt yêu cầu hủy" : "Đã từ chối yêu cầu hủy");
+                        fetchOrders();
+                    }
+                } catch (error) {
+                    message.error(error.message);
+                }
             }
-        } catch (error) {
-            showToast(error.message, "error");
-        }
-    };
-
-    const handleProcessCancellation = async (orderId, action) => {
-        const confirmMsg = action === 'approve'
-            ? "Approve this cancellation request? Order will be marked as CANCELLED."
-            : "Reject this cancellation request? Order will return to PAID status.";
-
-        if (!window.confirm(confirmMsg)) return;
-
-        try {
-            const res = await api.processOrderCancellation(orderId, action);
-            if (res.success) {
-                showToast(action === 'approve' ? "Cancellation approved" : "Cancellation rejected");
-                fetchOrders();
-            }
-        } catch (error) {
-            showToast(error.message, "error");
-        }
+        });
     };
 
     const filteredOrders = orders.filter(order =>
@@ -100,208 +98,135 @@ const AdminOrdersManagement = () => {
         order.event_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const getStatusColor = (status) => {
-        const styles = {
-            'PAID': 'success',
-            'PENDING': 'warning',
-            'CANCELLED': 'error',
-            'CANCELLATION_PENDING': 'info'
+    const getStatusConfig = (status) => {
+        const configs = {
+            'PAID': { color: 'success', label: 'Đã thanh toán', icon: <CheckCircleOutlined /> },
+            'PENDING': { color: 'warning', label: 'Chờ thanh toán', icon: <HistoryOutlined /> },
+            'CANCELLED': { color: 'error', label: 'Đã hủy', icon: <CloseCircleOutlined /> },
+            'CANCELLATION_PENDING': { color: 'processing', label: 'Chờ hủy', icon: <SyncOutlined spin /> }
         };
-        return styles[status] || 'default';
-    };
-
-    const getStatusLabel = (status) => {
-        const labels = {
-            'PAID': 'Paid',
-            'PENDING': 'Pending Payment',
-            'CANCELLED': 'Cancelled',
-            'CANCELLATION_PENDING': 'Cancellation Pending'
-        };
-        return labels[status] || status;
+        const SyncOutlined = ({ spin }) => <ReloadOutlined spin={spin} />;
+        return configs[status] || { color: 'default', label: status, icon: null };
     };
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
 
-    if (loading && orders.length === 0) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
+    const columns = [
+        {
+            title: 'MÃ ĐƠN / NGÀY',
+            key: 'order',
+            render: (_, record) => (
+                <Space direction="vertical" size={0}>
+                    <Text strong style={{ color: '#52c41a' }}>{record.order_code}</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                        <HistoryOutlined /> {new Date(record.created_at).toLocaleString('vi-VN')}
+                    </Text>
+                </Space>
+            ),
+        },
+        {
+            title: 'KHÁCH HÀNG',
+            key: 'customer',
+            render: (_, record) => (
+                <Space direction="vertical" size={0}>
+                    <Text strong style={{ fontSize: 13 }}>{record.customer_name}</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>{record.customer_phone || 'N/A'}</Text>
+                </Space>
+            ),
+        },
+        {
+            title: 'SỰ KIỆN',
+            key: 'event',
+            render: (_, record) => (
+                <Text ellipsis style={{ maxWidth: 200, fontSize: 13 }}>{record.event_name || 'N/A'}</Text>
+            ),
+        },
+        {
+            title: 'PHƯƠNG THỨC',
+            key: 'method',
+            align: 'center',
+            render: (_, record) => (
+                <Tag icon={record.payment_method === 'VNPAY' ? <WalletOutlined /> : <DollarOutlined />} color={record.payment_method === 'VNPAY' ? 'blue' : 'default'}>
+                    {record.payment_method}
+                </Tag>
+            ),
+        },
+        {
+            title: 'SỐ TIỀN',
+            key: 'amount',
+            align: 'right',
+            render: (_, record) => (
+                <Text strong>{formatCurrency(record.total_amount)}</Text>
+            ),
+        },
+        {
+            title: 'TRẠNG THÁI',
+            key: 'status',
+            align: 'center',
+            render: (_, record) => {
+                const config = getStatusConfig(record.order_status);
+                return <Tag color={config.color} icon={config.icon}>{config.label.toUpperCase()}</Tag>;
+            },
+        },
+        {
+            title: 'THAO TÁC',
+            key: 'actions',
+            align: 'right',
+            render: (_, record) => (
+                <Space>
+                    <Tooltip title="Xem chi tiết">
+                        <Button type="text" icon={<EyeOutlined />} style={{ color: '#52c41a' }} />
+                    </Tooltip>
+                    {record.payment_method === 'CASH' && record.order_status === 'PENDING' && (
+                        <Button size="small" type="primary" style={{ background: '#52c41a', borderColor: '#52c41a' }} onClick={() => handleConfirmCash(record.order_id)}>
+                            Xác nhận
+                        </Button>
+                    )}
+                    {record.order_status === 'CANCELLATION_PENDING' && (
+                        <Space>
+                            <Button size="small" type="primary" style={{ background: '#52c41a', borderColor: '#52c41a' }} icon={<CheckOutlined />} onClick={() => handleProcessCancellation(record.order_id, 'approve')}>
+                                Duyệt
+                            </Button>
+                            <Button size="small" danger icon={<CloseCircleOutlined />} onClick={() => handleProcessCancellation(record.order_id, 'reject')}>
+                                Từ chối
+                            </Button>
+                        </Space>
+                    )}
+                </Space>
+            ),
+        },
+    ];
 
     return (
-        <Box>
-            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
-                        Lịch Sử Giao Dịch
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Theo dõi dòng tiền và trạng thái thanh toán vé trên toàn hệ thống.
-                    </Typography>
-                </Box>
-                <Button
-                    variant="outlined"
-                    startIcon={<Refresh />}
-                    onClick={fetchOrders}
-                    size="small"
-                    sx={{ color: 'text.secondary', borderColor: 'divider' }}
-                >
-                    Làm mới
-                </Button>
-            </Stack>
+        <Spin spinning={loading} tip="Đang tải danh sách đơn hàng...">
+            <div>
+                <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'flex-end' }}>
+                    <Button icon={<ReloadOutlined />} onClick={fetchOrders} disabled={loading}>Làm mới</Button>
+                </Space>
 
-            <Card sx={{ mt: 3 }}>
-                <CardContent sx={{ p: 0 }}>
-                    <Box sx={{ p: 2, borderBottom: '1px solid #EBEEF5' }}>
-                        <TextField
-                            sx={{ maxWidth: 350 }}
-                            size="small"
-                            placeholder="Mã đơn, khách hàng hoặc sự kiện..."
+                <Card
+                    title={
+                        <Input
+                            prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <Search color="disabled" fontSize="small" />
-                                    </InputAdornment>
-                                ),
-                            }}
+                            style={{ width: 350 }}
+                            allowClear
                         />
-                    </Box>
-                    <TableContainer>
-                        <Table sx={{ minWidth: 1000 }}>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={{ px: 3 }}>MÃ ĐƠN/NGÀY</TableCell>
-                                    <TableCell>KHÁCH HÀNG</TableCell>
-                                    <TableCell>SỰ KIỆN</TableCell>
-                                    <TableCell align="center">PHƯƠNG THỨC</TableCell>
-                                    <TableCell align="right">SỐ TIỀN</TableCell>
-                                    <TableCell align="center">TRẠNG THÁI</TableCell>
-                                    <TableCell align="right" sx={{ pr: 3 }}>THAO TÁC</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredOrders.length > 0 ? (
-                                    filteredOrders.map((order) => (
-                                        <TableRow key={order.order_id} hover>
-                                            <TableCell sx={{ px: 3 }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                                                    {order.order_code}
-                                                </Typography>
-                                                <Stack direction="row" spacing={1} alignItems="center">
-                                                    <History sx={{ fontSize: 12, color: 'text.secondary' }} />
-                                                    <Typography variant="caption" color="textSecondary">
-                                                        {new Date(order.created_at).toLocaleString('vi-VN')}
-                                                    </Typography>
-                                                </Stack>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>{order.customer_name}</Typography>
-                                                <Typography variant="caption" color="textSecondary">{order.customer_phone || 'No phone'}</Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2" noWrap sx={{ maxWidth: 200, fontWeight: 500 }}>
-                                                    {order.event_name || 'N/A'}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <Chip
-                                                    icon={order.payment_method === 'VNPAY' ? <AccountBalanceWallet sx={{ fontSize: '14px !important' }} /> : <Payments sx={{ fontSize: '14px !important' }} />}
-                                                    label={order.payment_method}
-                                                    size="small"
-                                                    color={order.payment_method === 'VNPAY' ? "info" : "default"}
-                                                    variant="outlined"
-                                                    sx={{ borderRadius: 1, fontWeight: 600, minWidth: 80 }}
-                                                />
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                                    {formatCurrency(order.total_amount)}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <Chip
-                                                    label={getStatusLabel(order.order_status)}
-                                                    color={getStatusColor(order.order_status)}
-                                                    size="small"
-                                                    sx={{ borderRadius: 1.5, fontWeight: 600, px: 1 }}
-                                                />
-                                            </TableCell>
-                                            <TableCell align="right" sx={{ pr: 3 }}>
-                                                <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                    <Tooltip title="View Receipt">
-                                                        <IconButton size="small">
-                                                            <Visibility fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    {order.payment_method === 'CASH' && order.order_status === 'PENDING' && (
-                                                        <Button
-                                                            variant="contained"
-                                                            size="small"
-                                                            startIcon={<CheckCircle />}
-                                                            onClick={() => handleConfirmCash(order.order_id)}
-                                                            sx={{ borderRadius: 1.5, textTransform: 'none' }}
-                                                        >
-                                                            Confirm
-                                                        </Button>
-                                                    )}
-                                                    {order.order_status === 'CANCELLATION_PENDING' && (
-                                                        <Stack direction="row" spacing={1}>
-                                                            <Button
-                                                                variant="contained"
-                                                                size="small"
-                                                                color="success"
-                                                                startIcon={<CheckCircleOutline />}
-                                                                onClick={() => handleProcessCancellation(order.order_id, 'approve')}
-                                                                sx={{ borderRadius: 1.5, textTransform: 'none' }}
-                                                            >
-                                                                Approve
-                                                            </Button>
-                                                            <Button
-                                                                variant="outlined"
-                                                                size="small"
-                                                                color="error"
-                                                                startIcon={<Close />}
-                                                                onClick={() => handleProcessCancellation(order.order_id, 'reject')}
-                                                                sx={{ borderRadius: 1.5, textTransform: 'none' }}
-                                                            >
-                                                                Reject
-                                                            </Button>
-                                                        </Stack>
-                                                    )}
-                                                </Stack>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={7} align="center" sx={{ py: 5 }}>
-                                            <Typography color="textSecondary">No transaction records found.</Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </CardContent>
-            </Card>
-
-            <Snackbar
-                open={toast.show}
-                autoHideDuration={4000}
-                onClose={() => setToast({ ...toast, show: false })}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-            >
-                <Alert severity={toast.variant} sx={{ width: '100%', borderRadius: 2, boxShadow: 3 }}>
-                    {toast.message}
-                </Alert>
-            </Snackbar>
-        </Box>
+                    }
+                    styles={{ body: { padding: 0 } }}
+                >
+                    <Table
+                        columns={columns}
+                        dataSource={filteredOrders}
+                        rowKey="order_id"
+                        pagination={{ pageSize: 10 }}
+                    />
+                </Card>
+            </div>
+        </Spin>
     );
 };
 

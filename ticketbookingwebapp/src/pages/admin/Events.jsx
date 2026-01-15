@@ -1,55 +1,48 @@
 ﻿import React, { useState, useEffect } from 'react';
 import {
-    Box,
     Card,
-    CardContent,
-    Typography,
     Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
     Button,
-    IconButton,
-    Chip,
+    Tag,
     Avatar,
-    Stack,
-    Dialog,
-    DialogContent,
-    DialogActions,
-    Grid,
-    CircularProgress,
+    Input,
+    Modal,
+    Select,
+    Space,
+    Typography,
     Tooltip,
-    Snackbar,
     Alert,
+    message,
+    Spin,
     Divider,
-    DialogTitle,
-    TextField,
-    MenuItem,
-    InputAdornment,
-    FormControl,
-    InputLabel,
-    Select
-} from '@mui/material';
+    Row,
+    Col,
+    Badge,
+    Image,
+    List
+} from 'antd';
 import {
-    Refresh,
-    Visibility,
-    CheckCircle,
-    Cancel as CancelIcon,
-    LocationOn,
-    CalendarMonth,
-    Shield,
-    Star,
-    StarBorder,
-    Warning,
-    Search,
-    FilterList
-} from '@mui/icons-material';
+    SearchOutlined,
+    ReloadOutlined,
+    EyeOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    EnvironmentOutlined,
+    CalendarOutlined,
+    StarFilled,
+    StarOutlined,
+    WarningOutlined,
+    FilterOutlined,
+    DeleteOutlined,
+    StopOutlined,
+    PlayCircleOutlined,
+    CloudUploadOutlined,
+    AppstoreOutlined
+} from '@ant-design/icons';
 import { api } from '../../services/api';
 import SeatMapTemplateView from '../../components/Organizer/SeatMapTemplateView';
-import { Chair as ChairIcon } from '@mui/icons-material';
+
+const { Text, Title, Paragraph } = Typography;
 
 const AdminEventsManagement = () => {
     const [loading, setLoading] = useState(true);
@@ -57,7 +50,6 @@ const AdminEventsManagement = () => {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
-    const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
 
     // Filter States
     const [filterStatus, setFilterStatus] = useState('ALL');
@@ -73,7 +65,6 @@ const AdminEventsManagement = () => {
         fetchEvents();
     }, []);
 
-    // Fetch Seat Map Data when an event is selected
     useEffect(() => {
         if (selectedEvent && showModal) {
             fetchEventSeatMap();
@@ -86,16 +77,13 @@ const AdminEventsManagement = () => {
     const fetchEventSeatMap = async () => {
         try {
             setLoadingMap(true);
-            // 1. Fetch Venue Template
             const venueRes = await api.getVenueById(selectedEvent.venue_id);
             if (venueRes.success) {
                 setVenueTemplate(venueRes.data.seat_map_template);
             }
 
-            // 2. Fetch all seats for this event
             const seatsRes = await api.getAllEventSeats(selectedEvent.event_id);
             if (seatsRes.success) {
-                // Map API seats to the format expected by SeatMapTemplateView
                 const mappedSeats = seatsRes.data.map(s => ({
                     row_name: s.row_name,
                     seat_number: s.seat_number,
@@ -107,7 +95,7 @@ const AdminEventsManagement = () => {
             }
         } catch (error) {
             console.error("Error fetching seat map info:", error);
-            showToast("KhÃ´ng thá»ƒ táº£i sÆ¡ Ä‘á»“ gháº¿", "error");
+            message.error("Không thể tải sơ đồ ghế");
         } finally {
             setLoadingMap(false);
         }
@@ -120,14 +108,10 @@ const AdminEventsManagement = () => {
             if (res.success) setEvents(res.data);
         } catch (error) {
             console.error("Error fetching admin events:", error);
-            showToast("Lỗi khi tải danh sách sự kiện", "error");
+            message.error("Lỗi khi tải danh sách sự kiện");
         } finally {
             setLoading(false);
         }
-    };
-
-    const showToast = (message, variant = 'success') => {
-        setToast({ show: true, message, variant });
     };
 
     const handleUpdateStatus = async (eventId, newStatus) => {
@@ -136,29 +120,21 @@ const AdminEventsManagement = () => {
             const data = { status: newStatus };
             const res = await api.adminUpdateEventStatus(eventId, data);
             if (res.success) {
-                const statusMsg = {
-                    'PUBLISHED': 'đã được xuất bản',
-                    'APPROVED': 'đã được phê duyệt',
-                    'REJECTED': 'đã bị từ chối',
-                    'CANCELLED': 'đã bị hủy'
-                }[newStatus] || newStatus;
-
-                showToast(`Sự kiện ${statusMsg}`);
+                message.success(`Cập nhật trạng thái thành công`);
                 setShowModal(false);
                 fetchEvents();
             }
         } catch (error) {
-            showToast(error.message, "error");
+            message.error(error.message);
         } finally {
             setActionLoading(false);
         }
     };
 
     const toggleFeatured = async (event) => {
-        // Only allow featuring for approved or published events
         const allowedStatuses = ['APPROVED', 'PUBLISHED', 'ONGOING'];
         if (!event.is_featured && !allowedStatuses.includes(event.status)) {
-            showToast("Chỉ có thể đánh dấu nổi bật cho sự kiện đã được duyệt", "error");
+            message.warning("Chỉ sự kiện đã duyệt hoặc công khai mới có thể đánh dấu nổi bật");
             return;
         }
 
@@ -166,568 +142,400 @@ const AdminEventsManagement = () => {
             const data = { is_featured: !event.is_featured };
             const res = await api.adminUpdateEventStatus(event.event_id, data);
             if (res.success) {
-                showToast(event.is_featured ? "Đã bỏ đánh dấu nổi bật" : "Đã đánh dấu sự kiện nổi bật");
+                message.success(event.is_featured ? "Đã bỏ đánh dấu nổi bật" : "Đã đánh dấu sự kiện nổi bật");
                 fetchEvents();
             }
         } catch (error) {
-            showToast(error.message, "error");
+            message.error(error.message);
         }
     };
 
-    const handleDeleteEvent = async (eventId) => {
-        if (!window.confirm("Bạn có chắc chắn muốn XÓA VĨNH VIỄN sự kiện này không? Hành động này không thể hoàn tác.")) {
-            return;
-        }
-
-        try {
-            setActionLoading(true);
-            const res = await api.adminDeleteEvent(eventId);
-            if (res.success) {
-                showToast("Đã xóa sự kiện thành công");
-                setShowModal(false);
-                fetchEvents();
+    const handleDeleteEvent = (eventId) => {
+        Modal.confirm({
+            title: 'Xác nhận xóa vĩnh viễn',
+            icon: <WarningOutlined style={{ color: '#ff4d4f' }} />,
+            content: 'Bạn có chắc chắn muốn XÓA VĨNH VIỄN sự kiện này không? Hành động này không thể hoàn tác.',
+            okText: 'Xác nhận xóa',
+            okType: 'danger',
+            cancelText: 'Hủy',
+            onOk: async () => {
+                try {
+                    setActionLoading(true);
+                    const res = await api.adminDeleteEvent(eventId);
+                    if (res.success) {
+                        message.success("Đã xóa sự kiện thành công");
+                        setShowModal(false);
+                        fetchEvents();
+                    }
+                } catch (error) {
+                    message.error(error.message);
+                } finally {
+                    setActionLoading(false);
+                }
             }
-        } catch (error) {
-            showToast(error.message, "error");
-        } finally {
-            setActionLoading(false);
-        }
+        });
     };
 
-    const getStatusColor = (status) => {
-        const colors = {
-            'PUBLISHED': 'success',
-            'PENDING_APPROVAL': 'warning',
-            'APPROVED': 'info',
-            'REJECTED': 'error',
-            'DRAFT': 'default',
-            'CANCELLED': 'error',
-            'COMPLETED': 'secondary',
-            'ONGOING': 'success',
-            'PENDING_DELETION': 'error'
+    const getStatusConfig = (status) => {
+        const configs = {
+            'PUBLISHED': { color: 'success', label: 'Công khai', icon: <CloudUploadOutlined /> },
+            'PENDING_APPROVAL': { color: 'warning', label: 'Chờ duyệt', icon: <SyncOutlined spin /> },
+            'APPROVED': { color: 'cyan', label: 'Đã duyệt', icon: <CheckCircleOutlined /> },
+            'REJECTED': { color: 'error', label: 'Bị từ chối', icon: <CloseCircleOutlined /> },
+            'DRAFT': { color: 'default', label: 'Nháp', icon: <ClockCircleOutlined /> },
+            'CANCELLED': { color: 'error', label: 'Đã hủy', icon: <StopOutlined /> },
+            'COMPLETED': { color: 'default', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
+            'ONGOING': { color: 'processing', label: 'Đang diễn ra', icon: <PlayCircleOutlined /> },
+            'PENDING_DELETION': { color: 'error', label: 'Chờ xóa', icon: <DeleteOutlined /> }
         };
-        return colors[status] || 'default';
+        return configs[status] || { color: 'default', label: status, icon: null };
     };
 
-    const getStatusLabel = (status) => {
-        // Return raw status as per database
-        return status;
-    };
-
-    if (loading && events.length === 0) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    // Filter events based on selected filters
     const filteredEvents = events.filter(event => {
-        // Status filter
-        if (filterStatus !== 'ALL' && event.status !== filterStatus) {
-            return false;
-        }
-
-        // Featured filter
-        if (filterFeatured === 'FEATURED' && !event.is_featured) {
-            return false;
-        }
-        if (filterFeatured === 'NOT_FEATURED' && event.is_featured) {
-            return false;
-        }
-
-        // Search query
-        if (searchQuery && !event.event_name.toLowerCase().includes(searchQuery.toLowerCase())) {
-            return false;
-        }
-
+        if (filterStatus !== 'ALL' && event.status !== filterStatus) return false;
+        if (filterFeatured === 'FEATURED' && !event.is_featured) return false;
+        if (filterFeatured === 'NOT_FEATURED' && event.is_featured) return false;
+        if (searchQuery && !event.event_name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
         return true;
     });
 
-    const pendingCount = filteredEvents.filter(e => e.status === 'PENDING_APPROVAL').length;
+    const pendingCount = events.filter(e => e.status === 'PENDING_APPROVAL').length;
 
-    return (
-        <Box>
-            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
-                        Quản Lý Sự Kiện
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Xem xét, phê duyệt và quản lý tất cả sự kiện trên hệ thống
-                    </Typography>
-                </Box>
+    const columns = [
+        {
+            title: 'ẢNH BÌA',
+            key: 'banner',
+            render: (_, record) => (
+                <Image
+                    width={80}
+                    height={45}
+                    src={record.banner_image_url?.startsWith('http') ? record.banner_image_url : `http://127.0.0.1:5000${record.banner_image_url}`}
+                    style={{ borderRadius: 4, objectFit: 'cover' }}
+                />
+            ),
+        },
+        {
+            title: 'THÔNG TIN SỰ KIỆN',
+            key: 'info',
+            render: (_, record) => (
+                <Space direction="vertical" size={0}>
+                    <Text strong style={{ fontSize: 14 }}>{record.event_name}</Text>
+                    <Space size={8} style={{ fontSize: 12 }}>
+                        <Text type="secondary"><EnvironmentOutlined /> {record.venue?.name || record.venue_name}</Text>
+                        <Text type="secondary"><CalendarOutlined /> {new Date(record.start_datetime).toLocaleDateString('vi-VN')}</Text>
+                    </Space>
+                </Space>
+            ),
+        },
+        {
+            title: 'NHÀ TỔ CHỨC',
+            key: 'organizer',
+            render: (_, record) => (
+                <Space>
+                    <Avatar size="small" style={{ backgroundColor: '#52c41a' }}>{record.organizer_name?.charAt(0)}</Avatar>
+                    <Text style={{ fontSize: 13 }}>{record.organizer_name}</Text>
+                </Space>
+            ),
+        },
+        {
+            title: 'TRẠNG THÁI',
+            key: 'status',
+            align: 'center',
+            render: (_, record) => {
+                const config = getStatusConfig(record.status);
+                return <Tag color={config.color} style={{ fontSize: '0.7rem' }}>{config.label.toUpperCase()}</Tag>;
+            },
+        },
+        {
+            title: 'NỔI BẬT',
+            key: 'featured',
+            align: 'center',
+            render: (_, record) => (
+                <Tooltip title={record.is_featured ? "Bỏ nổi bật" : "Đánh dấu nổi bật"}>
+                    <Button
+                        type="text"
+                        icon={record.is_featured ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+                        onClick={() => toggleFeatured(record)}
+                        disabled={!record.is_featured && !['APPROVED', 'PUBLISHED', 'ONGOING'].includes(record.status)}
+                    />
+                </Tooltip>
+            ),
+        },
+        {
+            title: 'THAO TÁC',
+            key: 'actions',
+            align: 'right',
+            render: (_, record) => (
                 <Button
-                    variant="contained"
-                    startIcon={<Refresh />}
-                    onClick={fetchEvents}
-                    sx={{
-                        borderRadius: 2,
-                        px: 3,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        '&:hover': { bgcolor: 'grey.100' }
-                    }}
+                    type={record.status === 'PENDING_APPROVAL' ? "primary" : "default"}
+                    size="small"
+                    icon={<EyeOutlined />}
+                    onClick={() => { setSelectedEvent(record); setShowModal(true); }}
                 >
-                    Làm mới
+                    {record.status === 'PENDING_APPROVAL' ? 'Duyệt' : 'Chi tiết'}
                 </Button>
-            </Stack>
+            ),
+        },
+    ];
 
-            {pendingCount > 0 && (
-                <Alert
-                    severity="warning"
-                    icon={<Warning fontSize="inherit" />}
-                    sx={{ mb: 4, borderRadius: 3, border: 1, borderColor: 'warning.light' }}
-                >
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            Đang có {pendingCount} sự kiện cần được bạn phê duyệt để lên sàn.
-                        </Typography>
-                    </Stack>
-                </Alert>
-            )}
-
-            {/* Filter Section */}
-            <Card sx={{ mb: 3 }}>
-                <CardContent sx={{ p: 2.5 }}>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                        <FilterList size="small" color="primary" />
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Bộ lọc tìm kiếm</Typography>
-                    </Stack>
-                    <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Tìm kiếm theo tên sự kiện..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Search fontSize="small" color="action" />
-                                        </InputAdornment>
-                                    )
-                                }}
-                                sx={{ bgcolor: 'background.paper' }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Trạng thái</InputLabel>
-                                <Select
-                                    value={filterStatus}
-                                    label="Trạng thái"
-                                    onChange={(e) => setFilterStatus(e.target.value)}
-                                >
-                                    <MenuItem value="ALL">Tất cả trạng thái</MenuItem>
-                                    <MenuItem value="PENDING_APPROVAL">Chờ duyệt</MenuItem>
-                                    <MenuItem value="APPROVED">Đã duyệt</MenuItem>
-                                    <MenuItem value="PUBLISHED">Đã xuất bản</MenuItem>
-                                    <MenuItem value="REJECTED">Từ chối</MenuItem>
-                                    <MenuItem value="DRAFT">Nháp</MenuItem>
-                                    <MenuItem value="ONGOING">Đang diễn ra</MenuItem>
-                                    <MenuItem value="COMPLETED">Hoàn thành</MenuItem>
-                                    <MenuItem value="CANCELLED">Đã hủy</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Sự kiện nổi bật</InputLabel>
-                                <Select
-                                    value={filterFeatured}
-                                    label="Sự kiện nổi bật"
-                                    onChange={(e) => setFilterFeatured(e.target.value)}
-                                >
-                                    <MenuItem value="ALL">Tất cả</MenuItem>
-                                    <MenuItem value="FEATURED">Chỉ sự kiện nổi bật</MenuItem>
-                                    <MenuItem value="NOT_FEATURED">Không nổi bật</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                    </Grid>
-                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                            Hiển thị <strong>{filteredEvents.length}</strong> / {events.length} sự kiện
-                        </Typography>
-                        {(filterStatus !== 'ALL' || filterFeatured !== 'ALL' || searchQuery) && (
+    // For icons that were missing
+    const SyncOutlined = ({ spin }) => <ReloadOutlined spin={spin} />;
+    const ClockCircleOutlined = () => <CalendarOutlined />;
+    return (
+        <Spin spinning={loading} tip="Đang tải danh sách sự kiện...">
+            <div style={{ padding: '0 24px' }}>
+                <Card
+                    title={
+                        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                            <Title level={4} style={{ margin: 0 }}>Quản Lý Sự Kiện</Title>
                             <Button
-                                size="small"
-                                onClick={() => {
-                                    setFilterStatus('ALL');
-                                    setFilterFeatured('ALL');
-                                    setSearchQuery('');
-                                }}
-                                sx={{ textTransform: 'none' }}
+                                icon={<ReloadOutlined />}
+                                onClick={() => fetchEvents()}
+                                disabled={loading}
                             >
-                                Xóa bộ lọc
+                                Làm mới
                             </Button>
-                        )}
-                    </Stack>
-                </CardContent>
-            </Card>
-
-            <Card sx={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: 4, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
-                <TableContainer>
-                    <Table sx={{ minWidth: 900 }}>
-                        <TableHead sx={{ bgcolor: 'grey.50' }}>
-                            <TableRow>
-                                <TableCell sx={{ fontWeight: 700, px: 3, py: 2 }}>ẢNH BÌA</TableCell>
-                                <TableCell sx={{ fontWeight: 700 }}>THÔNG TIN SỰ KIỆN</TableCell>
-                                <TableCell sx={{ fontWeight: 700 }}>NHÀ TỔ CHỨC</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 700 }}>TRẠNG THÁI</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 700 }}>NỔI BẬT</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 700, pr: 3 }}>THAO TÁC</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {filteredEvents.map((event) => (
-                                <TableRow key={event.event_id} hover sx={{
-                                    transition: '0.2s',
-                                    bgcolor: event.status === 'PENDING_APPROVAL' ? 'warning.lighter' : 'inherit',
-                                    '&:hover': { bgcolor: 'action.hover' }
-                                }}>
-                                    <TableCell sx={{ px: 3 }}>
-                                        <Avatar
-                                            src={event.banner_image_url?.startsWith('http') ? event.banner_image_url : `http://127.0.0.1:5000${event.banner_image_url}`}
-                                            variant="rounded"
-                                            sx={{ width: 100, height: 56, borderRadius: 2, boxShadow: 1 }}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body1" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                            {event.event_name}
-                                        </Typography>
-                                        <Stack direction="row" spacing={2} alignItems="center">
-                                            <Stack direction="row" spacing={0.5} alignItems="center">
-                                                <LocationOn sx={{ fontSize: 16, color: 'text.secondary' }} />
-                                                <Typography variant="caption" color="textSecondary">
-                                                    {event.venue?.name || event.venue_name}
-                                                </Typography>
-                                            </Stack>
-                                            <Stack direction="row" spacing={0.5} alignItems="center">
-                                                <CalendarMonth sx={{ fontSize: 16, color: 'text.secondary' }} />
-                                                <Typography variant="caption" color="textSecondary">
-                                                    {new Date(event.start_datetime).toLocaleDateString('vi-VN')}
-                                                </Typography>
-                                            </Stack>
-                                        </Stack>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Stack direction="row" spacing={1.5} alignItems="center">
-                                            <Avatar sx={{ width: 32, height: 32, fontSize: 14, bgcolor: 'primary.main' }}>
-                                                {event.organizer_name?.charAt(0)}
-                                            </Avatar>
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{event.organizer_name}</Typography>
-                                        </Stack>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Chip
-                                            label={getStatusLabel(event.status)}
-                                            color={getStatusColor(event.status)}
-                                            size="small"
-                                            sx={{ borderRadius: 1.5, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.65rem' }}
-                                        />
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Tooltip title={
-                                            event.is_featured ? "Bỏ đánh dấu nổi bật" :
-                                                ['APPROVED', 'PUBLISHED', 'ONGOING'].includes(event.status) ?
-                                                    "Đánh dấu nổi bật" :
-                                                    "Chỉ sự kiện đã duyệt mới có thể nổi bật"
-                                        }>
-                                            <span>
-                                                <IconButton
-                                                    size="small"
-                                                    color={event.is_featured ? "warning" : "default"}
-                                                    onClick={() => toggleFeatured(event)}
-                                                    disabled={!event.is_featured && !['APPROVED', 'PUBLISHED', 'ONGOING'].includes(event.status)}
-                                                    sx={{
-                                                        bgcolor: event.is_featured ? 'warning.lighter' : 'transparent',
-                                                        '&:hover': { bgcolor: 'warning.light' },
-                                                        '&.Mui-disabled': {
-                                                            opacity: 0.3
-                                                        }
-                                                    }}
-                                                >
-                                                    {event.is_featured ? <Star /> : <StarBorder />}
-                                                </IconButton>
-                                            </span>
-                                        </Tooltip>
-                                    </TableCell>
-                                    <TableCell align="right" sx={{ pr: 3 }}>
-                                        <Button
-                                            variant={event.status === 'PENDING_APPROVAL' ? "contained" : "outlined"}
-                                            size="small"
-                                            startIcon={<Visibility />}
-                                            onClick={() => { setSelectedEvent(event); setShowModal(true); }}
-                                            sx={{
-                                                borderRadius: 2,
-                                                fontWeight: 700,
-                                                boxShadow: event.status === 'PENDING_APPROVAL' ? '0 4px 12px rgba(45, 194, 117, 0.3)' : 'none'
-                                            }}
-                                        >
-                                            {event.status === 'PENDING_APPROVAL' ? 'XEM & DUYỆT' : 'CHI TIẾT'}
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Card>
-
-            {/* Event Details and Approval Dialog */}
-            <Dialog
-                open={showModal}
-                onClose={() => setShowModal(false)}
-                maxWidth="md"
-                fullWidth
-                PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden' } }}
-            >
-                {selectedEvent && (
-                    <>
-                        <Box sx={{ position: 'relative', height: 300 }}>
-                            <img
-                                src={selectedEvent.banner_image_url?.startsWith('http') ? selectedEvent.banner_image_url : `http://127.0.0.1:5000${selectedEvent.banner_image_url}`}
-                                alt="Banner"
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        </Space>
+                    }
+                    style={{ marginBottom: 24, borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                >
+                    <Row gutter={16}>
+                        <Col xs={24} md={8}>
+                            <div style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c', fontWeight: 600 }}>TÌM KIẾM</div>
+                            <Input
+                                placeholder="Tên sự kiện, địa điểm..."
+                                prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                allowClear
+                                size="large"
                             />
-                            <Box sx={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'flex-end',
-                                p: 4,
-                                color: 'white'
-                            }}>
-                                <Chip
-                                    label={selectedEvent.category?.category_name || 'SỰ KIỆN'}
-                                    size="small"
-                                    sx={{ bgcolor: 'primary.main', color: 'white', mb: 2, width: 'fit-content', fontWeight: 700 }}
-                                />
-                                <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>{selectedEvent.event_name}</Typography>
-                                <Typography variant="body1" sx={{ opacity: 0.8 }}>Do {selectedEvent.organizer_name} tổ chức</Typography>
-                            </Box>
-                        </Box>
+                        </Col>
+                        <Col xs={12} md={8}>
+                            <div style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c', fontWeight: 600 }}>TRẠNG THÁI</div>
+                            <Select
+                                value={filterStatus}
+                                style={{ width: '100%' }}
+                                onChange={setFilterStatus}
+                                size="large"
+                            >
+                                <Option value="ALL">Tất cả trạng thái</Option>
+                                <Option value="PENDING_APPROVAL">Chờ phê duyệt</Option>
+                                <Option value="APPROVED">Đã phê duyệt</Option>
+                                <Option value="PUBLISHED">Đã đăng bán</Option>
+                                <Option value="REJECTED">Đã từ chối</Option>
+                                <Option value="ONGOING">Đang diễn ra</Option>
+                                <Option value="COMPLETED">Đã kết thúc</Option>
+                            </Select>
+                        </Col>
+                        <Col xs={12} md={8}>
+                            <div style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c', fontWeight: 600 }}>NỔI BẬT</div>
+                            <Select
+                                value={filterFeatured}
+                                style={{ width: '100%' }}
+                                onChange={setFilterFeatured}
+                                size="large"
+                            >
+                                <Option value="ALL">Tất cả</Option>
+                                <Option value="FEATURED">Sự kiện nổi bật</Option>
+                                <Option value="NORMAL">Sự kiện thường</Option>
+                            </Select>
+                        </Col>
+                    </Row>
+                </Card>
 
-                        <DialogContent sx={{ p: 4 }}>
-                            <Grid container spacing={4}>
-                                <Grid item xs={12} md={7}>
-                                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>Mô tả sự kiện</Typography>
-                                    <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-                                        {selectedEvent.description || 'Không có mô tả chi tiết.'}
-                                    </Typography>
-
-                                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 800, mt: 4 }}>Phân loại vé</Typography>
-                                    <Stack spacing={1.5}>
-                                        {selectedEvent.ticket_types?.map((tt, i) => (
-                                            <Paper key={i} variant="outlined" sx={{ p: 2, borderRadius: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <Box>
-                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{tt.type_name}</Typography>
-                                                    <Typography variant="caption" color="text.secondary">{tt.description || 'Không có mô tả'}</Typography>
-                                                </Box>
-                                                <Box sx={{ textAlign: 'right' }}>
-                                                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tt.price)}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="text.secondary">SL: {tt.quantity}</Typography>
-                                                </Box>
-                                            </Paper>
-                                        ))}
-                                    </Stack>
-                                </Grid>
-                                <Grid item xs={12} md={5}>
-                                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>Thông tin tóm tắt</Typography>
-                                    <Stack spacing={2} sx={{ mt: 2 }}>
-                                        <Card variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: 'grey.50' }}>
-                                            <Stack spacing={2.5}>
-                                                <Stack direction="row" spacing={2} alignItems="center">
-                                                    <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-                                                        <LocationOn />
-                                                    </Avatar>
-                                                    <Box>
-                                                        <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 600 }}>ĐỊA ĐIỂM</Typography>
-                                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{selectedEvent.venue?.name || selectedEvent.venue_name}</Typography>
-                                                    </Box>
-                                                </Stack>
-                                                <Stack direction="row" spacing={2} alignItems="center">
-                                                    <Avatar sx={{ bgcolor: 'secondary.main', width: 40, height: 40 }}>
-                                                        <CalendarMonth />
-                                                    </Avatar>
-                                                    <Box>
-                                                        <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 600 }}>THỜI GIAN</Typography>
-                                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                                            {new Date(selectedEvent.start_datetime).toLocaleString('vi-VN')}
-                                                        </Typography>
-                                                    </Box>
-                                                </Stack>
-                                                <Stack direction="row" spacing={2} alignItems="center">
-                                                    <Avatar sx={{ bgcolor: 'success.main', width: 40, height: 40 }}>
-                                                        <Shield />
-                                                    </Avatar>
-                                                    <Box>
-                                                        <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 600 }}>TRẠNG THÁI HIỆN TẠI</Typography>
-                                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{getStatusLabel(selectedEvent.status)}</Typography>
-                                                    </Box>
-                                                </Stack>
-                                            </Stack>
-                                        </Card>
-
-                                        <Paper sx={{ p: 2, borderRadius: 3, bgcolor: 'warning.lighter', border: 1, borderColor: 'warning.light' }}>
-                                            <Typography variant="caption" color="warning.dark" sx={{ fontStyle: 'italic' }}>
-                                                * Vui lòng kiểm tra kỹ nội dung và hình ảnh trước khi phê duyệt. Nhà tổ chức sẽ nhận được thông báo ngay khi trạng thái thay đổi.
-                                            </Typography>
-                                        </Paper>
-                                    </Stack>
-                                </Grid>
-                            </Grid>
-
-                            {/* SEAT MAP REVIEW SECTION */}
-                            <Box sx={{ mt: 5 }}>
-                                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                                    <ChairIcon color="primary" />
-                                    <Typography variant="h6" sx={{ fontWeight: 800 }}>Sơ đồ chỗ ngồi</Typography>
-                                </Stack>
-
-                                {loadingMap ? (
-                                    <Box sx={{ py: 5, textAlign: 'center' }}>
-                                        <CircularProgress size={40} />
-                                        <Typography sx={{ mt: 2 }} color="text.secondary">Đang tải sơ đồ ghế...</Typography>
-                                    </Box>
-                                ) : venueTemplate ? (
-                                    <Box sx={{ p: 3, bgcolor: 'grey.50', borderRadius: 4, border: 1, borderColor: 'divider' }}>
-                                        {/* Legend */}
-                                        <Stack direction="row" spacing={3} sx={{ mb: 3 }} justifyContent="center">
-                                            <Stack direction="row" alignItems="center" spacing={1}>
-                                                <Box sx={{ width: 16, height: 16, bgcolor: '#2196f3', borderRadius: 0.5 }} />
-                                                <Typography variant="caption" sx={{ fontWeight: 600 }}>Ghế đã gán vé</Typography>
-                                            </Stack>
-                                            <Stack direction="row" alignItems="center" spacing={1}>
-                                                <Box sx={{ width: 16, height: 16, bgcolor: '#ff5252', borderRadius: 0.5 }} />
-                                                <Typography variant="caption" sx={{ fontWeight: 600 }}>Ghế bị khóa/hỏng</Typography>
-                                            </Stack>
-                                            <Stack direction="row" alignItems="center" spacing={1}>
-                                                <Box sx={{ width: 16, height: 16, bgcolor: '#e0e0e0', borderRadius: 0.5, border: 1, borderColor: 'divider' }} />
-                                                <Typography variant="caption" sx={{ fontWeight: 600 }}>Ghế trống (Chưa gán)</Typography>
-                                            </Stack>
-                                        </Stack>
-
-                                        <Box sx={{ bgcolor: 'white', p: 4, borderRadius: 2, overflowX: 'auto', border: 1, borderColor: 'divider' }}>
-                                            <SeatMapTemplateView
-                                                venueTemplate={venueTemplate}
-                                                selectedTemplateSeats={[]} // Not selecting
-                                                allOccupiedSeats={eventSeats.map(s => ({ ...s, ticket_type_id: 'other' }))} // Show as "Occupied/Other" to get the blue color
-                                                activeTicketType={null}
-                                                handleSeatMouseDown={() => { }} // Read only
-                                                handleSeatMouseEnter={() => { }} // Read only
-                                            />
-                                        </Box>
-                                    </Box>
-                                ) : (
-                                    <Alert severity="info">Địa điểm này không sử dụng sơ đồ ghế định sẵn hoặc thông tin sơ đồ không khả dụng.</Alert>
-                                )}
-                            </Box>
-                        </DialogContent>
-                        <Divider />
-                        <DialogActions sx={{ p: 3, bgcolor: 'grey.50', justifyContent: 'space-between' }}>
-                            <Button onClick={() => setShowModal(false)} color="inherit" sx={{ fontWeight: 700 }}>Đóng</Button>
-
-                            <Stack direction="row" spacing={2}>
-                                {selectedEvent.status === 'PENDING_APPROVAL' && (
-                                    <>
-                                        <Button
-                                            variant="outlined"
-                                            color="error"
-                                            startIcon={<CancelIcon />}
-                                            sx={{ px: 3, borderRadius: 2, fontWeight: 700 }}
-                                            onClick={() => handleUpdateStatus(selectedEvent.event_id, 'REJECTED')}
-                                            disabled={actionLoading}
-                                        >
-                                            TỪ CHỐI
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            color="success"
-                                            startIcon={<CheckCircle />}
-                                            sx={{ px: 4, borderRadius: 2, fontWeight: 700, bgcolor: '#2dc275', '&:hover': { bgcolor: '#219d5c' } }}
-                                            onClick={() => handleUpdateStatus(selectedEvent.event_id, 'PUBLISHED')}
-                                            disabled={actionLoading}
-                                        >
-                                            {actionLoading ? <CircularProgress size={24} /> : 'XÁC NHẬN XUẤT BẢN'}
-                                        </Button>
-                                    </>
-                                )}
-
-                                {selectedEvent.status === 'PUBLISHED' && (
-                                    <Button
-                                        variant="contained"
-                                        color="error"
-                                        startIcon={<CancelIcon />}
-                                        sx={{ borderRadius: 2, fontWeight: 700 }}
-                                        onClick={() => {
-                                            if (window.confirm("Bạn có chắc chắn muốn HỦY sự kiện này không? Hành động này sẽ thông báo tới toàn bộ người mua.")) {
-                                                handleUpdateStatus(selectedEvent.event_id, 'CANCELLED');
-                                            }
-                                        }}
-                                        disabled={actionLoading}
-                                    >
-                                        HỦY SỰ KIỆN
-                                    </Button>
-                                )}
-
-                                {selectedEvent.status === 'PENDING_DELETION' && (
-                                    <Button
-                                        variant="contained"
-                                        color="error"
-                                        startIcon={<CancelIcon />}
-                                        sx={{ px: 4, borderRadius: 2, fontWeight: 700 }}
-                                        onClick={() => handleDeleteEvent(selectedEvent.event_id)}
-                                        disabled={actionLoading}
-                                    >
-                                        CHẤP NHẬN XÓA
-                                    </Button>
-                                )}
-
-                                {(selectedEvent.status === 'REJECTED' || selectedEvent.status === 'CANCELLED') && (
-                                    <Button
-                                        variant="outlined"
-                                        color="primary"
-                                        onClick={() => handleUpdateStatus(selectedEvent.event_id, 'PENDING_APPROVAL')}
-                                        disabled={actionLoading}
-                                        sx={{ borderRadius: 2, fontWeight: 700 }}
-                                    >
-                                        KHÔI PHỤC VỀ CHỜ DUYỆT
-                                    </Button>
-                                )}
-                            </Stack>
-                        </DialogActions>
-                    </>
+                {pendingCount > 0 && (
+                    <Alert
+                        message={
+                            <Space>
+                                <WarningOutlined />
+                                <Text strong>Cần chú ý: Đang có {pendingCount} sự kiện chờ bạn phê duyệt.</Text>
+                            </Space>
+                        }
+                        type="warning"
+                        showIcon={false}
+                        style={{ marginBottom: 24, borderRadius: 8, border: 'none', backgroundColor: '#fffbe6' }}
+                    />
                 )}
-            </Dialog>
 
-            <Snackbar
-                open={toast.show}
-                autoHideDuration={4000}
-                onClose={() => setToast({ ...toast, show: false })}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-            >
-                <Alert severity={toast.variant} variant="filled" sx={{ width: '100%', borderRadius: 3, boxShadow: 6 }}>
-                    {toast.message}
-                </Alert>
-            </Snackbar>
-        </Box>
+                <Card styles={{ body: { padding: 0 } }}>
+                    <Table
+                        columns={columns}
+                        dataSource={filteredEvents}
+                        rowKey="event_id"
+                        pagination={{
+                            pageSize: 10,
+                            showTotal: (total) => `Tổng số ${total} sự kiện`
+                        }}
+                    />
+                </Card>
+
+                <Modal
+                    title={<Text strong style={{ fontSize: 18 }}>Chi Tiết Sự Kiện</Text>}
+                    open={showModal}
+                    onCancel={() => setShowModal(false)}
+                    footer={null}
+                    width={800}
+                    style={{ top: 20 }}
+                    styles={{ body: { padding: 0 } }}
+                >
+                    <Spin spinning={actionLoading} tip="Đang xử lý...">
+                        {selectedEvent && (
+                            <div>
+                                <div style={{ height: 200, position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        backgroundImage: `url(${selectedEvent.banner_image_url || 'https://via.placeholder.com/800x400?text=No+Image'})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                        filter: 'blur(10px) brightness(0.7)'
+                                    }} />
+                                    <div style={{
+                                        position: 'relative',
+                                        height: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 32px',
+                                        gap: 24
+                                    }}>
+                                        <img
+                                            src={selectedEvent.banner_image_url || 'https://via.placeholder.com/200x200?text=No+Image'}
+                                            alt={selectedEvent.event_name}
+                                            style={{
+                                                width: 120,
+                                                height: 120,
+                                                borderRadius: 8,
+                                                objectFit: 'cover',
+                                                border: '3px solid white',
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                                            }}
+                                        />
+                                        <div style={{ color: 'white' }}>
+                                            <Title level={4} style={{ color: 'white', margin: 0 }}>{selectedEvent.event_name}</Title>
+                                            <Space split={<Divider type="vertical" style={{ borderColor: 'rgba(255,255,255,0.3)' }} />}>
+                                                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>
+                                                    <EnvironmentOutlined /> {selectedEvent.venue?.name || selectedEvent.venue_name}
+                                                </Text>
+                                                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>
+                                                    <CalendarOutlined /> {new Date(selectedEvent.start_datetime).toLocaleDateString('vi-VN')}
+                                                </Text>
+                                            </Space>
+                                            <div style={{ marginTop: 12 }}>
+                                                {getStatusConfig(selectedEvent.status).label}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{ padding: 32 }}>
+                                    <Row gutter={32}>
+                                        <Col span={16}>
+                                            <Title level={5}>Mô tả</Title>
+                                            <Paragraph type="secondary">
+                                                {selectedEvent.description || 'Không có mô tả cho sự kiện này.'}
+                                            </Paragraph>
+
+                                            <Divider />
+
+                                            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                                <Text strong><AppstoreOutlined /> Sơ đồ chỗ ngồi</Text>
+                                            </Space>
+                                            {loadingMap ? (
+                                                <div style={{ padding: '40px 0', textAlign: 'center' }}>
+                                                    <Spin tip="Đang tải sơ đồ...">
+                                                        <div style={{ padding: 20 }} />
+                                                    </Spin>
+                                                </div>
+                                            ) : venueTemplate ? (
+                                                <Card size="small" style={{ background: '#fafafa' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 16, fontSize: 11 }}>
+                                                        <Space><Badge color="#f0f0f0" /> <Text type="secondary">Trống</Text></Space>
+                                                        <Space><Badge color="#52c41a" /> <Text type="secondary">Đã gán</Text></Space>
+                                                        <Space><Badge color="#ff4d4f" /> <Text type="secondary">Hạng khác</Text></Space>
+                                                    </div>
+                                                    <SeatMapTemplateView template={venueTemplate} seats={eventSeats} readonly={true} />
+                                                </Card>
+                                            ) : (
+                                                <div style={{ padding: '20px 0', textAlign: 'center', color: '#8c8c8c' }}>
+                                                    Không có thông tin sơ đồ chỗ ngồi
+                                                </div>
+                                            )}
+                                        </Col>
+
+                                        <Col span={8}>
+                                            <Title level={5}>Hành động</Title>
+                                            <Space direction="vertical" style={{ width: '100%' }}>
+                                                {selectedEvent.status === 'PENDING_APPROVAL' && (
+                                                    <div style={{ display: 'flex', gap: 8 }}>
+                                                        <Button
+                                                            type="primary"
+                                                            block
+                                                            icon={<CheckCircleOutlined />}
+                                                            onClick={() => handleUpdateStatus(selectedEvent.event_id, 'APPROVED')}
+                                                            loading={actionLoading}
+                                                        >
+                                                            Phê duyệt
+                                                        </Button>
+                                                        <Button
+                                                            danger
+                                                            block
+                                                            icon={<CloseCircleOutlined />}
+                                                            onClick={() => handleUpdateStatus(selectedEvent.event_id, 'REJECTED')}
+                                                            loading={actionLoading}
+                                                        >
+                                                            Từ chối
+                                                        </Button>
+                                                    </div>
+                                                )}
+
+                                                {selectedEvent.status === 'APPROVED' && (
+                                                    <Button
+                                                        type="primary"
+                                                        block
+                                                        onClick={() => handleUpdateStatus(selectedEvent.event_id, 'PUBLISHED')}
+                                                        loading={actionLoading}
+                                                    >
+                                                        Công khai bán vé
+                                                    </Button>
+                                                )}
+
+                                                <Button
+                                                    block
+                                                    icon={selectedEvent.is_featured ? <StarFilled style={{ color: '#fadb14' }} /> : <StarOutlined />}
+                                                    onClick={() => toggleFeatured(selectedEvent)}
+                                                    loading={actionLoading}
+                                                >
+                                                    {selectedEvent.is_featured ? 'Bỏ nổi bật' : 'Đặt làm nổi bật'}
+                                                </Button>
+
+                                                {(selectedEvent.status === 'PENDING_APPROVAL' || selectedEvent.status === 'REJECTED' || selectedEvent.status === 'PENDING_DELETION') && (
+                                                    <Button
+                                                        danger
+                                                        block
+                                                        icon={<DeleteOutlined />}
+                                                        onClick={() => handleDeleteEvent(selectedEvent.event_id)}
+                                                        loading={actionLoading}
+                                                    >
+                                                        Xóa vĩnh viễn
+                                                    </Button>
+                                                )}
+                                            </Space>
+                                        </Col>
+                                    </Row>
+                                </div>
+                            </div>
+                        )}
+                    </Spin>
+                </Modal>
+            </div>
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .pending-row { background-color: #fffbe6 !important; }
+                .pending-row:hover td { background-color: #fff1b8 !important; }
+            `}} />
+        </Spin>
     );
 };
 
 export default AdminEventsManagement;
-
-

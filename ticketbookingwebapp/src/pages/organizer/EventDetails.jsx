@@ -1,39 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-    Box,
     Card,
-    CardContent,
     Typography,
     Button,
-    Grid,
-    Stack,
-    IconButton,
-    Chip,
+    Row,
+    Col,
+    Space,
+    Tag,
     Divider,
-    Paper,
-    LinearProgress,
-    CircularProgress,
+    Progress,
+    message,
+    Spin,
     Alert,
-    Breadcrumbs,
-    Link
-} from '@mui/material';
+    Descriptions,
+    Avatar,
+    Image,
+    List
+} from 'antd';
 import {
-    ArrowBack as ArrowBackIcon,
-    Edit as EditIcon,
-    EventSeat as SeatIcon,
-    CalendarToday as CalendarIcon,
-    LocationOn as LocationIcon,
-    LocalActivity as TicketIcon,
-    TrendingUp as ChartIcon,
-    Group as GroupIcon,
-    NavigateNext as NextIcon,
-    AccessTime as TimeIcon,
-    Cancel as CancelIcon,
-    Chair as ChairIcon
-} from '@mui/icons-material';
+    ArrowLeftOutlined,
+    EditOutlined,
+    CalendarOutlined,
+    EnvironmentOutlined,
+    ClockCircleOutlined,
+    CloseCircleOutlined,
+    AppstoreOutlined,
+    InfoCircleOutlined,
+    HomeOutlined
+} from '@ant-design/icons';
 import { api } from '../../services/api';
 import SeatMapTemplateView from '../../components/Organizer/SeatMapTemplateView';
+
+const { Title, Text, Paragraph } = Typography;
 
 const EventDetails = () => {
     const { eventId } = useParams();
@@ -43,7 +42,6 @@ const EventDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Seat Map States
     const [venueTemplate, setVenueTemplate] = useState(null);
     const [eventSeats, setEventSeats] = useState([]);
     const [loadingMap, setLoadingMap] = useState(false);
@@ -102,227 +100,170 @@ const EventDetails = () => {
     const getStatusConfig = (status) => {
         const configs = {
             'PENDING_APPROVAL': { color: 'warning', label: 'CHỜ DUYỆT' },
-            'APPROVED': { color: 'info', label: 'ĐÃ DUYỆT' },
+            'APPROVED': { color: 'cyan', label: 'ĐÃ DUYỆT' },
             'REJECTED': { color: 'error', label: 'TỪ CHỐI' },
             'PUBLISHED': { color: 'success', label: 'CÔNG KHAI' },
             'DRAFT': { color: 'default', label: 'NHÁP' },
-            'ONGOING': { color: 'secondary', label: 'ĐANG DIỄN RA' },
+            'ONGOING': { color: 'processing', label: 'ĐANG DIỄN RA' },
             'COMPLETED': { color: 'default', label: 'ĐÃ KẾT THÚC' },
             'PENDING_DELETION': { color: 'error', label: 'CHỜ XÓA' }
         };
         return configs[status] || { color: 'default', label: status };
     };
 
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <CircularProgress size={60} />
-            </Box>
-        );
-    }
-
-    if (error || !event) {
-        return (
-            <Box sx={{ p: 3 }}>
-                <Alert severity="error" sx={{ borderRadius: 2 }}>{error || 'Đã xảy ra lỗi'}</Alert>
-                <Button
-                    startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate('/organizer/events')}
-                    sx={{ mt: 2 }}
-                >
-                    Quay lại danh sách
-                </Button>
-            </Box>
-        );
-    }
-
-    const soldTickets = event.sold_tickets || 0;
-    const totalCapacity = event.total_capacity || 0;
-    const soldPercentage = totalCapacity > 0 ? (soldTickets / totalCapacity) * 100 : 0;
-    const statusConfig = getStatusConfig(event.status);
-
     const handleCancelApproval = async () => {
         try {
             setLoading(true);
             const formData = new FormData();
             formData.append('status', 'DRAFT');
-
             const response = await api.updateEvent(eventId, formData);
-
             if (response.success) {
                 setEvent(prev => ({ ...prev, status: 'DRAFT' }));
-            } else {
-                alert(response.message || 'Không thể hủy yêu cầu duyệt');
+                message.success('Đã hủy yêu cầu phê duyệt');
             }
         } catch (err) {
-            console.error('Error cancelling approval:', err);
-            alert(err.message || 'Không thể hủy yêu cầu duyệt');
+            message.error(err.message || 'Lỗi khi hủy duyệt');
         } finally {
             setLoading(false);
         }
     };
 
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <Spin size="large" tip="Đang tải dữ liệu..." />
+            </div>
+        );
+    }
+
+    if (error || !event) {
+        return (
+            <div style={{ padding: 24 }}>
+                <Alert
+                    type="error"
+                    title="Lỗi"
+                    description={error || 'Đã xảy ra lỗi khi tải thông tin'}
+                    showIcon
+                />
+                <Button
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate('/organizer/events')}
+                    style={{ marginTop: 16 }}
+                >
+                    Quay lại danh sách
+                </Button>
+            </div>
+        );
+    }
+
+    const statusConfig = getStatusConfig(event.status);
+
     return (
-        <Box sx={{ pb: 4 }}>
-            {/* Breadcrumbs & Header */}
-            <Breadcrumbs
-                separator={<NextIcon fontSize="small" />}
-                sx={{ mb: 3 }}
-            >
-                <Link color="inherit" component="button" onClick={() => navigate('/organizer/dashboard')}>
-                    Dashboard
-                </Link>
-                <Link color="inherit" component="button" onClick={() => navigate('/organizer/events')}>
-                    Sự kiện
-                </Link>
-                <Typography color="text.primary">Chi tiết</Typography>
-            </Breadcrumbs>
+        <div>
+            {/* Page Header */}
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Space size={16}>
+                    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/organizer/events')} />
+                    <div>
+                        <Title level={4} style={{ margin: 0 }}>{event.event_name}</Title>
+                        <Tag color={statusConfig.color} style={{ marginTop: 4 }}>{statusConfig.label}</Tag>
+                    </div>
+                </Space>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-start" spacing={2} sx={{ mb: 4 }}>
-                <Box>
-                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
-                        <Typography variant="h4" sx={{ fontWeight: 800, color: '#1a1a1a' }}>
-                            {event.event_name}
-                        </Typography>
-                        <Chip
-                            label={statusConfig.label}
-                            color={statusConfig.color}
-                            sx={{ fontWeight: 700, borderRadius: 1 }}
-                        />
-                    </Stack>
-                    <Typography variant="body1" color="text.secondary">
-                        Quản lý và xem thống kê chi tiết sự kiện của bạn
-                    </Typography>
-                </Box>
-
-                <Stack direction="row" spacing={2}>
+                <Space>
                     {event.status === 'PENDING_APPROVAL' && (
                         <Button
-                            variant="contained"
-                            color="error"
-                            startIcon={<CancelIcon />}
+                            danger
+                            icon={<CloseCircleOutlined />}
                             onClick={handleCancelApproval}
-                            sx={{ borderRadius: 2 }}
                         >
                             Hủy duyệt
                         </Button>
                     )}
                     <Button
-                        variant="outlined"
-                        startIcon={<EditIcon />}
+                        type="primary"
+                        icon={<EditOutlined />}
                         onClick={() => navigate(`/organizer/edit-event/${eventId}`)}
                         disabled={['PENDING_APPROVAL', 'ONGOING', 'COMPLETED', 'PENDING_DELETION'].includes(event.status)}
-                        sx={{ borderRadius: 2 }}
                     >
-                        Chỉnh sửa
+                        Sửa sự kiện
                     </Button>
-                </Stack>
-            </Stack>
+                </Space>
+            </div>
 
-            <Grid container spacing={3}>
+            <Row gutter={24}>
+                {/* Left side */}
+                <Col xs={24} lg={16}>
+                    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                        {/* Event Banner & Description */}
+                        <Card styles={{ body: { padding: 0 } }} overflow="hidden">
+                            <div style={{ height: 300, backgroundColor: '#f0f2f5', overflow: 'hidden' }}>
+                                {event.banner_image_url && (
+                                    <Image
+                                        src={event.banner_image_url.startsWith('http') ? event.banner_image_url : `http://127.0.0.1:5000${event.banner_image_url}`}
+                                        width="100%"
+                                        height={300}
+                                        style={{ objectFit: 'cover' }}
+                                    />
+                                )}
+                            </div>
+                            <div style={{ padding: 24 }}>
+                                <Title level={5}>Mô tả sự kiện</Title>
+                                <Paragraph type="secondary" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
+                                    {event.description || 'Chưa có mô tả chi tiết.'}
+                                </Paragraph>
+                            </div>
+                        </Card>
 
-
-                {/* Left Column - Main Info */}
-                <Grid item xs={12} lg={8}>
-                    {/* Event Banner */}
-                    <Card sx={{ borderRadius: 4, overflow: 'hidden', mb: 3, border: '1px solid #e5e7eb' }}>
-                        <Box sx={{ position: 'relative', pt: '40%', bgcolor: '#f3f4f6' }}>
-                            {event.banner_image_url && (
-                                <Box
-                                    component="img"
-                                    src={event.banner_image_url.startsWith('http') ? event.banner_image_url : `http://127.0.0.1:5000${event.banner_image_url}`}
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover'
-                                    }}
-                                />
-                            )}
-                        </Box>
-                        <CardContent sx={{ p: 4 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Mô tả sự kiện</Typography>
-                            <Typography variant="body1" color="text.secondary" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
-                                {event.description || 'Chưa có mô tả chi tiết cho sự kiện này.'}
-                            </Typography>
-                        </CardContent>
-                    </Card>
-
-                    {/* Ticket Types Breakdown */}
-                    <Card sx={{ borderRadius: 4, border: '1px solid #e5e7eb', mb: 3 }}>
-                        <CardContent sx={{ p: 4 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>Các loại vé</Typography>
-                            <Stack spacing={2}>
+                        {/* Ticket Groups */}
+                        <Card title="DANH SÁCH LOẠI VÉ" headStyle={{ fontSize: 13, color: '#8c8c8c' }}>
+                            <Row gutter={[16, 16]}>
                                 {ticketTypes.map((tt, index) => {
                                     const soldInType = (eventSeats || []).filter(s => s.ticket_type_id === tt.ticket_type_id && s.status === 'BOOKED').length;
                                     const percentageInType = tt.quantity > 0 ? (soldInType / tt.quantity) * 100 : 0;
 
                                     return (
-                                        <Paper
-                                            key={index}
-                                            elevation={0}
-                                            sx={{
-                                                p: 3,
-                                                borderRadius: 3,
-                                                bgcolor: '#f8fafc',
-                                                border: '1px solid #f1f5f9'
-                                            }}
-                                        >
-                                            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
-                                                <Box>
-                                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                                                        {tt.type_name}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                        {tt.description || 'Vé tham dự sự kiện'}
-                                                    </Typography>
-                                                    <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
-                                                        {parseFloat(tt.price).toLocaleString()}đ
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ minWidth: 150, textAlign: { md: 'right' } }}>
-                                                    <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                                                        Tình trạng vé
-                                                    </Typography>
-                                                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                                        {soldInType} / {tt.quantity}
-                                                    </Typography>
-                                                    <LinearProgress
-                                                        variant="determinate"
-                                                        value={percentageInType}
-                                                        sx={{ height: 6, borderRadius: 3, mt: 1, bgcolor: '#e2e8f0' }}
-                                                    />
-                                                </Box>
-                                            </Stack>
-                                        </Paper>
+                                        <Col xs={24} md={12} key={index}>
+                                            <Card size="small" style={{ background: '#fafafa', borderStyle: 'dashed' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                                                    <div>
+                                                        <Text strong style={{ fontSize: 14 }}>{tt.type_name}</Text><br />
+                                                        <Text strong style={{ fontSize: 16, color: '#52c41a' }}>
+                                                            {parseFloat(tt.price).toLocaleString()}đ
+                                                        </Text>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                                            {soldInType} / {tt.quantity} vé
+                                                        </Text>
+                                                    </div>
+                                                </div>
+                                                <Progress
+                                                    percent={Math.round(percentageInType)}
+                                                    size="small"
+                                                    strokeColor="#52c41a"
+                                                    trailColor="#e8e8e8"
+                                                />
+                                            </Card>
+                                        </Col>
                                     );
                                 })}
-                            </Stack>
-                        </CardContent>
-                    </Card>
+                            </Row>
+                        </Card>
 
-                    {/* Seat Map View */}
-                    <Card sx={{ borderRadius: 4, border: '1px solid #e5e7eb' }}>
-                        <CardContent sx={{ p: 4 }}>
-                            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3 }}>
-                                <ChairIcon color="primary" />
-                                <Typography variant="h6" sx={{ fontWeight: 700 }}>Sơ đồ chỗ ngồi thực tế</Typography>
-                            </Stack>
-
+                        {/* Seat Map */}
+                        <Card
+                            title={
+                                <Space>
+                                    <AppstoreOutlined style={{ color: '#8c8c8c' }} />
+                                    <span style={{ fontSize: 13, color: '#8c8c8c' }}>SƠ ĐỒ CHỖ NGỒI THỰC TẾ</span>
+                                </Space>
+                            }
+                        >
                             {loadingMap ? (
-                                <Box sx={{ py: 10, textAlign: 'center' }}>
-                                    <CircularProgress size={40} />
-                                    <Typography sx={{ mt: 2 }} color="text.secondary">Đang tải sơ đồ ghế...</Typography>
-                                </Box>
+                                <div style={{ padding: 40, textAlign: 'center' }}><Spin /></div>
                             ) : venueTemplate ? (
-                                <Box sx={{
-                                    bgcolor: '#1a1a1a',
-                                    borderRadius: 4,
-                                    overflow: 'hidden',
-                                    border: '1px solid #333'
-                                }}>
+                                <div style={{ background: '#333', borderRadius: 8, padding: 16 }}>
                                     <SeatMapTemplateView
                                         venueTemplate={venueTemplate}
                                         selectedTemplateSeats={[]}
@@ -331,120 +272,87 @@ const EventDetails = () => {
                                         handleSeatMouseDown={() => { }}
                                         handleSeatMouseEnter={() => { }}
                                     />
-                                </Box>
+                                </div>
                             ) : (
-                                <Alert severity="info" sx={{ borderRadius: 3 }}>
-                                    Sự kiện này không sử dụng sơ đồ ghế hoặc sơ đồ không khả dụng.
-                                </Alert>
+                                <div style={{ padding: 24, textAlign: 'center', color: '#8c8c8c' }}>
+                                    <InfoCircleOutlined style={{ fontSize: 32, marginBottom: 16, opacity: 0.5 }} /><br />
+                                    <Text type="secondary">Không có sơ đồ ghế cho địa điểm này</Text>
+                                </div>
                             )}
-                        </CardContent>
-                    </Card>
-                </Grid>
+                        </Card>
+                    </Space>
+                </Col>
 
-                {/* Right Column - Timeline & Location */}
-                <Grid item xs={12} lg={4}>
-                    <Card sx={{ borderRadius: 4, mb: 3, border: '1px solid #e5e7eb' }}>
-                        <CardContent sx={{ p: 4 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>Thời gian & Địa điểm</Typography>
+                {/* Right side */}
+                <Col xs={24} lg={8}>
+                    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                        <Card title="Thông tin chi tiết">
+                            <Descriptions column={1} layout="vertical">
+                                <Descriptions.Item label={
+                                    <Space><CalendarOutlined /> <Text strong>Ngày tổ chức</Text></Space>
+                                }>
+                                    <Text type="secondary">
+                                        {event.start_datetime ? new Date(event.start_datetime).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
+                                    </Text>
+                                </Descriptions.Item>
 
-                            <Stack spacing={3}>
-                                <Stack direction="row" spacing={2}>
-                                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#f3f4f6', color: '#4b5563', display: 'flex', height: 'fit-content' }}>
-                                        <CalendarIcon />
-                                    </Box>
-                                    <Box>
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Ngày tổ chức</Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {event.start_datetime ? new Date(event.start_datetime).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Chưa xác định'}
-                                        </Typography>
-                                    </Box>
-                                </Stack>
+                                <Descriptions.Item label={
+                                    <Space><ClockCircleOutlined /> <Text strong>Thời gian</Text></Space>
+                                }>
+                                    <Text type="secondary">
+                                        {event.start_datetime ? new Date(event.start_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--'}
+                                        {' - '}
+                                        {event.end_datetime ? new Date(event.end_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--'}
+                                    </Text>
+                                </Descriptions.Item>
 
-                                <Stack direction="row" spacing={2}>
-                                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#f3f4f6', color: '#4b5563', display: 'flex', height: 'fit-content' }}>
-                                        <TimeIcon />
-                                    </Box>
-                                    <Box>
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Thời gian</Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {event.start_datetime ? new Date(event.start_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                                            -
-                                            {event.end_datetime ? new Date(event.end_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                                        </Typography>
-                                    </Box>
-                                </Stack>
+                                <Descriptions.Item label={
+                                    <Space><EnvironmentOutlined /> <Text strong>Địa điểm</Text></Space>
+                                }>
+                                    <Text type="secondary">{event.venue?.venue_name}</Text><br />
+                                    <Text type="secondary" style={{ fontSize: 12 }}>{event.venue?.address}</Text>
+                                </Descriptions.Item>
+                            </Descriptions>
 
-                                <Stack direction="row" spacing={2}>
-                                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#f3f4f6', color: '#4b5563', display: 'flex', height: 'fit-content' }}>
-                                        <LocationIcon />
-                                    </Box>
-                                    <Box>
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Địa điểm</Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {event.venue?.venue_name}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            {event.venue?.address}, {event.venue?.city}
-                                        </Typography>
-                                    </Box>
-                                </Stack>
+                            <Divider style={{ margin: '16px 0' }} />
 
-                                <Divider />
+                            <div>
+                                <Text strong style={{ display: 'block', marginBottom: 8 }}>Kênh bán vé</Text>
+                                <Text type="secondary" style={{ fontSize: 13, display: 'block' }}>
+                                    Mở: {event.sale_start_datetime ? new Date(event.sale_start_datetime).toLocaleString('vi-VN') : 'N/A'}
+                                </Text>
+                                <Text type="secondary" style={{ fontSize: 13, display: 'block' }}>
+                                    Đóng: {event.sale_end_datetime ? new Date(event.sale_end_datetime).toLocaleString('vi-VN') : 'N/A'}
+                                </Text>
+                            </div>
+                        </Card>
 
-                                <Box>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Thời gian bán vé</Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Bắt đầu: {event.sale_start_datetime ? new Date(event.sale_start_datetime).toLocaleString('vi-VN') : '---'}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Kết thúc: {event.sale_end_datetime ? new Date(event.sale_end_datetime).toLocaleString('vi-VN') : '---'}
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                        </CardContent>
-                    </Card>
+                        <Card style={{ backgroundColor: '#262626', borderColor: '#262626' }}>
+                            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                <Space>
+                                    <InfoCircleOutlined style={{ color: '#52c41a' }} />
+                                    <Text strong style={{ color: 'white', fontSize: 12 }}>THÔNG TIN HỆ THỐNG</Text>
+                                </Space>
 
-                    {/* Quick Access Info */}
-                    <Card sx={{ borderRadius: 4, bgcolor: '#1a1a1a', color: 'white' }}>
-                        <CardContent sx={{ p: 4 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Mã Sự Kiện</Typography>
-                            <Box sx={{
-                                bgcolor: 'rgba(255,255,255,0.1)',
-                                p: 2,
-                                borderRadius: 2,
-                                textAlign: 'center',
-                                fontFamily: 'monospace',
-                                fontSize: '1.5rem',
-                                fontWeight: 600,
-                                mb: 3
-                            }}>
-                                EVT-{eventId.toString().padStart(5, '0')}
-                            </Box>
-                            <Typography variant="body2" sx={{ opacity: 0.8, mb: 3 }}>
-                                Sử dụng mã này khi liên hệ với hỗ trợ kỹ thuật hoặc báo cáo vấn đề liên quan đến sự kiện.
-                            </Typography>
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                sx={{
-                                    bgcolor: 'white',
-                                    color: 'black',
-                                    fontWeight: 700,
-                                    '&:hover': { bgcolor: '#f3f4f6' }
-                                }}
-                                onClick={() => navigate('/organizer/events')}
-                            >
-                                Quay lại danh sách
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
-        </Box>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '12px 16px', borderRadius: 8 }}>
+                                    <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>ID SỰ KIỆN</Text>
+                                    <Text strong style={{ color: 'white', fontSize: 20, letterSpacing: 1, fontFamily: 'monospace' }}>
+                                        #{event.event_id.toString().padStart(6, '0')}
+                                    </Text>
+                                </div>
+
+                                <Link to="/organizer/events">
+                                    <Button block type="text" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                                        <HomeOutlined /> Quay lại trang chủ
+                                    </Button>
+                                </Link>
+                            </Space>
+                        </Card>
+                    </Space>
+                </Col>
+            </Row>
+        </div>
     );
 };
-
-// Workaround for icon import naming
-const TrendingUpIcon = ChartIcon;
 
 export default EventDetails;

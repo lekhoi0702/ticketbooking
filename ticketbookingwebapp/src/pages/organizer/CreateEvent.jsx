@@ -1,37 +1,29 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Box,
     Card,
-    CardContent,
     Typography,
     Button,
-    Alert,
-    Grid,
-    CircularProgress,
-    Stack,
-    IconButton,
-    Stepper,
-    Step,
-    StepLabel,
-    Paper,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Snackbar
-} from '@mui/material';
+    Row,
+    Col,
+    Space,
+    Steps,
+    Modal,
+    Result,
+    Spin,
+    Divider,
+    message,
+    Affix
+} from 'antd';
 import {
-    ArrowBack as ArrowBackIcon,
-    CheckCircle as CheckCircleIcon,
-    Info as InfoIcon,
-    Event as EventIcon,
-    Schedule as ScheduleIcon,
-    ConfirmationNumber as TicketIcon,
-    Image as ImageIcon,
-    Chair as ChairIcon,
-    NavigateNext as NextIcon
-} from '@mui/icons-material';
+    ArrowLeftOutlined,
+    CheckCircleOutlined,
+    EditOutlined,
+    CalendarOutlined,
+    FileTextOutlined,
+    AppstoreAddOutlined,
+    CloudUploadOutlined
+} from '@ant-design/icons';
 
 // Hooks
 import { useCreateEvent } from '../../hooks/useCreateEvent';
@@ -42,12 +34,7 @@ import EventDateTime from '../../components/Organizer/EventDateTime';
 import EventBannerUpload from '../../components/Organizer/EventBannerUpload';
 import TicketConfig from '../../components/Organizer/TicketConfig';
 
-const steps = [
-    { label: 'Thông tin cơ bản', icon: <InfoIcon /> },
-    { label: 'Thời gian', icon: <ScheduleIcon /> },
-    { label: 'Loại vé & Sơ đồ', icon: <TicketIcon /> },
-    { label: 'Ảnh bìa & Hoàn tất', icon: <ImageIcon /> }
-];
+const { Title, Text } = Typography;
 
 const CreateEvent = () => {
     const navigate = useNavigate();
@@ -63,9 +50,7 @@ const CreateEvent = () => {
         bannerPreview,
         ticketTypes,
         currentStep,
-        createdEventId,
         setError,
-        setCurrentStep,
         handleInputChange,
         handleImageChange,
         removeBanner,
@@ -79,259 +64,144 @@ const CreateEvent = () => {
 
     if (loadingData) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <Stack alignItems="center" spacing={2}>
-                    <CircularProgress size={60} thickness={4} />
-                    <Typography variant="h6" color="text.secondary">
-                        Đang tải cấu hình...
-                    </Typography>
-                </Stack>
-            </Box>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <Spin size="large" tip="Đang tải dữ liệu cấu hình..." />
+            </div>
         );
     }
 
     return (
-        <Box>
-            {/* Success Dialog */}
-            <Dialog
-                open={success}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{ sx: { borderRadius: 4, p: 2 } }}
-            >
-                <DialogContent sx={{ textAlign: 'center', py: 4 }}>
-                    <CheckCircleIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
-                    <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-                        Sơ Đồ Ghế Đã Lưu!
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                        Sự kiện của bạn và toàn bộ cấu hình sơ đồ ghế đã được khởi tạo thành công.
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Sự kiện sẽ hiển thị sau khi được Quản trị viên phê duyệt.
-                    </Typography>
-                </DialogContent>
-                <DialogActions sx={{ px: 4, pb: 4 }}>
+        <Spin spinning={loading} tip="Đang tạo sự kiện...">
+            <div>
+                {/* Header Area */}
+                <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center' }}>
                     <Button
-                        variant="contained"
-                        fullWidth
-                        size="large"
-                        onClick={() => navigate('/organizer/events')}
-                        sx={{
-                            borderRadius: 2,
-                            py: 1.5,
-                            background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
-                            fontWeight: 700
-                        }}
-                    >
-                        XEM DANH SÁCH SỰ KIỆN
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                        icon={<ArrowLeftOutlined />}
+                        onClick={() => navigate(-1)}
+                        style={{ marginRight: 16 }}
+                        disabled={loading}
+                    />
+                    <Title level={4} style={{ margin: 0 }}>Tạo sự kiện mới</Title>
+                </div>
 
-            {/* Error Snackbar */}
-            <Snackbar
-                open={!!error}
-                autoHideDuration={6000}
-                onClose={() => setError(null)}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Alert onClose={() => setError(null)} severity="error" variant="filled" sx={{ width: '100%', borderRadius: 2 }}>
-                    {error}
-                </Alert>
-            </Snackbar>
-            {/* Header */}
-            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
-                <IconButton onClick={() => navigate(-1)} sx={{ color: 'text.secondary' }}>
-                    <ArrowBackIcon />
-                </IconButton>
-                <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                        Tạo Sự Kiện Mới
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                        Bắt đầu hành trình tổ chức sự kiện của bạn
-                    </Typography>
-                </Box>
-            </Stack>
+                {/* Steps Progress */}
+                <Card style={{ marginBottom: 24 }}>
+                    <Steps
+                        current={currentStep}
+                        items={[
+                            { title: 'Thông tin cơ bản', icon: <FileTextOutlined /> },
+                            { title: 'Thời gian', icon: <CalendarOutlined /> },
+                            { title: 'Vé & Sơ đồ', icon: <AppstoreAddOutlined /> },
+                            { title: 'Banner & Hoàn tất', icon: <CloudUploadOutlined /> }
+                        ]}
+                    />
+                </Card>
 
-            {/* Progress Stepper */}
-            <Card sx={{ mb: 4, borderRadius: 3 }}>
-                <CardContent sx={{ p: 3 }}>
-                    <Stepper activeStep={currentStep} alternativeLabel>
-                        {steps.map((step, index) => (
-                            <Step key={step.label}>
-                                <StepLabel
-                                    StepIconComponent={() => (
-                                        <Box
-                                            sx={{
-                                                width: 40,
-                                                height: 40,
-                                                borderRadius: '50%',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                bgcolor: index <= currentStep ? 'primary.main' : 'primary.light',
-                                                color: index <= currentStep ? 'white' : 'primary.main',
-                                                boxShadow: index === currentStep ? '0 0 10px rgba(45, 194, 117, 0.4)' : 'none',
-                                                transition: 'all 0.3s'
-                                            }}
-                                        >
-                                            {step.icon}
-                                        </Box>
-                                    )}
-                                >
-                                    {step.label}
-                                </StepLabel>
-                            </Step>
-                        ))}
-                    </Stepper>
-                </CardContent>
-            </Card>
+                <form onSubmit={handleSubmit}>
+                    <Row gutter={24}>
+                        {/* Main Form Content */}
+                        <Col xs={24} lg={16}>
+                            <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                                {/* Section 1: Basic Info */}
+                                <Card title="1. Thông tin chung" headStyle={{ background: '#fafafa' }}>
+                                    <EventBasicInfo
+                                        formData={formData}
+                                        handleInputChange={handleInputChange}
+                                        categories={categories}
+                                        venues={venues}
+                                        disabled={loading}
+                                    />
+                                </Card>
 
-            {/* Error Alert */}
-            {error && (
-                <Alert
-                    severity="error"
-                    onClose={() => setError(null)}
-                    sx={{ mb: 3, borderRadius: 2 }}
-                >
-                    {error}
-                </Alert>
-            )}
+                                {/* Section 2: Date Time */}
+                                <Card title="2. Thời gian diễn ra" headStyle={{ background: '#fafafa' }}>
+                                    <EventDateTime
+                                        formData={formData}
+                                        handleInputChange={handleInputChange}
+                                        disabled={loading}
+                                    />
+                                </Card>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit}>
-                <Grid container spacing={3}>
-                    {/* Left Column */}
-                    <Grid item xs={12} lg={8}>
-                        {/* Basic Info */}
-                        <Card sx={{ mb: 3, borderRadius: 3 }}>
-                            <CardContent sx={{ p: 3 }}>
-                                <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
-                                    <EventIcon color="primary" />
-                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                        1. Thông tin cơ bản
-                                    </Typography>
-                                </Stack>
-                                <EventBasicInfo
-                                    formData={formData}
-                                    handleInputChange={handleInputChange}
-                                    categories={categories}
-                                    venues={venues}
-                                />
-                            </CardContent>
-                        </Card>
+                                {/* Section 3: Tickets */}
+                                <Card title="3. Cấu hình loại vé" headStyle={{ background: '#fafafa' }}>
+                                    <TicketConfig
+                                        ticketTypes={ticketTypes}
+                                        handleTicketTypeChange={handleTicketTypeChange}
+                                        addTicketType={addTicketType}
+                                        removeTicketType={removeTicketType}
+                                        venueTemplate={venueTemplate}
+                                        toggleSeatSelection={toggleSeatSelection}
+                                        toggleAreaSelection={toggleAreaSelection}
+                                        disabled={loading}
+                                    />
+                                </Card>
+                            </Space>
+                        </Col>
 
-                        {/* Date Time */}
-                        <Card sx={{ mb: 3, borderRadius: 3 }}>
-                            <CardContent sx={{ p: 3 }}>
-                                <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
-                                    <ScheduleIcon color="primary" />
-                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                        2. Thời gian tổ chức
-                                    </Typography>
-                                </Stack>
-                                <EventDateTime
-                                    formData={formData}
-                                    handleInputChange={handleInputChange}
-                                />
-                            </CardContent>
-                        </Card>
-
-                        {/* Ticket Config */}
-                        <Card sx={{ mb: 3, borderRadius: 3 }}>
-                            <CardContent sx={{ p: 3 }}>
-                                <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
-                                    <TicketIcon color="primary" />
-                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                        3. Thiết lập loại vé
-                                    </Typography>
-                                </Stack>
-                                <TicketConfig
-                                    ticketTypes={ticketTypes}
-                                    handleTicketTypeChange={handleTicketTypeChange}
-                                    addTicketType={addTicketType}
-                                    removeTicketType={removeTicketType}
-                                    venueTemplate={venueTemplate}
-                                    toggleSeatSelection={toggleSeatSelection}
-                                    toggleAreaSelection={toggleAreaSelection}
-                                />
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    {/* Right Column - Sticky Sidebar */}
-                    <Grid item xs={12} lg={4}>
-                        <Box sx={{ position: 'sticky', top: 100 }}>
-                            <Card sx={{ borderRadius: 3 }}>
-                                <CardContent sx={{ p: 3 }}>
-                                    <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
-                                        <ImageIcon color="primary" />
-                                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                            Ảnh bìa sự kiện
-                                        </Typography>
-                                    </Stack>
-
+                        {/* Sticky Sidebar */}
+                        <Col xs={24} lg={8}>
+                            <Affix offsetTop={80}>
+                                <Card title="Ảnh bìa & Hoàn tất" headStyle={{ background: '#fafafa' }}>
                                     <EventBannerUpload
                                         bannerPreview={bannerPreview}
                                         handleImageChange={handleImageChange}
                                         removeBanner={removeBanner}
+                                        disabled={loading}
                                     />
 
-                                    <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'divider' }}>
-                                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                                            Hoàn tất đăng tin
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                            Vui lòng kiểm tra kỹ tất cả thông tin. Sự kiện sau khi tạo sẽ được gửi tới Admin để phê duyệt.
-                                        </Typography>
+                                    <Divider style={{ margin: '24px 0' }} />
 
+                                    <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 24 }}>
+                                        Bằng cách nhấn xác nhận, bạn đồng ý với các điều khoản dành cho nhà tổ chức. Sự kiện sẽ ở trạng thái chờ duyệt.
+                                    </Text>
+
+                                    <Space direction="vertical" style={{ width: '100%' }} size={12}>
                                         <Button
-                                            type="submit"
-                                            variant="contained"
-                                            fullWidth
+                                            type="primary"
+                                            htmlType="submit"
+                                            block
                                             size="large"
-                                            disabled={loading}
-                                            sx={{
-                                                mb: 2,
-                                                py: 1.5,
-                                                borderRadius: 2,
-                                                background: 'linear-gradient(135deg, #2dc275 0%, #219d5c 100%)',
-                                                boxShadow: '0 4px 12px rgba(45, 194, 117, 0.2)',
-                                                fontWeight: 700,
-                                                '&:hover': {
-                                                    background: 'linear-gradient(135deg, #219d5c 0%, #17834a 100%)'
-                                                }
-                                            }}
+                                            loading={loading}
+                                            icon={<CheckCircleOutlined />}
+                                            style={{ height: 48, fontWeight: 600 }}
                                         >
-                                            {loading ? (
-                                                <>
-                                                    <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
-                                                    Đang xử lý...
-                                                </>
-                                            ) : (
-                                                'XÁC NHẬN'
-                                            )}
+                                            Xác nhận tạo
                                         </Button>
-
                                         <Button
-                                            variant="outlined"
-                                            fullWidth
-                                            onClick={() => navigate('/organizer/dashboard')}
+                                            block
+                                            size="large"
+                                            onClick={() => navigate('/organizer/events')}
                                             disabled={loading}
-                                            sx={{ borderRadius: 2 }}
                                         >
                                             Hủy bỏ
                                         </Button>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        </Box>
-                    </Grid>
-                </Grid>
-            </form>
-        </Box>
+                                    </Space>
+                                </Card>
+                            </Affix>
+                        </Col>
+                    </Row>
+                </form>
+
+                {/* Success Modal */}
+                <Modal
+                    open={success}
+                    footer={null}
+                    closable={false}
+                    centered
+                >
+                    <Result
+                        status="success"
+                        title="Khởi tạo thành công!"
+                        subTitle="Sự kiện và cấu hình sơ đồ ghế của bạn đã được nhận. Vui lòng chờ Admin phê duyệt để hiển thị công khai."
+                        extra={[
+                            <Button type="primary" key="home" onClick={() => navigate('/organizer/events')}>
+                                Quay về danh sách
+                            </Button>
+                        ]}
+                    />
+                </Modal>
+            </div>
+        </Spin>
     );
 };
 

@@ -4,6 +4,7 @@ from app.models.event import Event
 from app.models.event_category import EventCategory
 from app.models.venue import Venue
 from sqlalchemy import or_, and_
+from datetime import datetime
 
 events_bp = Blueprint("events", __name__)
 
@@ -17,9 +18,14 @@ def get_events():
         is_featured = request.args.get('is_featured', type=lambda x: x.lower() == 'true')
         limit = request.args.get('limit', 20, type=int)
         offset = request.args.get('offset', 0, type=int)
+        sort = request.args.get('sort')
         
         # Build query
-        query = Event.query
+        # We join with Venue to ensure we only show events at ACTIVE venues
+        query = db.session.query(Event).join(Venue, Event.venue_id == Venue.venue_id).filter(
+            Venue.status == 'ACTIVE',
+            Venue.is_active == True
+        )
         
         if category_id:
             query = query.filter(Event.category_id == category_id)
@@ -30,8 +36,17 @@ def get_events():
         if is_featured is not None:
             query = query.filter(Event.is_featured == is_featured)
         
-        # Order by created_at descending
-        query = query.order_by(Event.created_at.desc())
+        # Apply sorting
+        if sort == 'upcoming':
+            # Use datetime.utcnow() to match DB convention
+            # and sort by start time ascending
+            query = query.filter(Event.start_datetime >= datetime.utcnow())
+            query = query.order_by(Event.start_datetime.asc())
+        elif sort == 'newest':
+            query = query.order_by(Event.created_at.desc())
+        else:
+            # Default order by created_at descending
+            query = query.order_by(Event.created_at.desc())
         
         # Pagination
         total = query.count()
@@ -46,6 +61,7 @@ def get_events():
         }), 200
         
     except Exception as e:
+        print(f"Error in get_events: {str(e)}")
         return jsonify({
             'success': False,
             'message': str(e)
@@ -80,9 +96,11 @@ def get_featured_events():
     try:
         limit = request.args.get('limit', 10, type=int)
         
-        events = Event.query.filter(
+        events = db.session.query(Event).join(Venue, Event.venue_id == Venue.venue_id).filter(
             Event.is_featured == True,
-            Event.status == 'PUBLISHED'
+            Event.status == 'PUBLISHED',
+            Venue.status == 'ACTIVE',
+            Venue.is_active == True
         ).order_by(Event.created_at.desc()).limit(limit).all()
         
         return jsonify({
@@ -91,6 +109,7 @@ def get_featured_events():
         }), 200
         
     except Exception as e:
+        print(f"Error in get_featured_events: {str(e)}")
         return jsonify({
             'success': False,
             'message': str(e)
@@ -109,12 +128,14 @@ def search_events():
                 'message': 'Search query is required'
             }), 400
         
-        events = Event.query.filter(
+        events = db.session.query(Event).join(Venue, Event.venue_id == Venue.venue_id).filter(
             or_(
                 Event.event_name.like(f'%{query_text}%'),
                 Event.description.like(f'%{query_text}%')
             ),
-            Event.status == 'PUBLISHED'
+            Event.status == 'PUBLISHED',
+            Venue.status == 'ACTIVE',
+            Venue.is_active == True
         ).limit(limit).all()
         
         return jsonify({
@@ -123,6 +144,7 @@ def search_events():
         }), 200
         
     except Exception as e:
+        print(f"Error in search_events: {str(e)}")
         return jsonify({
             'success': False,
             'message': str(e)

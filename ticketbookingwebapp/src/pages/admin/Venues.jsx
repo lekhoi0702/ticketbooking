@@ -1,48 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
     Card,
-    CardContent,
-    Typography,
     Grid,
     Button,
-    IconButton,
-    CircularProgress,
-    Stack,
+    Typography,
+    Space,
+    Tag,
+    Modal,
+    InputNumber,
+    Input,
+    message,
+    Spin,
     Divider,
-    Paper,
-    TextField,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Snackbar,
-    Alert,
     Tooltip,
-    Chip,
-    InputAdornment,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow
-} from '@mui/material';
+    Row,
+    Col,
+    Badge,
+    List,
+    Alert
+} from 'antd';
 import {
-    Refresh,
-    LocationOn,
-    Chair,
-    Edit,
-    Save,
-    Close,
-    EventSeat,
-    Groups,
-    Add,
-    Delete,
-    GridView,
-    Block
-} from '@mui/icons-material';
+    ReloadOutlined,
+    EnvironmentOutlined,
+    EditOutlined,
+    SaveOutlined,
+    CloseOutlined,
+    PlusOutlined,
+    DeleteOutlined,
+    AppstoreOutlined,
+    StopOutlined,
+    InfoCircleOutlined,
+    ToolOutlined
+} from '@ant-design/icons';
 import { api } from '../../services/api';
+
+const { Text, Title } = Typography;
 
 const VenuesManagement = () => {
     const [loading, setLoading] = useState(true);
@@ -51,8 +43,15 @@ const VenuesManagement = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [saving, setSaving] = useState(false);
     const [areas, setAreas] = useState([]);
-    const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
     const [activeAreaIndex, setActiveAreaIndex] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragAction, setDragAction] = useState(null); // 'lock' or 'unlock'
+
+    useEffect(() => {
+        const handleGlobalMouseUp = () => setIsDragging(false);
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+        return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    }, []);
 
     useEffect(() => {
         fetchVenues();
@@ -65,19 +64,14 @@ const VenuesManagement = () => {
             if (res.success) setVenues(res.data);
         } catch (error) {
             console.error("Error fetching venues:", error);
-            showToast("Error loading venues information", "error");
+            message.error("Lỗi khi tải thông tin địa điểm");
         } finally {
             setLoading(false);
         }
     };
 
-    const showToast = (message, variant = 'success') => {
-        setToast({ show: true, message, variant });
-    };
-
     const handleEditLayout = (venue) => {
         setSelectedVenue(venue);
-        // Parse template or init empty
         const template = venue.seat_map_template || { areas: [] };
         setAreas(template.areas || []);
         setActiveAreaIndex(0);
@@ -89,7 +83,7 @@ const VenuesManagement = () => {
             name: `Khu vực ${areas.length + 1}`,
             rows: 5,
             cols: 10,
-            locked_seats: [] // list of "row-col" strings
+            locked_seats: []
         };
         setAreas([...areas, newArea]);
         setActiveAreaIndex(areas.length);
@@ -106,7 +100,6 @@ const VenuesManagement = () => {
     const updateAreaProperty = (index, prop, value) => {
         const newAreas = [...areas];
         newAreas[index][prop] = value;
-        // If shrinking rows/cols, we might want to clean up locked_seats that fall out of bounds
         setAreas(newAreas);
     };
 
@@ -122,10 +115,38 @@ const VenuesManagement = () => {
         setAreas(newAreas);
     };
 
+    const handleSeatMouseDown = (areaIndex, row, col) => {
+        setIsDragging(true);
+        const seatId = `${row}-${col}`;
+        const area = areas[areaIndex];
+        const isCurrentlyLocked = area.locked_seats.includes(seatId);
+        const action = isCurrentlyLocked ? 'unlock' : 'lock';
+        setDragAction(action);
+        applySeatAction(areaIndex, row, col, action);
+    };
+
+    const handleSeatMouseEnter = (areaIndex, row, col) => {
+        if (!isDragging) return;
+        applySeatAction(areaIndex, row, col, dragAction);
+    };
+
+    const applySeatAction = (areaIndex, row, col, action) => {
+        const seatId = `${row}-${col}`;
+        const newAreas = [...areas];
+        const area = newAreas[areaIndex];
+
+        if (action === 'lock' && !area.locked_seats.includes(seatId)) {
+            area.locked_seats = [...area.locked_seats, seatId];
+            setAreas(newAreas);
+        } else if (action === 'unlock' && area.locked_seats.includes(seatId)) {
+            area.locked_seats = area.locked_seats.filter(id => id !== seatId);
+            setAreas(newAreas);
+        }
+    };
+
     const handleSaveLayout = async () => {
         try {
             setSaving(true);
-            // Calculate total capacity
             const totalCapacity = areas.reduce((sum, area) => sum + (area.rows * area.cols), 0);
 
             const payload = {
@@ -135,14 +156,27 @@ const VenuesManagement = () => {
 
             const res = await api.updateVenueSeats(selectedVenue.venue_id, payload);
             if (res.success) {
-                showToast("Venue layout and seat map updated successfully!");
+                message.success("Cập nhật sơ đồ địa điểm thành công!");
                 setShowEditModal(false);
                 fetchVenues();
             }
         } catch (error) {
-            showToast(error.message, "error");
+            message.error(error.message);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleToggleMaintenance = async (venue) => {
+        const newStatus = venue.status === 'MAINTENANCE' ? 'ACTIVE' : 'MAINTENANCE';
+        try {
+            const res = await api.updateVenueStatus(venue.venue_id, newStatus);
+            if (res.success) {
+                message.success(`Đã chuyển ${venue.venue_name} sang ${newStatus === 'MAINTENANCE' ? 'chế độ bảo trì' : 'trạng thái hoạt động'}`);
+                fetchVenues();
+            }
+        } catch (error) {
+            message.error(error.message);
         }
     };
 
@@ -153,312 +187,283 @@ const VenuesManagement = () => {
             for (let c = 1; c <= area.cols; c++) {
                 const isLocked = area.locked_seats.includes(`${r}-${c}`);
                 cols.push(
-                    <Tooltip title={`Hàng ${r}, Ghế ${c} ${isLocked ? '(Hỏng/Khóa)' : ''}`} key={`${r}-${c}`}>
-                        <Box
-                            onClick={() => toggleSeatLock(areaIndex, r, c)}
-                            sx={{
-                                width: 28,
-                                height: 28,
-                                m: 0.5,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: 1,
-                                cursor: 'pointer',
-                                bgcolor: isLocked ? 'error.main' : 'grey.200',
-                                color: isLocked ? 'white' : 'text.secondary',
-                                fontSize: 10,
-                                fontWeight: 'bold',
-                                transition: 'all 0.2s',
-                                '&:hover': {
-                                    bgcolor: isLocked ? 'error.dark' : 'primary.light',
-                                    transform: 'scale(1.1)'
-                                }
-                            }}
-                        >
-                            {isLocked ? <Block sx={{ fontSize: 14 }} /> : `${String.fromCharCode(64 + r)}${c}`}
-                        </Box>
+                    <Tooltip title={`Hàng ${r}, Ghế ${c} ${isLocked ? '(Hỏng/Khóa)' : ''}`} key={`${r}-${c}`}><div
+                        onMouseDown={() => handleSeatMouseDown(areaIndex, r, c)}
+                        onMouseEnter={() => handleSeatMouseEnter(areaIndex, r, c)}
+                        style={{
+                            width: 28,
+                            height: 28,
+                            margin: 4,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: 4,
+                            cursor: 'pointer',
+                            backgroundColor: isLocked ? '#ff4d4f' : '#f0f0f0',
+                            color: isLocked ? 'white' : 'rgba(0,0,0,0.45)',
+                            fontSize: 10,
+                            fontWeight: 'bold',
+                            userSelect: 'none',
+                            transition: 'all 0.2s',
+                            border: isLocked ? 'none' : '1px solid #d9d9d9'
+                        }}
+                        className="seat-item"
+                    >
+                        {isLocked ? <StopOutlined style={{ fontSize: 14 }} /> : `${String.fromCharCode(64 + r)}${c}`}
+                    </div>
                     </Tooltip>
                 );
             }
             rows.push(
-                <Box key={r} sx={{ display: 'flex', justifyContent: 'center' }}>
+                <div key={r} style={{ display: 'flex', justifyContent: 'center' }}>
                     {cols}
-                </Box>
+                </div>
             );
         }
         return (
-            <Box sx={{
-                p: 2,
-                bgcolor: '#f5f5f5',
-                borderRadius: 2,
+            <div style={{
+                padding: '24px',
+                backgroundColor: '#fafafa',
+                borderRadius: 8,
                 overflowX: 'auto',
                 minHeight: 200,
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center'
+                alignItems: 'center',
+                border: '1px solid #f0f0f0'
             }}>
-                <Box sx={{ mb: 2, width: '100%', textAlign: 'center' }}>
-                    <Chip label="Sân khấu / Màn hình" sx={{ width: '60%', mb: 4, borderRadius: '0 0 20px 20px' }} />
-                </Box>
+                <div style={{ marginBottom: 32, width: '100%', textAlign: 'center' }}>
+                    <div style={{
+                        width: '60%',
+                        margin: '0 auto',
+                        padding: '8px',
+                        background: '#e8e8e8',
+                        borderRadius: '0 0 20px 20px',
+                        fontSize: 12,
+                        color: '#8c8c8c',
+                        fontWeight: 600
+                    }}>
+                        SÂN KHẤU / MÀN HÌNH
+                    </div>
+                </div>
                 {rows}
-            </Box>
+            </div>
         );
     };
 
     if (loading && venues.length === 0) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-                <CircularProgress />
-            </Box>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
+                <Spin tip="Đang tải dữ liệu...">
+                    <div style={{ padding: 50 }} />
+                </Spin>
+            </div>
         );
     }
 
     return (
-        <Box>
-            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
-                        Thiết Kế Sơ Đồ Địa Điểm
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Xây dựng bố cục khu vực, hàng ghế và quản lý trang thiết bị.
-                    </Typography>
-                </Box>
-                <Button
-                    variant="outlined"
-                    startIcon={<Refresh />}
-                    onClick={fetchVenues}
-                    size="small"
-                    sx={{ color: 'text.secondary', borderColor: 'divider' }}
-                >
-                    Làm mới
-                </Button>
-            </Stack>
+        <Spin spinning={loading || saving} tip="Vui lòng đợi...">
+            <div>
+                <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'flex-end' }}>
+                    <Button icon={<ReloadOutlined />} onClick={fetchVenues} disabled={loading || saving}>Làm mới</Button>
+                </Space>
 
-            <Grid container spacing={3}>
-                {venues.map((venue) => {
-                    const template = venue.seat_map_template || { areas: [] };
-                    const areaCount = template.areas?.length || 0;
-                    const totalSeats = template.areas?.reduce((sum, a) => sum + (a.rows * a.cols), 0) || 0;
-                    const lockedCount = template.areas?.reduce((sum, a) => sum + (a.locked_seats?.length || 0), 0) || 0;
+                <Row gutter={[24, 24]}>
+                    {venues.map((venue) => {
+                        const template = venue.seat_map_template || { areas: [] };
+                        const areaCount = template.areas?.length || 0;
+                        const totalSeats = template.areas?.reduce((sum, a) => sum + (a.rows * a.cols), 0) || 0;
+                        const lockedCount = template.areas?.reduce((sum, a) => sum + (a.locked_seats?.length || 0), 0) || 0;
 
-                    return (
-                        <Grid item xs={12} md={6} lg={4} key={venue.venue_id}>
-                            <Card sx={{ height: '100%' }}>
-                                <CardContent>
-                                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                                        <Box>
-                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.2 }}>
-                                                {venue.venue_name}
-                                            </Typography>
-                                            <Typography variant="caption" color="textSecondary" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                <LocationOn sx={{ fontSize: 14, mr: 0.3 }} /> {venue.city || 'Chưa cập nhật'}
-                                            </Typography>
-                                        </Box>
-                                        <Chip
-                                            label={venue.is_active ? "Sẵn sàng" : "Bản nháp"}
-                                            size="small"
-                                            variant="outlined"
-                                            color={venue.is_active ? "success" : "default"}
-                                            sx={{ borderRadius: 1, fontWeight: 600 }}
-                                        />
-                                    </Stack>
-
-                                    <Divider sx={{ my: 1.5, borderColor: '#f0f0f0' }} />
-
-                                    <Grid container spacing={2} sx={{ mb: 2 }}>
-                                        <Grid item xs={4}>
-                                            <Typography variant="caption" color="textSecondary" display="block">KHU VỰC</Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{areaCount}</Typography>
-                                        </Grid>
-                                        <Grid item xs={4}>
-                                            <Typography variant="caption" color="textSecondary" display="block">TỔNG GHẾ</Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{totalSeats}</Typography>
-                                        </Grid>
-                                        <Grid item xs={4}>
-                                            <Typography variant="caption" color="textSecondary" display="block">GHẾ HỎNG</Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>{lockedCount}</Typography>
-                                        </Grid>
-                                    </Grid>
-
-                                    <Button
-                                        fullWidth
-                                        variant="outlined"
-                                        startIcon={<GridView />}
-                                        onClick={() => handleEditLayout(venue)}
-                                        size="small"
-                                    >
-                                        Cài đặt sơ đồ
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    );
-                })}
-            </Grid>
-
-            {/* Editor Dialog */}
-            <Dialog
-                open={showEditModal}
-                onClose={() => !saving && setShowEditModal(false)}
-                maxWidth="lg"
-                fullWidth
-            >
-                <Box sx={{ p: 2.5, borderBottom: '1px solid #EBEEF5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            Thiết Kế Sơ Đồ: {selectedVenue?.venue_name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            Cấu trúc khu vực và trạng thái ghế ngồi
-                        </Typography>
-                    </Box>
-                    <IconButton size="small" onClick={() => setShowEditModal(false)} disabled={saving}>
-                        <Close fontSize="small" />
-                    </IconButton>
-                </Box>
-
-                <DialogContent sx={{ p: 0, display: 'flex' }}>
-                    {/* Sidebar - Area Management */}
-                    <Box sx={{ width: 300, borderRight: '1px solid #eee', p: 3, bgcolor: '#fafafa', overflowY: 'auto' }}>
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            startIcon={<Add />}
-                            onClick={addNewArea}
-                            sx={{ mb: 3, borderRadius: 2 }}
-                        >
-                            Thêm khu vực mới
-                        </Button>
-
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'text.secondary', textTransform: 'uppercase', fontSize: 11 }}>
-                            Danh sách khu vực ({areas.length})
-                        </Typography>
-
-                        <Stack spacing={1}>
-                            {areas.map((area, idx) => (
-                                <Paper
-                                    key={idx}
-                                    onClick={() => setActiveAreaIndex(idx)}
-                                    elevation={0}
-                                    sx={{
-                                        p: 1.5,
-                                        cursor: 'pointer',
-                                        borderRadius: 2,
-                                        border: '1px solid',
-                                        borderColor: activeAreaIndex === idx ? 'primary.main' : 'divider',
-                                        bgcolor: activeAreaIndex === idx ? 'primary.lighter' : 'white',
-                                        transition: 'all 0.2s',
-                                        position: 'relative'
-                                    }}
+                        return (
+                            <Col xs={24} md={12} lg={8} key={venue.venue_id}>
+                                <Card
+                                    hoverable
+                                    actions={[
+                                        <Button type="link" icon={<EditOutlined />} onClick={() => handleEditLayout(venue)} disabled={loading || saving}>Sơ đồ</Button>,
+                                        <Button
+                                            type="link"
+                                            danger={venue.status !== 'MAINTENANCE'}
+                                            icon={<ToolOutlined />}
+                                            onClick={() => handleToggleMaintenance(venue)}
+                                            disabled={loading || saving}
+                                        >
+                                            {venue.status === 'MAINTENANCE' ? 'Kết thúc bảo trì' : 'Bảo trì'}
+                                        </Button>
+                                    ]}
                                 >
-                                    <Typography variant="body2" sx={{ fontWeight: activeAreaIndex === idx ? 700 : 500, color: activeAreaIndex === idx ? 'primary.main' : 'text.primary' }}>
-                                        {area.name}
-                                    </Typography>
-                                    <Typography variant="caption" color="textSecondary">
-                                        {area.rows} hàng x {area.cols} cột ({area.rows * area.cols} ghế)
-                                    </Typography>
-                                    <IconButton
-                                        size="small"
-                                        sx={{ position: 'absolute', top: 5, right: 5, color: 'error.light' }}
-                                        onClick={(e) => { e.stopPropagation(); removeArea(idx); }}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                                        <div>
+                                            <Title level={5} style={{ margin: 0 }}>{venue.venue_name}</Title>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                <EnvironmentOutlined /> {venue.city || 'Chưa cập nhật'}
+                                            </Text>
+                                        </div>
+                                        <Space size={4}>
+                                            {venue.status === 'MAINTENANCE' && <Tag color="warning" icon={<ToolOutlined />}>BẢO TRÌ</Tag>}
+                                            <Tag color={venue.is_active ? 'success' : 'default'}>
+                                                {venue.is_active ? 'SẴN SÀNG' : 'BẢN NHÁP'}
+                                            </Tag>
+                                        </Space>
+                                    </div>
+
+                                    <Divider style={{ margin: '12px 0' }} />
+
+                                    <Row gutter={16}>
+                                        <Col span={8}>
+                                            <Text type="secondary" style={{ fontSize: 11 }}>KHU VỰC</Text><br />
+                                            <Text strong>{areaCount}</Text>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Text type="secondary" style={{ fontSize: 11 }}>TỔNG GHẾ</Text><br />
+                                            <Text strong>{totalSeats}</Text>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Text type="secondary" style={{ fontSize: 11 }}>GHẾ HỎNG</Text><br />
+                                            <Text strong style={{ color: lockedCount > 0 ? '#ff4d4f' : 'inherit' }}>{lockedCount}</Text>
+                                        </Col>
+                                    </Row>
+                                </Card>
+                            </Col>
+                        );
+                    })}
+                </Row>
+
+                <Modal
+                    title={`Thiết Kế Sơ Đồ: ${selectedVenue?.venue_name}`}
+                    open={showEditModal}
+                    onCancel={() => !saving && setShowEditModal(false)}
+                    width={1100}
+                    style={{ top: 20 }}
+                    footer={[
+                        <Button key="cancel" onClick={() => setShowEditModal(false)} disabled={saving}>Hủy bỏ</Button>,
+                        <Button key="save" type="primary" icon={<SaveOutlined />} onClick={handleSaveLayout} loading={saving} disabled={areas.length === 0}>
+                            Lưu sơ đồ địa điểm
+                        </Button>
+                    ]}
+                    styles={{ body: { padding: 0 } }}
+                >
+                    <div style={{ display: 'flex', height: '70vh' }}>
+                        {/* Sidebar */}
+                        <div style={{ width: 280, borderRight: '1px solid #f0f0f0', padding: 24, backgroundColor: '#fafafa', overflowY: 'auto' }}>
+                            <Button
+                                block
+                                type="dashed"
+                                icon={<PlusOutlined />}
+                                onClick={addNewArea}
+                                style={{ marginBottom: 24 }}
+                                disabled={saving}
+                            >
+                                Thêm khu vực mới
+                            </Button>
+
+                            <Text strong style={{ fontSize: 11, color: '#8c8c8c', textTransform: 'uppercase' }}>
+                                Danh sách khu vực ({areas.length})
+                            </Text>
+
+                            <div style={{ marginTop: 16 }}>
+                                {areas.map((area, idx) => (
+                                    <div
+                                        key={idx}
+                                        onClick={() => !saving && setActiveAreaIndex(idx)}
+                                        style={{
+                                            padding: '12px 16px',
+                                            marginBottom: 8,
+                                            borderRadius: 8,
+                                            border: '1px solid',
+                                            borderColor: activeAreaIndex === idx ? '#52c41a' : '#f0f0f0',
+                                            backgroundColor: activeAreaIndex === idx ? '#f6ffed' : 'white',
+                                            cursor: saving ? 'not-allowed' : 'pointer',
+                                            position: 'relative',
+                                            transition: 'all 0.3s'
+                                        }}
                                     >
-                                        <Delete fontSize="inherit" />
-                                    </IconButton>
-                                </Paper>
-                            ))}
-                        </Stack>
-                    </Box>
-
-                    {/* Main - Layout Editor */}
-                    <Box sx={{ flexGrow: 1, p: 4, overflowY: 'auto' }}>
-                        {areas.length > 0 ? (
-                            <Box>
-                                <Grid container spacing={3} sx={{ mb: 4 }}>
-                                    <Grid item xs={12} md={4}>
-                                        <TextField
-                                            fullWidth
-                                            label="Tên khu vực"
+                                        <Text strong style={{ color: activeAreaIndex === idx ? '#52c41a' : 'inherit' }}>{area.name}</Text><br />
+                                        <Text type="secondary" style={{ fontSize: 11 }}>{area.rows} x {area.cols} ({area.rows * area.cols} ghế)</Text>
+                                        <Button
+                                            type="text"
                                             size="small"
-                                            value={areas[activeAreaIndex].name}
-                                            onChange={(e) => updateAreaProperty(activeAreaIndex, 'name', e.target.value)}
+                                            danger
+                                            icon={<DeleteOutlined />}
+                                            style={{ position: 'absolute', top: 12, right: 8 }}
+                                            onClick={(e) => { e.stopPropagation(); !saving && removeArea(idx); }}
+                                            disabled={saving}
                                         />
-                                    </Grid>
-                                    <Grid item xs={6} md={2}>
-                                        <TextField
-                                            fullWidth
-                                            type="number"
-                                            label="Số hàng"
-                                            size="small"
-                                            value={areas[activeAreaIndex].rows}
-                                            onChange={(e) => updateAreaProperty(activeAreaIndex, 'rows', parseInt(e.target.value) || 1)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={6} md={2}>
-                                        <TextField
-                                            fullWidth
-                                            type="number"
-                                            label="Số cột"
-                                            size="small"
-                                            value={areas[activeAreaIndex].cols}
-                                            onChange={(e) => updateAreaProperty(activeAreaIndex, 'cols', parseInt(e.target.value) || 1)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Typography variant="body2" color="error" sx={{ fontWeight: 600 }}>
-                                            <Block sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'middle' }} />
-                                            {areas[activeAreaIndex].locked_seats.length} ghế hỏng/khóa
-                                        </Typography>
-                                    </Grid>
-                                </Grid>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-                                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>Trình xem trước sơ đồ</Typography>
+                        {/* Editor */}
+                        <div style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
+                            {areas.length > 0 ? (
+                                <div>
+                                    <Row gutter={24} style={{ marginBottom: 32 }}>
+                                        <Col span={10}>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>TÊN KHU VỰC</Text>
+                                            <Input
+                                                value={areas[activeAreaIndex].name}
+                                                onChange={e => updateAreaProperty(activeAreaIndex, 'name', e.target.value)}
+                                                disabled={saving}
+                                            />
+                                        </Col>
+                                        <Col span={4}>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>SỐ HÀNG</Text><br />
+                                            <InputNumber
+                                                min={1} max={50}
+                                                value={areas[activeAreaIndex].rows}
+                                                onChange={val => updateAreaProperty(activeAreaIndex, 'rows', val || 1)}
+                                                style={{ width: '100%' }}
+                                                disabled={saving}
+                                            />
+                                        </Col>
+                                        <Col span={4}>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>SỐ CỘT</Text><br />
+                                            <InputNumber
+                                                min={1} max={50}
+                                                value={areas[activeAreaIndex].cols}
+                                                onChange={val => updateAreaProperty(activeAreaIndex, 'cols', val || 1)}
+                                                style={{ width: '100%' }}
+                                                disabled={saving}
+                                            />
+                                        </Col>
+                                        <Col span={6} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                                            <Tag color="error" icon={<StopOutlined />}>
+                                                {areas[activeAreaIndex].locked_seats.length} ghế hỏng
+                                            </Tag>
+                                        </Col>
+                                    </Row>
 
-                                {renderSeatMap(areas[activeAreaIndex], activeAreaIndex)}
+                                    <Title level={5}>Trình xem trước sơ đồ</Title>
+                                    {renderSeatMap(areas[activeAreaIndex], activeAreaIndex)}
 
-                                <Box sx={{ mt: 3, p: 2, bgcolor: 'info.lighter', borderRadius: 2, display: 'flex', alignItems: 'center' }}>
-                                    <Alert severity="info" variant="standard" sx={{ bgcolor: 'transparent', p: 0 }}>
-                                        Hướng dẫn: Click vào từng ghế để chuyển trạng thái giữa <b>Bình thường</b> và <b>Hỏng (Không thể bán)</b>.
-                                    </Alert>
-                                </Box>
-                            </Box>
-                        ) : (
-                            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'text.secondary' }}>
-                                <GridView sx={{ fontSize: 64, mb: 2, opacity: 0.1 }} />
-                                <Typography>Hãy thêm ít nhất một khu vực để bắt đầu thiết kế</Typography>
-                            </Box>
-                        )}
-                    </Box>
-                </DialogContent>
-
-                <DialogActions sx={{ p: 3, borderTop: '1px solid #eee', bgcolor: '#fafafa' }}>
-                    <Button onClick={() => setShowEditModal(false)} disabled={saving} color="inherit">
-                        Hủy bỏ
-                    </Button>
-                    <Button
-                        variant="contained"
-                        startIcon={saving ? <CircularProgress size={20} /> : <Save />}
-                        onClick={handleSaveLayout}
-                        disabled={saving || areas.length === 0}
-                        sx={{ px: 4, borderRadius: 2 }}
-                    >
-                        Lưu sơ đồ địa điểm
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            <Snackbar
-                open={toast.show}
-                autoHideDuration={4000}
-                onClose={() => setToast({ ...toast, show: false })}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-            >
-                <Alert severity={toast.variant} sx={{ width: '100%', borderRadius: 2, boxShadow: 3 }}>
-                    {toast.message}
-                </Alert>
-            </Snackbar>
-        </Box>
+                                    <Alert
+                                        type="info"
+                                        showIcon
+                                        icon={<InfoCircleOutlined />}
+                                        title="Hướng dẫn"
+                                        description="Click hoặc đè chuột và kéo để đánh dấu/bỏ đánh dấu nhiều ghế hỏng cùng lúc. Ghế hỏng sẽ có màu đỏ."
+                                        style={{ marginTop: 24 }}
+                                    />
+                                </div>
+                            ) : (
+                                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+                                    <AppstoreOutlined style={{ fontSize: 64, marginBottom: 16 }} />
+                                    <Text>Thêm khu vực để bắt đầu thiết kế sơ đồ</Text>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </Modal>
+                <style dangerouslySetInnerHTML={{
+                    __html: `
+                    .seat-item:hover {
+                        box-shadow: 0 0 8px rgba(82, 196, 26, 0.4);
+                        border-color: #52c41a !important;
+                    }
+                `}} />
+            </div>
+        </Spin>
     );
 };
 

@@ -1,25 +1,21 @@
 import React from 'react';
 import {
     Card,
-    CardContent,
-    CardHeader,
     Typography,
     List,
-    ListItem,
-    ListItemButton,
-    ListItemText,
-    ListItemIcon,
-    Box,
-    LinearProgress,
-    Stack,
+    Space,
+    Progress,
     Divider,
-    Paper
-} from '@mui/material';
+    Badge
+} from 'antd';
 import {
-    Chair as ChairIcon,
-    Info as InfoIcon,
-    CheckCircle as CheckCircleIcon
-} from '@mui/icons-material';
+    AppstoreOutlined,
+    InfoCircleOutlined,
+    CheckCircleFilled,
+    VerticalAlignMiddleOutlined
+} from '@ant-design/icons';
+
+const { Text } = Typography;
 
 const TicketTypeSidebar = ({
     ticketTypes,
@@ -30,158 +26,73 @@ const TicketTypeSidebar = ({
     venueName
 }) => {
     return (
-        <Stack spacing={3}>
-            <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                <CardHeader
-                    title="HẠNG VÉ SỰ KIỆN"
-                    titleTypographyProps={{
-                        variant: 'caption',
-                        fontWeight: 700,
-                        letterSpacing: 1,
-                        color: 'text.secondary'
-                    }}
-                    sx={{ bgcolor: 'action.hover', borderBottom: 1, borderColor: 'divider', py: 1.5 }}
-                />
-                <List disablePadding>
-                    {ticketTypes.map((tt, index) => {
+        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+            <Card
+                title={<span style={{ fontSize: 11, color: '#8c8c8c', fontWeight: 600 }}>HẠNG VÉ SỰ KIỆN</span>}
+                styles={{ body: { padding: 0 } }}
+            >
+                <List
+                    dataSource={ticketTypes}
+                    renderItem={(tt, index) => {
                         const isActive = activeTicketType?.ticket_type_id === tt.ticket_type_id;
                         const assignedCount = allOccupiedSeats.filter(s => String(s.ticket_type_id) === String(tt.ticket_type_id)).length;
                         const isFull = assignedCount >= tt.quantity;
                         const progress = Math.min(100, (assignedCount / tt.quantity) * 100);
 
                         return (
-                            <React.Fragment key={tt.ticket_type_id}>
-                                <ListItem disablePadding>
-                                    <ListItemButton
-                                        selected={isActive}
-                                        onClick={() => setActiveTicketType(tt)}
-                                        sx={{
-                                            py: 2.5,
-                                            px: 3,
-                                            borderLeft: isActive ? 4 : 0,
-                                            borderColor: 'primary.main',
-                                            transition: 'all 0.2s',
-                                            '&.Mui-selected': {
-                                                bgcolor: 'primary.lighter',
-                                                '&:hover': { bgcolor: 'primary.lighter' }
-                                            }
-                                        }}
-                                    >
-                                        <Stack spacing={1} sx={{ width: '100%' }}>
-                                            <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                                <Box>
-                                                    <Typography
-                                                        variant="subtitle1"
-                                                        sx={{
-                                                            fontWeight: 700,
-                                                            color: isActive ? 'primary.main' : 'text.primary'
-                                                        }}
-                                                    >
-                                                        {tt.type_name}
-                                                    </Typography>
-                                                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                                                        <Typography
-                                                            variant="caption"
-                                                            sx={{
-                                                                fontWeight: 700,
-                                                                color: assignedCount > 0 ? 'success.main' : 'text.disabled'
-                                                            }}
-                                                        >
-                                                            {assignedCount}
-                                                        </Typography>
-                                                        <Typography variant="caption" color="text.disabled">/</Typography>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {tt.quantity} ghế
-                                                        </Typography>
-                                                        {isFull && <CheckCircleIcon sx={{ fontSize: 14, color: 'success.main' }} />}
-                                                    </Stack>
-                                                </Box>
-                                                <Box
-                                                    sx={{
-                                                        width: 32,
-                                                        height: 32,
-                                                        borderRadius: '50%',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        bgcolor: isActive ? 'primary.main' : 'action.hover',
-                                                        color: isActive ? 'white' : 'text.disabled'
-                                                    }}
-                                                >
-                                                    <ChairIcon sx={{ fontSize: 16 }} />
-                                                </Box>
-                                            </Stack>
-
-                                            {isActive && (
-                                                <LinearProgress
-                                                    variant="determinate"
-                                                    value={progress}
-                                                    sx={{
-                                                        height: 4,
-                                                        borderRadius: 2,
-                                                        bgcolor: 'rgba(0,0,0,0.05)',
-                                                        '& .MuiLinearProgress-bar': { borderRadius: 2 }
-                                                    }}
-                                                />
-                                            )}
-                                        </Stack>
-                                    </ListItemButton>
-                                </ListItem>
-                                {index < ticketTypes.length - 1 && <Divider />}
-                            </React.Fragment>
+                            <div
+                                key={tt.ticket_type_id}
+                                onClick={() => setActiveTicketType(tt)}
+                                style={{
+                                    padding: '16px 20px',
+                                    cursor: 'pointer',
+                                    borderRight: isActive ? '3px solid #52c41a' : 'none',
+                                    backgroundColor: isActive ? '#f6ffed' : 'transparent',
+                                    transition: 'all 0.3s',
+                                    borderBottom: index < ticketTypes.length - 1 ? '1px solid #f0f0f0' : 'none'
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                    <Text strong style={{ color: isActive ? '#52c41a' : 'inherit' }}>{tt.type_name}</Text>
+                                    <AppstoreOutlined style={{ color: isActive ? '#52c41a' : '#d9d9d9' }} />
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: isActive ? 8 : 0 }}>
+                                    <Text strong style={{ fontSize: 12, color: assignedCount > 0 ? (isFull ? '#52c41a' : '#faad14') : '#d9d9d9' }}>
+                                        {assignedCount}
+                                    </Text>
+                                    <Text type="secondary" style={{ fontSize: 11 }}>/</Text>
+                                    <Text type="secondary" style={{ fontSize: 11 }}>{tt.quantity} ghế</Text>
+                                    {isFull && <CheckCircleFilled style={{ fontSize: 12, color: '#52c41a', marginLeft: 4 }} />}
+                                </div>
+                                {isActive && (
+                                    <Progress
+                                        percent={Math.round(progress)}
+                                        size="small"
+                                        showInfo={false}
+                                        strokeColor={isFull ? '#52c41a' : '#52c41a'}
+                                        trailColor="#e8e8e8"
+                                    />
+                                )}
+                            </div>
                         );
-                    })}
-                </List>
+                    }}
+                />
             </Card>
 
-            {/* Instruction Card */}
-            <Paper
-                variant="outlined"
-                sx={{
-                    p: 3,
-                    borderRadius: 3,
-                    bgcolor: 'info.lighter',
-                    borderColor: 'info.light'
-                }}
-            >
-                <Stack spacing={2}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                        <InfoIcon color="info" fontSize="small" />
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'info.dark' }}>
-                            Hướng dẫn
-                        </Typography>
-                    </Stack>
-
-                    {venueTemplate ? (
-                        <>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                                Sơ đồ được nạp từ thiết kế của <strong>{venueName}</strong>.
-                            </Typography>
-                            <Box component="ul" sx={{ m: 0, pl: 2, '& li': { mb: 1 } }}>
-                                <Typography component="li" variant="caption" color="text.secondary">
-                                    Click và <strong>Rê chuột</strong> để gán/hủy gán nhiều ghế cùng lúc.
-                                </Typography>
-                                <Typography component="li" variant="caption" color="text.secondary">
-                                    <Box component="span" sx={{ color: 'success.main', fontWeight: 700 }}>Xanh</Box>: Đang gán cho hạng này.
-                                </Typography>
-                                <Typography component="li" variant="caption" color="text.secondary">
-                                    <Box component="span" sx={{ color: 'error.main', fontWeight: 700 }}>Đỏ</Box>: Đã gán cho hạng vé khác.
-                                </Typography>
-                                {activeTicketType && (
-                                    <Typography component="li" variant="caption" sx={{ color: 'primary.dark', fontWeight: 600 }}>
-                                        Hãy chọn đúng <strong>{activeTicketType.quantity}</strong> ghế cho <strong>{activeTicketType.type_name}</strong>.
-                                    </Typography>
-                                )}
-                            </Box>
-                        </>
-                    ) : (
-                        <Typography variant="caption" color="text.secondary">
-                            Thiết lập lưới ghế bằng cách nhập số hàng và số ghế mỗi hàng.
-                        </Typography>
-                    )}
-                </Stack>
-            </Paper>
-        </Stack>
+            <Card size="small" style={{ background: '#f5f5f5', borderStyle: 'dashed' }}>
+                <Space direction="vertical" size={8}>
+                    <Space>
+                        <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+                        <Text strong style={{ fontSize: 11, color: '#595959' }}>HƯỚNG DẪN THIẾT LẬP</Text>
+                    </Space>
+                    <Text type="secondary" style={{ fontSize: 12, lineHeight: 1.5 }}>
+                        {venueTemplate
+                            ? `Sơ đồ được nạp từ thiết kế của ${venueName}. Kéo chuột để gán ghế nhanh cho hạng vé đang chọn.`
+                            : 'Nhập thông tin lưới ghế để khởi tạo sơ đồ tự do cho sự kiện này.'}
+                    </Text>
+                </Space>
+            </Card>
+        </Space>
     );
 };
 

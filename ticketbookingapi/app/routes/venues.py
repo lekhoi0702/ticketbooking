@@ -8,7 +8,8 @@ def get_venues():
     """Get all active venues"""
     try:
         venues = Venue.query.filter(
-            Venue.is_active == True
+            Venue.is_active == True,
+            Venue.status == 'ACTIVE'
         ).all()
         
         return jsonify({
