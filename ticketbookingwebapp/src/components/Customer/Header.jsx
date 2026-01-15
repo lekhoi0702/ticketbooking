@@ -175,10 +175,10 @@ const Header = () => {
 
                 <div className="header-right">
                     <Space size="middle">
-                        <Dropdown menu={{ items: categoryMenuItems }} trigger={['hover']}><Button type="text" className="nav-btn">Khám phá <GlobalOutlined /></Button></Dropdown>
+                        <Dropdown menu={{ items: categoryMenuItems }} trigger={['click']}><Button type="text" className="nav-btn">Khám phá <GlobalOutlined /></Button></Dropdown>
 
                         {isAuthenticated ? (
-                            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow><Space className="user-profile-btn">
+                            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow trigger={['click']}><Space className="user-profile-btn">
                                 <Avatar
                                     style={{ backgroundColor: '#52c41a' }}
                                     icon={<UserOutlined />}
