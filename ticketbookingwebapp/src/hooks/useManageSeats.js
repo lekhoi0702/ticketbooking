@@ -186,6 +186,48 @@ export const useManageSeats = (eventId) => {
         }
     };
 
+    const toggleAreaSeats = useCallback((areaName, seatsInArea) => {
+        if (!activeTicketType) return;
+
+        // Determine if all available seats in this area are already selected
+        const availableSeatsInArea = seatsInArea.filter(t => {
+            return !allOccupiedSeats.some(s =>
+                s.row_name === t.row_name &&
+                String(s.seat_number) === String(t.seat_number) &&
+                s.ticket_type_id !== activeTicketType?.ticket_type_id
+            );
+        });
+
+        const currentSelectedInAreaCount = selectedTemplateSeats.filter(s =>
+            s.area === areaName &&
+            availableSeatsInArea.some(t =>
+                t.row_name === s.row_name &&
+                String(t.seat_number) === String(s.seat_number)
+            )
+        ).length;
+
+        const allSelected = currentSelectedInAreaCount === availableSeatsInArea.length && availableSeatsInArea.length > 0;
+        const mode = allSelected ? 'deselect' : 'select';
+
+        setSelectedTemplateSeats(prev => {
+            if (mode === 'deselect') {
+                // Remove all seats in this area
+                return prev.filter(s => s.area !== areaName);
+            } else {
+                // Add all available seats in this area that aren't already selected
+                const seatsToSelect = availableSeatsInArea.filter(t =>
+                    !prev.some(s =>
+                        s.area === areaName &&
+                        s.row_name === t.row_name &&
+                        String(s.seat_number) === String(t.seat_number)
+                    )
+                ).map(t => ({ ...t, seat_number: String(t.seat_number) }));
+
+                return [...prev, ...seatsToSelect];
+            }
+        });
+    }, [activeTicketType, allOccupiedSeats, selectedTemplateSeats]);
+
     const venueTemplate = useMemo(() => {
         const template = event?.venue?.seat_map_template;
         if (typeof template === 'string') {
@@ -218,6 +260,7 @@ export const useManageSeats = (eventId) => {
         setInitData,
         handleSeatMouseDown,
         handleSeatMouseEnter,
+        toggleAreaSeats,
         handleInitializeSeats,
         handleSaveTemplateAssignment,
         setHasSeats

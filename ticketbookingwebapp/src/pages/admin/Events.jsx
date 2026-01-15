@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     Box,
     Card,
@@ -25,7 +25,13 @@ import {
     Snackbar,
     Alert,
     Divider,
-    DialogTitle
+    DialogTitle,
+    TextField,
+    MenuItem,
+    InputAdornment,
+    FormControl,
+    InputLabel,
+    Select
 } from '@mui/material';
 import {
     Refresh,
@@ -37,7 +43,9 @@ import {
     Shield,
     Star,
     StarBorder,
-    Warning
+    Warning,
+    Search,
+    FilterList
 } from '@mui/icons-material';
 import { api } from '../../services/api';
 import SeatMapTemplateView from '../../components/Organizer/SeatMapTemplateView';
@@ -50,6 +58,11 @@ const AdminEventsManagement = () => {
     const [showModal, setShowModal] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
+
+    // Filter States
+    const [filterStatus, setFilterStatus] = useState('ALL');
+    const [filterFeatured, setFilterFeatured] = useState('ALL');
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Seat Map States
     const [venueTemplate, setVenueTemplate] = useState(null);
@@ -94,7 +107,7 @@ const AdminEventsManagement = () => {
             }
         } catch (error) {
             console.error("Error fetching seat map info:", error);
-            showToast("Không thể tải sơ đồ ghế", "error");
+            showToast("KhÃ´ng thá»ƒ táº£i sÆ¡ Ä‘á»“ gháº¿", "error");
         } finally {
             setLoadingMap(false);
         }
@@ -142,6 +155,13 @@ const AdminEventsManagement = () => {
     };
 
     const toggleFeatured = async (event) => {
+        // Only allow featuring for approved or published events
+        const allowedStatuses = ['APPROVED', 'PUBLISHED', 'ONGOING'];
+        if (!event.is_featured && !allowedStatuses.includes(event.status)) {
+            showToast("Chỉ có thể đánh dấu nổi bật cho sự kiện đã được duyệt", "error");
+            return;
+        }
+
         try {
             const data = { is_featured: !event.is_featured };
             const res = await api.adminUpdateEventStatus(event.event_id, data);
@@ -154,6 +174,26 @@ const AdminEventsManagement = () => {
         }
     };
 
+    const handleDeleteEvent = async (eventId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn XÓA VĨNH VIỄN sự kiện này không? Hành động này không thể hoàn tác.")) {
+            return;
+        }
+
+        try {
+            setActionLoading(true);
+            const res = await api.adminDeleteEvent(eventId);
+            if (res.success) {
+                showToast("Đã xóa sự kiện thành công");
+                setShowModal(false);
+                fetchEvents();
+            }
+        } catch (error) {
+            showToast(error.message, "error");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const getStatusColor = (status) => {
         const colors = {
             'PUBLISHED': 'success',
@@ -163,23 +203,15 @@ const AdminEventsManagement = () => {
             'DRAFT': 'default',
             'CANCELLED': 'error',
             'COMPLETED': 'secondary',
-            'ONGOING': 'success'
+            'ONGOING': 'success',
+            'PENDING_DELETION': 'error'
         };
         return colors[status] || 'default';
     };
 
     const getStatusLabel = (status) => {
-        const labels = {
-            'PUBLISHED': 'Đã xuất bản',
-            'PENDING_APPROVAL': 'Chờ duyệt',
-            'APPROVED': 'Đã duyệt',
-            'REJECTED': 'Từ chối',
-            'DRAFT': 'Nháp',
-            'CANCELLED': 'Đã hủy',
-            'COMPLETED': 'Hoàn thành',
-            'ONGOING': 'Đang diễn ra'
-        };
-        return labels[status] || status;
+        // Return raw status as per database
+        return status;
     };
 
     if (loading && events.length === 0) {
@@ -190,17 +222,40 @@ const AdminEventsManagement = () => {
         );
     }
 
-    const pendingCount = events.filter(e => e.status === 'PENDING_APPROVAL').length;
+    // Filter events based on selected filters
+    const filteredEvents = events.filter(event => {
+        // Status filter
+        if (filterStatus !== 'ALL' && event.status !== filterStatus) {
+            return false;
+        }
+
+        // Featured filter
+        if (filterFeatured === 'FEATURED' && !event.is_featured) {
+            return false;
+        }
+        if (filterFeatured === 'NOT_FEATURED' && event.is_featured) {
+            return false;
+        }
+
+        // Search query
+        if (searchQuery && !event.event_name.toLowerCase().includes(searchQuery.toLowerCase())) {
+            return false;
+        }
+
+        return true;
+    });
+
+    const pendingCount = filteredEvents.filter(e => e.status === 'PENDING_APPROVAL').length;
 
     return (
         <Box>
-            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
                 <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                        Quản Lý Phê Duyệt
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
+                        Quản Lý Sự Kiện
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                        Xem xét và cấp phép xuất bản các sự kiện trên hệ thống
+                    <Typography variant="body2" color="text.secondary">
+                        Xem xét, phê duyệt và quản lý tất cả sự kiện trên hệ thống
                     </Typography>
                 </Box>
                 <Button
@@ -234,6 +289,87 @@ const AdminEventsManagement = () => {
                 </Alert>
             )}
 
+            {/* Filter Section */}
+            <Card sx={{ mb: 3 }}>
+                <CardContent sx={{ p: 2.5 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                        <FilterList size="small" color="primary" />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Bộ lọc tìm kiếm</Typography>
+                    </Stack>
+                    <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                placeholder="Tìm kiếm theo tên sự kiện..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Search fontSize="small" color="action" />
+                                        </InputAdornment>
+                                    )
+                                }}
+                                sx={{ bgcolor: 'background.paper' }}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Trạng thái</InputLabel>
+                                <Select
+                                    value={filterStatus}
+                                    label="Trạng thái"
+                                    onChange={(e) => setFilterStatus(e.target.value)}
+                                >
+                                    <MenuItem value="ALL">Tất cả trạng thái</MenuItem>
+                                    <MenuItem value="PENDING_APPROVAL">Chờ duyệt</MenuItem>
+                                    <MenuItem value="APPROVED">Đã duyệt</MenuItem>
+                                    <MenuItem value="PUBLISHED">Đã xuất bản</MenuItem>
+                                    <MenuItem value="REJECTED">Từ chối</MenuItem>
+                                    <MenuItem value="DRAFT">Nháp</MenuItem>
+                                    <MenuItem value="ONGOING">Đang diễn ra</MenuItem>
+                                    <MenuItem value="COMPLETED">Hoàn thành</MenuItem>
+                                    <MenuItem value="CANCELLED">Đã hủy</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Sự kiện nổi bật</InputLabel>
+                                <Select
+                                    value={filterFeatured}
+                                    label="Sự kiện nổi bật"
+                                    onChange={(e) => setFilterFeatured(e.target.value)}
+                                >
+                                    <MenuItem value="ALL">Tất cả</MenuItem>
+                                    <MenuItem value="FEATURED">Chỉ sự kiện nổi bật</MenuItem>
+                                    <MenuItem value="NOT_FEATURED">Không nổi bật</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                    </Grid>
+                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                            Hiển thị <strong>{filteredEvents.length}</strong> / {events.length} sự kiện
+                        </Typography>
+                        {(filterStatus !== 'ALL' || filterFeatured !== 'ALL' || searchQuery) && (
+                            <Button
+                                size="small"
+                                onClick={() => {
+                                    setFilterStatus('ALL');
+                                    setFilterFeatured('ALL');
+                                    setSearchQuery('');
+                                }}
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Xóa bộ lọc
+                            </Button>
+                        )}
+                    </Stack>
+                </CardContent>
+            </Card>
+
             <Card sx={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: 4, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
                 <TableContainer>
                     <Table sx={{ minWidth: 900 }}>
@@ -248,7 +384,7 @@ const AdminEventsManagement = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {events.map((event) => (
+                            {filteredEvents.map((event) => (
                                 <TableRow key={event.event_id} hover sx={{
                                     transition: '0.2s',
                                     bgcolor: event.status === 'PENDING_APPROVAL' ? 'warning.lighter' : 'inherit',
@@ -297,17 +433,30 @@ const AdminEventsManagement = () => {
                                         />
                                     </TableCell>
                                     <TableCell align="center">
-                                        <IconButton
-                                            size="small"
-                                            color={event.is_featured ? "warning" : "default"}
-                                            onClick={() => toggleFeatured(event)}
-                                            sx={{
-                                                bgcolor: event.is_featured ? 'warning.lighter' : 'transparent',
-                                                '&:hover': { bgcolor: 'warning.light' }
-                                            }}
-                                        >
-                                            {event.is_featured ? <Star /> : <StarBorder />}
-                                        </IconButton>
+                                        <Tooltip title={
+                                            event.is_featured ? "Bỏ đánh dấu nổi bật" :
+                                                ['APPROVED', 'PUBLISHED', 'ONGOING'].includes(event.status) ?
+                                                    "Đánh dấu nổi bật" :
+                                                    "Chỉ sự kiện đã duyệt mới có thể nổi bật"
+                                        }>
+                                            <span>
+                                                <IconButton
+                                                    size="small"
+                                                    color={event.is_featured ? "warning" : "default"}
+                                                    onClick={() => toggleFeatured(event)}
+                                                    disabled={!event.is_featured && !['APPROVED', 'PUBLISHED', 'ONGOING'].includes(event.status)}
+                                                    sx={{
+                                                        bgcolor: event.is_featured ? 'warning.lighter' : 'transparent',
+                                                        '&:hover': { bgcolor: 'warning.light' },
+                                                        '&.Mui-disabled': {
+                                                            opacity: 0.3
+                                                        }
+                                                    }}
+                                                >
+                                                    {event.is_featured ? <Star /> : <StarBorder />}
+                                                </IconButton>
+                                            </span>
+                                        </Tooltip>
                                     </TableCell>
                                     <TableCell align="right" sx={{ pr: 3 }}>
                                         <Button
@@ -535,6 +684,19 @@ const AdminEventsManagement = () => {
                                     </Button>
                                 )}
 
+                                {selectedEvent.status === 'PENDING_DELETION' && (
+                                    <Button
+                                        variant="contained"
+                                        color="error"
+                                        startIcon={<CancelIcon />}
+                                        sx={{ px: 4, borderRadius: 2, fontWeight: 700 }}
+                                        onClick={() => handleDeleteEvent(selectedEvent.event_id)}
+                                        disabled={actionLoading}
+                                    >
+                                        CHẤP NHẬN XÓA
+                                    </Button>
+                                )}
+
                                 {(selectedEvent.status === 'REJECTED' || selectedEvent.status === 'CANCELLED') && (
                                     <Button
                                         variant="outlined"
@@ -567,4 +729,5 @@ const AdminEventsManagement = () => {
 };
 
 export default AdminEventsManagement;
+
 

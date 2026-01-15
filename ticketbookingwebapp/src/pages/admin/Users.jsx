@@ -42,7 +42,8 @@ import {
     CheckCircle,
     DeleteOutline,
     LockOpen,
-    Lock
+    Lock,
+    Close
 } from '@mui/icons-material';
 import { api } from '../../services/api';
 
@@ -99,9 +100,7 @@ const UsersManagement = () => {
         try {
             setCreating(true);
             setError(null);
-            // We send a dummy username or modify backend to not require it. 
-            // For now, let's assume email can be used as username or backend handles it.
-            const res = await api.createUser({ ...newUser, username: newUser.email });
+            const res = await api.createUser(newUser);
             if (res.success) {
                 setShowCreateModal(false);
                 setNewUser({ email: '', password: '', full_name: '', role: 'ORGANIZER' });
@@ -193,41 +192,41 @@ const UsersManagement = () => {
         <Box>
             <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
                 <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                        Users Management
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
+                        Quản Lý Người Dùng
                     </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                        Manage Organizer accounts and monitor user activity
+                    <Typography variant="body2" color="text.secondary">
+                        Quản lý tài khoản nhà tổ chức và theo dõi hoạt động hệ thống.
                     </Typography>
                 </Box>
-                <Stack direction="row" spacing={2}>
+                <Stack direction="row" spacing={1.5}>
                     <Button
                         variant="outlined"
                         startIcon={<Refresh />}
                         onClick={fetchUsers}
-                        sx={{ borderRadius: 1.5 }}
+                        size="small"
+                        sx={{ color: 'text.secondary', borderColor: 'divider' }}
                     >
-                        Refresh
+                        Làm mới
                     </Button>
                     <Button
                         variant="contained"
                         startIcon={<PersonAdd />}
                         onClick={() => setShowCreateModal(true)}
-                        sx={{ borderRadius: 1.5 }}
+                        size="small"
                     >
-                        Create Organizer
+                        Thêm Organizer
                     </Button>
                 </Stack>
             </Stack>
 
-            <Card sx={{ boxShadow: 2, borderRadius: 2 }}>
+            <Card sx={{ mt: 3 }}>
                 <CardContent sx={{ p: 0 }}>
-                    <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ p: 2, borderBottom: '1px solid #EBEEF5' }}>
                         <TextField
-                            fullWidth
                             variant="outlined"
                             size="small"
-                            placeholder="Search by name or email..."
+                            placeholder="Tìm kiếm theo tên hoặc email..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             InputProps={{
@@ -237,18 +236,18 @@ const UsersManagement = () => {
                                     </InputAdornment>
                                 ),
                             }}
-                            sx={{ maxWidth: 400 }}
+                            sx={{ maxWidth: 350 }}
                         />
                     </Box>
                     <TableContainer>
                         <Table sx={{ minWidth: 800 }}>
-                            <TableHead sx={{ bgcolor: 'grey.50' }}>
+                            <TableHead>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 600 }}>Full Name & Email</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Joined Date</TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: 600, pr: 3 }}>Actions</TableCell>
+                                    <TableCell>NGƯỜI DÙNG</TableCell>
+                                    <TableCell>VAI TRÒ</TableCell>
+                                    <TableCell>TRẠNG THÁI</TableCell>
+                                    <TableCell>NGÀY THAM GIA</TableCell>
+                                    <TableCell align="right">THAO TÁC</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -350,72 +349,170 @@ const UsersManagement = () => {
             {/* Create Organizer Dialog */}
             <Dialog
                 open={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
+                onClose={() => {
+                    setShowCreateModal(false);
+                    setNewUser({ email: '', password: '', full_name: '', role: 'ORGANIZER' });
+                    setError(null);
+                }}
                 maxWidth="xs"
                 fullWidth
-                PaperProps={{ sx: { borderRadius: 2 } }}
             >
                 <form onSubmit={handleCreateUser}>
-                    <DialogTitle sx={{ px: 3, pt: 3, pb: 1 }}>
-                        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                            Create Organizer Account
-                        </Typography>
-                    </DialogTitle>
-                    <DialogContent sx={{ px: 3 }}>
-                        <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                            Enter the details for the new event organizer. They will be able to host and manage events.
-                        </Typography>
+                    <Box sx={{ p: 3, borderBottom: '1px solid #EBEEF5', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>Tạo Tài Khoản Nhà Tổ Chức</Typography>
+                        <IconButton size="small" onClick={() => setShowCreateModal(false)}>
+                            <Close fontSize="small" />
+                        </IconButton>
+                    </Box>
+
+                    <DialogContent sx={{ px: 4, py: 4 }}>
                         {error && (
-                            <Alert severity="error" sx={{ mb: 3 }}>
+                            <Alert
+                                severity="error"
+                                sx={{
+                                    mb: 3,
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: 'error.light'
+                                }}
+                            >
                                 {error}
                             </Alert>
                         )}
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
+
+                        <Stack spacing={3}>
+                            <Box>
+                                <Typography
+                                    variant="subtitle2"
+                                    sx={{
+                                        fontWeight: 700,
+                                        mb: 1.5,
+                                        color: '#1e293b',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5
+                                    }}
+                                >
+                                    Họ và Tên
+                                    <Typography component="span" color="error.main">*</Typography>
+                                </Typography>
                                 <TextField
                                     fullWidth
-                                    label="Full Name"
                                     required
-                                    placeholder="e.g. John Doe / Company Name"
                                     value={newUser.full_name}
                                     onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2,
+                                            bgcolor: '#f8fafc',
+                                            '&:hover': {
+                                                bgcolor: '#f1f5f9'
+                                            },
+                                            '&.Mui-focused': {
+                                                bgcolor: 'white'
+                                            }
+                                        }
+                                    }}
                                 />
-                            </Grid>
-                            <Grid item xs={12}>
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                    Tên đầy đủ hoặc tên công ty/tổ chức
+                                </Typography>
+                            </Box>
+
+                            <Box>
+                                <Typography
+                                    variant="subtitle2"
+                                    sx={{
+                                        fontWeight: 700,
+                                        mb: 1.5,
+                                        color: '#1e293b',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5
+                                    }}
+                                >
+                                    Địa Chỉ Email
+                                    <Typography component="span" color="error.main">*</Typography>
+                                </Typography>
                                 <TextField
                                     fullWidth
-                                    label="Email Address"
                                     type="email"
                                     required
-                                    placeholder="organizer@example.com"
                                     value={newUser.email}
                                     onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2,
+                                            bgcolor: '#f8fafc',
+                                            '&:hover': {
+                                                bgcolor: '#f1f5f9'
+                                            },
+                                            '&.Mui-focused': {
+                                                bgcolor: 'white'
+                                            }
+                                        }
+                                    }}
                                 />
-                            </Grid>
-                            <Grid item xs={12}>
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                    Email sẽ được dùng để đăng nhập hệ thống
+                                </Typography>
+                            </Box>
+
+                            <Box>
+                                <Typography
+                                    variant="subtitle2"
+                                    sx={{
+                                        fontWeight: 700,
+                                        mb: 1.5,
+                                        color: '#1e293b',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5
+                                    }}
+                                >
+                                    Mật Khẩu Ban Đầu
+                                    <Typography component="span" color="error.main">*</Typography>
+                                </Typography>
                                 <TextField
                                     fullWidth
-                                    label="Initial Password"
                                     type="password"
                                     required
-                                    placeholder="••••••••"
                                     value={newUser.password}
                                     onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2,
+                                            bgcolor: '#f8fafc',
+                                            '&:hover': {
+                                                bgcolor: '#f1f5f9'
+                                            },
+                                            '&.Mui-focused': {
+                                                bgcolor: 'white'
+                                            }
+                                        }
+                                    }}
                                 />
-                            </Grid>
-                        </Grid>
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                    Người dùng có thể thay đổi sau khi đăng nhập
+                                </Typography>
+                            </Box>
+                        </Stack>
                     </DialogContent>
-                    <DialogActions sx={{ p: 3 }}>
-                        <Button onClick={() => setShowCreateModal(false)} color="inherit">
-                            Cancel
+
+                    <DialogActions sx={{ p: 3, borderTop: '1px solid #EBEEF5' }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => setShowCreateModal(false)}
+                            sx={{ color: 'text.secondary', borderColor: 'divider' }}
+                        >
+                            Hủy bỏ
                         </Button>
                         <Button
                             variant="contained"
                             type="submit"
                             disabled={creating}
-                            sx={{ px: 4, borderRadius: 1.5 }}
                         >
-                            {creating ? <CircularProgress size={24} /> : 'Create Organizer'}
+                            {creating ? <CircularProgress size={20} color="inherit" /> : 'Tạo tài khoản'}
                         </Button>
                     </DialogActions>
                 </form>

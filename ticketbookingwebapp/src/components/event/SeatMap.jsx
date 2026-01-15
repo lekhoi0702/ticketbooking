@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Spinner, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Row, Col, Spinner, Badge, OverlayTrigger, Tooltip, Alert } from 'react-bootstrap';
 import { FaChair } from 'react-icons/fa';
 import { api } from '../../services/api';
 
@@ -8,6 +8,8 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
     const [seats, setSeats] = useState([]);
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [rows, setRows] = useState([]);
+    const [error, setError] = useState(null);
+    const [rowsData, setRowsData] = useState({});
 
     useEffect(() => {
         if (ticketType) {
@@ -51,7 +53,6 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
         }
     };
 
-    const [rowsData, setRowsData] = useState({});
 
     const toggleSeat = (seat) => {
         if (seat.status !== 'AVAILABLE') return;
@@ -63,7 +64,8 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
             newSelection = selectedSeats.filter(s => s.seat_id !== seat.seat_id);
         } else {
             if (selectedSeats.length >= maxSelection) {
-                alert(`Bạn chỉ có thể chọn tối đa ${maxSelection} ghế`);
+                setError(`Bạn chỉ có thể chọn tối đa ${maxSelection} ghế`);
+                setTimeout(() => setError(null), 4000); // Auto-dismiss
                 return;
             }
             newSelection = [...selectedSeats, seat];
@@ -88,6 +90,16 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
 
     return (
         <div className="seat-map-container p-4 bg-dark rounded-4 shadow-lg text-white">
+            {error && (
+                <Alert
+                    variant="danger"
+                    className="mb-0" // The CSS now handles positioning globally
+                    onClose={() => setError(null)}
+                    dismissible
+                >
+                    {error}
+                </Alert>
+            )}
             <div className="text-center mb-5">
                 <div className="stage-label mb-3 py-2 px-5 bg-secondary bg-opacity-25 rounded-pill d-inline-block border border-secondary fw-bold text-uppercase letter-spacing-2">
                     SÂN KHẤU / STAGE

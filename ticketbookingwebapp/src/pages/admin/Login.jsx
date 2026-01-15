@@ -59,77 +59,66 @@ const AdminLogin = () => {
                     backgroundColor: 'background.default'
                 }}
             >
-                <Container maxWidth="sm">
-                    <Card sx={{ boxShadow: 3 }}>
+                <Container maxWidth="xs">
+                    <Card sx={{ border: '1px solid #dcdfe6', boxShadow: '0 2px 12px 0 rgba(0,0,0,.1)' }}>
                         <CardContent sx={{ p: 4 }}>
                             <Box
                                 sx={{
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    mb: 3
+                                    mb: 4
                                 }}
                             >
-                                <Avatar sx={{ m: 1, bgcolor: 'primary.main', width: 56, height: 56 }}>
-                                    <LockOutlined />
-                                </Avatar>
-                                <Typography component="h1" variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
-                                    TicketBooking Admin
+                                <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main', mb: 1 }}>
+                                    ADMIN<span style={{ color: '#303133' }}>PANEL</span>
                                 </Typography>
                                 <Typography variant="body2" color="textSecondary">
-                                    Đăng nhập trang quản trị
+                                    Hệ thống quản trị TicketBooking
                                 </Typography>
                             </Box>
 
                             {error && (
-                                <Alert severity="error" sx={{ mb: 2 }}>
+                                <Alert severity="error" sx={{ mb: 3, borderRadius: 1 }}>
                                     {error}
                                 </Alert>
                             )}
 
                             <Box component="form" onSubmit={handleSubmit} noValidate>
+                                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#606266' }}>Tài khoản</Typography>
                                 <TextField
-                                    margin="normal"
-                                    required
                                     fullWidth
                                     id="identifier"
-                                    label="Tài khoản"
                                     name="identifier"
                                     autoFocus
+                                    placeholder="Email admin"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
                                 />
+
+                                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#606266' }}>Mật khẩu</Typography>
                                 <TextField
-                                    margin="normal"
-                                    required
                                     fullWidth
                                     name="password"
-                                    label="Password"
                                     type="password"
                                     id="password"
+                                    placeholder="••••••••"
                                     autoComplete="current-password"
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
                                 />
-                                <FormControlLabel
-                                    control={<Checkbox value="remember" color="primary" />}
-                                    label="Remember me"
-                                    sx={{ mt: 1 }}
-                                />
+
                                 <Button
                                     type="submit"
                                     fullWidth
                                     variant="contained"
-                                    sx={{ mt: 3, mb: 2, py: 1.5 }}
+                                    sx={{ mt: 2, mb: 2, py: 1.2, fontWeight: 600 }}
                                     disabled={loading}
                                 >
-                                    {loading ? 'Signing in...' : 'Sign In'}
+                                    {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                                 </Button>
-                                <Box sx={{ textAlign: 'center' }}>
-                                    <MuiLink href="#" variant="body2" underline="hover">
-                                        Forgot password?
-                                    </MuiLink>
-                                </Box>
                             </Box>
                         </CardContent>
                     </Card>

@@ -87,20 +87,6 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues }) => 
                     </TextField>
                 </Grid>
 
-                <Grid item xs={12} md={6}>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                name="is_featured"
-                                checked={formData.is_featured}
-                                onChange={handleInputChange}
-                                color="primary"
-                            />
-                        }
-                        label="Đề xuất sự kiện nổi bật"
-                        sx={{ mt: 1 }}
-                    />
-                </Grid>
             </Grid>
         </Box>
     );

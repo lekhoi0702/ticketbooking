@@ -12,7 +12,10 @@ import {
     IconButton,
     Chip,
     CircularProgress,
-    Alert
+    Alert,
+    Dialog,
+    DialogActions,
+    DialogContent
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -23,7 +26,20 @@ import EventTable from '../../components/Organizer/EventTable';
 import { useEventList } from '../../hooks/useEventList';
 
 const EventList = () => {
-    const { events, loading, error, handlePublishEvent, fetchEvents } = useEventList();
+    const {
+        events,
+        loading,
+        error,
+        handlePublishEvent,
+        handleCancelApproval,
+        fetchEvents,
+        handleDeleteClick,
+        handleDeleteConfirm,
+        showDeleteModal,
+        setShowDeleteModal,
+        eventToDelete,
+        deleting
+    } = useEventList();
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredEvents = events.filter(event =>
@@ -140,9 +156,52 @@ const EventList = () => {
                     <EventTable
                         events={filteredEvents}
                         handlePublishEvent={handlePublishEvent}
+                        handleCancelApproval={handleCancelApproval}
+                        handleDeleteClick={handleDeleteClick}
                     />
                 </CardContent>
             </Card>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={showDeleteModal}
+                onClose={() => !deleting && setShowDeleteModal(false)}
+                PaperProps={{ sx: { borderRadius: 3, maxWidth: 400 } }}
+            >
+                <DialogContent sx={{ textAlign: 'center', pt: 4, pb: 2 }}>
+                    <Box sx={{ color: 'error.main', mb: 2 }}>
+                        <Box sx={{ fontSize: 60, mb: 1 }}>⚠️</Box>
+                    </Box>
+                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+                        Xác nhận xóa sự kiện
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        Bạn có chắc chắn muốn xóa sự kiện <strong>{eventToDelete?.event_name}</strong>?
+                        Hành động này không thể hoàn tác.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 3, gap: 2 }}>
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        onClick={() => setShowDeleteModal(false)}
+                        disabled={deleting}
+                        sx={{ borderRadius: 2 }}
+                    >
+                        Bỏ qua
+                    </Button>
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        color="error"
+                        onClick={handleDeleteConfirm}
+                        disabled={deleting}
+                        sx={{ borderRadius: 2 }}
+                    >
+                        {deleting ? <CircularProgress size={24} color="inherit" /> : 'Xóa ngay'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

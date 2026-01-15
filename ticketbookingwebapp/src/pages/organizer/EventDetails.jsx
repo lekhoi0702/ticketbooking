@@ -28,9 +28,12 @@ import {
     TrendingUp as ChartIcon,
     Group as GroupIcon,
     NavigateNext as NextIcon,
-    AccessTime as TimeIcon
+    AccessTime as TimeIcon,
+    Cancel as CancelIcon,
+    Chair as ChairIcon
 } from '@mui/icons-material';
 import { api } from '../../services/api';
+import SeatMapTemplateView from '../../components/Organizer/SeatMapTemplateView';
 
 const EventDetails = () => {
     const { eventId } = useParams();
@@ -39,6 +42,11 @@ const EventDetails = () => {
     const [ticketTypes, setTicketTypes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Seat Map States
+    const [venueTemplate, setVenueTemplate] = useState(null);
+    const [eventSeats, setEventSeats] = useState([]);
+    const [loadingMap, setLoadingMap] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -54,6 +62,7 @@ const EventDetails = () => {
 
             if (eventRes.success) {
                 setEvent(eventRes.data);
+                fetchSeatMapData(eventRes.data.venue_id, eventId);
             } else {
                 setError('Không tìm thấy thông tin sự kiện');
             }
@@ -66,6 +75,27 @@ const EventDetails = () => {
             setError('Lỗi khi tải thông tin sự kiện');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchSeatMapData = async (venueId, evtId) => {
+        try {
+            setLoadingMap(true);
+            const [venueRes, seatsRes] = await Promise.all([
+                api.getVenueById(venueId),
+                api.getAllEventSeats(evtId)
+            ]);
+
+            if (venueRes.success) {
+                setVenueTemplate(venueRes.data.seat_map_template);
+            }
+            if (seatsRes.success) {
+                setEventSeats(seatsRes.data);
+            }
+        } catch (err) {
+            console.error('Error fetching seat map:', err);
+        } finally {
+            setLoadingMap(false);
         }
     };
 
@@ -111,6 +141,27 @@ const EventDetails = () => {
     const soldPercentage = totalCapacity > 0 ? (soldTickets / totalCapacity) * 100 : 0;
     const statusConfig = getStatusConfig(event.status);
 
+    const handleCancelApproval = async () => {
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.append('status', 'DRAFT');
+
+            const response = await api.updateEvent(eventId, formData);
+
+            if (response.success) {
+                setEvent(prev => ({ ...prev, status: 'DRAFT' }));
+            } else {
+                alert(response.message || 'Không thể hủy yêu cầu duyệt');
+            }
+        } catch (err) {
+            console.error('Error cancelling approval:', err);
+            alert(err.message || 'Không thể hủy yêu cầu duyệt');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Box sx={{ pb: 4 }}>
             {/* Breadcrumbs & Header */}
@@ -145,70 +196,31 @@ const EventDetails = () => {
                 </Box>
 
                 <Stack direction="row" spacing={2}>
+                    {event.status === 'PENDING_APPROVAL' && (
+                        <Button
+                            variant="contained"
+                            color="error"
+                            startIcon={<CancelIcon />}
+                            onClick={handleCancelApproval}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Hủy duyệt
+                        </Button>
+                    )}
                     <Button
                         variant="outlined"
                         startIcon={<EditIcon />}
                         onClick={() => navigate(`/organizer/edit-event/${eventId}`)}
-                        disabled={['ONGOING', 'COMPLETED', 'PENDING_DELETION'].includes(event.status)}
+                        disabled={['PENDING_APPROVAL', 'ONGOING', 'COMPLETED', 'PENDING_DELETION'].includes(event.status)}
                         sx={{ borderRadius: 2 }}
                     >
                         Chỉnh sửa
-                    </Button>
-                    <Button
-                        variant="contained"
-                        startIcon={<SeatIcon />}
-                        onClick={() => navigate(`/organizer/manage-seats/${eventId}`)}
-                        disabled={['ONGOING', 'COMPLETED', 'PENDING_DELETION'].includes(event.status)}
-                        sx={{
-                            borderRadius: 2,
-                            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                            '&:hover': { background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)' }
-                        }}
-                    >
-                        Quản lý ghế
                     </Button>
                 </Stack>
             </Stack>
 
             <Grid container spacing={3}>
-                {/* Statistics Overview */}
-                <Grid item xs={12}>
-                    <Grid container spacing={3}>
-                        {[
-                            { label: 'Vé đã bán', value: soldTickets, icon: <TicketIcon />, color: '#2dc275', secondary: `/${totalCapacity} tổng cộng` },
-                            { label: 'Doanh thu dự kiến', value: `${(soldTickets * 500000).toLocaleString()}đ`, icon: <ChartIcon />, color: '#6366f1', secondary: 'Ước tính' },
-                            { label: 'Tỷ lệ lấp đầy', value: `${soldPercentage.toFixed(1)}%`, icon: <TrendingUpIcon />, color: '#f59e0b', secondary: 'Đang tăng' },
-                            { label: 'Khách hàng', value: soldTickets, icon: <GroupIcon />, color: '#ec4899', secondary: 'Người đặt vé' }
-                        ].map((stat, index) => (
-                            <Grid item xs={12} sm={6} md={3} key={index}>
-                                <Card sx={{ borderRadius: 4, height: '100%', border: '1px solid #e5e7eb' }}>
-                                    <CardContent>
-                                        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-                                            <Box sx={{
-                                                p: 1.5,
-                                                borderRadius: 3,
-                                                bgcolor: `${stat.color}15`,
-                                                color: stat.color,
-                                                display: 'flex'
-                                            }}>
-                                                {stat.icon}
-                                            </Box>
-                                            <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                                                {stat.label}
-                                            </Typography>
-                                        </Stack>
-                                        <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
-                                            {stat.value}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            {stat.secondary}
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
-                </Grid>
+
 
                 {/* Left Column - Main Info */}
                 <Grid item xs={12} lg={8}>
@@ -239,50 +251,92 @@ const EventDetails = () => {
                     </Card>
 
                     {/* Ticket Types Breakdown */}
-                    <Card sx={{ borderRadius: 4, border: '1px solid #e5e7eb' }}>
+                    <Card sx={{ borderRadius: 4, border: '1px solid #e5e7eb', mb: 3 }}>
                         <CardContent sx={{ p: 4 }}>
                             <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>Các loại vé</Typography>
                             <Stack spacing={2}>
-                                {ticketTypes.map((tt, index) => (
-                                    <Paper
-                                        key={index}
-                                        elevation={0}
-                                        sx={{
-                                            p: 3,
-                                            borderRadius: 3,
-                                            bgcolor: '#f8fafc',
-                                            border: '1px solid #f1f5f9'
-                                        }}
-                                    >
-                                        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
-                                            <Box>
-                                                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                                                    {tt.type_name}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                    {tt.description || 'Vé tham dự sự kiện'}
-                                                </Typography>
-                                                <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
-                                                    {parseFloat(tt.price).toLocaleString()}đ
-                                                </Typography>
-                                            </Box>
-                                            <Box sx={{ minWidth: 150, textAlign: { md: 'right' } }}>
-                                                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                                                    Tình trạng vé
-                                                </Typography>
-                                                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                                    0 / {tt.quantity}
-                                                </Typography>
-                                                <LinearProgress
-                                                    variant="determinate"
-                                                    value={0}
-                                                    sx={{ height: 6, borderRadius: 3, mt: 1, bgcolor: '#e2e8f0' }}
-                                                />
-                                            </Box>
-                                        </Stack>
-                                    </Paper>
-                                ))}
+                                {ticketTypes.map((tt, index) => {
+                                    const soldInType = (eventSeats || []).filter(s => s.ticket_type_id === tt.ticket_type_id && s.status === 'BOOKED').length;
+                                    const percentageInType = tt.quantity > 0 ? (soldInType / tt.quantity) * 100 : 0;
+
+                                    return (
+                                        <Paper
+                                            key={index}
+                                            elevation={0}
+                                            sx={{
+                                                p: 3,
+                                                borderRadius: 3,
+                                                bgcolor: '#f8fafc',
+                                                border: '1px solid #f1f5f9'
+                                            }}
+                                        >
+                                            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
+                                                <Box>
+                                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                                                        {tt.type_name}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                        {tt.description || 'Vé tham dự sự kiện'}
+                                                    </Typography>
+                                                    <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
+                                                        {parseFloat(tt.price).toLocaleString()}đ
+                                                    </Typography>
+                                                </Box>
+                                                <Box sx={{ minWidth: 150, textAlign: { md: 'right' } }}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                                                        Tình trạng vé
+                                                    </Typography>
+                                                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                                        {soldInType} / {tt.quantity}
+                                                    </Typography>
+                                                    <LinearProgress
+                                                        variant="determinate"
+                                                        value={percentageInType}
+                                                        sx={{ height: 6, borderRadius: 3, mt: 1, bgcolor: '#e2e8f0' }}
+                                                    />
+                                                </Box>
+                                            </Stack>
+                                        </Paper>
+                                    );
+                                })}
                             </Stack>
+                        </CardContent>
+                    </Card>
+
+                    {/* Seat Map View */}
+                    <Card sx={{ borderRadius: 4, border: '1px solid #e5e7eb' }}>
+                        <CardContent sx={{ p: 4 }}>
+                            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3 }}>
+                                <ChairIcon color="primary" />
+                                <Typography variant="h6" sx={{ fontWeight: 700 }}>Sơ đồ chỗ ngồi thực tế</Typography>
+                            </Stack>
+
+                            {loadingMap ? (
+                                <Box sx={{ py: 10, textAlign: 'center' }}>
+                                    <CircularProgress size={40} />
+                                    <Typography sx={{ mt: 2 }} color="text.secondary">Đang tải sơ đồ ghế...</Typography>
+                                </Box>
+                            ) : venueTemplate ? (
+                                <Box sx={{
+                                    bgcolor: '#1a1a1a',
+                                    borderRadius: 4,
+                                    overflow: 'hidden',
+                                    border: '1px solid #333'
+                                }}>
+                                    <SeatMapTemplateView
+                                        venueTemplate={venueTemplate}
+                                        selectedTemplateSeats={[]}
+                                        allOccupiedSeats={eventSeats}
+                                        activeTicketType={null}
+                                        handleSeatMouseDown={() => { }}
+                                        handleSeatMouseEnter={() => { }}
+                                    />
+                                </Box>
+                            ) : (
+                                <Alert severity="info" sx={{ borderRadius: 3 }}>
+                                    Sự kiện này không sử dụng sơ đồ ghế hoặc sơ đồ không khả dụng.
+                                </Alert>
+                            )}
                         </CardContent>
                     </Card>
                 </Grid>

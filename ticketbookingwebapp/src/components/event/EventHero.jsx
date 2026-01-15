@@ -36,9 +36,11 @@ const EventHero = ({ event }) => {
                             <div className="event-price-range">
                                 <span className="label">Giá từ</span>
                                 <span className="price">
-                                    {event.ticket_types?.[0]?.price > 0
-                                        ? `${event.ticket_types[0].price.toLocaleString('vi-VN')}đ`
-                                        : 'Miễn phí'}
+                                    {(() => {
+                                        if (!event.ticket_types || event.ticket_types.length === 0) return 'Đang cập nhật';
+                                        const minPrice = Math.min(...event.ticket_types.map(t => t.price));
+                                        return minPrice > 0 ? `${minPrice.toLocaleString('vi-VN')}đ` : 'Miễn phí';
+                                    })()}
                                 </span>
                             </div>
                             <div className="hero-actions">

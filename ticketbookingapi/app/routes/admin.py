@@ -55,22 +55,25 @@ def admin_create_user():
     try:
         data = request.get_json()
         
-        # Validate required fields
-        required = ['username', 'email', 'password', 'full_name', 'role']
+        # Validate required fields (removed username)
+        required = ['email', 'password', 'full_name', 'role']
         for field in required:
             if field not in data:
                 return jsonify({'success': False, 'message': f'Thiếu trường: {field}'}), 400
         
-        # Check if user exists
-        if User.query.filter((User.username == data['username']) | (User.email == data['email'])).first():
-            return jsonify({'success': False, 'message': 'Username hoặc Email đã tồn tại'}), 400
+        # Check if email exists
+        if User.query.filter(User.email == data['email']).first():
+            return jsonify({'success': False, 'message': 'Email đã tồn tại'}), 400
+        
+        # Map role string to role_id
+        role_map = {'ADMIN': 1, 'ORGANIZER': 2, 'USER': 3}
+        role_id = role_map.get(data['role'], 3)  # Default to USER if invalid
             
         new_user = User(
-            username=data['username'],
             email=data['email'],
             full_name=data['full_name'],
-            role=data['role'],
-            status='ACTIVE'
+            role_id=role_id,
+            is_active=True
         )
         new_user.set_password(data['password'])
         
@@ -158,7 +161,7 @@ def update_event_status(event_id):
             
         if 'status' in data:
             new_status = data.get('status')
-            valid_statuses = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED']
+            valid_statuses = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION']
             if new_status not in valid_statuses:
                 return jsonify({'success': False, 'message': 'Trạng thái không hợp lệ'}), 400
             event.status = new_status
@@ -176,6 +179,32 @@ def update_event_status(event_id):
             'data': event.to_dict()
         }), 200
     except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@admin_bp.route("/admin/events/<int:event_id>", methods=["DELETE"])
+def admin_delete_event(event_id):
+    """Admin xóa sự kiện (đặc biệt là xử lý yêu cầu PENDING_DELETION)"""
+    try:
+        event = Event.query.get(event_id)
+        if not event:
+            return jsonify({'success': False, 'message': 'Sự kiện không tồn tại'}), 404
+            
+        # Kiểm tra vé đã bán (giống organizer)
+        if event.sold_tickets > 0:
+            return jsonify({
+                'success': False,
+                'message': 'Không thể xóa sự kiện đã có vé được bán'
+            }), 400
+            
+        db.session.delete(event)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Đã xóa sự kiện thành công'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @admin_bp.route("/admin/orders", methods=["GET"])

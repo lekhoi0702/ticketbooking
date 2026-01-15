@@ -8,10 +8,6 @@ const TrendingSection = ({ events }) => {
         <section className="trending-section">
             <Container>
                 <div className="trending-header">
-                    <div className="awards-badge">
-                        <span className="awards-icon">🏆</span>
-                        <span className="awards-text">TICKETBOOKING AWARDS</span>
-                    </div>
                     <h2 className="trending-title">Sự kiện xu hướng</h2>
                 </div>
                 <Row className="g-4">

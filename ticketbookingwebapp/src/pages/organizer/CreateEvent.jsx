@@ -73,6 +73,7 @@ const CreateEvent = () => {
         toggleSeatSelection,
         addTicketType,
         removeTicketType,
+        toggleAreaSelection,
         handleSubmit
     } = useCreateEvent();
 
@@ -254,6 +255,7 @@ const CreateEvent = () => {
                                     removeTicketType={removeTicketType}
                                     venueTemplate={venueTemplate}
                                     toggleSeatSelection={toggleSeatSelection}
+                                    toggleAreaSelection={toggleAreaSelection}
                                 />
                             </CardContent>
                         </Card>

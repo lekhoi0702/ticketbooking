@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Badge, Button, Spinner, Alert, Modal } from 'react-bootstrap';
-import { FaTicketAlt, FaCalendarAlt, FaMapMarkerAlt, FaClock, FaQrcode, FaDownload, FaCheckCircle } from 'react-icons/fa';
+import { FaTicketAlt, FaCalendarAlt, FaMapMarkerAlt, FaClock, FaQrcode, FaDownload, FaCheckCircle, FaChair } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
@@ -136,7 +136,6 @@ const MyTickets = () => {
                         </div>
                         <div>
                             <h1 className="page-title mb-0">Vé của tôi</h1>
-                            <p className="page-subtitle mb-0">Quản lý và xem chi tiết vé điện tử</p>
                         </div>
                     </div>
                 </div>
@@ -166,114 +165,82 @@ const MyTickets = () => {
                 ) : (
                     <>
                         {/* Tickets Grid */}
-                        <Row className="g-4">
-                            {tickets.map((ticket) => (
-                                <Col lg={6} key={ticket.ticket_id}>
-                                    <Card className="ticket-card h-100">
-                                        <Card.Body className="p-0">
-                                            {/* Ticket Header */}
-                                            <div className="ticket-header">
-                                                <div className="d-flex justify-content-between align-items-start">
-                                                    <div className="flex-grow-1">
-                                                        <h5 className="ticket-event-name mb-2">
-                                                            {ticket.event_name || 'Sự kiện'}
-                                                        </h5>
-                                                        <div className="ticket-code mb-2">
-                                                            <span className="code-label">Mã vé:</span>
-                                                            <span className="code-value">{ticket.ticket_code}</span>
-                                                        </div>
+                        <div className="tickets-list">
+                            {tickets.map((ticket, index) => (
+                                <Card
+                                    className="border-0 shadow-sm mb-4 rounded-4 overflow-hidden ticket-compact-card clickable-card"
+                                    key={ticket.ticket_id}
+                                    onClick={() => handleShowQR(ticket)}
+                                >
+                                    <div className="ticket-compact-content p-3 flex-grow-1 bg-white position-relative">
+                                        {/* Notches */}
+                                        <div className="notch notch-top"></div>
+                                        <div className="notch notch-bottom"></div>
+
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <div className="flex-grow-1">
+                                                <h6 className="ticket-event-name-compact fw-bold mb-1 text-uppercase">
+                                                    {ticket.event_name || 'Sự kiện'}
+                                                </h6>
+
+                                                <div className="d-flex gap-2 align-items-center">
+                                                    <div className="small text-muted d-flex align-items-center">
+                                                        <FaCalendarAlt className="me-2 text-primary" />
+                                                        {formatTime(ticket.event_date)} {formatDate(ticket.event_date)}
                                                     </div>
-                                                    {getStatusBadge(ticket.ticket_status)}
+
+                                                    {ticket.seat ? (
+                                                        <div className="bg-white border px-3 py-1 rounded-pill d-inline-flex align-items-center fw-bold small">
+                                                            <FaChair className="me-1 text-success small" />
+                                                            {ticket.seat.row_name}{ticket.seat.seat_number}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="ticket-zone-badge d-inline-flex align-items-center fw-bold small">
+                                                            <FaTicketAlt className="me-2" />
+                                                            {ticket.ticket_type_name}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            {/* Ticket Body */}
-                                            <div className="ticket-body">
-                                                <Row className="g-3">
-                                                    <Col md={6}>
-                                                        <div className="ticket-info-item">
-                                                            <FaCalendarAlt className="info-icon" />
-                                                            <div>
-                                                                <div className="info-label">Ngày diễn ra</div>
-                                                                <div className="info-value">
-                                                                    {formatDate(ticket.event_date)}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </Col>
-                                                    <Col md={6}>
-                                                        <div className="ticket-info-item">
-                                                            <FaClock className="info-icon" />
-                                                            <div>
-                                                                <div className="info-label">Giờ bắt đầu</div>
-                                                                <div className="info-value">
-                                                                    {formatTime(ticket.event_date)}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </Col>
-                                                    <Col md={12}>
-                                                        <div className="ticket-info-item">
-                                                            <FaMapMarkerAlt className="info-icon" />
-                                                            <div>
-                                                                <div className="info-label">Địa điểm</div>
-                                                                <div className="info-value">
-                                                                    {ticket.venue_name || 'Chưa cập nhật'}
-                                                                </div>
-                                                                {ticket.venue_address && (
-                                                                    <div className="info-subtext">
-                                                                        {ticket.venue_address}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </Col>
-                                                </Row>
+                                            <div className="text-end d-flex flex-column justify-content-between h-100">
+                                                <div>
+                                                    <div className="fw-bold text-dark fs-5">{formatCurrency(ticket.price)}</div>
+                                                    <div className="small text-muted mb-2">Mã: {ticket.ticket_code}</div>
+                                                </div>
 
-                                                {/* Ticket Type & Price */}
-                                                <div className="ticket-pricing mt-3 pt-3 border-top">
-                                                    <div className="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <span className="ticket-type-label">Loại vé:</span>
-                                                            <span className="ticket-type-value ms-2">
-                                                                {ticket.ticket_type_name || 'Standard'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="ticket-price">
-                                                            {formatCurrency(ticket.price)}
+                                                <div className="bg-light p-1 rounded-2 text-center d-flex align-items-center justify-content-center" style={{ width: '85px', height: '85px', margin: '0px 0px 0px auto' }}>
+                                                    <div className="w-100 h-100 bg-white d-flex align-items-center justify-content-center rounded border overflow-hidden">
+                                                        {ticket.ticket_code ? (
+                                                            <img
+                                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticket.ticket_code}`}
+                                                                alt="QR Code"
+                                                                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                                                onError={(e) => {
+                                                                    e.target.style.display = 'none';
+                                                                    if (e.target.nextSibling) e.target.nextSibling.style.display = 'block';
+                                                                }}
+                                                            />
+                                                        ) : null}
+                                                        <div style={{ display: 'none' }}>
+                                                            {ticket.ticket_code ? (
+                                                                <QRCodeSVG
+                                                                    value={ticket.ticket_code}
+                                                                    size={65}
+                                                                    level="L"
+                                                                />
+                                                            ) : (
+                                                                <div style={{ fontSize: '8px' }}>NO CODE</div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                {/* Holder Info */}
-                                                {ticket.holder_name && (
-                                                    <div className="ticket-holder mt-3 pt-3 border-top">
-                                                        <div className="holder-label">Người sở hữu</div>
-                                                        <div className="holder-name">{ticket.holder_name}</div>
-                                                        {ticket.holder_email && (
-                                                            <div className="holder-email">{ticket.holder_email}</div>
-                                                        )}
-                                                    </div>
-                                                )}
                                             </div>
-
-                                            {/* Ticket Footer */}
-                                            <div className="ticket-footer">
-                                                <Button
-                                                    variant="success"
-                                                    className="w-100 qr-button shadow-sm fw-bold"
-                                                    onClick={() => handleShowQR(ticket)}
-                                                    disabled={ticket.ticket_status === 'CANCELLED'}
-                                                >
-                                                    <FaQrcode className="me-2" />
-                                                    Xem mã QR
-                                                </Button>
-                                            </div>
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
+                                        </div>
+                                    </div>
+                                </Card>
                             ))}
-                        </Row>
+                        </div>
                     </>
                 )}
             </Container>
@@ -289,18 +256,9 @@ const MyTickets = () => {
                             <div className="qr-code-wrapper mb-4 p-4 bg-white rounded-4 shadow-sm border border-success border-opacity-10 d-inline-block">
                                 <QRCodeSVG
                                     id="ticket-qr-code"
-                                    value={selectedTicket.ticket_code}
+                                    value={selectedTicket.ticket_code || 'TICKET'}
                                     size={256}
                                     level="H"
-                                    includeMargin={false}
-                                    imageSettings={{
-                                        src: "/favicon.ico", // Attempt to use favicon as center logo for premium feel
-                                        x: undefined,
-                                        y: undefined,
-                                        height: 40,
-                                        width: 40,
-                                        excavate: true,
-                                    }}
                                 />
                             </div>
 

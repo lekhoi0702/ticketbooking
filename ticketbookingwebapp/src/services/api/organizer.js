@@ -92,4 +92,17 @@ export const organizerApi = {
         }
         return await response.json();
     },
+
+    async processOrderCancellation(orderId, action) {
+        const response = await fetch(`${API_BASE_URL}/organizer/orders/${orderId}/cancellation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action }) // action: 'approve' or 'reject'
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to process cancellation');
+        }
+        return await response.json();
+    },
 };

@@ -42,6 +42,17 @@ export const adminApi = {
         return await response.json();
     },
 
+    async adminDeleteEvent(eventId) {
+        const response = await fetch(`${API_BASE_URL}/admin/events/${eventId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to delete event');
+        }
+        return await response.json();
+    },
+
     async getAllAdminOrders() {
         const response = await fetch(`${API_BASE_URL}/admin/orders`);
         if (!response.ok) throw new Error('Failed to fetch admin orders');
@@ -86,6 +97,19 @@ export const adminApi = {
             body: JSON.stringify(areaData)
         });
         if (!response.ok) throw new Error('Failed to update venue seats');
+        return await response.json();
+    },
+
+    async processOrderCancellation(orderId, action) {
+        const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/cancellation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action }) // action: 'approve' or 'reject'
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to process cancellation');
+        }
         return await response.json();
     }
 };

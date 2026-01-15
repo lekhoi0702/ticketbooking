@@ -88,6 +88,29 @@ export const useEventList = () => {
         }
     };
 
+    const handleCancelApproval = async (eventId) => {
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.append('status', 'DRAFT');
+
+            const response = await api.updateEvent(eventId, formData);
+
+            if (response.success) {
+                setEvents(prev => prev.map(e =>
+                    e.event_id === eventId ? { ...e, status: 'DRAFT' } : e
+                ));
+            } else {
+                alert(response.message || 'Không thể hủy yêu cầu duyệt');
+            }
+        } catch (err) {
+            console.error('Error cancelling approval:', err);
+            alert(err.message || 'Không thể hủy yêu cầu duyệt');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         events,
         loading,
@@ -99,6 +122,7 @@ export const useEventList = () => {
         handleDeleteClick,
         handleDeleteConfirm,
         handlePublishEvent,
+        handleCancelApproval,
         fetchEvents
     };
 };

@@ -76,164 +76,187 @@ const AdminLayout = () => {
     ];
 
     const drawer = (
-        <div>
-            <Toolbar sx={{ px: 2, py: 3 }}>
-                <Typography variant="h5" noWrap component="div" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                    TicketBooking
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Toolbar sx={{ px: 3, py: 3, minHeight: '64px !important' }}>
+                <Typography variant="h5" noWrap component="div" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: '-0.5px' }}>
+                    ADMIN<span style={{ color: '#303133' }}>PANEL</span>
                 </Typography>
             </Toolbar>
-            <Divider />
-            <List sx={{ px: 2 }}>
+            <Divider sx={{ borderColor: '#f0f0f0' }} />
+            <List sx={{ px: 1.5, py: 2 }}>
                 {menuItems.map((item) => (
                     <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
                         <ListItemButton
                             selected={location.pathname === item.path}
                             onClick={() => navigate(item.path)}
                             sx={{
-                                borderRadius: 1,
+                                borderRadius: '4px',
+                                py: 1.2,
                                 '&.Mui-selected': {
-                                    backgroundColor: 'primary.lighter',
+                                    backgroundColor: 'primary.light',
                                     color: 'primary.main',
+                                    '& .MuiListItemIcon-root': {
+                                        color: 'primary.main'
+                                    },
                                     '&:hover': {
-                                        backgroundColor: 'primary.lighter'
+                                        backgroundColor: 'primary.light'
                                     }
+                                },
+                                '&:hover': {
+                                    backgroundColor: '#f5f7fa'
                                 }
                             }}
                         >
-                            <ListItemIcon sx={{ color: location.pathname === item.path ? 'primary.main' : 'text.secondary', minWidth: 40 }}>
+                            <ListItemIcon sx={{ color: location.pathname === item.path ? 'primary.main' : '#909399', minWidth: 38 }}>
                                 {item.icon}
                             </ListItemIcon>
-                            <ListItemText primary={item.label} />
+                            <ListItemText
+                                primary={item.label}
+                                primaryTypographyProps={{
+                                    fontSize: '0.875rem',
+                                    fontWeight: location.pathname === item.path ? 600 : 500
+                                }}
+                            />
                         </ListItemButton>
                     </ListItem>
                 ))}
             </List>
-        </div>
+        </Box>
     );
 
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Box sx={{ display: 'flex' }}>
+            <Box sx={{ display: 'flex', bgcolor: '#f5f7fa', minHeight: '100vh' }}>
                 <AppBar
                     position="fixed"
+                    elevation={0}
                     sx={{
                         width: { sm: `calc(100% - ${drawerWidth}px)` },
                         ml: { sm: `${drawerWidth}px` },
-                        backgroundColor: 'background.paper',
-                        color: 'text.primary',
-                        boxShadow: 1
+                        backgroundColor: '#ffffff',
+                        color: '#303133',
+                        borderBottom: '1px solid #dcdfe6',
+                        zIndex: (theme) => theme.zIndex.drawer + 1
                     }}
                 >
-                    <Toolbar>
-                        <IconButton
-                            color="inherit"
-                            aria-label="open drawer"
-                            edge="start"
-                            onClick={handleDrawerToggle}
-                            sx={{ mr: 2, display: { sm: 'none' } }}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-                            {menuItems.find(i => i.path === location.pathname)?.label || 'Admin Panel'}
-                        </Typography>
-                        <div>
+                    <Toolbar sx={{ justifyContent: 'space-between' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <IconButton
-                                size="large"
-                                aria-label="account of current user"
-                                aria-controls="menu-appbar"
-                                aria-haspopup="true"
-                                onClick={handleMenu}
                                 color="inherit"
+                                aria-label="open drawer"
+                                edge="start"
+                                onClick={handleDrawerToggle}
+                                sx={{ mr: 2, display: { sm: 'none' } }}
                             >
-                                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                                    {user?.full_name?.charAt(0) || 'A'}
-                                </Avatar>
+                                <MenuIcon />
                             </IconButton>
-                            <Menu
-                                id="menu-appbar"
-                                anchorEl={anchorEl}
-                                anchorOrigin={{
-                                    vertical: 'bottom',
-                                    horizontal: 'right',
-                                }}
-                                keepMounted
-                                transformOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
-                                open={Boolean(anchorEl)}
-                                onClose={handleClose}
-                            >
-                                <MenuItem disabled>
-                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                        {user?.full_name}
-                                    </Typography>
-                                </MenuItem>
-                                <Divider />
-                                <MenuItem onClick={handleClose}>
-                                    <ListItemIcon>
-                                        <AccountCircle fontSize="small" />
-                                    </ListItemIcon>
-                                    Profile
-                                </MenuItem>
-                                <MenuItem onClick={handleLogout}>
-                                    <ListItemIcon>
-                                        <Logout fontSize="small" />
-                                    </ListItemIcon>
-                                    Logout
-                                </MenuItem>
-                            </Menu>
-                        </div>
-                    </Toolbar>
-                </AppBar>
-                <Box
-                    component="nav"
-                    sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-                >
-                    <Drawer
-                        variant="temporary"
-                        open={mobileOpen}
-                        onClose={handleDrawerToggle}
-                        ModalProps={{
-                            keepMounted: true
-                        }}
-                        sx={{
-                            display: { xs: 'block', sm: 'none' },
-                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth }
-                        }}
-                    >
-                        {drawer}
-                    </Drawer>
-                    <Drawer
-                        variant="permanent"
-                        sx={{
-                            display: { xs: 'none', sm: 'block' },
-                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: '1px solid', borderColor: 'divider' }
-                        }}
-                        open
-                    >
-                        {drawer}
-                    </Drawer>
-                </Box>
-                <Box
-                    component="main"
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#606266' }}>
+                                {menuItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
+                            </Typography>
+                        </Box>
+                        <IconButton
+                            size="large"
+                            aria-label="account of current user"
+                            aria-controls="menu-appbar"
+                            aria-haspopup="true"
+                            onClick={handleMenu}
+                            color="inherit"
+                        >
+                            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                                {user?.full_name?.charAt(0) || 'A'}
+                            </Avatar>
+                        </IconButton>
+                        <Menu
+                            id="menu-appbar"
+                            anchorEl={anchorEl}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'right',
+                            }}
+                            keepMounted
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                            open={Boolean(anchorEl)}
+                            onClose={handleClose}
+                        >
+                            <MenuItem disabled>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {user?.full_name}
+                                </Typography>
+                            </MenuItem>
+                            <Divider />
+                            <MenuItem onClick={handleClose}>
+                                <ListItemIcon>
+                                    <AccountCircle fontSize="small" />
+                                </ListItemIcon>
+                                Profile
+                            </MenuItem>
+                            <MenuItem onClick={handleLogout}>
+                                <ListItemIcon>
+                                    <Logout fontSize="small" />
+                                </ListItemIcon>
+                                Logout
+                            </MenuItem>
+                        </Menu>
+                    </div>
+                </Toolbar>
+            </AppBar>
+            <Box
+                component="nav"
+                sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+            >
+                <Drawer
+                    variant="temporary"
+                    open={mobileOpen}
+                    onClose={handleDrawerToggle}
+                    ModalProps={{
+                        keepMounted: true
+                    }}
                     sx={{
-                        flexGrow: 1,
-                        p: 3,
-                        width: { sm: `calc(100% - ${drawerWidth}px)` },
-                        backgroundColor: 'background.default',
-                        minHeight: '100vh'
+                        display: { xs: 'block', sm: 'none' },
+                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth }
                     }}
                 >
-                    <Toolbar />
-                    <Container maxWidth="xl" sx={{ mt: 2 }}>
-                        <Outlet />
-                    </Container>
+                    {drawer}
+                </Drawer>
+                <Drawer
+                    variant="permanent"
+                    sx={{
+                        display: { xs: 'none', sm: 'block' },
+                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: '1px solid', borderColor: 'divider' }
+                    }}
+                    open
+                >
+                    {drawer}
+                </Drawer>
+            </Box>
+            <Box
+                component="main"
+                sx={{
+                    flexGrow: 1,
+                    backgroundColor: 'background.default',
+                    minHeight: '100vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center', // This Centers children
+                    width: '100%'
+                }}
+            >
+                <Toolbar />
+                <Box sx={{
+                    width: '100%',
+                    maxWidth: '1440px',
+                    px: { xs: 2, sm: 4, md: 6 },
+                    py: 4
+                }}>
+                    <Outlet />
                 </Box>
             </Box>
-        </ThemeProvider>
+        </Box>
+        </ThemeProvider >
     );
 };
 

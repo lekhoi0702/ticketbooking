@@ -18,8 +18,33 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
 
     const { login } = useAuth();
 
+    const validateEmailOrPhone = (input) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+        return emailRegex.test(input) || phoneRegex.test(input);
+    };
+
+    const validatePhone = (phone) => {
+        const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+        return phoneRegex.test(phone);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Basic frontend validation
+        if (activeTab === 'login') {
+            if (!validateEmailOrPhone(formData.email)) {
+                setError({ type: 'danger', msg: 'Vui lòng nhập Email hoặc Số điện thoại hợp lệ' });
+                return;
+            }
+        } else if (activeTab === 'register') {
+            if (!validatePhone(formData.phone)) {
+                setError({ type: 'danger', msg: 'Số điện thoại không hợp lệ' });
+                return;
+            }
+        }
+
         setLoading(true);
         setError(null);
 
@@ -29,7 +54,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                 if (res.success) {
                     setActiveTab('login');
                     setError({ type: 'success', msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
-                    setFormData({ ...formData, full_name: '', phone: '' });
+                    setFormData({ ...formData, full_name: '', phone: '', email: '', password: '' });
                 }
             } else {
                 const res = await api.login({
@@ -64,11 +89,11 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
     return (
         <Modal show={show} onHide={handleClose} centered size="md" className="auth-modal">
             <Modal.Header closeButton className="border-0 pb-0">
-                <Modal.Title className="w-100 text-center">
+                <div className="w-100 d-flex flex-column align-items-center mt-3">
                     <div className="auth-modal-icon">
                         <FaUser />
                     </div>
-                </Modal.Title>
+                </div>
             </Modal.Header>
             <Modal.Body className="px-4 pb-4">
                 <Tabs
@@ -98,7 +123,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 <Form.Control
                                     required
                                     type="text"
-                                    placeholder="Email hoặc SĐT"
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     className="py-2 px-3"
@@ -113,7 +137,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 <Form.Control
                                     required
                                     type="password"
-                                    placeholder="********"
                                     value={formData.password}
                                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                                     className="py-2 px-3"
@@ -200,7 +223,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 <Form.Control
                                     required
                                     type="password"
-                                    placeholder="********"
                                     value={formData.password}
                                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                                     className="py-2 px-3"

@@ -30,7 +30,8 @@ const TicketConfig = ({
     addTicketType,
     removeTicketType,
     venueTemplate,
-    toggleSeatSelection
+    toggleSeatSelection,
+    toggleAreaSelection
 }) => {
     const [expandedIndex, setExpandedIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
@@ -124,47 +125,50 @@ const TicketConfig = ({
                             <Collapse in={expandedIndex === index}>
                                 <Divider />
                                 <Box sx={{ p: 3 }}>
-                                    <Grid container spacing={3}>
-                                        <Grid item xs={12} md={6}>
-                                            <TextField
-                                                fullWidth
-                                                label="Tên Loại Vé"
-                                                size="small"
-                                                value={tt.type_name}
-                                                onChange={(e) => handleTicketTypeChange(index, 'type_name', e.target.value)}
-                                                required
-                                            />
+                                    <Stack spacing={4}>
+                                        <Grid container spacing={3}>
+                                            <Grid item xs={12} md={6}>
+                                                <TextField
+                                                    fullWidth
+                                                    label="Tên Loại Vé"
+                                                    size="small"
+                                                    value={tt.type_name}
+                                                    onChange={(e) => handleTicketTypeChange(index, 'type_name', e.target.value)}
+                                                    required
+                                                />
+                                            </Grid>
+                                            <Grid item xs={12} md={3}>
+                                                <TextField
+                                                    fullWidth
+                                                    label="Giá Vé (VND)"
+                                                    type="number"
+                                                    size="small"
+                                                    value={tt.price}
+                                                    onChange={(e) => handleTicketTypeChange(index, 'price', e.target.value)}
+                                                    required
+                                                />
+                                            </Grid>
+                                            <Grid item xs={12} md={3}>
+                                                <TextField
+                                                    fullWidth
+                                                    label="Số Lượng (Tự động)"
+                                                    type="number"
+                                                    size="small"
+                                                    disabled
+                                                    value={tt.quantity}
+                                                    helperText="Dựa trên số ghế đã chọn"
+                                                />
+                                            </Grid>
                                         </Grid>
-                                        <Grid item xs={12} md={3}>
-                                            <TextField
-                                                fullWidth
-                                                label="Giá Vé (VND)"
-                                                type="number"
-                                                size="small"
-                                                value={tt.price}
-                                                onChange={(e) => handleTicketTypeChange(index, 'price', e.target.value)}
-                                                required
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12} md={3}>
-                                            <TextField
-                                                fullWidth
-                                                label="Số Lượng (Tự động)"
-                                                type="number"
-                                                size="small"
-                                                disabled
-                                                value={tt.quantity}
-                                                helperText="Dựa trên số ghế đã chọn"
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <Box sx={{ mt: 2, p: 2, bgcolor: '#f1f3f4', borderRadius: 2 }}>
-                                                <Typography variant="subtitle2" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
-                                                    <ChairIcon fontSize="small" color="primary" /> Sơ đồ chọn chỗ cho hạng "{tt.type_name || 'này'}"
-                                                </Typography>
 
-                                                {venueTemplate ? (
-                                                    <Box sx={{ bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 2, overflow: 'hidden' }}>
+                                        <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                            <Typography variant="subtitle2" sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+                                                <ChairIcon fontSize="small" color="primary" /> Sơ đồ chọn chỗ cho hạng "{tt.type_name || 'này'}"
+                                            </Typography>
+
+                                            {venueTemplate ? (
+                                                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                                    <Box sx={{ width: '100%', maxWidth: '900px', borderRadius: 2, overflow: 'hidden' }}>
                                                         <SeatMapTemplateView
                                                             venueTemplate={venueTemplate}
                                                             selectedTemplateSeats={tt.selectedSeats || []}
@@ -172,14 +176,15 @@ const TicketConfig = ({
                                                             activeTicketType={{ ticket_type_id: 'current' }}
                                                             handleSeatMouseDown={(e, t) => handleSeatMouseDown(e, t, index)}
                                                             handleSeatMouseEnter={(t) => handleSeatMouseEnter(t, index)}
+                                                            toggleAreaSeats={(areaName, seatsInArea) => toggleAreaSelection(index, areaName, seatsInArea)}
                                                         />
                                                     </Box>
-                                                ) : (
-                                                    <Alert severity="warning">Vui lòng chọn địa điểm tổ chức để hiển thị sơ đồ ghế.</Alert>
-                                                )}
-                                            </Box>
-                                        </Grid>
-                                    </Grid>
+                                                </Box>
+                                            ) : (
+                                                <Alert severity="warning" sx={{ width: '100%' }}>Vui lòng chọn địa điểm tổ chức để hiển thị sơ đồ ghế.</Alert>
+                                            )}
+                                        </Box>
+                                    </Stack>
                                 </Box>
                             </Collapse>
                         </CardContent>

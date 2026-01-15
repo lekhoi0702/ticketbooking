@@ -57,6 +57,7 @@ const ManageSeats = () => {
         handleSeatMouseEnter,
         handleInitializeSeats,
         handleSaveTemplateAssignment,
+        toggleAreaSeats,
         setHasSeats
     } = useManageSeats(eventId);
 
@@ -228,6 +229,7 @@ const ManageSeats = () => {
                                     activeTicketType={activeTicketType}
                                     handleSeatMouseDown={handleSeatMouseDown}
                                     handleSeatMouseEnter={handleSeatMouseEnter}
+                                    toggleAreaSeats={toggleAreaSeats}
                                 />
                             ) : (
                                 <Box sx={{ p: 5, textAlign: 'center' }}>

@@ -28,25 +28,27 @@ import {
     EventSeat as SeatIcon,
     Public as PublicIcon,
     Warning as WarningIcon,
-    Visibility as ViewIcon
+    Visibility as ViewIcon,
+    Cancel as CancelIcon
 } from '@mui/icons-material';
 import { api } from '../../services/api';
 
-const EventTable = ({ events, handlePublishEvent }) => {
+const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDeleteClick }) => {
     const navigate = useNavigate();
 
     const getStatusConfig = (status) => {
         const configs = {
-            'PENDING_APPROVAL': { color: 'warning', label: 'CHỜ DUYỆT' },
-            'APPROVED': { color: 'info', label: 'ĐÃ DUYỆT' },
-            'REJECTED': { color: 'error', label: 'TỪ CHỐI' },
-            'PUBLISHED': { color: 'success', label: 'CÔNG KHAI' },
-            'DRAFT': { color: 'default', label: 'NHÁP' },
-            'ONGOING': { color: 'secondary', label: 'ĐANG DIỄN RA' },
-            'COMPLETED': { color: 'default', label: 'ĐÃ KẾT THÚC' },
-            'PENDING_DELETION': { color: 'error', label: 'CHỜ XÓA' }
+            'PENDING_APPROVAL': { color: 'warning' },
+            'APPROVED': { color: 'info' },
+            'REJECTED': { color: 'error' },
+            'PUBLISHED': { color: 'success' },
+            'DRAFT': { color: 'default' },
+            'ONGOING': { color: 'secondary' },
+            'COMPLETED': { color: 'default' },
+            'PENDING_DELETION': { color: 'error' }
         };
-        return configs[status] || { color: 'default', label: status };
+        const config = configs[status] || { color: 'default' };
+        return { ...config, label: status };
     };
 
 
@@ -157,30 +159,23 @@ const EventTable = ({ events, handlePublishEvent }) => {
                                                         Đăng
                                                     </Button>
                                                 )}
-                                                <Tooltip title={
-                                                    event.status === 'REJECTED' ? "Không thể quản lý ghế cho sự kiện bị từ chối" :
-                                                        event.status === 'ONGOING' ? "Không thể quản lý ghế cho sự kiện đang diễn ra" :
-                                                            event.status === 'COMPLETED' ? "Không thể quản lý ghế cho sự kiện đã kết thúc" :
-                                                                "Sơ đồ ghế"
-                                                }>
-                                                    <span>
-                                                        <IconButton
-                                                            size="small"
-                                                            color="info"
-                                                            onClick={() => navigate(`/organizer/manage-seats/${event.event_id}`)}
-                                                            disabled={['REJECTED', 'ONGOING', 'COMPLETED'].includes(event.status)}
-                                                            sx={{
-                                                                border: 1,
-                                                                borderColor: ['REJECTED', 'ONGOING', 'COMPLETED'].includes(event.status) ? 'action.disabledBackground' : 'info.main',
-                                                                '&:hover': {
-                                                                    bgcolor: 'info.light'
-                                                                }
-                                                            }}
-                                                        >
-                                                            <SeatIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </span>
-                                                </Tooltip>
+                                                {event.status === 'PENDING_APPROVAL' && (
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
+                                                        color="error"
+                                                        startIcon={<CancelIcon />}
+                                                        onClick={() => handleCancelApproval(event.event_id)}
+                                                        sx={{
+                                                            borderRadius: 2,
+                                                            textTransform: 'none',
+                                                            fontSize: '0.75rem',
+                                                            px: 2
+                                                        }}
+                                                    >
+                                                        Hủy duyệt
+                                                    </Button>
+                                                )}
                                                 <Tooltip title="Xem chi tiết">
                                                     <IconButton
                                                         size="small"
@@ -199,19 +194,20 @@ const EventTable = ({ events, handlePublishEvent }) => {
                                                 </Tooltip>
                                                 <Tooltip title={
                                                     event.status === 'REJECTED' ? "Không thể sửa sự kiện bị từ chối" :
-                                                        event.status === 'ONGOING' ? "Không thể sửa sự kiện đang diễn ra" :
-                                                            event.status === 'COMPLETED' ? "Không thể sửa sự kiện đã kết thúc" :
-                                                                "Sửa"
+                                                        event.status === 'PENDING_APPROVAL' ? "Không thể sửa sự kiện đang chờ duyệt" :
+                                                            event.status === 'ONGOING' ? "Không thể sửa sự kiện đang diễn ra" :
+                                                                event.status === 'COMPLETED' ? "Không thể sửa sự kiện đã kết thúc" :
+                                                                    "Sửa"
                                                 }>
                                                     <span>
                                                         <IconButton
                                                             size="small"
                                                             color="primary"
                                                             onClick={() => navigate(`/organizer/edit-event/${event.event_id}`)}
-                                                            disabled={['REJECTED', 'ONGOING', 'COMPLETED'].includes(event.status)}
+                                                            disabled={['REJECTED', 'PENDING_APPROVAL', 'ONGOING', 'COMPLETED'].includes(event.status)}
                                                             sx={{
                                                                 border: 1,
-                                                                borderColor: ['REJECTED', 'ONGOING', 'COMPLETED'].includes(event.status) ? 'action.disabledBackground' : 'primary.main',
+                                                                borderColor: ['REJECTED', 'PENDING_APPROVAL', 'ONGOING', 'COMPLETED'].includes(event.status) ? 'action.disabledBackground' : 'primary.main',
                                                                 '&:hover': {
                                                                     bgcolor: 'primary.light'
                                                                 }
@@ -221,6 +217,24 @@ const EventTable = ({ events, handlePublishEvent }) => {
                                                         </IconButton>
                                                     </span>
                                                 </Tooltip>
+                                                {['DRAFT', 'REJECTED'].includes(event.status) && (
+                                                    <Tooltip title="Xóa sự kiện">
+                                                        <IconButton
+                                                            size="small"
+                                                            color="error"
+                                                            onClick={() => handleDeleteClick(event)}
+                                                            sx={{
+                                                                border: 1,
+                                                                borderColor: 'error.main',
+                                                                '&:hover': {
+                                                                    bgcolor: 'error.lighter'
+                                                                }
+                                                            }}
+                                                        >
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
                                             </Stack>
                                         </TableCell>
                                     </TableRow>

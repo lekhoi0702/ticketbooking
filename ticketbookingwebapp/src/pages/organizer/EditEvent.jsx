@@ -63,6 +63,7 @@ const EditEvent = () => {
         toggleSeatSelection,
         addTicketType,
         removeTicketType,
+        toggleAreaSelection,
         handleSubmit,
         // Helper to populate data for editing
         setFormData,
@@ -306,6 +307,7 @@ const EditEvent = () => {
                                     removeTicketType={removeTicketType}
                                     venueTemplate={venueTemplate}
                                     toggleSeatSelection={toggleSeatSelection}
+                                    toggleAreaSelection={toggleAreaSelection}
                                     isEdit={true}
                                 />
                                 <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>

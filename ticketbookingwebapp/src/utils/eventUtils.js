@@ -21,9 +21,11 @@ export const transformEvent = (event) => {
         }) : 'TBA',
         location: event.venue ? `${event.venue.venue_name}, ${event.venue.city}` : 'TBA',
         image: getImageUrl(event.banner_image_url),
-        price: event.ticket_types && event.ticket_types.length > 0
-            ? (event.ticket_types[0].price === 0 ? 'Miễn phí' : `${event.ticket_types[0].price.toLocaleString('vi-VN')}đ`)
-            : 'TBA',
+        price: (() => {
+            if (!event.ticket_types || event.ticket_types.length === 0) return 'TBA';
+            const minPrice = Math.min(...event.ticket_types.map(t => t.price));
+            return minPrice === 0 ? 'Miễn phí' : `${minPrice.toLocaleString('vi-VN')}đ`;
+        })(),
         badge: event.is_featured ? 'Hot' : null
     };
 };

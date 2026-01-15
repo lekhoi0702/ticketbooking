@@ -29,8 +29,11 @@ import {
     ConfirmationNumber as TicketIcon,
     TrendingUp as TrendingUpIcon,
     Refresh as RefreshIcon,
-    ArrowForward as ArrowForwardIcon
+    ArrowForward as ArrowForwardIcon,
+    CheckCircle as CheckCircleIcon,
+    Cancel as CancelIcon
 } from '@mui/icons-material';
+import { Snackbar, Alert, Button } from '@mui/material';
 
 const StatCard = ({ title, value, icon, color, trend, link }) => (
     <Card
@@ -131,6 +134,7 @@ const Dashboard = () => {
         totalTicketsSold: 0,
         recentOrders: []
     });
+    const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
 
     useEffect(() => {
         if (user?.user_id) {
@@ -141,7 +145,7 @@ const Dashboard = () => {
     const fetchStats = async () => {
         try {
             setLoading(true);
-            const res = await api.getDashboardStats(user.user_id);
+            const res = await api.getDashboardStats(user?.user_id || 1);
             if (res.success) {
                 setStats({
                     totalEvents: res.data.total_events,
@@ -154,6 +158,24 @@ const Dashboard = () => {
             console.error("Error fetching stats:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleProcessCancellation = async (orderId, action) => {
+        const confirmMsg = action === 'approve'
+            ? "Đồng ý yêu cầu hủy đơn này? Tiền sẽ được hoàn lại (nếu có) và vé sẽ bị hủy."
+            : "Từ chối yêu cầu hủy? Đơn hàng sẽ trở lại trạng thái Đã thanh toán.";
+
+        if (!window.confirm(confirmMsg)) return;
+
+        try {
+            const res = await api.processOrderCancellation(orderId, action);
+            if (res.success) {
+                setToast({ show: true, message: action === 'approve' ? "Đã duyệt yêu cầu hủy" : "Đã từ chối yêu cầu hủy", variant: 'success' });
+                fetchStats();
+            }
+        } catch (error) {
+            setToast({ show: true, message: error.message, variant: 'error' });
         }
     };
 
@@ -250,6 +272,7 @@ const Dashboard = () => {
                                     <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }} align="right">Tổng Tiền</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Thanh Toán</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Ngày</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }} align="center">Hành Động</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -323,6 +346,24 @@ const Dashboard = () => {
                                                     {new Date(order.created_at).toLocaleDateString('vi-VN')}
                                                 </Typography>
                                             </TableCell>
+                                            <TableCell align="center">
+                                                {order.order_status === 'CANCELLATION_PENDING' || order.status === 'CANCELLATION_PENDING' ? (
+                                                    <Stack direction="row" spacing={1} justifyContent="center">
+                                                        <Tooltip title="Duyệt Hủy">
+                                                            <IconButton size="small" color="success" onClick={(e) => { e.stopPropagation(); handleProcessCancellation(order.order_id, 'approve'); }}>
+                                                                <CheckCircleIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Từ Chối">
+                                                            <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleProcessCancellation(order.order_id, 'reject'); }}>
+                                                                <CancelIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Stack>
+                                                ) : (
+                                                    <Typography variant="caption" color="text.disabled">---</Typography>
+                                                )}
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
@@ -345,6 +386,17 @@ const Dashboard = () => {
                     </TableContainer>
                 </CardContent>
             </Card>
+
+            <Snackbar
+                open={toast.show}
+                autoHideDuration={4000}
+                onClose={() => setToast({ ...toast, show: false })}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert severity={toast.variant} sx={{ width: '100%', borderRadius: 2 }}>
+                    {toast.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

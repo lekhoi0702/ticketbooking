@@ -76,12 +76,6 @@ const Footer = () => {
                 </Row>
 
                 <div className="footer-bottom">
-                    <div className="footer-brand">
-                        <span className="brand-text">ticketbooking by TEAM</span>
-                    </div>
-                    <div className="footer-copyright">
-                        <p>© 2026 TicketBooking. All rights reserved.</p>
-                    </div>
                 </div>
             </Container>
         </footer>

@@ -6,7 +6,27 @@
 }
 
 .auth-modal .modal-header {
-    padding: 2rem 2rem 0;
+    padding: 1.5rem 1.5rem 0;
+    position: relative;
+}
+
+.auth-modal .btn-close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 10;
+    transition: all 0.3s;
+    background-size: 12px;
+    padding: 10px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    opacity: 0.8;
+}
+
+.auth-modal .btn-close:hover {
+    background-color: #e9ecef;
+    opacity: 1;
+    transform: rotate(90deg);
 }
 
 .auth-modal .modal-body {

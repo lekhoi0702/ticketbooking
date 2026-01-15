@@ -40,10 +40,30 @@ const MyOrders = () => {
             'PAID': { bg: 'success', text: 'Đã thanh toán' },
             'PENDING': { bg: 'warning', text: 'Chờ thanh toán' },
             'CANCELLED': { bg: 'danger', text: 'Đã hủy' },
-            'COMPLETED': { bg: 'primary', text: 'Hoàn thành' }
+            'COMPLETED': { bg: 'primary', text: 'Hoàn thành' },
+            'CANCELLATION_PENDING': { bg: 'info', text: 'Chờ duyệt hủy' }
         };
         const s = statuses[status] || { bg: 'secondary', text: status };
-        return <Badge bg={s.bg} className="px-3 py-2 lh-1">{s.text}</Badge>;
+        return <Badge bg={s.bg} className="px-3 py-2 lh-1 rounded-pill">{s.text}</Badge>;
+    };
+
+    const handleCancelOrder = async (orderId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn gửi yêu cầu hủy đơn hàng này không? Quá trình duyệt có thể mất một ít thời gian.")) return;
+
+        try {
+            setLoading(true);
+            const res = await api.cancelOrder(orderId);
+            if (res.success) {
+                // We'll show a message or just refresh
+                fetchUserOrders();
+            } else {
+                setError(res.message);
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
 
@@ -102,15 +122,28 @@ const MyOrders = () => {
                                                         <span><FaTicketAlt className="me-1 text-success" /> Tổng tiền: <strong>{formatCurrency(order.total_amount)}</strong></span>
                                                     </div>
                                                 </div>
-                                                <Button
-                                                    as={Link}
-                                                    to={`/order-success/${order.order_code}`}
-                                                    variant="outline-primary"
-                                                    className="rounded-pill px-4"
-                                                    size="sm"
-                                                >
-                                                    <FaEye className="me-2" /> Chi tiết vé
-                                                </Button>
+                                                <div className="d-flex flex-column gap-2">
+                                                    <Button
+                                                        as={Link}
+                                                        to={`/order-success/${order.order_code}`}
+                                                        variant="outline-primary"
+                                                        className="rounded-pill px-4"
+                                                        size="sm"
+                                                    >
+                                                        <FaEye className="me-2" /> Chi tiết vé
+                                                    </Button>
+
+                                                    {order.order_status === 'PAID' && new Date(order.event_start_datetime || order.start_datetime) > new Date() && (
+                                                        <Button
+                                                            variant="link"
+                                                            className="text-danger x-small text-decoration-none p-0 fw-bold border-0"
+                                                            size="sm"
+                                                            onClick={() => handleCancelOrder(order.order_id)}
+                                                        >
+                                                            Hủy đơn hàng
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
                                             <hr className="my-3 opacity-10" />
                                             <div className="small text-muted d-flex align-items-center">

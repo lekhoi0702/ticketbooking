@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { Container, Card, Alert, Spinner, Button, Row, Col, ListGroup, Badge } from 'react-bootstrap';
 import { FaCheckCircle, FaTicketAlt, FaCalendar, FaMapMarkerAlt, FaChair, FaDownload } from 'react-icons/fa';
 import { api } from '../../services/api';
-import { formatCurrency } from '../../utils/eventUtils';
+import { formatCurrency, getImageUrl } from '../../utils/eventUtils';
+import { QRCodeSVG } from 'qrcode.react';
 
 const OrderSuccess = () => {
     const { orderCode } = useParams();
@@ -99,37 +100,47 @@ const OrderSuccess = () => {
                                 <FaTicketAlt className="me-2 text-primary" /> Vé điện tử của bạn
                             </h5>
                             {tickets.map((ticket, idx) => (
-                                <Card key={ticket.ticket_id} className="border-0 shadow-sm mb-3 rounded-4 overflow-hidden ticket-card">
-                                    <div className="d-flex h-100">
-                                        <div className="bg-primary p-3 d-flex flex-column justify-content-center align-items-center text-white" style={{ width: '80px' }}>
-                                            <div className="small opacity-75">VÉ</div>
-                                            <div className="fs-3 fw-bold">#{idx + 1}</div>
-                                        </div>
-                                        <div className="p-3 flex-grow-1 bg-white position-relative">
-                                            <div className="position-absolute top-0 start-0 translate-middle-y bg-light rounded-circle" style={{ width: '20px', height: '20px', left: '-10px' }}></div>
-                                            <div className="position-absolute bottom-0 start-0 translate-middle-y bg-light rounded-circle" style={{ width: '20px', height: '20px', left: '-10px' }}></div>
+                                <Card key={ticket.ticket_id} className="border-0 shadow-sm mb-3 rounded-4 overflow-hidden ticket-compact-card">
+                                    <div className="ticket-compact-content p-3 flex-grow-1 bg-white position-relative">
+                                        <div className="notch notch-top" style={{ top: '-10px', left: '-10px', position: 'absolute', width: '20px', height: '20px', backgroundColor: '#f8f9fa', borderRadius: '50%' }}></div>
+                                        <div className="notch notch-bottom" style={{ bottom: '-10px', left: '-10px', position: 'absolute', width: '20px', height: '20px', backgroundColor: '#f8f9fa', borderRadius: '50%' }}></div>
 
-                                            <div className="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <h6 className="fw-bold mb-1 text-uppercase">{event?.event_name}</h6>
-                                                    <div className="small text-muted d-flex align-items-center mb-2">
-                                                        <FaCalendar className="me-2" /> {formatDateTime(event?.start_datetime)}
-                                                    </div>
-
-                                                    {ticket.seat ? (
-                                                        <div className="bg-success bg-opacity-10 text-success px-3 py-2 rounded-3 d-inline-flex align-items-center fw-bold">
-                                                            <FaChair className="me-2" />
-                                                            Hàng {ticket.seat.row_name} - Ghế {ticket.seat.seat_number}
-                                                        </div>
-                                                    ) : (
-                                                        <Badge bg="light" text="dark" className="border">Vé chung (Standard)</Badge>
-                                                    )}
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <div className="flex-grow-1">
+                                                <h6 className="fw-bold mb-1 text-uppercase">{event?.event_name}</h6>
+                                                <div className="small text-muted d-flex align-items-center mb-2">
+                                                    <FaCalendar className="me-2 text-primary" /> {formatDateTime(event?.start_datetime)}
                                                 </div>
-                                                <div className="text-end">
+
+                                                {ticket.seat ? (
+                                                    <div className="bg-white border px-3 py-1 rounded-pill d-inline-flex align-items-center fw-bold small">
+                                                        <FaChair className="me-1 text-success small" />
+                                                        {ticket.seat.row_name}{ticket.seat.seat_number}
+                                                    </div>
+                                                ) : (
+                                                    <Badge bg="light" text="dark" className="border">Vé chung</Badge>
+                                                )}
+                                            </div>
+                                            <div className="text-end d-flex flex-column justify-content-between h-100">
+                                                <div>
                                                     <div className="fw-bold text-dark fs-5">{formatCurrency(ticket.price)}</div>
                                                     <div className="small text-muted mb-2">Mã: {ticket.ticket_code}</div>
-                                                    <div className="bg-light p-2 rounded-2 text-center" style={{ width: '80px', height: '80px', margin: '0 0 0 auto' }}>
-                                                        <div className="w-100 h-100 border border-secondary border-2 opacity-25 d-flex align-items-center justify-content-center" style={{ fontSize: '8px' }}>QR CODE</div>
+                                                </div>
+
+                                                <div className="bg-light p-1 rounded-2 text-center d-flex align-items-center justify-content-center" style={{ width: '85px', height: '85px', margin: '0px 0px 0px auto' }}>
+                                                    <div className="w-100 h-100 bg-white d-flex align-items-center justify-content-center rounded border overflow-hidden">
+                                                        <img
+                                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticket.ticket_code}`}
+                                                            alt="QR Code"
+                                                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                if (e.target.nextSibling) e.target.nextSibling.style.display = 'block';
+                                                            }}
+                                                        />
+                                                        <div style={{ display: 'none' }}>
+                                                            <QRCodeSVG value={ticket.ticket_code} size={65} level="L" />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

@@ -106,24 +106,26 @@ def assign_seats_from_template():
         # 1. Xóa các ghế cũ của hạng vé này
         Seat.query.filter_by(ticket_type_id=ticket_type_id).delete()
         
-        # 2. Tạo mới các ghế đã chọn
-        created_count = 0
+        # 2. Tạo mới các ghế đã chọn bằng bulk insert để tăng hiệu suất và tránh deadlock
+        seats_to_insert = []
         for s_data in selected_seats:
-            seat = Seat(
-                ticket_type_id=ticket_type_id,
-                row_name=s_data.get('row_name'),
-                seat_number=str(s_data.get('seat_number')),
-                area_name=s_data.get('area'), # Changed to 'area' to match frontend key
-                status='AVAILABLE',
-                x_pos=s_data.get('x_pos'),
-                y_pos=s_data.get('y_pos')
-            )
-            db.session.add(seat)
-            created_count += 1
+            seats_to_insert.append({
+                'ticket_type_id': ticket_type_id,
+                'row_name': s_data.get('row_name'),
+                'seat_number': str(s_data.get('seat_number')),
+                'area_name': s_data.get('area'),
+                'status': 'AVAILABLE',
+                'is_active': True,
+                'x_pos': s_data.get('x_pos'),
+                'y_pos': s_data.get('y_pos')
+            })
+        
+        if seats_to_insert:
+            db.session.bulk_insert_mappings(Seat, seats_to_insert)
+            created_count = len(seats_to_insert)
             
         # 3. Cập nhật số lượng vé thực tế dựa trên số ghế đã chọn
         ticket_type.quantity = created_count
-        
         db.session.commit()
         
         return jsonify({

@@ -104,20 +104,27 @@ const Header = () => {
                         </Link>
 
                         <div className="search-bar position-relative" ref={suggestionRef}>
-                            <Form onSubmit={handleSearch}>
-                                <InputGroup>
+                            <Form onSubmit={handleSearch} className="search-form">
+                                <div className="search-input-wrapper">
+                                    <FaSearch className="search-icon-left" />
                                     <Form.Control
                                         type="text"
                                         placeholder="Tìm sự kiện, tên ca sĩ..."
-                                        className="search-input border-0 bg-light"
+                                        className="search-input-premium"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         onFocus={() => searchQuery.trim().length > 1 && setShowSuggestions(true)}
                                     />
-                                    <Button type="submit" variant="primary" className="search-button px-4">
-                                        <FaSearch />
-                                    </Button>
-                                </InputGroup>
+                                    {searchQuery && (
+                                        <button
+                                            type="button"
+                                            className="search-clear-btn"
+                                            onClick={() => setSearchQuery('')}
+                                        >
+                                            &times;
+                                        </button>
+                                    )}
+                                </div>
                             </Form>
 
                             {/* Search Suggestions Dropdown */}
@@ -173,7 +180,7 @@ const Header = () => {
                                                 </div>
                                                 <div className="user-info-text d-none d-md-block text-start">
                                                     <div className="user-display-name fw-bold text-white small">{user?.full_name}</div>
-                                                    <div className="user-status x-small text-white-50">Thành viên</div>
+                                                    <div className="user-status x-small text-white opacity-75">Thành viên</div>
                                                 </div>
                                             </div>
                                         }

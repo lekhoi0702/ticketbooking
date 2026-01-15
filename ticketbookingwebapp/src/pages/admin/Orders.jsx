@@ -29,7 +29,10 @@ import {
     CheckCircle,
     AccountBalanceWallet,
     Payments,
-    History
+    History,
+    CancelOutlined,
+    CheckCircleOutline,
+    Close
 } from '@mui/icons-material';
 import { api } from '../../services/api';
 
@@ -73,6 +76,24 @@ const AdminOrdersManagement = () => {
         }
     };
 
+    const handleProcessCancellation = async (orderId, action) => {
+        const confirmMsg = action === 'approve'
+            ? "Approve this cancellation request? Order will be marked as CANCELLED."
+            : "Reject this cancellation request? Order will return to PAID status.";
+
+        if (!window.confirm(confirmMsg)) return;
+
+        try {
+            const res = await api.processOrderCancellation(orderId, action);
+            if (res.success) {
+                showToast(action === 'approve' ? "Cancellation approved" : "Cancellation rejected");
+                fetchOrders();
+            }
+        } catch (error) {
+            showToast(error.message, "error");
+        }
+    };
+
     const filteredOrders = orders.filter(order =>
         order.order_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -83,7 +104,8 @@ const AdminOrdersManagement = () => {
         const styles = {
             'PAID': 'success',
             'PENDING': 'warning',
-            'CANCELLED': 'error'
+            'CANCELLED': 'error',
+            'CANCELLATION_PENDING': 'info'
         };
         return styles[status] || 'default';
     };
@@ -92,7 +114,8 @@ const AdminOrdersManagement = () => {
         const labels = {
             'PAID': 'Paid',
             'PENDING': 'Pending Payment',
-            'CANCELLED': 'Cancelled'
+            'CANCELLED': 'Cancelled',
+            'CANCELLATION_PENDING': 'Cancellation Pending'
         };
         return labels[status] || status;
     };
@@ -113,31 +136,31 @@ const AdminOrdersManagement = () => {
         <Box>
             <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
                 <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                        Transaction Logs
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
+                        Lịch Sử Giao Dịch
                     </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                        Monitor system-wide cash flow and ticket payment statuses
+                    <Typography variant="body2" color="text.secondary">
+                        Theo dõi dòng tiền và trạng thái thanh toán vé trên toàn hệ thống.
                     </Typography>
                 </Box>
                 <Button
                     variant="outlined"
                     startIcon={<Refresh />}
                     onClick={fetchOrders}
-                    sx={{ borderRadius: 1.5 }}
+                    size="small"
+                    sx={{ color: 'text.secondary', borderColor: 'divider' }}
                 >
-                    Refresh
+                    Làm mới
                 </Button>
             </Stack>
 
-            <Card sx={{ boxShadow: 2, borderRadius: 2 }}>
+            <Card sx={{ mt: 3 }}>
                 <CardContent sx={{ p: 0 }}>
-                    <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ p: 2, borderBottom: '1px solid #EBEEF5' }}>
                         <TextField
-                            sx={{ maxWidth: 450 }}
-                            fullWidth
+                            sx={{ maxWidth: 350 }}
                             size="small"
-                            placeholder="Search by order code, customer or event..."
+                            placeholder="Mã đơn, khách hàng hoặc sự kiện..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             InputProps={{
@@ -151,15 +174,15 @@ const AdminOrdersManagement = () => {
                     </Box>
                     <TableContainer>
                         <Table sx={{ minWidth: 1000 }}>
-                            <TableHead sx={{ bgcolor: 'grey.50' }}>
+                            <TableHead>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 600, px: 3 }}>Order/ID</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Customer</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Event</TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: 600 }}>Method</TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: 600 }}>Amount</TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: 600, pr: 3 }}>Actions</TableCell>
+                                    <TableCell sx={{ px: 3 }}>MÃ ĐƠN/NGÀY</TableCell>
+                                    <TableCell>KHÁCH HÀNG</TableCell>
+                                    <TableCell>SỰ KIỆN</TableCell>
+                                    <TableCell align="center">PHƯƠNG THỨC</TableCell>
+                                    <TableCell align="right">SỐ TIỀN</TableCell>
+                                    <TableCell align="center">TRẠNG THÁI</TableCell>
+                                    <TableCell align="right" sx={{ pr: 3 }}>THAO TÁC</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -226,6 +249,30 @@ const AdminOrdersManagement = () => {
                                                         >
                                                             Confirm
                                                         </Button>
+                                                    )}
+                                                    {order.order_status === 'CANCELLATION_PENDING' && (
+                                                        <Stack direction="row" spacing={1}>
+                                                            <Button
+                                                                variant="contained"
+                                                                size="small"
+                                                                color="success"
+                                                                startIcon={<CheckCircleOutline />}
+                                                                onClick={() => handleProcessCancellation(order.order_id, 'approve')}
+                                                                sx={{ borderRadius: 1.5, textTransform: 'none' }}
+                                                            >
+                                                                Approve
+                                                            </Button>
+                                                            <Button
+                                                                variant="outlined"
+                                                                size="small"
+                                                                color="error"
+                                                                startIcon={<Close />}
+                                                                onClick={() => handleProcessCancellation(order.order_id, 'reject')}
+                                                                sx={{ borderRadius: 1.5, textTransform: 'none' }}
+                                                            >
+                                                                Reject
+                                                            </Button>
+                                                        </Stack>
                                                     )}
                                                 </Stack>
                                             </TableCell>

@@ -174,6 +174,46 @@ export const useCreateEvent = () => {
         setTicketTypes(newTicketTypes);
     };
 
+    const toggleAreaSelection = (index, areaName, seatsInArea) => {
+        const newTicketTypes = [...ticketTypes];
+        const currentTT = newTicketTypes[index];
+        const selected = currentTT.selectedSeats || [];
+
+        // Determine available seats (not taken by other ticket types)
+        const availableSeatsInArea = seatsInArea.filter(t => {
+            const isTakenByOthers = ticketTypes.some((tt, i) =>
+                i !== index && tt.selectedSeats?.some(s =>
+                    s.row_name === t.row_name &&
+                    String(s.seat_number) === String(t.seat_number) &&
+                    s.area === areaName
+                )
+            );
+            return !isTakenByOthers;
+        });
+
+        const currentSelectedInArea = selected.filter(s => s.area === areaName);
+        const allSelected = currentSelectedInArea.length === availableSeatsInArea.length && availableSeatsInArea.length > 0;
+        const mode = allSelected ? 'deselect' : 'select';
+
+        if (mode === 'deselect') {
+            currentTT.selectedSeats = selected.filter(s => s.area !== areaName);
+        } else {
+            // Add all available seats in this area that aren't already selected
+            const seatsToSelect = availableSeatsInArea.filter(t =>
+                !selected.some(s =>
+                    s.area === areaName &&
+                    s.row_name === t.row_name &&
+                    String(s.seat_number) === String(t.seat_number)
+                )
+            ).map(t => ({ ...t, seat_number: String(t.seat_number) }));
+
+            currentTT.selectedSeats = [...selected, ...seatsToSelect];
+        }
+
+        currentTT.quantity = String(currentTT.selectedSeats.length);
+        setTicketTypes(newTicketTypes);
+    };
+
     const addTicketType = () => {
         setTicketTypes([...ticketTypes, { type_name: '', price: '', quantity: '0', description: '', selectedSeats: [] }]);
     };
@@ -264,23 +304,24 @@ export const useCreateEvent = () => {
                 const eventIdToUse = isEdit ? eventId : response.data.event_id;
                 const returnedTicketTypes = response.data.ticket_types;
 
-                // Assign/Re-assign seats for each ticket type
-                const assignmentPromises = ticketTypes.map(localTT => {
+                // Assign/Re-assign seats for each ticket type sequentially to avoid database deadlocks
+                for (const localTT of ticketTypes) {
                     const matchedTT = returnedTicketTypes?.find(rtt =>
                         (localTT.ticket_type_id && rtt.ticket_type_id === localTT.ticket_type_id) ||
                         (!localTT.ticket_type_id && rtt.type_name === localTT.type_name)
                     );
 
-                    if (matchedTT && localTT.selectedSeats.length > 0) {
-                        return api.assignSeatsFromTemplate({
+                    if (matchedTT && localTT.selectedSeats && localTT.selectedSeats.length > 0) {
+                        const assignResult = await api.assignSeatsFromTemplate({
                             ticket_type_id: matchedTT.ticket_type_id,
                             seats: localTT.selectedSeats
                         });
-                    }
-                    return Promise.resolve({ success: true });
-                });
 
-                await Promise.all(assignmentPromises);
+                        if (!assignResult.success) {
+                            throw new Error(assignResult.message || `Lỗi khi lưu ghế cho hạng vé ${localTT.type_name}`);
+                        }
+                    }
+                }
 
                 if (!isEdit) {
                     setCreatedEventId(eventIdToUse);
@@ -334,6 +375,7 @@ export const useCreateEvent = () => {
         },
         handleTicketTypeChange,
         toggleSeatSelection,
+        toggleAreaSelection,
         addTicketType,
         removeTicketType,
         handleSubmit,

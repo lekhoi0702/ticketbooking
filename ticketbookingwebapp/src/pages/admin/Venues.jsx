@@ -218,20 +218,21 @@ const VenuesManagement = () => {
         <Box>
             <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
                 <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                        Venue Designer
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
+                        Thiết Kế Sơ Đồ Địa Điểm
                     </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                        Thiết kế sơ đồ ghế và quản lý tình trạng cơ sở vật chất
+                    <Typography variant="body2" color="text.secondary">
+                        Xây dựng bố cục khu vực, hàng ghế và quản lý trang thiết bị.
                     </Typography>
                 </Box>
                 <Button
                     variant="outlined"
                     startIcon={<Refresh />}
                     onClick={fetchVenues}
-                    sx={{ borderRadius: 1.5 }}
+                    size="small"
+                    sx={{ color: 'text.secondary', borderColor: 'divider' }}
                 >
-                    Refresh
+                    Làm mới
                 </Button>
             </Stack>
 
@@ -244,49 +245,51 @@ const VenuesManagement = () => {
 
                     return (
                         <Grid item xs={12} md={6} lg={4} key={venue.venue_id}>
-                            <Card sx={{ height: '100%', borderRadius: 3, boxShadow: 2, transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+                            <Card sx={{ height: '100%' }}>
                                 <CardContent>
                                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                                         <Box>
-                                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.2 }}>
                                                 {venue.venue_name}
                                             </Typography>
-                                            <Typography variant="body2" color="textSecondary" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                <LocationOn sx={{ fontSize: 16, mr: 0.5 }} /> {venue.city || 'Chưa cập nhật'}
+                                            <Typography variant="caption" color="textSecondary" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                <LocationOn sx={{ fontSize: 14, mr: 0.3 }} /> {venue.city || 'Chưa cập nhật'}
                                             </Typography>
                                         </Box>
                                         <Chip
-                                            label={venue.is_active ? "Đang hoạt động" : "Bản nháp"}
+                                            label={venue.is_active ? "Sẵn sàng" : "Bản nháp"}
                                             size="small"
+                                            variant="outlined"
                                             color={venue.is_active ? "success" : "default"}
+                                            sx={{ borderRadius: 1, fontWeight: 600 }}
                                         />
                                     </Stack>
 
-                                    <Divider sx={{ my: 1.5 }} />
+                                    <Divider sx={{ my: 1.5, borderColor: '#f0f0f0' }} />
 
                                     <Grid container spacing={2} sx={{ mb: 2 }}>
                                         <Grid item xs={4}>
                                             <Typography variant="caption" color="textSecondary" display="block">KHU VỰC</Typography>
-                                            <Typography variant="body1" sx={{ fontWeight: 700 }}>{areaCount}</Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{areaCount}</Typography>
                                         </Grid>
                                         <Grid item xs={4}>
                                             <Typography variant="caption" color="textSecondary" display="block">TỔNG GHẾ</Typography>
-                                            <Typography variant="body1" sx={{ fontWeight: 700 }}>{totalSeats}</Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{totalSeats}</Typography>
                                         </Grid>
                                         <Grid item xs={4}>
                                             <Typography variant="caption" color="textSecondary" display="block">GHẾ HỎNG</Typography>
-                                            <Typography variant="body1" sx={{ fontWeight: 700, color: 'error.main' }}>{lockedCount}</Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>{lockedCount}</Typography>
                                         </Grid>
                                     </Grid>
 
                                     <Button
                                         fullWidth
-                                        variant="contained"
+                                        variant="outlined"
                                         startIcon={<GridView />}
                                         onClick={() => handleEditLayout(venue)}
-                                        sx={{ borderRadius: 2, bgcolor: 'primary.main', py: 1 }}
+                                        size="small"
                                     >
-                                        Thiết kế sơ đồ ghế
+                                        Cài đặt sơ đồ
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -301,21 +304,20 @@ const VenuesManagement = () => {
                 onClose={() => !saving && setShowEditModal(false)}
                 maxWidth="lg"
                 fullWidth
-                PaperProps={{ sx: { borderRadius: 3, height: '90vh' } }}
             >
-                <DialogTitle sx={{ p: 3, borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box sx={{ p: 2.5, borderBottom: '1px solid #EBEEF5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                            Layout Designer: {selectedVenue?.venue_name}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            Thiết Kế Sơ Đồ: {selectedVenue?.venue_name}
                         </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                            Kéo thả hoặc click để khóa các ghế bị hỏng
+                        <Typography variant="caption" color="text.secondary">
+                            Cấu trúc khu vực và trạng thái ghế ngồi
                         </Typography>
                     </Box>
-                    <IconButton onClick={() => setShowEditModal(false)} disabled={saving}>
-                        <Close />
+                    <IconButton size="small" onClick={() => setShowEditModal(false)} disabled={saving}>
+                        <Close fontSize="small" />
                     </IconButton>
-                </DialogTitle>
+                </Box>
 
                 <DialogContent sx={{ p: 0, display: 'flex' }}>
                     {/* Sidebar - Area Management */}

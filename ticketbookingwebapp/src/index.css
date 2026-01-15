@@ -70,3 +70,78 @@ img {
 .skip-links {
   display: none !important;
 }
+
+/* Unify all notifications as Premium MessageBox design */
+.alert {
+  position: fixed;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 10000;
+  /* Ensure it's above everything */
+  min-width: 350px;
+  max-width: 90%;
+  border-radius: 20px;
+  border: none;
+  padding: 1.25rem 2.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  text-align: center;
+  animation: messageBoxSlideIn 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  color: white !important;
+}
+
+@keyframes messageBoxSlideIn {
+  0% {
+    transform: translateX(-50%) translateY(-30px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.alert-danger {
+  background: rgba(220, 38, 38, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.alert-success {
+  background: rgba(5, 150, 105, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.alert-warning {
+  background: rgba(217, 119, 6, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.alert-info {
+  background: rgba(37, 99, 235, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.alert .btn-close {
+  filter: brightness(0) invert(1);
+  padding: 1.4rem;
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.8;
+}
+
+.alert .btn-close:hover {
+  opacity: 1;
+}
+
+.alert-dismissible {
+  padding-right: 4.5rem;
+}

@@ -20,7 +20,7 @@ const OrderSummary = ({
 
     return (
         <Card className="border-0 shadow-sm rounded-4 overflow-hidden order-summary-sidebar">
-            <Card.Header className="bg-dark text-white py-3">
+            <Card.Header className="py-3" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none' }}>
                 <h5 className="mb-0 fw-bold text-center">Tóm tắt đơn hàng</h5>
             </Card.Header>
             <Card.Body className="p-4">
@@ -50,8 +50,8 @@ const OrderSummary = ({
                                             </div>
                                             {seats.length > 0 && (
                                                 <div className="mt-1">
-                                                    <Badge bg="light" text="dark" className="border fw-normal small">
-                                                        Ghế: {seats.map(s => s.seat_label).join(', ')}
+                                                    <Badge bg="white" text="dark" className="border px-2 py-1 rounded-pill fw-bold small">
+                                                        Ghế: {seats.map(s => `${s.row_name || ''}${s.seat_number || ''}`).join(', ')}
                                                     </Badge>
                                                 </div>
                                             )}
@@ -83,7 +83,7 @@ const OrderSummary = ({
                     className="w-100 py-3 rounded-4 shadow-sm fw-bold border-0 transition-all"
                     type="submit"
                     disabled={processing || getTotalTickets() === 0}
-                    style={{ background: 'linear-gradient(45deg, #0d6efd, #00d2ff)' }}
+                    style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
                 >
                     {processing ? (
                         <><Spinner animation="border" size="sm" className="me-2" /> Đang xử lý...</>
