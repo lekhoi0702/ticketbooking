@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../constants';
+import { API_BASE_URL } from '@shared/constants';
 
 export const organizerApi = {
     async getDashboardStats(managerId = 1) {
@@ -39,13 +39,16 @@ export const organizerApi = {
         return await response.json();
     },
 
-    async deleteEvent(eventId) {
+    async deleteEvent(eventId, requestBody = {}) {
         const response = await fetch(`${API_BASE_URL}/organizer/events/${eventId}`, {
             method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
         });
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.message || 'Failed to delete event');
+            // Return the error response instead of throwing, so we can handle specific cases
+            return error;
         }
         return await response.json();
     },
@@ -102,6 +105,36 @@ export const organizerApi = {
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to process cancellation');
+        }
+        return await response.json();
+    },
+
+    async getEventOrders(eventId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/events/${eventId}/orders`);
+        if (!response.ok) throw new Error('Failed to fetch event orders');
+        return await response.json();
+    },
+
+    async approveRefund(orderId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/orders/${orderId}/refund/approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to approve refund');
+        }
+        return await response.json();
+    },
+
+    async rejectRefund(orderId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/orders/${orderId}/refund/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to reject refund');
         }
         return await response.json();
     },

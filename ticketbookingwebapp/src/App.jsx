@@ -1,48 +1,51 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
-import { AntdThemeConfig } from './theme/AntdThemeConfig';
-// Customer Imports
-import UserLayout from './components/Customer/UserLayout';
-import Header from './components/Customer/Header';
-import Footer from './components/Customer/Footer';
-import Home from './pages/user/Home';
-import EventDetail from './pages/user/EventDetail';
-import Checkout from './pages/user/Checkout';
-import OrderSuccess from './pages/user/OrderSuccess';
-import VNPayReturn from './pages/user/VNPayReturn';
-import MyOrders from './pages/user/MyOrders';
-import MyTickets from './pages/user/MyTickets';
-import SearchResults from './pages/user/SearchResults';
-import CategoryEvents from './pages/user/CategoryEvents';
+import { AntdThemeConfig } from '@theme/AntdThemeConfig';
+
+// User Imports
+import UserLayout from '@features/user/components/UserLayout';
+import Header from '@features/user/components/Header';
+import Footer from '@features/user/components/Footer';
+import Home from '@features/user/pages/Home';
+import EventDetail from '@features/user/pages/EventDetail';
+import Checkout from '@features/user/pages/Checkout';
+import OrderSuccess from '@features/user/pages/OrderSuccess';
+import VNPayReturn from '@features/user/pages/VNPayReturn';
+import MyOrders from '@features/user/pages/MyOrders';
+import MyTickets from '@features/user/pages/MyTickets';
+import SearchResults from '@features/user/pages/SearchResults';
+import CategoryEvents from '@features/user/pages/CategoryEvents';
+import Profile from '@features/user/pages/Profile';
+import Login from '@features/user/pages/Login';
 
 // Organizer Imports
-import OrganizerLayout from './components/Organizer/OrganizerLayout';
-import EventList from './pages/organizer/EventList';
-import CreateEvent from './pages/organizer/CreateEvent';
-import EditEvent from './pages/organizer/EditEvent';
-import OrganizerEventDetails from './pages/organizer/EventDetails';
-import OrganizerLogin from './pages/organizer/Login';
-import OrganizerHome from './pages/organizer/OrganizerHome';
-
-import ManageSeats from './pages/organizer/ManageSeats';
+import OrganizerLayout from '@features/organizer/components/OrganizerLayout';
+import EventList from '@features/organizer/pages/EventList';
+import CreateEvent from '@features/organizer/pages/CreateEvent';
+import EditEvent from '@features/organizer/pages/EditEvent';
+import OrganizerEventDetails from '@features/organizer/pages/EventDetails';
+import OrganizerLogin from '@features/organizer/pages/Login';
+import OrganizerHome from '@features/organizer/pages/OrganizerHome';
+import ManageSeats from '@features/organizer/pages/ManageSeats';
+import EventOrders from '@features/organizer/pages/EventOrders';
 
 // Admin Imports
-import AdminLayout from './components/Admin/AdminLayout';
-import UsersManagement from './pages/admin/Users';
-import AdminEventsManagement from './pages/admin/Events';
-import AdminOrdersManagement from './pages/admin/Orders';
-import VenuesManagement from './pages/admin/Venues';
-import AdminLogin from './pages/admin/Login';
+import AdminLayout from '@features/admin/components/AdminLayout';
+import UsersManagement from '@features/admin/pages/Users';
+import AdminEventsManagement from '@features/admin/pages/Events';
+import AdminOrdersManagement from '@features/admin/pages/Orders';
+import VenuesManagement from '@features/admin/pages/Venues';
+import EventDeletionRequests from '@features/admin/pages/EventDeletionRequests';
+import AdminLogin from '@features/admin/pages/Login';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './pages/user/Login';
+import { AuthProvider, useAuth } from '@context/AuthContext';
 
 // Protected Route Component with Role Support
-const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/login" }) => {
+const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/" }) => {
   const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
@@ -71,14 +74,13 @@ function App() {
               {/* User Routes */}
               <Route element={<UserLayout />}>
                 <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
                 <Route path="/event/:id" element={<EventDetail />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/category/:id" element={<CategoryEvents />} />
                 <Route
                   path="/checkout/:eventId"
                   element={
-                    <ProtectedRoute allowedRoles={['USER']}>
+                    <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
                       <Checkout />
                     </ProtectedRoute>
                   }
@@ -88,7 +90,7 @@ function App() {
                 <Route
                   path="/my-orders"
                   element={
-                    <ProtectedRoute allowedRoles={['USER']}>
+                    <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
                       <MyOrders />
                     </ProtectedRoute>
                   }
@@ -96,8 +98,16 @@ function App() {
                 <Route
                   path="/my-tickets"
                   element={
-                    <ProtectedRoute allowedRoles={['USER']}>
+                    <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
                       <MyTickets />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
+                      <Profile />
                     </ProtectedRoute>
                   }
                 />
@@ -111,6 +121,7 @@ function App() {
                 <Route path="events" element={<AdminEventsManagement />} />
                 <Route path="orders" element={<AdminOrdersManagement />} />
                 <Route path="venues" element={<VenuesManagement />} />
+                <Route path="event-deletion-requests" element={<EventDeletionRequests />} />
               </Route>
 
               {/* Organizer Routes */}
@@ -130,6 +141,7 @@ function App() {
                 <Route path="edit-event/:eventId" element={<EditEvent />} />
                 <Route path="event/:eventId" element={<OrganizerEventDetails />} />
                 <Route path="manage-seats/:eventId" element={<ManageSeats />} />
+                <Route path="event/:eventId/orders" element={<EventOrders />} />
               </Route>
             </Routes>
           </Router>
@@ -140,4 +152,3 @@ function App() {
 }
 
 export default App;
-

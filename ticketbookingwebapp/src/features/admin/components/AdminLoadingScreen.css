@@ -1,0 +1,53 @@
+.admin-loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    width: 100%;
+    background: #ffffff;
+    padding: 60px 20px;
+}
+
+.admin-loading-wrapper {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.admin-loading-icon {
+    position: relative;
+    width: 64px;
+    height: 64px;
+}
+
+.admin-loading-circle {
+    animation: rotate 1.5s linear infinite;
+    transform-origin: center;
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.admin-loading-tip {
+    font-size: 15px;
+    color: rgba(0, 0, 0, 0.65);
+    font-weight: 500;
+}
+
+/* Ant Design Progress customization */
+.admin-loading-container .ant-progress-bg {
+    height: 6px !important;
+}
+
+.admin-loading-container .ant-progress-outer {
+    padding-right: 0 !important;
+}

@@ -102,36 +102,63 @@ def assign_seats_from_template():
         ticket_type = TicketType.query.get(ticket_type_id)
         if not ticket_type:
             return jsonify({'success': False, 'message': 'Ticket type not found'}), 404
-            
-        # 1. Xóa các ghế cũ của hạng vé này
-        Seat.query.filter_by(ticket_type_id=ticket_type_id).delete()
         
-        # 2. Tạo mới các ghế đã chọn bằng bulk insert để tăng hiệu suất và tránh deadlock
-        seats_to_insert = []
+        # 1. Lấy danh sách ghế hiện tại
+        existing_seats = Seat.query.filter_by(ticket_type_id=ticket_type_id).all()
+        
+        # 2. Kiểm tra ghế nào đã có vé bán (không được xóa)
+        from app.models.ticket import Ticket
+        seats_with_tickets = set()
+        for seat in existing_seats:
+            has_ticket = db.session.query(Ticket).filter_by(seat_id=seat.seat_id).first()
+            if has_ticket:
+                seats_with_tickets.add(f"{seat.row_name}{seat.seat_number}")
+        
+        # 3. Tạo set các ghế mới được chọn
+        new_seat_keys = set()
         for s_data in selected_seats:
-            seats_to_insert.append({
-                'ticket_type_id': ticket_type_id,
-                'row_name': s_data.get('row_name'),
-                'seat_number': str(s_data.get('seat_number')),
-                'area_name': s_data.get('area'),
-                'status': 'AVAILABLE',
-                'is_active': True,
-                'x_pos': s_data.get('x_pos'),
-                'y_pos': s_data.get('y_pos')
-            })
+            key = f"{s_data.get('row_name')}{s_data.get('seat_number')}"
+            new_seat_keys.add(key)
+        
+        # 4. Xóa các ghế cũ KHÔNG có vé và KHÔNG nằm trong danh sách mới
+        for seat in existing_seats:
+            seat_key = f"{seat.row_name}{seat.seat_number}"
+            if seat_key not in seats_with_tickets and seat_key not in new_seat_keys:
+                db.session.delete(seat)
+        
+        # 5. Thêm các ghế mới (chỉ thêm nếu chưa tồn tại)
+        existing_seat_keys = {f"{s.row_name}{s.seat_number}" for s in existing_seats}
+        seats_to_insert = []
+        
+        for s_data in selected_seats:
+            seat_key = f"{s_data.get('row_name')}{s_data.get('seat_number')}"
+            if seat_key not in existing_seat_keys:
+                seats_to_insert.append({
+                    'ticket_type_id': ticket_type_id,
+                    'row_name': s_data.get('row_name'),
+                    'seat_number': str(s_data.get('seat_number')),
+                    'area_name': s_data.get('area'),
+                    'status': 'AVAILABLE',
+                    'is_active': True,
+                    'x_pos': s_data.get('x_pos'),
+                    'y_pos': s_data.get('y_pos')
+                })
         
         if seats_to_insert:
             db.session.bulk_insert_mappings(Seat, seats_to_insert)
-            created_count = len(seats_to_insert)
-            
-        # 3. Cập nhật số lượng vé thực tế dựa trên số ghế đã chọn
-        ticket_type.quantity = created_count
+        
+        db.session.commit()
+        
+        # 6. Đếm lại tổng số ghế hiện tại
+        final_seat_count = Seat.query.filter_by(ticket_type_id=ticket_type_id).count()
+        ticket_type.quantity = final_seat_count
         db.session.commit()
         
         return jsonify({
             'success': True,
-            'message': f'Đã gán và kích hoạt {created_count} ghế cho hạng vé {ticket_type.type_name}',
-            'count': created_count
+            'message': f'Đã cập nhật ghế cho hạng vé {ticket_type.type_name}. Tổng: {final_seat_count} ghế',
+            'count': final_seat_count,
+            'seats_with_tickets': len(seats_with_tickets)
         }), 200
     except Exception as e:
         db.session.rollback()

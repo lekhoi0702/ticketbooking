@@ -95,3 +95,54 @@ def register():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@auth_bp.route("/auth/change-password", methods=["POST"])
+def change_password():
+    """Đổi mật khẩu người dùng"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        old_password = data.get('old_password')
+        new_password = data.get('new_password')
+        
+        if not user_id or not old_password or not new_password:
+            return jsonify({
+                'success': False, 
+                'message': 'Vui lòng nhập đầy đủ thông tin'
+            }), 400
+        
+        # Find user
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({
+                'success': False, 
+                'message': 'Không tìm thấy người dùng'
+            }), 404
+        
+        # Verify old password
+        if not user.check_password(old_password):
+            return jsonify({
+                'success': False, 
+                'message': 'Mật khẩu hiện tại không chính xác'
+            }), 401
+        
+        # Validate new password
+        if len(new_password) < 6:
+            return jsonify({
+                'success': False, 
+                'message': 'Mật khẩu mới phải có ít nhất 6 ký tự'
+            }), 400
+        
+        # Update password
+        user.set_password(new_password)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Đổi mật khẩu thành công'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+

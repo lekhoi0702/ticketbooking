@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../constants';
+import { API_BASE_URL } from '@shared/constants';
 
 export const authApi = {
     async login(credentials) {
@@ -23,6 +23,19 @@ export const authApi = {
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Registration failed');
+        }
+        return await response.json();
+    },
+
+    async changePassword(data) {
+        const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Change password failed');
         }
         return await response.json();
     },

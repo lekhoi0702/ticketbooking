@@ -327,8 +327,10 @@ def update_event(event_id):
 
 @organizer_bp.route("/organizer/events/<int:event_id>", methods=["DELETE"])
 def delete_event(event_id):
-    """Delete an event"""
+    """Request event deletion - all deletions require admin approval"""
     try:
+        from app.models.event_deletion_request import EventDeletionRequest
+        
         event = Event.query.get(event_id)
         
         if not event:
@@ -337,19 +339,64 @@ def delete_event(event_id):
                 'message': 'Event not found'
             }), 404
         
-        # Check if there are any sold tickets
-        if event.sold_tickets > 0:
+        # Get request data
+        data = request.get_json() or {}
+        reason = data.get('reason', '')
+        manager_id = data.get('manager_id', 1)
+        
+        # Check if event is still PUBLISHED
+        if event.status == 'PUBLISHED':
             return jsonify({
                 'success': False,
-                'message': 'Cannot delete event with sold tickets'
+                'message': 'Không thể xóa sự kiện đang công khai. Vui lòng chuyển sự kiện về trạng thái "Bản nháp" trước khi xóa.',
+                'action_required': 'UNPUBLISH'
             }), 400
         
-        db.session.delete(event)
+        # Check if deletion request already exists
+        existing_request = EventDeletionRequest.query.filter_by(
+            event_id=event_id,
+            request_status='PENDING'
+        ).first()
+        
+        if existing_request:
+            return jsonify({
+                'success': False,
+                'message': 'Đã có yêu cầu xóa sự kiện này đang chờ phê duyệt từ Admin.'
+            }), 400
+        
+        # Count active orders (if any)
+        active_orders = db.session.query(Order).join(
+            Ticket, Order.order_id == Ticket.order_id
+        ).join(
+            TicketType, Ticket.ticket_type_id == TicketType.ticket_type_id
+        ).filter(
+            TicketType.event_id == event_id,
+            Order.order_status.in_(['PAID', 'PENDING', 'CANCELLATION_PENDING'])
+        ).count()
+        
+        # ALL deletions require admin approval
+        deletion_request = EventDeletionRequest(
+            event_id=event_id,
+            organizer_id=manager_id,
+            reason=reason,
+            request_status='PENDING'
+        )
+        
+        db.session.add(deletion_request)
         db.session.commit()
+        
+        message_text = f'Yêu cầu xóa sự kiện đã được gửi đến Admin để phê duyệt.'
+        if active_orders > 0:
+            message_text = f'Sự kiện có {active_orders} đơn hàng chưa hủy. ' + message_text
         
         return jsonify({
             'success': True,
-            'message': 'Event deleted successfully'
+            'requires_approval': True,
+            'message': message_text,
+            'data': {
+                'request_id': deletion_request.request_id,
+                'active_orders': active_orders
+            }
         }), 200
         
     except Exception as e:
@@ -478,3 +525,138 @@ def delete_ticket_type(ticket_type_id):
             'success': False,
             'message': str(e)
         }), 500
+
+@organizer_bp.route("/organizer/events/<int:event_id>/orders", methods=["GET"])
+def get_event_orders(event_id):
+    """Get all orders for a specific event"""
+    try:
+        # Verify event exists and belongs to organizer
+        event = Event.query.get(event_id)
+        if not event:
+            return jsonify({'success': False, 'message': 'Event not found'}), 404
+        
+        # Get all orders for this event through tickets
+        orders = db.session.query(Order).join(
+            Ticket, Order.order_id == Ticket.order_id
+        ).join(
+            TicketType, Ticket.ticket_type_id == TicketType.ticket_type_id
+        ).filter(
+            TicketType.event_id == event_id
+        ).distinct().all()
+        
+        # Format orders with additional info
+        orders_data = []
+        for order in orders:
+            # Get tickets for this order in this event
+            tickets = db.session.query(Ticket).join(
+                TicketType
+            ).filter(
+                Ticket.order_id == order.order_id,
+                TicketType.event_id == event_id
+            ).all()
+            
+            order_dict = order.to_dict()
+            order_dict['tickets_count'] = len(tickets)
+            order_dict['tickets'] = [t.to_dict() for t in tickets]
+            orders_data.append(order_dict)
+        
+        return jsonify({
+            'success': True,
+            'data': orders_data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@organizer_bp.route("/organizer/orders/<int:order_id>/refund/approve", methods=["POST"])
+def approve_refund(order_id):
+    """Approve refund request, cancel order and DELETE tickets"""
+    try:
+        from app.models.seat import Seat
+        
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+        
+        # Verify order is in cancellation pending status
+        if order.order_status != 'CANCELLATION_PENDING':
+            return jsonify({
+                'success': False,
+                'message': 'Order is not pending cancellation'
+            }), 400
+        
+        # Get all tickets for this order
+        tickets = Ticket.query.filter_by(order_id=order_id).all()
+        
+        # Update order status
+        order.order_status = 'CANCELLED'
+        
+        # DELETE all tickets and release seats
+        for ticket in tickets:
+            # Release seat if exists
+            if ticket.seat_id:
+                seat = Seat.query.get(ticket.seat_id)
+                if seat:
+                    seat.status = 'AVAILABLE'
+            
+            # Update ticket type sold quantity
+            ticket_type = TicketType.query.get(ticket.ticket_type_id)
+            if ticket_type:
+                ticket_type.sold_quantity = max(0, ticket_type.sold_quantity - 1)
+                
+                # Update event sold tickets count
+                if ticket_type.event:
+                    ticket_type.event.sold_tickets = max(0, ticket_type.event.sold_tickets - 1)
+            
+            # DELETE the ticket
+            db.session.delete(ticket)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Refund approved successfully. Tickets have been deleted.'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@organizer_bp.route("/organizer/orders/<int:order_id>/refund/reject", methods=["POST"])
+def reject_refund(order_id):
+    """Reject refund request and restore order to PAID status"""
+    try:
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+        
+        # Verify order is in cancellation pending status
+        if order.order_status != 'CANCELLATION_PENDING':
+            return jsonify({
+                'success': False,
+                'message': 'Order is not pending cancellation'
+            }), 400
+        
+        # Restore order status to PAID
+        order.order_status = 'PAID'
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Refund request rejected'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+

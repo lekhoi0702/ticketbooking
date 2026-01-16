@@ -18,6 +18,7 @@ def create_app():
         Role, User, EventCategory, Venue, Event, 
         TicketType, Order, Payment, Ticket, Discount, Review
     )
+    from app.models.event_deletion_request import EventDeletionRequest
 
     # Serve uploaded files
     @app.route('/uploads/<path:filename>')
@@ -39,6 +40,7 @@ def create_app():
     from app.routes.admin import admin_bp
     from app.routes.seats import seats_bp
     from app.routes.auth import auth_bp
+    from app.routes.event_deletion import event_deletion_bp
 
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(events_bp, url_prefix="/api")
@@ -50,5 +52,6 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix="/api")
     app.register_blueprint(seats_bp, url_prefix="/api")
     app.register_blueprint(auth_bp, url_prefix="/api")
+    app.register_blueprint(event_deletion_bp, url_prefix="/api")
 
     return app

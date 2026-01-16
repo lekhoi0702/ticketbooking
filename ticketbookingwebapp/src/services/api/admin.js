@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../constants';
+import { API_BASE_URL } from '@shared/constants';
 
 export const adminApi = {
     async getAdminStats() {
@@ -119,6 +119,39 @@ export const adminApi = {
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to process cancellation');
+        }
+        return await response.json();
+    },
+
+    async getEventDeletionRequests(status = 'PENDING') {
+        const params = status ? `?status=${status}` : '';
+        const response = await fetch(`${API_BASE_URL}/admin/event-deletion-requests${params}`);
+        if (!response.ok) throw new Error('Failed to fetch deletion requests');
+        return await response.json();
+    },
+
+    async approveEventDeletionRequest(requestId, data) {
+        const response = await fetch(`${API_BASE_URL}/admin/event-deletion-requests/${requestId}/approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to approve deletion request');
+        }
+        return await response.json();
+    },
+
+    async rejectEventDeletionRequest(requestId, data) {
+        const response = await fetch(`${API_BASE_URL}/admin/event-deletion-requests/${requestId}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to reject deletion request');
         }
         return await response.json();
     }

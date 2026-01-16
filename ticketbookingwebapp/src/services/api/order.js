@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../constants';
+import { API_BASE_URL } from '@shared/constants';
 
 export const orderApi = {
     async createOrder(orderData) {

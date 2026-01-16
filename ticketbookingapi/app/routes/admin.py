@@ -134,7 +134,7 @@ def reset_user_password(user_id):
 def get_all_events():
     """Lấy danh sách toàn bộ sự kiện với thông tin nhà tổ chức"""
     try:
-        events = Event.query.all()
+        events = Event.query.order_by(Event.created_at.desc()).all()
         events_data = []
         for event in events:
             edata = event.to_dict(include_details=True)
