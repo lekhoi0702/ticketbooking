@@ -21,6 +21,7 @@ import {
     ExclamationCircleOutlined,
     InfoCircleOutlined
 } from '@ant-design/icons';
+import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 // Components
 import SeatMap from '@features/user/components/Event/SeatMap';
@@ -65,11 +66,7 @@ const ManageSeats = () => {
     }, [selectedTemplateSeats, activeTicketType]);
 
     if (loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <Spin size="large" tip="Đang tải dữ liệu..." />
-            </div>
-        );
+        return <LoadingSpinner tip="Đang tải dữ liệu..." />;
     }
 
     return (

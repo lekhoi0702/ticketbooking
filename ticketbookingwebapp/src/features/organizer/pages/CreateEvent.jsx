@@ -22,8 +22,10 @@ import {
     CalendarOutlined,
     FileTextOutlined,
     AppstoreAddOutlined,
+
     CloudUploadOutlined
 } from '@ant-design/icons';
+import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 // Hooks
 import { useCreateEvent } from '@shared/hooks/useCreateEvent';
@@ -63,11 +65,7 @@ const CreateEvent = () => {
     } = useCreateEvent();
 
     if (loadingData) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <Spin size="large" tip="Đang tải dữ liệu cấu hình..." />
-            </div>
-        );
+        return <LoadingSpinner tip="Đang tải dữ liệu cấu hình..." />;
     }
 
     return (

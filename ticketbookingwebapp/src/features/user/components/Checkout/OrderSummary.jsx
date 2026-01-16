@@ -1,6 +1,7 @@
-import React from 'react';
-import { Card, ListGroup, Badge, Button, Spinner } from 'react-bootstrap';
-import { FaTicketAlt } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { Card, ListGroup, Badge, Button, Form, InputGroup } from 'react-bootstrap';
+import { FaTicketAlt, FaTag } from 'react-icons/fa';
+import { LoadingOutlined } from '@ant-design/icons';
 import { formatCurrency } from '@shared/utils/eventUtils';
 
 /**
@@ -14,9 +15,29 @@ const OrderSummary = ({
     calculateTotal,
     getTotalTickets,
     paymentMethod,
-    processing
+    processing,
+    applyDiscount,
+    discountAmount,
+    isValidDiscount,
+    discountMsg
 }) => {
+    const [couponCode, setCouponCode] = useState('');
+    const [applying, setApplying] = useState(false);
+
     if (!event) return null;
+
+    const handleApply = async () => {
+        if (!couponCode) return;
+        setApplying(true);
+        // Call parent method
+        await applyDiscount(couponCode);
+        setApplying(false);
+    };
+
+    const finalTotal = calculateTotal();
+    const subTotal = finalTotal + (discountAmount || 0);
+
+    console.log("OrderSummary Render:", { discountMsg, isValidDiscount, discountAmount });
 
     return (
         <Card className="border-0 shadow-sm rounded-4 overflow-hidden order-summary-sidebar">
@@ -34,7 +55,7 @@ const OrderSummary = ({
 
                 <hr className="opacity-10" />
 
-                <div className="mb-4">
+                <div className="mb-3">
                     <h6 className="text-uppercase small fw-bold text-muted mb-3 letter-spacing-1">Vé đã chọn</h6>
                     {getTotalTickets() > 0 ? (
                         <ListGroup variant="flush">
@@ -66,14 +87,56 @@ const OrderSummary = ({
                     )}
                 </div>
 
+                {/* Coupon Section */}
+                <div className="mb-4">
+                    <h6 className="text-uppercase small fw-bold text-muted mb-2 letter-spacing-1">Mã khuyến mãi</h6>
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0">
+                            <FaTag className="text-muted" />
+                        </InputGroup.Text>
+                        <Form.Control
+                            placeholder="Nhập mã giảm giá"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            disabled={isValidDiscount || processing}
+                            className="border-start-0"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleApply();
+                                }
+                            }}
+                        />
+                        <Button
+                            variant={isValidDiscount ? "success" : "outline-primary"}
+                            onClick={handleApply}
+                            disabled={processing || !couponCode || isValidDiscount || applying}
+                        >
+                            {applying ? <LoadingOutlined spin /> : (isValidDiscount ? "Đã dùng" : "Áp dụng")}
+                        </Button>
+                    </InputGroup>
+                    {discountMsg && (
+                        <div className={`mt-2 small fw-bold ${isValidDiscount ? 'text-success' : 'text-danger'}`}>
+                            {isValidDiscount ? <FaTag className="me-1" /> : null}
+                            {discountMsg}
+                        </div>
+                    )}
+                </div>
+
                 <div className="bg-light p-3 rounded-4 mb-4 mt-2">
                     <div className="d-flex justify-content-between align-items-center mb-1">
                         <span className="text-muted small">Tạm tính:</span>
-                        <span className="fw-bold">{formatCurrency(calculateTotal())}</span>
+                        <span className="fw-bold text-muted">{formatCurrency(subTotal)}</span>
                     </div>
-                    <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                        <h5 className="mb-0 fw-bold">Tổng số tiền</h5>
-                        <h4 className="mb-0 text-primary fw-bold">{formatCurrency(calculateTotal())}</h4>
+                    {discountAmount > 0 && (
+                        <div className="d-flex justify-content-between align-items-center mb-1 text-success">
+                            <span className="small fw-bold"><FaTag className="me-1" />Giảm giá:</span>
+                            <span className="fw-bold">-{formatCurrency(discountAmount)}</span>
+                        </div>
+                    )}
+                    <div className="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
+                        <h5 className="mb-0 fw-bold">Tổng thanh toán</h5>
+                        <h4 className="mb-0 text-primary fw-bold">{formatCurrency(finalTotal)}</h4>
                     </div>
                 </div>
 
@@ -86,7 +149,7 @@ const OrderSummary = ({
                     style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
                 >
                     {processing ? (
-                        <><Spinner animation="border" size="sm" className="me-2" /> Đang xử lý...</>
+                        <><LoadingOutlined spin className="me-2" /> Đang xử lý...</>
                     ) : (
                         <>{paymentMethod === 'VNPAY' ? 'Thanh toán ngay' : 'Xác nhận đặt vé'}</>
                     )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Spinner, Badge, OverlayTrigger, Tooltip, Alert } from 'react-bootstrap';
+import { Row, Col, Badge, OverlayTrigger, Tooltip, Alert } from 'react-bootstrap';
+import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { FaChair } from 'react-icons/fa';
 import { api } from '@services/api';
 
@@ -75,12 +76,7 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
         onSelectionChange(newSelection);
     };
 
-    if (loading) return (
-        <div className="text-center py-5">
-            <Spinner animation="border" variant="primary" />
-            <p className="mt-2 text-muted">Đang tải sơ đồ ghế...</p>
-        </div>
-    );
+    if (loading) return <LoadingSpinner tip="Đang tải sơ đồ ghế..." />;
 
     if (seats.length === 0) return (
         <div className="text-center py-4 bg-light rounded-4 border border-dashed">

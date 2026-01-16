@@ -24,6 +24,7 @@ import {
     InfoCircleOutlined,
     SaveOutlined
 } from '@ant-design/icons';
+import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 // Hooks
 import { useCreateEvent } from '@shared/hooks/useCreateEvent';
@@ -173,11 +174,7 @@ const EditEvent = () => {
     };
 
     if (loadingData) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <Spin size="large" tip="Đang tải dữ liệu sự kiện..." />
-            </div>
-        );
+        return <LoadingSpinner tip="Đang tải dữ liệu sự kiện..." />;
     }
 
     const isReadOnly = ['REJECTED', 'ONGOING', 'COMPLETED', 'PENDING_DELETION'].includes(formData.status);

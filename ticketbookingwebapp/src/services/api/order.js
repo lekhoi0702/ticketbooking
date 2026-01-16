@@ -48,4 +48,18 @@ export const orderApi = {
         }
         return await response.json();
     },
+
+    async checkDiscount(data) {
+        const baseUrl = API_BASE_URL || 'http://127.0.0.1:5000/api';
+        console.log('Checking discount at:', `${baseUrl}/orders/validate-discount`);
+        const response = await fetch(`${baseUrl}/orders/validate-discount`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const res = await response.json();
+        console.log("Validate Response:", res);
+        if (!response.ok) throw new Error(res.message || 'Lỗi kiểm tra mã');
+        return res;
+    }
 };

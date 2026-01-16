@@ -32,6 +32,12 @@ export const useCheckout = () => {
     const [selectedSeats, setSelectedSeats] = useState(initialSeats);
     const [hasSeatMap, setHasSeatMap] = useState(initialHasSeatMap);
 
+    // Discount states
+    const [discountCode, setDiscountCode] = useState('');
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [discountMsg, setDiscountMsg] = useState('');
+    const [isValidDiscount, setIsValidDiscount] = useState(false);
+
     // Customer info
     const [customerInfo, setCustomerInfo] = useState({
         name: user?.full_name || '',
@@ -87,11 +93,48 @@ export const useCheckout = () => {
             const quantity = selectedTickets[tt.ticket_type_id] || 0;
             total += tt.price * quantity;
         });
-        return total;
+        return Math.max(0, total - discountAmount);
     };
 
     const getTotalTickets = () => {
         return Object.values(selectedTickets).reduce((sum, qty) => sum + qty, 0);
+    };
+
+    const applyDiscount = async (code) => {
+        if (!code) return;
+        try {
+            setProcessing(true);
+            const items = [];
+            Object.keys(selectedTickets).forEach(tidStr => {
+                const tid = parseInt(tidStr);
+                if (selectedTickets[tid] > 0)
+                    items.push({ ticket_type_id: tid, quantity: selectedTickets[tid] });
+            });
+
+            const res = await api.checkDiscount({ code, items });
+            if (res.success) {
+                setDiscountCode(code);
+                setDiscountAmount(res.discount_amount);
+                setIsValidDiscount(true);
+                setDiscountMsg('Đã áp dụng mã giảm giá');
+                return { success: true, message: 'Áp dụng thành công' };
+            } else {
+                setDiscountCode('');
+                setDiscountAmount(0);
+                setIsValidDiscount(false);
+                setDiscountMsg(res.message);
+                return { success: false, message: res.message };
+            }
+        } catch (error) {
+            console.error("Apply Discount Error:", error);
+            setDiscountCode('');
+            setDiscountAmount(0);
+            setIsValidDiscount(false);
+            setDiscountMsg(error.message);
+            return { success: false, message: error.message };
+        } finally {
+            setProcessing(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -138,7 +181,8 @@ export const useCheckout = () => {
                 customer_name: customerInfo.name,
                 customer_email: customerInfo.email,
                 customer_phone: customerInfo.phone,
-                tickets: tickets
+                tickets: tickets,
+                discount_code: isValidDiscount ? discountCode : null
             };
 
             const orderResponse = await api.createOrder(orderData);
@@ -165,7 +209,6 @@ export const useCheckout = () => {
     };
 
     return {
-        // States
         loading,
         processing,
         error,
@@ -177,16 +220,19 @@ export const useCheckout = () => {
         customerInfo,
         paymentMethod,
         user,
+        discountCode,
+        discountAmount,
+        isValidDiscount,
+        discountMsg,
 
-        // Setters
         setError,
         setCustomerInfo,
         setPaymentMethod,
-
-        // Methods
         calculateTotal,
         getTotalTickets,
         handleSubmit,
+        applyDiscount,
+        setDiscountCode, // Expose setter if needed
         navigate
     };
 };

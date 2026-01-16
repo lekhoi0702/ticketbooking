@@ -5,6 +5,7 @@ from app.models.ticket import Ticket
 from app.models.ticket_type import TicketType
 from app.models.event import Event
 from app.models.payment import Payment
+from app.models.discount import Discount
 from datetime import datetime
 import random
 import string
@@ -23,6 +24,71 @@ def generate_ticket_code():
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return f"TKT-{timestamp}-{random_str}"
+
+def validate_and_calculate_discount(discount_code, items):
+    """
+    items: list of dict {'ticket_type': obj, 'quantity': int, 'price': float}
+    Returns: (is_valid, amount, message, discount_obj)
+    """
+    discount = Discount.query.filter_by(discount_code=discount_code).first()
+    if not discount:
+        return False, 0, "Mã giảm giá không tồn tại", None
+        
+    if not discount.is_active:
+        return False, 0, "Mã giảm giá đã bị khóa", None
+
+    if discount.end_date < datetime.utcnow():
+         return False, 0, "Mã giảm giá đã hết hạn", None
+    
+    if discount.start_date > datetime.utcnow():
+         return False, 0, "Mã giảm giá chưa có hiệu lực", None
+
+    if discount.usage_limit and discount.usage_limit > 0:
+        if (discount.used_count or 0) >= discount.usage_limit:
+             return False, 0, "Mã giảm giá đã hết lượt sử dụng", None
+             
+    eligible_amount = 0
+    has_valid_item = False
+    
+    for item in items:
+        tt = item['ticket_type']
+        is_applicable = False
+        
+        # Check Event ID constraint
+        if discount.event_id:
+             if tt.event_id == discount.event_id:
+                 is_applicable = True
+        # Check Manager ID constraint
+        elif discount.manager_id:
+             event = Event.query.get(tt.event_id)
+             if event and event.manager_id == discount.manager_id:
+                  is_applicable = True
+        else:
+             is_applicable = True
+             
+        if is_applicable:
+            eligible_amount += item['price'] * item['quantity']
+            has_valid_item = True
+            
+    if not has_valid_item:
+        return False, 0, "Mã giảm giá không áp dụng cho đơn hàng này", None
+        
+    if discount.min_order_amount and eligible_amount < discount.min_order_amount:
+         return False, 0, f"Đơn hàng chưa đạt giá trị tối thiểu {float(discount.min_order_amount):,.0f}đ", None
+         
+    amount = 0
+    if discount.discount_type == 'PERCENTAGE':
+        amount = eligible_amount * (float(discount.discount_value) / 100)
+    else:
+        amount = float(discount.discount_value)
+        
+    if discount.max_discount_amount and amount > float(discount.max_discount_amount):
+        amount = float(discount.max_discount_amount)
+        
+    if amount > eligible_amount:
+        amount = eligible_amount
+        
+    return True, amount, "Áp dụng thành công", discount
 
 @orders_bp.route("/orders/create", methods=["POST"])
 def create_order():
@@ -98,8 +164,18 @@ def create_order():
         # Apply discount if provided
         discount_amount = 0
         if data.get('discount_code'):
-            # TODO: Implement discount code validation
-            pass
+            is_valid, amount, msg, discount_obj = validate_and_calculate_discount(
+                data.get('discount_code'), 
+                ticket_types_to_update
+            )
+            if not is_valid:
+                return jsonify({'success': False, 'message': msg}), 400
+                
+            discount_amount = amount
+            
+            # Increment usage count
+            if discount_obj:
+                discount_obj.used_count = (discount_obj.used_count or 0) + 1
         
         final_amount = total_amount - discount_amount
         
@@ -481,6 +557,38 @@ def get_user_tickets(user_id):
             'success': False,
             'message': str(e)
         }), 500
+
+@orders_bp.route("/orders/validate-discount", methods=["POST"])
+def check_discount():
+    """Validate discount code before checkout"""
+    try:
+        data = request.get_json()
+        code = data.get('code')
+        items = data.get('items', [])
+        
+        if not code or not items:
+             return jsonify({'success': False, 'message': 'Missing data'}), 400
+             
+        detailed_items = []
+        for it in items:
+            tt = TicketType.query.get(it.get('ticket_type_id'))
+            if tt:
+                detailed_items.append({
+                    'ticket_type': tt,
+                    'quantity': it.get('quantity', 1),
+                    'price': float(tt.price)
+                })
+                
+        is_valid, amount, msg, _ = validate_and_calculate_discount(code, detailed_items)
+        
+        return jsonify({
+            'success': is_valid,
+            'message': msg,
+            'discount_amount': amount
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 

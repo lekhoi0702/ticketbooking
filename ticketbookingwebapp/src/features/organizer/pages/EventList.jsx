@@ -17,6 +17,7 @@ import {
     ReloadOutlined,
     ExclamationCircleOutlined
 } from '@ant-design/icons';
+import LoadingSpinner from '@shared/components/LoadingSpinner';
 import EventTable from '@features/organizer/components/EventTable';
 import { useEventList } from '@shared/hooks/useEventList';
 
@@ -44,11 +45,7 @@ const EventList = () => {
     );
 
     if (loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <Spin size="large" tip="Đang tải dữ liệu..." />
-            </div>
-        );
+        return <LoadingSpinner tip="Đang tải dữ liệu..." />;
     }
 
     return (

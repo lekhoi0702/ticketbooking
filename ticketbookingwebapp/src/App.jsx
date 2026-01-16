@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 import { AntdThemeConfig } from '@theme/AntdThemeConfig';
 
 // User Imports
@@ -29,6 +30,11 @@ import OrganizerLogin from '@features/organizer/pages/Login';
 import OrganizerHome from '@features/organizer/pages/OrganizerHome';
 import ManageSeats from '@features/organizer/pages/ManageSeats';
 import EventOrders from '@features/organizer/pages/EventOrders';
+import OrganizerVenues from '@features/organizer/pages/Venues';
+import TicketManagement from '@features/organizer/pages/TicketManagement';
+import OrganizerProfile from '@features/organizer/pages/OrganizerProfile';
+import ManageOrders from '@features/organizer/pages/ManageOrders';
+import DiscountManagement from '@features/organizer/pages/DiscountManagement';
 
 // Admin Imports
 import AdminLayout from '@features/admin/components/AdminLayout';
@@ -66,7 +72,7 @@ const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/" }) => {
 
 function App() {
   return (
-    <ConfigProvider theme={AntdThemeConfig}>
+    <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#52c41a' }} spin /> }}>
       <AntdApp>
         <AuthProvider>
           <Router>
@@ -142,6 +148,11 @@ function App() {
                 <Route path="event/:eventId" element={<OrganizerEventDetails />} />
                 <Route path="manage-seats/:eventId" element={<ManageSeats />} />
                 <Route path="event/:eventId/orders" element={<EventOrders />} />
+                <Route path="venues" element={<OrganizerVenues />} />
+                <Route path="tickets" element={<TicketManagement />} />
+                <Route path="profile" element={<OrganizerProfile />} />
+                <Route path="orders" element={<ManageOrders />} />
+                <Route path="discounts" element={<DiscountManagement />} />
               </Route>
             </Routes>
           </Router>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Container, Card, Spinner, Alert } from 'react-bootstrap';
+import { Container, Card, Alert } from 'react-bootstrap';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 const VNPayReturn = () => {
     const [searchParams] = useSearchParams();
@@ -83,11 +84,7 @@ const VNPayReturn = () => {
                 <Card className="border-0 shadow-sm text-center" style={{ maxWidth: '500px', width: '100%' }}>
                     <Card.Body className="py-5 px-4">
                         {processing ? (
-                            <>
-                                <Spinner animation="border" variant="primary" size="lg" />
-                                <h4 className="mt-4 mb-3">Đang xử lý kết quả thanh toán...</h4>
-                                <p className="text-muted">Vui lòng đợi trong giây lát</p>
-                            </>
+                            <LoadingSpinner tip="Đang xử lý kết quả thanh toán..." />
                         ) : (
                             <>
                                 {success ? (

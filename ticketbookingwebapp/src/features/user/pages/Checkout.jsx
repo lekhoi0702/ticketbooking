@@ -34,7 +34,11 @@ const Checkout = () => {
         calculateTotal,
         getTotalTickets,
         handleSubmit,
-        navigate
+        navigate,
+        applyDiscount,
+        discountAmount,
+        isValidDiscount,
+        discountMsg
     } = useCheckout();
 
     if (loading) {
@@ -83,6 +87,10 @@ const Checkout = () => {
                             getTotalTickets={getTotalTickets}
                             paymentMethod={paymentMethod}
                             processing={processing}
+                            applyDiscount={applyDiscount}
+                            discountAmount={discountAmount}
+                            isValidDiscount={isValidDiscount}
+                            discountMsg={discountMsg}
                         />
                     </Col>
                 </Row>

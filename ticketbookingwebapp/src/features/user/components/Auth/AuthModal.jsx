@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Modal, Form, Button, Alert, Spinner, Tabs, Tab } from 'react-bootstrap';
+import { Modal, Form, Button, Alert, Tabs, Tab } from 'react-bootstrap';
 import { FaLock, FaEnvelope, FaUser, FaPhone, FaArrowRight } from 'react-icons/fa';
+import { LoadingOutlined } from '@ant-design/icons';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
 import './AuthModal.css';
@@ -150,7 +151,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 className="w-100 py-2 fw-bold"
                                 disabled={loading}
                             >
-                                {loading ? <Spinner size="sm" className="me-2" /> : null}
+                                {loading ? <LoadingOutlined spin className="me-2" /> : null}
                                 ĐĂNG NHẬP
                                 {!loading && <FaArrowRight className="ms-2" />}
                             </Button>
@@ -237,7 +238,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 className="w-100 py-2 fw-bold"
                                 disabled={loading}
                             >
-                                {loading ? <Spinner size="sm" className="me-2" /> : null}
+                                {loading ? <LoadingOutlined spin className="me-2" /> : null}
                                 ĐĂNG KÝ NGAY
                                 {!loading && <FaArrowRight className="ms-2" />}
                             </Button>

@@ -19,7 +19,13 @@ import {
     LogoutOutlined,
     BellOutlined,
     HomeOutlined,
-    AppstoreOutlined
+    AppstoreOutlined,
+    EnvironmentOutlined,
+
+    QrcodeOutlined,
+    LoadingOutlined,
+    ShoppingOutlined,
+    TagsOutlined
 } from '@ant-design/icons';
 import { AntdThemeConfig } from '@theme/AntdThemeConfig';
 import { usePendingRefunds } from '@shared/hooks/usePendingRefunds';
@@ -44,32 +50,39 @@ const OrganizerLayout = () => {
             icon: <CalendarOutlined />,
             label: 'Quản lý sự kiện',
             onClick: () => navigate('/organizer/events'),
+        },
+        {
+            key: '/organizer/venues',
+            icon: <EnvironmentOutlined />,
+            label: 'Quản lý địa điểm',
+            onClick: () => navigate('/organizer/venues'),
+        },
+        {
+            key: '/organizer/tickets',
+            icon: <QrcodeOutlined />,
+            label: 'Quản lý vé & Check-in',
+            onClick: () => navigate('/organizer/tickets'),
+        },
+        {
+            key: '/organizer/orders',
+            icon: <ShoppingOutlined />,
+            label: 'Quản lý đơn hàng',
+            onClick: () => navigate('/organizer/orders'),
+        },
+        {
+            key: '/organizer/discounts',
+            icon: <TagsOutlined />,
+            label: 'Mã giảm giá',
+            onClick: () => navigate('/organizer/discounts'),
         }
     ];
 
-    const userMenuItems = [
-        {
-            key: 'profile',
-            icon: <UserOutlined />,
-            label: 'Hồ sơ cá nhân',
-            onClick: () => navigate('/organizer/profile'),
-        },
-        {
-            type: 'divider',
-        },
-        {
-            key: 'logout',
-            icon: <LogoutOutlined />,
-            label: 'Đăng xuất',
-            danger: true,
-            onClick: handleLogout,
-        },
-    ];
+
 
     const currentMenuItem = menuItems.find(item => item.key === location.pathname);
 
     return (
-        <ConfigProvider theme={AntdThemeConfig}>
+        <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#52c41a' }} spin /> }}>
             <Layout style={{ minHeight: '100vh' }}>
                 <Sider
                     theme="light"
@@ -136,13 +149,17 @@ const OrganizerLayout = () => {
                                 />
                             </Badge>
 
-                            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow><Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 4, transition: 'background 0.3s' }} className="user-dropdown-hover">
+                            <div
+                                style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 4, transition: 'background 0.3s', display: 'flex', alignItems: 'center', gap: 8 }}
+                                className="user-dropdown-hover"
+                                onClick={() => navigate('/organizer/profile')}
+                            >
                                 <Avatar
                                     src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=52c41a&color=fff`}
                                     size="small"
                                 />
                                 <Text strong style={{ color: '#606266' }}>{user?.full_name || 'Nhà tổ chức'}</Text>
-                            </Space></Dropdown>
+                            </div>
                         </Space>
                     </Header>
                     <Content
@@ -155,7 +172,7 @@ const OrganizerLayout = () => {
                         <Outlet />
                     </Content>
                     <div style={{ textAlign: 'center', paddingBottom: 24, color: '#909399' }}>
-                        <Text type="secondary">© 2026 TicketBooking - Ant Design Redesign</Text>
+                        <Text type="secondary">© 2026 TicketBooking</Text>
                     </div>
                 </Layout>
             </Layout>

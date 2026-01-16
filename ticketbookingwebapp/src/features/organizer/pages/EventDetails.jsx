@@ -29,6 +29,7 @@ import {
     InfoCircleOutlined,
     HomeOutlined
 } from '@ant-design/icons';
+import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { api } from '@services/api';
 import SeatMapTemplateView from '@features/organizer/components/SeatMapTemplateView';
 
@@ -129,11 +130,7 @@ const EventDetails = () => {
     };
 
     if (loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <Spin size="large" tip="Đang tải dữ liệu..." />
-            </div>
-        );
+        return <LoadingSpinner tip="Đang tải dữ liệu..." />;
     }
 
     if (error || !event) {
@@ -261,7 +258,7 @@ const EventDetails = () => {
                             }
                         >
                             {loadingMap ? (
-                                <div style={{ padding: 40, textAlign: 'center' }}><Spin /></div>
+                                <LoadingSpinner tip="Đang tải sơ đồ..." />
                             ) : venueTemplate ? (
                                 <div style={{ background: '#333', borderRadius: 8, padding: 16 }}>
                                     <SeatMapTemplateView

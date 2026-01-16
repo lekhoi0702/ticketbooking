@@ -84,8 +84,8 @@ const MyTickets = () => {
 
     const getStatusBadge = (status) => {
         const statuses = {
-            'ACTIVE': { bg: 'success', text: 'Có hiệu lực', icon: FaCheckCircle },
-            'USED': { bg: 'secondary', text: 'Đã sử dụng', icon: FaCheckCircle },
+            'ACTIVE': { bg: 'success', text: 'Chưa sử dụng', icon: FaCheckCircle },
+            'USED': { bg: 'secondary', text: 'Đã Check-in', icon: FaCheckCircle },
             'CANCELLED': { bg: 'danger', text: 'Đã hủy', icon: null },
             'REFUNDED': { bg: 'warning', text: 'Đã hoàn tiền', icon: null }
         };
@@ -176,9 +176,14 @@ const MyTickets = () => {
 
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div className="flex-grow-1">
-                                                <h6 className="ticket-event-name-compact fw-bold mb-1 text-uppercase">
-                                                    {ticket.event_name || 'Sự kiện'}
-                                                </h6>
+                                                <div className="d-flex justify-content-between align-items-start mb-1 pe-3">
+                                                    <h6 className="ticket-event-name-compact fw-bold mb-0 text-uppercase text-truncate" style={{ maxWidth: '75%' }}>
+                                                        {ticket.event_name || 'Sự kiện'}
+                                                    </h6>
+                                                    <div style={{ transform: 'scale(0.9)', transformOrigin: 'right top' }}>
+                                                        {getStatusBadge(ticket.ticket_status)}
+                                                    </div>
+                                                </div>
 
                                                 <div className="d-flex gap-2 align-items-center">
                                                     <div className="small text-muted d-flex align-items-center">
@@ -260,8 +265,11 @@ const MyTickets = () => {
                             </div>
 
                             <div className="qr-ticket-details border-top pt-4">
-                                <Badge bg="success" className="mb-3 px-3 py-2 rounded-pill">
-                                    {selectedTicket.ticket_type_name || 'Hợp lệ'}
+                                <div className="mb-2 d-flex justify-content-center">
+                                    {getStatusBadge(selectedTicket.ticket_status)}
+                                </div>
+                                <Badge bg="light" text="dark" className="d-inline-block mb-3 px-3 py-2 rounded-pill border">
+                                    {selectedTicket.ticket_type_name}
                                 </Badge>
                                 <h4 className="fw-bold mb-2 text-dark">{selectedTicket.event_name}</h4>
                                 <div className="text-secondary small mb-3">

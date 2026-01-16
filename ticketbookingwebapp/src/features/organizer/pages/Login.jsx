@@ -15,7 +15,9 @@ import {
     LockOutlined,
     UserOutlined,
     ArrowRightOutlined,
-    CalendarOutlined
+
+    CalendarOutlined,
+    LoadingOutlined
 } from '@ant-design/icons';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
@@ -53,7 +55,7 @@ const OrganizerLogin = () => {
     };
 
     return (
-        <ConfigProvider theme={AntdThemeConfig}>
+        <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#52c41a' }} spin /> }}>
             <div style={{
                 minHeight: '100vh',
                 display: 'flex',

@@ -8,6 +8,7 @@ import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 function Home() {
     const [featuredEvents, setFeaturedEvents] = useState([]);
+    const [popularEvents, setPopularEvents] = useState([]);
     const [upcomingEvents, setUpcomingEvents] = useState([]);
     const [musicEvents, setMusicEvents] = useState([]);
     const [theaterEvents, setTheaterEvents] = useState([]);
@@ -26,6 +27,12 @@ function Home() {
             const featuredResponse = await api.getFeaturedEvents(4);
             if (featuredResponse.success) {
                 setFeaturedEvents(featuredResponse.data);
+            }
+
+            // Load popular events (most sold)
+            const popularResponse = await api.getEvents({ sort: 'popular', limit: 3 });
+            if (popularResponse.success) {
+                setPopularEvents(popularResponse.data);
             }
 
             // Load upcoming events (sorted by nearest date)
@@ -69,6 +76,13 @@ function Home() {
                 <EventSection
                     title="Sự kiện đặc biệt"
                     events={featuredEvents.map(transformEvent)}
+                />
+            )}
+
+            {popularEvents.length > 0 && (
+                <TrendingSection
+                    title="Sự kiện bán chạy nhất"
+                    events={popularEvents.map(transformEvent)}
                 />
             )}
 

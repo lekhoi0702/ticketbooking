@@ -6,7 +6,7 @@ from app.models.order import Order
 from app.models.ticket import Ticket
 from app.models.payment import Payment
 from app.models.venue import Venue
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
@@ -660,3 +660,407 @@ def reject_refund(order_id):
             'message': str(e)
         }), 500
 
+
+@organizer_bp.route("/organizer/venues", methods=["GET"])
+def get_organizer_venues():
+    """Get all venues managed by organizer"""
+    try:
+        manager_id = request.args.get('manager_id', 1, type=int)
+        
+        venues = Venue.query.filter_by(manager_id=manager_id).all()
+        
+        return jsonify({
+            'success': True,
+            'data': [v.to_dict() for v in venues]
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@organizer_bp.route("/organizer/venues", methods=["POST"])
+def create_organizer_venue():
+    """Create a new venue"""
+    try:
+        data = request.get_json()
+        manager_id = data.get('manager_id', 1)
+        
+        new_venue = Venue(
+            venue_name=data.get('venue_name'),
+            address=data.get('address'),
+            city=data.get('city'),
+            capacity=int(data.get('capacity', 0)),
+            manager_id=manager_id,
+            vip_seats=int(data.get('vip_seats', 0)),
+            standard_seats=int(data.get('standard_seats', 0)),
+            economy_seats=int(data.get('economy_seats', 0)),
+            contact_phone=data.get('contact_phone'),
+            seat_map_template=data.get('seat_map_template'),
+            status='ACTIVE'
+        )
+        
+        db.session.add(new_venue)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Venue created successfully',
+            'data': new_venue.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@organizer_bp.route("/organizer/venues/<int:venue_id>", methods=["GET"])
+def get_organizer_venue(venue_id):
+    """Get a single venue"""
+    try:
+        venue = Venue.query.get(venue_id)
+        if not venue:
+            return jsonify({'success': False, 'message': 'Venue not found'}), 404
+            
+        return jsonify({
+            'success': True,
+            'data': venue.to_dict()
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@organizer_bp.route("/organizer/venues/<int:venue_id>", methods=["PUT"])
+def update_organizer_venue(venue_id):
+    """Update venue details"""
+    try:
+        venue = Venue.query.get(venue_id)
+        if not venue:
+            return jsonify({'success': False, 'message': 'Venue not found'}), 404
+        
+        data = request.get_json()
+        
+        if 'venue_name' in data: venue.venue_name = data['venue_name']
+        if 'address' in data: venue.address = data['address']
+        if 'city' in data: venue.city = data['city']
+        if 'contact_phone' in data: venue.contact_phone = data['contact_phone']
+        if 'capacity' in data: venue.capacity = int(data['capacity'])
+        if 'vip_seats' in data: venue.vip_seats = int(data['vip_seats'])
+        if 'standard_seats' in data: venue.standard_seats = int(data['standard_seats'])
+        if 'economy_seats' in data: venue.economy_seats = int(data['economy_seats'])
+        if 'status' in data: venue.status = data['status']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Venue updated successfully',
+            'data': venue.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@organizer_bp.route("/organizer/venues/<int:venue_id>/seats", methods=["PUT"])
+def update_venue_seats(venue_id):
+    """Update seat map for venue"""
+    try:
+        venue = Venue.query.get(venue_id)
+        if not venue:
+            return jsonify({'success': False, 'message': 'Venue not found'}), 404
+            
+        data = request.get_json()
+        
+        if 'seat_map_template' in data:
+            venue.seat_map_template = data['seat_map_template']
+            
+        if 'capacity' in data:
+            venue.capacity = data['capacity']
+            
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Seat map updated successfully',
+            'data': venue.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@organizer_bp.route("/organizer/tickets/search", methods=["GET"])
+def search_tickets():
+    """Search tickets by code, customer email, event, or status"""
+    try:
+        manager_id = request.args.get('manager_id', 1, type=int)
+        query_text = request.args.get('q', '')
+        event_id = request.args.get('event_id', type=int)
+        status = request.args.get('status')
+        
+        # Get events managed by this organizer
+        organizer_events = Event.query.filter_by(manager_id=manager_id).all()
+        org_event_ids = [e.event_id for e in organizer_events]
+        
+        # Start building the query
+        query = db.session.query(Ticket).join(
+            TicketType, Ticket.ticket_type_id == TicketType.ticket_type_id
+        )
+        
+        # Filter by organizer's events
+        if event_id:
+            # If specific event requested, ensure it belongs to organizer
+            if event_id not in org_event_ids:
+                return jsonify({'success': True, 'data': []}), 200
+            query = query.filter(TicketType.event_id == event_id)
+        else:
+            # Otherwise search all organizer's events
+            query = query.filter(TicketType.event_id.in_(org_event_ids))
+            
+        # Filter by status if provided
+        if status and status != 'ALL':
+            query = query.filter(Ticket.ticket_status == status)
+            
+        # Filter by search text if provided
+        if query_text:
+            query = query.filter(
+                or_(
+                    Ticket.ticket_code.like(f'%{query_text}%'),
+                    Ticket.holder_email.like(f'%{query_text}%'),
+                    Ticket.holder_name.like(f'%{query_text}%')
+                )
+            )
+            
+        tickets = query.all()
+        
+        results = []
+        for ticket in tickets:
+            tt = TicketType.query.get(ticket.ticket_type_id)
+            evt = Event.query.get(tt.event_id)
+            t_data = ticket.to_dict()
+            t_data['event_name'] = evt.event_name
+            t_data['ticket_type_name'] = tt.type_name
+            results.append(t_data)
+            
+        return jsonify({
+            'success': True,
+            'data': results
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@organizer_bp.route("/organizer/tickets/check-in", methods=["POST"])
+def check_in_ticket():
+    """Check in a ticket"""
+    try:
+        data = request.get_json()
+        ticket_code = data.get('ticket_code')
+        manager_id = data.get('manager_id', 1)
+        
+        ticket = Ticket.query.filter_by(ticket_code=ticket_code).first()
+        
+        if not ticket:
+            return jsonify({'success': False, 'message': 'Ticket not found'}), 404
+            
+        # Verify ownership
+        tt = TicketType.query.get(ticket.ticket_type_id)
+        evt = Event.query.get(tt.event_id)
+        
+        if evt.manager_id != manager_id:
+             return jsonify({'success': False, 'message': 'Unauthorized access to this ticket'}), 403
+             
+        if ticket.ticket_status == 'USED':
+             return jsonify({
+                 'success': False, 
+                 'message': 'Vé đã được sử dụng trước đó',
+                 'checked_in_at': ticket.checked_in_at
+             }), 400
+             
+        if ticket.ticket_status != 'ACTIVE':
+             return jsonify({'success': False, 'message': f'Vé không hợp lệ (Trạng thái: {ticket.ticket_status})'}), 400
+             
+        # Perform check-in
+        ticket.ticket_status = 'USED'
+        ticket.checked_in_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Check-in thành công',
+            'data': {
+                'ticket_code': ticket.ticket_code,
+                'holder_name': ticket.holder_name,
+                'event_name': evt.event_name,
+                'checked_in_at': ticket.checked_in_at.isoformat()
+            }
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@organizer_bp.route("/organizer/stats", methods=["GET"])
+def get_organizer_stats():
+    """Get dashboard statistics for organizer"""
+    try:
+        manager_id = request.args.get('manager_id', 1, type=int)
+
+        # Revenue (Sum of price of sold tickets)
+        total_revenue = db.session.query(func.sum(Ticket.price))\
+            .join(TicketType, Ticket.ticket_type_id == TicketType.ticket_type_id)\
+            .join(Event, TicketType.event_id == Event.event_id)\
+            .filter(Event.manager_id == manager_id)\
+            .filter(Ticket.ticket_status.in_(['ACTIVE', 'USED']))\
+            .scalar() or 0
+            
+        # Sold Tickets
+        total_tickets_sold = db.session.query(func.count(Ticket.ticket_id))\
+            .join(TicketType, Ticket.ticket_type_id == TicketType.ticket_type_id)\
+            .join(Event, TicketType.event_id == Event.event_id)\
+            .filter(Event.manager_id == manager_id)\
+            .filter(Ticket.ticket_status.in_(['ACTIVE', 'USED']))\
+            .scalar() or 0
+            
+        # Refunded/Cancelled Tickets
+        refunded_tickets = db.session.query(func.count(Ticket.ticket_id))\
+            .join(TicketType, Ticket.ticket_type_id == TicketType.ticket_type_id)\
+            .join(Event, TicketType.event_id == Event.event_id)\
+            .filter(Event.manager_id == manager_id)\
+            .filter(Ticket.ticket_status.in_(['REFUNDED', 'CANCELLED']))\
+            .scalar() or 0
+            
+        # Total Events
+        total_events = Event.query.filter_by(manager_id=manager_id).count()
+
+        # Best Selling Events (by calculated active tickets)
+        best_selling_query = db.session.query(
+            Event,
+            func.count(Ticket.ticket_id).label('sold_count')
+        ).join(TicketType, Event.event_id == TicketType.event_id)\
+         .join(Ticket, TicketType.ticket_type_id == Ticket.ticket_type_id)\
+         .filter(Event.manager_id == manager_id)\
+         .filter(Ticket.ticket_status.in_(['ACTIVE', 'USED']))\
+         .group_by(Event.event_id)\
+         .order_by(func.count(Ticket.ticket_id).desc())\
+         .limit(5).all()
+        
+        best_selling_data = [{
+            'event_id': e.event_id,
+            'event_name': e.event_name,
+            'sold_tickets': count,
+            'total_capacity': e.total_capacity,
+            'fill_rate': round((count / e.total_capacity * 100), 1) if e.total_capacity > 0 else 0
+        } for e, count in best_selling_query]
+
+        # Highest Revenue Events
+        revenue_query = db.session.query(
+            Event.event_id, 
+            Event.event_name, 
+            func.sum(Ticket.price).label('revenue')
+        ).join(TicketType, Event.event_id == TicketType.event_id)\
+         .join(Ticket, TicketType.ticket_type_id == Ticket.ticket_type_id)\
+         .filter(Event.manager_id == manager_id)\
+         .filter(Ticket.ticket_status.in_(['ACTIVE', 'USED']))\
+         .group_by(Event.event_id, Event.event_name)\
+         .order_by(func.sum(Ticket.price).desc())\
+         .limit(5).all()
+
+        revenue_data = [{
+            'event_id': r.event_id,
+            'event_name': r.event_name,
+            'revenue': float(r.revenue or 0)
+        } for r in revenue_query]
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_revenue': float(total_revenue),
+                'total_tickets_sold': total_tickets_sold,
+                'refunded_tickets': refunded_tickets,
+                'total_events': total_events,
+                'best_selling_events': best_selling_data,
+                'revenue_events': revenue_data
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@organizer_bp.route("/organizer/orders", methods=["GET"])
+def get_organizer_orders():
+    """Get list of orders containing tickets for organizer's events"""
+    try:
+        manager_id = request.args.get('manager_id', type=int)
+        search = request.args.get('search', '')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('limit', 10, type=int)
+
+        if not manager_id:
+            return jsonify({'success': False, 'message': 'Missing manager_id'}), 400
+
+        # Query Orders that have at least one ticket from this manager
+        query = db.session.query(Order).join(Ticket).join(TicketType).join(Event)
+        
+        query = query.filter(Event.manager_id == manager_id)
+        
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(or_(
+                Order.order_code.ilike(search_term),
+                Order.customer_name.ilike(search_term),
+                Order.customer_email.ilike(search_term),
+                Order.customer_phone.ilike(search_term)
+            ))
+            
+        # Group by Order to ensure uniqueness
+        query = query.group_by(Order.order_id).order_by(Order.created_at.desc())
+        
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        orders_data = []
+        for order in pagination.items:
+            # Filter tickets belonging to this manager
+            relevant_tickets = [
+                t for t in order.tickets 
+                if t.ticket_type and t.ticket_type.event and t.ticket_type.event.manager_id == manager_id
+            ]
+            
+            if not relevant_tickets: 
+                continue
+
+            org_revenue = sum(t.price for t in relevant_tickets)
+            
+            orders_data.append({
+                'order_id': order.order_id,
+                'order_code': order.order_code,
+                'customer_name': order.customer_name or "Unknown",
+                'customer_email': order.customer_email or "N/A",
+                'customer_phone': order.customer_phone,
+                'created_at': order.created_at.isoformat(),
+                'status': order.order_status,
+                'revenue': float(org_revenue),
+                'ticket_count': len(relevant_tickets),
+                'tickets': [{
+                    'ticket_id': t.ticket_id,
+                    'code': t.ticket_code,
+                    'event': t.ticket_type.event.event_name,
+                    'type': t.ticket_type.type_name,
+                    'price': float(t.price),
+                    'status': 'EXPIRED' if t.ticket_status == 'ACTIVE' and t.ticket_type.event.end_datetime < datetime.utcnow() else t.ticket_status
+                } for t in relevant_tickets]
+            })
+            
+        return jsonify({
+            'success': True,
+            'data': orders_data,
+            'pagination': {
+                'total': pagination.total,
+                'pages': pagination.pages,
+                'page': page,
+                'limit': per_page
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500

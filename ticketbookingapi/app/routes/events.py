@@ -44,6 +44,8 @@ def get_events():
             query = query.order_by(Event.start_datetime.asc())
         elif sort == 'newest':
             query = query.order_by(Event.created_at.desc())
+        elif sort == 'popular':
+            query = query.order_by(Event.sold_tickets.desc())
         else:
             # Default order by created_at descending
             query = query.order_by(Event.created_at.desc())

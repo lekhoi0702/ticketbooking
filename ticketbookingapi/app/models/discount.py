@@ -5,6 +5,8 @@ class Discount(db.Model):
     __tablename__ = "Discount"
 
     discount_id = db.Column(db.Integer, primary_key=True)
+    manager_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('Event.event_id'), nullable=True)
     discount_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
     discount_name = db.Column(db.String(255), nullable=False)
     discount_type = db.Column(db.Enum('PERCENTAGE', 'FIXED_AMOUNT'), nullable=False)

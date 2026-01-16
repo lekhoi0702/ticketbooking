@@ -138,4 +138,128 @@ export const organizerApi = {
         }
         return await response.json();
     },
+
+    // Venue Management
+    async getVenues(managerId = 1) {
+        const response = await fetch(`${API_BASE_URL}/organizer/venues?manager_id=${managerId}`);
+        if (!response.ok) throw new Error('Failed to fetch venues');
+        return await response.json();
+    },
+
+    async createVenue(venueData) {
+        const response = await fetch(`${API_BASE_URL}/organizer/venues`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(venueData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create venue');
+        }
+        return await response.json();
+    },
+
+    async getVenue(venueId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/venues/${venueId}`);
+        if (!response.ok) throw new Error('Failed to fetch venue');
+        return await response.json();
+    },
+
+    async updateVenue(venueId, venueData) {
+        const response = await fetch(`${API_BASE_URL}/organizer/venues/${venueId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(venueData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update venue');
+        }
+        return await response.json();
+    },
+
+    async updateVenueSeats(venueId, seatData) {
+        const response = await fetch(`${API_BASE_URL}/organizer/venues/${venueId}/seats`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(seatData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update seat map');
+        }
+        return await response.json();
+    },
+
+    // Ticket Management
+    async searchTickets(query, managerId = 1, eventId = null, status = null) {
+        let url = `${API_BASE_URL}/organizer/tickets/search?manager_id=${managerId}`;
+        if (query) url += `&q=${query}`;
+        if (eventId) url += `&event_id=${eventId}`;
+        if (status) url += `&status=${status}`;
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to search tickets');
+        return await response.json();
+    },
+
+    async checkInTicket(ticketCode, managerId = 1) {
+        const response = await fetch(`${API_BASE_URL}/organizer/tickets/check-in`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticket_code: ticketCode, manager_id: managerId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to check in ticket');
+        }
+        return await response.json();
+    },
+
+    async getOrganizerStats(managerId = 1) {
+        const response = await fetch(`${API_BASE_URL}/organizer/stats?manager_id=${managerId}`);
+        if (!response.ok) throw new Error('Failed to fetch stats');
+        return await response.json();
+    },
+
+    async getOrders(managerId, params = {}) {
+        const query = new URLSearchParams({
+            manager_id: managerId,
+            ...params
+        }).toString();
+        const response = await fetch(`${API_BASE_URL}/organizer/orders?${query}`);
+        if (!response.ok) throw new Error('Failed to fetch orders');
+        return await response.json();
+    },
+
+    async getDiscounts(managerId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/discounts?manager_id=${managerId}`);
+        if (!response.ok) throw new Error('Failed to fetch discounts');
+        return await response.json();
+    },
+
+    async createDiscount(data) {
+        const response = await fetch(`${API_BASE_URL}/organizer/discounts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const resData = await response.json();
+        if (!response.ok) throw new Error(resData.message || 'Failed to create discount');
+        return resData;
+    },
+
+    async updateDiscount(id, data) {
+        const response = await fetch(`${API_BASE_URL}/organizer/discounts/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        return await response.json();
+    },
+
+    async deleteDiscount(id) {
+        const response = await fetch(`${API_BASE_URL}/organizer/discounts/${id}`, { method: 'DELETE' });
+        return await response.json();
+    }
 };
