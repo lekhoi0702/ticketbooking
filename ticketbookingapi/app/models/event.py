@@ -45,5 +45,6 @@ class Event(db.Model):
             data['category'] = self.category.to_dict() if self.category else None
             data['venue'] = self.venue.to_dict() if self.venue else None
             data['ticket_types'] = [tt.to_dict() for tt in self.ticket_types] if self.ticket_types else []
+            data['organizer_info'] = self.manager.organizer_info.to_dict() if self.manager and self.manager.organizer_info else None
         
         return data

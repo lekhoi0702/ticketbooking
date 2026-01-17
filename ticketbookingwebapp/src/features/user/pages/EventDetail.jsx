@@ -144,11 +144,17 @@ function EventDetail() {
                             <Card.Body>
                                 <div className="organizer-info">
                                     <div className="organizer-avatar">
-                                        {event.event_name.charAt(0)}
+                                        {event.organizer_info?.logo_url ? (
+                                            <img src={event.organizer_info.logo_url} alt={event.organizer_info.organization_name} />
+                                        ) : (
+                                            (event.organizer_info?.organization_name || event.event_name).charAt(0).toString().toUpperCase()
+                                        )}
                                     </div>
                                     <div className="organizer-details">
-                                        <h6>Ban tổ chức sự kiện</h6>
-                                        <p className="text-muted small mb-0">Chuyên tổ chức các sự kiện giải trí hàng đầu</p>
+                                        <h6>{event.organizer_info?.organization_name || 'Ban tổ chức sự kiện'}</h6>
+                                        <p className="text-muted small mb-0">
+                                            {event.organizer_info?.description || 'Chuyên tổ chức các sự kiện giải trí hàng đầu'}
+                                        </p>
                                     </div>
                                 </div>
                                 <Button variant="outline-success" className="w-100 mt-3">Theo dõi</Button>
