@@ -1,0 +1,96 @@
+.profile-page {
+    min-height: 100vh;
+    background: #ffffff;
+    padding: 0;
+}
+
+.profile-container {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.profile-header-card {
+    margin-bottom: 24px;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    background: #ffffff;
+    border: 1px solid #f0f0f0;
+}
+
+.profile-header-card .ant-card-body {
+    background: #ffffff;
+    padding: 24px;
+}
+
+.profile-tabs-card {
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    min-height: 500px;
+    background: #ffffff;
+    border: 1px solid #f0f0f0;
+}
+
+.profile-tabs-card .ant-card-body {
+    background: #ffffff;
+    padding: 24px;
+}
+
+.profile-tabs-card .ant-tabs-nav {
+    margin-bottom: 24px;
+    background: #ffffff;
+}
+
+.profile-tabs-card .ant-tabs-tab {
+    font-size: 16px;
+    padding: 12px 24px;
+    background: transparent;
+}
+
+.profile-tabs-card .ant-tabs-tab-active {
+    font-weight: 600;
+    background: transparent;
+}
+
+.profile-tabs-card .ant-tabs-content {
+    background: #ffffff;
+}
+
+/* Text color overrides for admin profile */
+.profile-page .ant-typography,
+.profile-page h1,
+.profile-page h2,
+.profile-page h3,
+.profile-page h4,
+.profile-page h5,
+.profile-page h6,
+.profile-page p,
+.profile-page span,
+.profile-page label,
+.profile-page .ant-form-item-label>label {
+    color: #000000 !important;
+}
+
+.profile-page .ant-typography-secondary {
+    color: #595959 !important;
+}
+
+.profile-page .ant-typography-success {
+    color: #52c41a !important;
+}
+
+@media (max-width: 768px) {
+    .profile-header-card .ant-card-body>div {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .profile-header-card .ant-space {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-tabs-card .ant-tabs-tab {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}

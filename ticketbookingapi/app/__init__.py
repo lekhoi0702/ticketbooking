@@ -16,18 +16,40 @@ def create_app():
     # Import models to ensure they are registered
     from app.models import (
         Role, User, EventCategory, Venue, Event, 
-        TicketType, Order, Payment, Ticket, Discount, Review
+        TicketType, Order, Payment, Ticket, Discount, Banner, OrganizerInfo
     )
     from app.models.event_deletion_request import EventDeletionRequest
 
     # Serve uploaded files
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
-        # Get the project root directory (ticketbooking/)
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        uploads_dir = os.path.join(project_root, 'uploads')
-        print(f"Serving file: {filename} from {uploads_dir}")  # Debug log
-        return send_from_directory(uploads_dir, filename)
+        from flask import make_response, abort
+        
+        # DEBUG: Hardcode exact path to ensure no resolution errors
+        uploads_dir = r'C:\Users\khoi.le\Desktop\ticketbooking\uploads'
+        full_path = os.path.join(uploads_dir, filename)
+        
+        # Debug logging
+        print(f"-------- UPLOAD DEBUG --------")
+        print(f"Request: {filename}")
+        print(f"Looking in: {full_path}")
+        print(f"Exists: {os.path.exists(full_path)}")
+        
+        if not os.path.exists(full_path):
+             print(f"ERROR: File not found!")
+             return f"File not found: {full_path}", 404
+
+        # Send file
+        response = make_response(send_from_directory(uploads_dir, filename))
+        
+        # CORS headers for static files
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        
+        # MIME type fixes
+        if filename.lower().endswith('.svg'):
+            response.headers['Content-Type'] = 'image/svg+xml'
+            
+        return response
 
     # Register blueprints
     from app.routes.health import health_bp
@@ -42,6 +64,7 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.event_deletion import event_deletion_bp
     from app.routes.organizer_discount import organizer_discount_bp
+    from app.routes.banners import banners_bp
 
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(events_bp, url_prefix="/api")
@@ -55,5 +78,6 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix="/api")
     app.register_blueprint(event_deletion_bp, url_prefix="/api")
     app.register_blueprint(organizer_discount_bp, url_prefix="/api")
+    app.register_blueprint(banners_bp, url_prefix="/api")
 
     return app

@@ -2,10 +2,15 @@ import { BASE_URL } from '@shared/constants';
 
 export const getImageUrl = (path, placeholder = 'https://via.placeholder.com/800x450?text=TicketBooking') => {
     if (!path) return placeholder;
-    if (path.startsWith('http')) return path;
-    if (path.startsWith('/uploads/')) return `${BASE_URL}${path}`;
-    if (path.startsWith('uploads/')) return `${BASE_URL}/${path}`;
-    return path;
+    // Return external URLs (http/https) as-is
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+
+    // Static assets from frontend public folder (e.g., banners)
+    if (path.startsWith('/banners/')) return path;
+
+    // Backend uploads: Normalize path and append BASE_URL
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${BASE_URL}${cleanPath}`;
 };
 
 export const transformEvent = (event) => {

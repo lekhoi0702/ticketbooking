@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Container, Card, Alert, Button, Row, Col, ListGroup, Badge } from 'react-bootstrap';
-import { FaCheckCircle, FaTicketAlt, FaCalendar, FaMapMarkerAlt, FaChair, FaDownload } from 'react-icons/fa';
+import { Container, Card, Alert, Row, Col, Badge } from 'react-bootstrap';
+import { FaCheckCircle, FaTicketAlt, FaCalendar, FaMapMarkerAlt, FaChair } from 'react-icons/fa';
 import { api } from '@services/api';
-import { formatCurrency, getImageUrl } from '@shared/utils/eventUtils';
+import { formatCurrency } from '@shared/utils/eventUtils';
 import { QRCodeSVG } from 'qrcode.react';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
@@ -37,13 +37,23 @@ const OrderSuccess = () => {
         }
     };
 
-
-    const formatDateTime = (dateString) => {
-        if (!dateString) return '-';
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
         const date = new Date(dateString);
-        return date.toLocaleString('vi-VN', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
+        return date.toLocaleDateString('vi-VN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const formatTime = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit'
         });
     };
 
@@ -51,7 +61,7 @@ const OrderSuccess = () => {
 
     if (error || !orderData) return (
         <Container className="py-5">
-            <Alert variant="danger">
+            <Alert variant="danger" className="bg-dark text-white border-danger">
                 <h4>Lỗi!</h4>
                 <p>{error || 'Không tìm thấy đơn hàng'}</p>
                 <Link to="/" className="btn btn-outline-danger">Quay lại trang chủ</Link>
@@ -59,128 +69,347 @@ const OrderSuccess = () => {
         </Container>
     );
 
-    const { order, tickets, payment, event } = orderData;
+    const { order, tickets, event } = orderData;
 
     return (
-        <Container className="py-5">
+        <Container className="py-5 order-success-page">
             <Row className="justify-content-center">
-                <Col lg={9}>
-                    <Card className="border-0 shadow-sm mb-4 text-center rounded-4 py-4 overflow-hidden position-relative">
-                        <div className={`position-absolute top-0 start-0 w-100 h-100 ${order.order_status === 'PAID' ? 'bg-success' : 'bg-warning'} bg-opacity-10`} style={{ zIndex: 0 }}></div>
-                        <Card.Body className="position-relative" style={{ zIndex: 1 }}>
+                <Col lg={10}>
+                    {/* Header Status Card */}
+                    <Card className="status-header-card border-0 shadow-lg mb-5 text-center rounded-4 overflow-hidden">
+                        <Card.Body className="py-5">
                             {order.order_status === 'PAID' ? (
                                 <>
-                                    <FaCheckCircle className="text-success mb-3" size={70} />
-                                    <h2 className="fw-bold mb-2">Thanh toán thành công!</h2>
-                                    <p className="text-muted">Giao dịch của bạn đã được xác nhận. Chúc bạn có những giây phút tuyệt vời.</p>
-                                    <Badge bg="success" className="px-4 py-2 fs-6 pill shadow-sm">
-                                        Đã thanh toán
-                                    </Badge>
+                                    <div className="status-icon-wrapper mb-4">
+                                        <FaCheckCircle className="text-success shadow-icon" size={80} />
+                                    </div>
+                                    <h1 className="fw-bold mb-3 text-white">Thanh toán thành công!</h1>
+                                    <p className="text-secondary fs-5 mb-4">Cảm ơn bạn đã tin tưởng. Vé của bạn đã sẵn sàng sử dụng.</p>
+                                    <div className="status-pill PAID">ĐÃ THANH TOÁN</div>
                                 </>
                             ) : (
                                 <>
-                                    <div className="spinner-border text-warning mb-3" role="status" style={{ width: '70px', height: '70px' }}></div>
-                                    <h2 className="fw-bold mb-2">Đang xử lý thanh toán</h2>
-                                    <p className="text-muted">Hệ thống đang cập nhật trạng thái đơn hàng. Vui lòng đợi trong giây lát hoặc kiểm tra lịch sử đơn hàng.</p>
-                                    <Badge bg="warning" text="dark" className="px-4 py-2 fs-6 pill shadow-sm">
-                                        Đang xử lý
-                                    </Badge>
+                                    <div className="spinner-border text-warning mb-4" role="status" style={{ width: '80px', height: '80px' }}></div>
+                                    <h1 className="fw-bold mb-3 text-white">Đang xử lý giao dịch</h1>
+                                    <p className="text-secondary fs-5 mb-4">Hệ thống đang xác thực thanh toán của bạn. Vui lòng không đóng trình duyệt.</p>
+                                    <div className="status-pill PENDING">ĐANG XỬ LÝ</div>
                                 </>
                             )}
                         </Card.Body>
                     </Card>
 
-                    <Row>
-                        <Col md={7}>
-                            <h5 className="fw-bold mb-3 d-flex align-items-center">
-                                <FaTicketAlt className="me-2 text-primary" /> Vé điện tử của bạn
-                            </h5>
-                            {tickets.map((ticket, idx) => (
-                                <Card key={ticket.ticket_id} className="border-0 shadow-sm mb-3 rounded-4 overflow-hidden ticket-compact-card">
-                                    <div className="ticket-compact-content p-3 flex-grow-1 bg-white position-relative">
-                                        <div className="notch notch-top" style={{ top: '-10px', left: '-10px', position: 'absolute', width: '20px', height: '20px', backgroundColor: '#f8f9fa', borderRadius: '50%' }}></div>
-                                        <div className="notch notch-bottom" style={{ bottom: '-10px', left: '-10px', position: 'absolute', width: '20px', height: '20px', backgroundColor: '#f8f9fa', borderRadius: '50%' }}></div>
-
-                                        <div className="d-flex justify-content-between align-items-center">
-                                            <div className="flex-grow-1">
-                                                <h6 className="fw-bold mb-1 text-uppercase">{event?.event_name}</h6>
-                                                <div className="small text-muted d-flex align-items-center mb-2">
-                                                    <FaCalendar className="me-2 text-primary" /> {formatDateTime(event?.start_datetime)}
-                                                </div>
-
-                                                {ticket.seat ? (
-                                                    <div className="bg-white border px-3 py-1 rounded-pill d-inline-flex align-items-center fw-bold small">
-                                                        <FaChair className="me-1 text-success small" />
-                                                        {ticket.seat.row_name}{ticket.seat.seat_number}
+                    <Row className="g-4">
+                        {/* Tickets List */}
+                        <Col lg={7}>
+                            <h4 className="section-title mb-4">
+                                <FaTicketAlt className="me-2 text-success" /> Danh sách vé của bạn
+                            </h4>
+                            <div className="tickets-stack">
+                                {tickets.map((ticket) => (
+                                    <div className="ticket-card-container mb-4" key={ticket.ticket_id}>
+                                        <div className="ticket-main-part">
+                                            <div className="ticket-event-info">
+                                                <h3 className="ticket-event-title">{event?.event_name}</h3>
+                                                <div className="ticket-details-grid">
+                                                    <div className="detail-item">
+                                                        <FaCalendar className="detail-icon" />
+                                                        <span>{formatTime(event?.start_datetime)} {formatDate(event?.start_datetime)}</span>
                                                     </div>
-                                                ) : (
-                                                    <Badge bg="light" text="dark" className="border">Vé chung</Badge>
-                                                )}
+                                                    <div className="detail-item">
+                                                        <FaChair className="detail-icon" />
+                                                        <span>{ticket.seat ? `${ticket.seat.row_name}${ticket.seat.seat_number}` : (ticket.ticket_type_name || 'Vé tham dự')}</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="text-end d-flex flex-column justify-content-between h-100">
-                                                <div>
-                                                    <div className="fw-bold text-dark fs-5">{formatCurrency(ticket.price)}</div>
-                                                    <div className="small text-muted mb-2">Mã: {ticket.ticket_code}</div>
+                                            <div className="ticket-bottom-info">
+                                                <div className="info-group">
+                                                    <div className="info-label">MÃ VÉ</div>
+                                                    <div className="info-value code-font">{ticket.ticket_code}</div>
                                                 </div>
-
-                                                <div className="bg-light p-1 rounded-2 text-center d-flex align-items-center justify-content-center" style={{ width: '85px', height: '85px', margin: '0px 0px 0px auto' }}>
-                                                    <div className="w-100 h-100 bg-white d-flex align-items-center justify-content-center rounded border overflow-hidden">
-                                                        <img
-                                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticket.ticket_code}`}
-                                                            alt="QR Code"
-                                                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                                if (e.target.nextSibling) e.target.nextSibling.style.display = 'block';
-                                                            }}
-                                                        />
-                                                        <div style={{ display: 'none' }}>
-                                                            <QRCodeSVG value={ticket.ticket_code} size={65} level="L" />
-                                                        </div>
-                                                    </div>
+                                                <div className="info-group">
+                                                    <div className="info-label">GIÁ VÉ</div>
+                                                    <div className="info-value">{formatCurrency(ticket.price)}</div>
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <div className="ticket-perforation-divider">
+                                            <div className="perforation-notch notch-top"></div>
+                                            <div className="perforation-line"></div>
+                                            <div className="perforation-notch notch-bottom"></div>
+                                        </div>
+
+                                        <div className="ticket-stub-part">
+                                            <div className="stub-qr-wrapper">
+                                                <QRCodeSVG
+                                                    value={ticket.ticket_code}
+                                                    size={110}
+                                                    level="H"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                </Card>
-                            ))}
+                                ))}
+                            </div>
                         </Col>
 
-                        <Col md={5}>
-                            <Card className="border-0 shadow-sm rounded-4 mb-4">
-                                <Card.Header className="bg-white py-3">
-                                    <h6 className="mb-0 fw-bold">Thông tin đơn hàng</h6>
-                                </Card.Header>
-                                <Card.Body>
-                                    <div className="mb-3">
-                                        <div className="text-muted small">Mã giao dịch:</div>
-                                        <div className="fw-bold">{order.order_code}</div>
+                        {/* Order Summary */}
+                        <Col lg={5}>
+                            <h4 className="section-title mb-4 text-white">Chi tiết đơn hàng</h4>
+                            <Card className="order-details-card border-0 shadow-lg rounded-4 overflow-hidden">
+                                <Card.Body className="p-4">
+                                    <div className="info-row mb-4">
+                                        <span className="info-row-label">Mã đơn hàng:</span>
+                                        <span className="info-row-value text-white">{order.order_code}</span>
                                     </div>
-                                    <div className="mb-3">
-                                        <div className="text-muted small">Địa điểm:</div>
-                                        <div className="fw-bold"><FaMapMarkerAlt className="text-danger me-1" />{event?.venue?.venue_name}</div>
-                                        <div className="small text-muted ps-3">{event?.venue?.address}</div>
+                                    <div className="info-row mb-4">
+                                        <span className="info-row-label">Địa điểm:</span>
+                                        <div className="info-row-value text-white d-flex align-items-start mt-1">
+                                            <FaMapMarkerAlt className="text-danger me-2 mt-1" />
+                                            <div>
+                                                <div className="fw-bold">{event?.venue?.venue_name}</div>
+                                                <div className="small text-secondary">{event?.venue?.address}</div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <hr className="opacity-10" />
-                                    <div className="d-flex justify-content-between mb-2">
-                                        <span className="text-muted">Tổng cộng:</span>
-                                        <span className="fw-bold fs-5 text-primary">{formatCurrency(order.final_amount)}</span>
+                                    <div className="info-row mb-4">
+                                        <span className="info-row-label">Thời gian thanh toán:</span>
+                                        <span className="info-row-value text-white">{formatDate(order.created_at)}</span>
+                                    </div>
+
+                                    <div className="payment-divider mb-4"></div>
+
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <span className="total-label text-white">Tổng cộng</span>
+                                        <span className="total-value text-success">{formatCurrency(order.final_amount)}</span>
                                     </div>
                                 </Card.Body>
+                                <Card.Footer className="border-0 bg-dark bg-opacity-50 p-4 text-center">
+                                    <p className="text-secondary small mb-3">Bạn có thể xem lại vé trong mục "Cá nhân &gt; Vé của tôi"</p>
+                                    <Link to="/" className="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm">TIẾP TỤC KHÁM PHÁ</Link>
+                                </Card.Footer>
                             </Card>
                         </Col>
                     </Row>
-
-                    <div className="text-center mt-4">
-                        <Link to="/" className="btn btn-link text-decoration-none text-muted"> Quay lại trang chủ</Link>
-                    </div>
                 </Col>
             </Row>
 
             <style>{`
-                .ticket-card { transition: transform 0.2s; }
-                .ticket-card:hover { transform: translateY(-5px); }
-                .pill { border-radius: 50px; }
+                .order-success-page {
+                    background: #000;
+                    min-height: 100vh;
+                }
+
+                .status-header-card {
+                    background: #121212;
+                    border: 1px solid rgba(255,255,255,0.05);
+                }
+
+                .status-pill {
+                    display: inline-block;
+                    padding: 8px 30px;
+                    border-radius: 50px;
+                    font-weight: 800;
+                    font-size: 14px;
+                    letter-spacing: 1px;
+                }
+
+                .status-pill.PAID {
+                    color: #52c41a;
+                    border: 2px solid #52c41a;
+                }
+                
+                .status-pill.PENDING {
+                    color: #faad14;
+                    border: 2px solid #faad14;
+                }
+
+                .shadow-icon {
+                    filter: drop-shadow(0 0 15px rgba(82, 196, 26, 0.4));
+                }
+
+                .section-title {
+                    color: #fff;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    font-size: 1.1rem;
+                }
+
+                /* Realistic Ticket Styles (Matched with MyTicketsTab) */
+                .ticket-card-container {
+                    display: flex;
+                    height: 200px;
+                    border-radius: 16px;
+                    position: relative;
+                    background: #121212;
+                    border: 2px solid #ffffff;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    -webkit-mask-image: radial-gradient(circle at calc(100% - 180px) 0, transparent 15px, black 16px),
+                                      radial-gradient(circle at calc(100% - 180px) 100%, transparent 15px, black 16px);
+                    mask-image: radial-gradient(circle at calc(100% - 180px) 0, transparent 15px, black 16px),
+                                radial-gradient(circle at calc(100% - 180px) 100%, transparent 15px, black 16px);
+                    -webkit-mask-composite: source-in;
+                    mask-composite: intersect;
+                }
+
+                .ticket-main-part {
+                    flex: 1;
+                    padding: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
+
+                .ticket-event-title {
+                    font-size: 1.3rem;
+                    font-weight: 800;
+                    color: #fff;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                }
+
+                .ticket-details-grid {
+                    display: flex;
+                    gap: 15px;
+                }
+
+                .detail-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    color: #b0b3b8;
+                    font-size: 0.8rem;
+                }
+
+                .detail-icon { color: #52c41a; }
+
+                .ticket-bottom-info {
+                    margin-top: auto;
+                    border-top: 1px dashed rgba(255,255,255,0.1);
+                    padding-top: 12px;
+                    display: flex;
+                    gap: 30px;
+                    justify-content: flex-start;
+                }
+
+                .info-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+
+                .info-label {
+                    font-size: 0.6rem;
+                    color: #666;
+                    font-weight: 800;
+                }
+
+                .info-value {
+                    font-size: 1rem;
+                    font-weight: 800;
+                    color: #52c41a;
+                }
+
+                .code-font {
+                    font-family: 'Courier New', monospace;
+                    color: #fff;
+                }
+
+                .ticket-perforation-divider {
+                    width: 0;
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .perforation-line {
+                    height: calc(100% - 40px);
+                    border-left: 1px dashed rgba(255,255,255,0.2);
+                }
+
+                .perforation-notch {
+                    position: absolute;
+                    width: 32px;
+                    height: 32px;
+                    border: 2px solid #ffffff;
+                    border-radius: 50%;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: transparent;
+                }
+
+                .notch-top { top: -17px; }
+                .notch-bottom { bottom: -17px; }
+
+                .ticket-stub-part {
+                    width: 180px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    border-left: 1px dashed rgba(255,255,255,0.2);
+                    background: rgba(255,255,255,0.02);
+                }
+
+                .stub-qr-wrapper {
+                    background: white;
+                    padding: 8px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                }
+
+                /* Order Details Card */
+                .order-details-card {
+                    background: #121212;
+                    border: 1px solid rgba(255,255,255,0.05);
+                }
+
+                .info-row-label {
+                    color: #666;
+                    font-size: 0.8rem;
+                    display: block;
+                    margin-bottom: 2px;
+                }
+
+                .info-row-value {
+                    font-weight: 700;
+                    font-size: 1rem;
+                }
+
+                .payment-divider {
+                    height: 1px;
+                    background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.1), rgba(255,255,255,0));
+                }
+
+                .total-label {
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                }
+
+                .total-value {
+                    font-size: 1.8rem;
+                    font-weight: 900;
+                }
+
+                @media (max-width: 991px) {
+                    .ticket-card-container {
+                        height: auto;
+                        flex-direction: column;
+                        -webkit-mask-image: none;
+                        mask-image: none;
+                    }
+                    .ticket-stub-part {
+                        width: 100%;
+                        border-left: none;
+                        border-top: 1px dashed rgba(255,255,255,0.2);
+                        padding: 30px;
+                    }
+                    .perforation-notch { display: none; }
+                }
             `}</style>
         </Container>
     );

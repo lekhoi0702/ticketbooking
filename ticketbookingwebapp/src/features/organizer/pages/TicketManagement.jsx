@@ -216,16 +216,18 @@ const TicketManagement = () => {
                         />
                     </div>
 
-                    <Search
-                        placeholder="Nhập mã vé / Email / Tên khách hàng"
-                        allowClear
-                        enterButton="Tìm kiếm"
-                        size="large"
-                        onSearch={handleSearch}
-                        loading={loading}
-                        style={{ maxWidth: 600, margin: '0 auto', display: 'block' }}
-                        prefix={<BarcodeOutlined style={{ color: '#bfbfbf' }} />}
-                    />
+                    <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                        <Search
+                            placeholder="Nhập mã vé / Email / Tên khách hàng"
+                            allowClear
+                            enterButton="Tìm kiếm"
+                            size="large"
+                            onSearch={handleSearch}
+                            loading={loading}
+                            style={{ width: '100%', maxWidth: 600 }}
+                            prefix={<BarcodeOutlined style={{ color: '#bfbfbf' }} />}
+                        />
+                    </div>
                 </Space>
             </Card>
 

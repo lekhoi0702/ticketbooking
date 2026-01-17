@@ -1,84 +1,165 @@
-.app-footer-wrapper {
-    background: #fafafa !important;
-    padding: 60px 40px 30px !important;
-    border-top: 1px solid #f0f0f0;
+.app-main-footer {
+    background-color: #ffffff;
+    color: #4b5563;
+    padding: 60px 0 40px;
+    font-family: 'Inter', sans-serif;
+    border-top: 1px solid #e5e7eb;
 }
 
-.footer-container {
-    max-width: 1400px;
-    margin: 0 auto;
+/* Headings */
+.footer-heading {
+    color: #111827 !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    margin-bottom: 24px !important;
+    /* Increased margin for better spacing */
+    min-height: 24px;
+    /* Ensure uniform height for alignment */
+    line-height: 1.5 !important;
 }
 
-.footer-brand {
+/* Specific fix for bottom section titles to align buttons */
+.footer-bottom-section .footer-heading {
+    min-height: 48px;
+    /* Force minimum height to account for potentially 2 lines */
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    align-items: flex-end;
+    /* Align text to bottom if single line, or natural if double */
+    margin-bottom: 16px !important;
 }
 
-.footer-desc {
-    font-size: 14px;
-    line-height: 1.6;
+/* Text and Links */
+.footer-text-icon,
+.footer-address,
+.footer-email {
     display: block;
-}
-
-.footer-social {
-    font-size: 20px;
-    margin-top: 8px;
-}
-
-.footer-social a {
-    color: #8c8c8c;
-    transition: color 0.3s;
-}
-
-.footer-social a:hover {
-    color: #52c41a;
-}
-
-.footer-links a,
-.footer-policy-links a {
-    color: #606266;
+    color: #b0b3b8;
     font-size: 14px;
-    transition: color 0.3s;
-}
-
-.footer-links a:hover,
-.footer-policy-links a:hover {
-    color: #52c41a;
-}
-
-.footer-contact .ant-typography {
-    color: #606266;
-    font-size: 14px;
-}
-
-.footer-contact .anticon {
-    margin-right: 8px;
-    color: #52c41a;
-}
-
-.address-text {
+    margin-bottom: 8px;
     line-height: 1.6;
-    display: flex !important;
-    align-items: flex-start;
 }
 
-.footer-bottom {
+.footer-address .anticon {
+    margin-right: 8px;
+    color: #999;
+}
+
+.footer-hotline {
+    display: block;
+    color: #52c41a;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 8px 0 24px;
+    text-decoration: none;
+}
+
+.footer-email {
+    color: #b0b3b8;
+    text-decoration: none;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
+    gap: 8px;
+}
+
+.footer-info-block {
+    margin-bottom: 24px;
+}
+
+.footer-group {
+    margin-bottom: 32px;
+}
+
+/* Links List */
+.footer-link {
+    display: block;
+    color: #b0b3b8;
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer-link:hover {
+    color: #52c41a;
+}
+
+/* App Download Buttons */
+.app-download-btn {
+    display: inline-block;
+    height: 40px;
+    /* Reduced height to look cleaner */
+    transition: opacity 0.3s;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    width: auto;
+}
+
+.app-download-btn img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+}
+
+.app-download-btn:hover {
+    opacity: 0.8;
+}
+
+/* Social Icons */
+.social-icons {
+    display: flex;
+    align-items: center;
+}
+
+.social-icon {
+    font-size: 28px;
+    transition: transform 0.3s;
+    display: inline-flex;
+}
+
+.social-icon:hover {
+    transform: translateY(-2px);
+}
+
+.social-icon.facebook {
+    color: #1877F2;
+}
+
+.social-icon.instagram {
+    color: #E4405F;
+}
+
+.social-icon.tiktok {
+    color: #000000;
+}
+
+.social-icon.linkedin {
+    color: #0A66C2;
+}
+
+/* Bottom Section Spacing */
+.footer-bottom-section {
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 1px solid #f3f4f6;
 }
 
 @media (max-width: 768px) {
-    .footer-bottom {
-        justify-content: center;
-        text-align: center;
+    .app-main-footer {
+        padding: 40px 0;
     }
 
-    .footer-policy-links {
-        width: 100%;
-        justify-content: center;
+    .footer-bottom-section .ant-col {
+        margin-bottom: 32px;
+    }
+
+    /* Reset fixed height for mobile where items stack */
+    .footer-bottom-section .footer-heading {
+        min-height: auto;
+        display: block;
+    }
+
+    .footer-hotline {
+        font-size: 20px;
     }
 }

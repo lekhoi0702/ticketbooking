@@ -5,6 +5,7 @@ from app.models.user import User
 from app.models.order import Order
 from app.models.payment import Payment
 from app.models.venue import Venue
+from app.models.event_category import EventCategory
 from sqlalchemy import func
 from datetime import datetime
 
@@ -209,25 +210,34 @@ def admin_delete_event(event_id):
 
 @admin_bp.route("/admin/orders", methods=["GET"])
 def get_all_orders():
-    """Lấy danh sách toàn bộ đơn hàng toàn hệ thống"""
+    """Lấy danh sách toàn bộ đơn hàng toàn hệ thống - Optimized"""
     try:
-        orders = Order.query.order_by(Order.created_at.desc()).all()
+        from app.models.ticket import Ticket
+        from app.models.ticket_type import TicketType
+        from sqlalchemy.orm import joinedload
+        
+        # Use eager loading to prevent N+1 queries
+        orders = Order.query.options(
+            joinedload(Order.payment)
+        ).order_by(Order.created_at.desc()).limit(500).all()  # Limit to last 500 orders
+        
         orders_data = []
         for order in orders:
             odata = order.to_dict()
-            payment = Payment.query.filter_by(order_id=order.order_id).first()
-            odata['payment_method'] = payment.payment_method if payment else "N/A"
             
-            # Lấy tên sự kiện (thông qua vé đầu tiên)
-            # Lưu ý: Một đơn hàng có thể có nhiều vé cùng sự kiện
-            from app.models.ticket import Ticket
-            from app.models.ticket_type import TicketType
+            # Payment method from relationship
+            odata['payment_method'] = order.payment.payment_method if order.payment else "N/A"
+            
+            # Get event name from first ticket (optimized single query)
             ticket = Ticket.query.filter_by(order_id=order.order_id).first()
             if ticket:
                 tt = TicketType.query.get(ticket.ticket_type_id)
-                if tt:
-                    evt = Event.query.get(tt.event_id)
-                    odata['event_name'] = evt.event_name if evt else "N/A"
+                if tt and tt.event:
+                    odata['event_name'] = tt.event.event_name
+                else:
+                    odata['event_name'] = "N/A"
+            else:
+                odata['event_name'] = "N/A"
             
             orders_data.append(odata)
             
@@ -236,6 +246,8 @@ def get_all_orders():
             'data': orders_data
         }), 200
     except Exception as e:
+        import traceback
+        print(traceback.format_exc())
         return jsonify({'success': False, 'message': str(e)}), 500
 @admin_bp.route("/admin/users/<int:user_id>/toggle-lock", methods=["POST"])
 def toggle_user_lock(user_id):
@@ -397,6 +409,91 @@ def process_order_cancellation(order_id):
         else:
             return jsonify({'success': False, 'message': 'Hành động không hợp lệ'}), 400
             
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@admin_bp.route("/admin/categories", methods=["POST"])
+def admin_create_category():
+    """Create a new event category"""
+    try:
+        data = request.get_json()
+        if 'category_name' not in data:
+            return jsonify({'success': False, 'message': 'Category name is required'}), 400
+            
+        # Check duplicate
+        if EventCategory.query.filter_by(category_name=data['category_name']).first():
+            return jsonify({'success': False, 'message': 'Category name already exists'}), 400
+            
+        category = EventCategory(
+            category_name=data['category_name'],
+            is_active=True
+        )
+        
+        db.session.add(category)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Category created successfully',
+            'data': category.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@admin_bp.route("/admin/categories/<int:category_id>", methods=["PUT"])
+def admin_update_category(category_id):
+    """Update an existing category"""
+    try:
+        data = request.get_json()
+        category = EventCategory.query.get(category_id)
+        if not category:
+            return jsonify({'success': False, 'message': 'Category not found'}), 404
+            
+        if 'category_name' in data:
+            # Check duplicate if name changed
+            if data['category_name'] != category.category_name:
+                if EventCategory.query.filter_by(category_name=data['category_name']).first():
+                    return jsonify({'success': False, 'message': 'Category name already exists'}), 400
+            category.category_name = data['category_name']
+            
+        if 'status' in data:
+            category.is_active = (data['status'] == 'ACTIVE')
+            
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Category updated successfully',
+            'data': category.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@admin_bp.route("/admin/categories/<int:category_id>", methods=["DELETE"])
+def admin_delete_category(category_id):
+    """Delete a category"""
+    try:
+        category = EventCategory.query.get(category_id)
+        if not category:
+            return jsonify({'success': False, 'message': 'Category not found'}), 404
+            
+        # Check if events exist in this category
+        if category.events:
+            return jsonify({
+                'success': False, 
+                'message': 'Cannot delete category with existing events. Please reassign items first.'
+            }), 400
+            
+        db.session.delete(category)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Category deleted successfully'
+        }), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500

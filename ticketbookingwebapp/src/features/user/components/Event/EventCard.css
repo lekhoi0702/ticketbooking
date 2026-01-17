@@ -14,6 +14,7 @@
 .event-card-premium:hover {
     transform: translateY(-8px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+    border-color: transparent !important;
 }
 
 .event-card-image-wrapper {
@@ -64,16 +65,41 @@
     transform: translateY(0);
 }
 
-.event-card-badge {
+.event-card-badge-hot {
     position: absolute;
     top: 12px;
     left: 12px;
-    margin: 0 !important;
-    border: none !important;
-    border-radius: 4px !important;
-    font-weight: 700 !important;
-    font-size: 10px !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(255, 77, 79, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 2;
+}
+
+.badge-icon {
+    font-size: 12px;
+    animation: flicker 1.5s infinite alternate;
+}
+
+@keyframes flicker {
+
+    0%,
+    100% {
+        opacity: 1;
+        text-shadow: 0 0 2px #fff;
+    }
+
+    50% {
+        opacity: 0.8;
+        text-shadow: none;
+    }
 }
 
 .event-card-body {

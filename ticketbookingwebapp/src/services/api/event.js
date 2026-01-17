@@ -55,4 +55,10 @@ export const eventApi = {
         if (!response.ok) throw new Error('Network response was not ok');
         return await response.json();
     },
+
+    async getPublicBanners() {
+        const response = await fetch(`${API_BASE_URL}/banners`);
+        if (!response.ok) throw new Error('Failed to fetch banners');
+        return await response.json();
+    },
 };

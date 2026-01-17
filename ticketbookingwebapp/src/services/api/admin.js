@@ -154,5 +154,86 @@ export const adminApi = {
             throw new Error(error.message || 'Failed to reject deletion request');
         }
         return await response.json();
+    },
+
+    async createCategory(data) {
+        const response = await fetch(`${API_BASE_URL}/admin/categories`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create category');
+        }
+        return await response.json();
+    },
+
+    async updateCategory(categoryId, data) {
+        const response = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update category');
+        }
+        return await response.json();
+    },
+
+    async deleteCategory(categoryId) {
+        const response = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to delete category');
+        }
+        return await response.json();
+    },
+
+    // Banner Management
+    async getBanners() {
+        const response = await fetch(`${API_BASE_URL}/admin/banners`);
+        if (!response.ok) throw new Error('Failed to fetch banners');
+        return await response.json();
+    },
+
+    async createBanner(data) {
+        // data should be FormData
+        const response = await fetch(`${API_BASE_URL}/admin/banners`, {
+            method: 'POST',
+            body: data
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create banner');
+        }
+        return await response.json();
+    },
+
+    async updateBanner(bannerId, data) {
+        // data should be FormData
+        const response = await fetch(`${API_BASE_URL}/admin/banners/${bannerId}`, {
+            method: 'PUT',
+            body: data
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update banner');
+        }
+        return await response.json();
+    },
+
+    async deleteBanner(bannerId) {
+        const response = await fetch(`${API_BASE_URL}/admin/banners/${bannerId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to delete banner');
+        }
+        return await response.json();
     }
 };

@@ -31,6 +31,7 @@ import {
 } from '@ant-design/icons';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { api } from '@services/api';
+import { getImageUrl } from '@shared/utils/eventUtils';
 import SeatMapTemplateView from '@features/organizer/components/SeatMapTemplateView';
 
 const { Title, Text, Paragraph } = Typography;
@@ -197,7 +198,7 @@ const EventDetails = () => {
                             <div style={{ height: 300, backgroundColor: '#f0f2f5', overflow: 'hidden' }}>
                                 {event.banner_image_url && (
                                     <Image
-                                        src={event.banner_image_url.startsWith('http') ? event.banner_image_url : `http://127.0.0.1:5000${event.banner_image_url}`}
+                                        src={getImageUrl(event.banner_image_url)}
                                         width="100%"
                                         height={300}
                                         style={{ objectFit: 'cover' }}

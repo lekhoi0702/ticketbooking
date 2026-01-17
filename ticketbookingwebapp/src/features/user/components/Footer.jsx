@@ -1,13 +1,14 @@
 import React from 'react';
-import { Layout, Row, Col, Typography, Space, Divider } from 'antd';
+import { Layout, Row, Col, Typography, Space } from 'antd';
+import { Container } from 'react-bootstrap';
 import {
-    FacebookOutlined,
-    InstagramOutlined,
-    YoutubeOutlined,
+    FacebookFilled,
+    InstagramFilled,
+    LinkedinFilled,
+    GlobalOutlined,
     PhoneOutlined,
     MailOutlined,
-    EnvironmentOutlined,
-    TwitterOutlined
+    EnvironmentOutlined
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import './Footer.css';
@@ -17,67 +18,109 @@ const { Title, Text } = Typography;
 
 const Footer = () => {
     return (
-        <AntFooter className="app-footer-wrapper">
-            <div className="footer-container">
-                <Row gutter={[48, 32]}>
-                    <Col xs={24} sm={12} md={6}>
-                        <div className="footer-brand">
-                            <Title level={3} style={{ color: '#52c41a', margin: 0 }}>ticketbooking</Title>
-                            <Text type="secondary" className="footer-desc">
-                                Nền tảng đặt vé sự kiện hàng đầu Việt Nam. Mang đến trải nghiệm giải trí tuyệt vời nhất cho bạn.
-                            </Text>
-                            <Space size="middle" className="footer-social">
-                                <a href="https://facebook.com" target="_blank" rel="noreferrer"><FacebookOutlined /></a>
-                                <a href="https://instagram.com" target="_blank" rel="noreferrer"><InstagramOutlined /></a>
-                                <a href="https://twitter.com" target="_blank" rel="noreferrer"><TwitterOutlined /></a>
-                                <a href="https://youtube.com" target="_blank" rel="noreferrer"><YoutubeOutlined /></a>
+        <AntFooter className="app-main-footer">
+            <Container>
+                {/* Top Section */}
+                <div className="footer-top-section">
+                    <Row gutter={[24, 32]}>
+                        {/* Column 1: Contact Info */}
+                        <Col xs={24} md={8}>
+                            <div className="footer-info-block">
+                                <Title level={5} className="footer-heading">Hotline</Title>
+                                <Text className="footer-text-icon">
+                                    <PhoneOutlined rotate={90} /> Thứ 2 - Chủ Nhật (8:00 - 23:00)
+                                </Text>
+                                <a href="tel:19006408" className="footer-hotline">1900.6408</a>
+                            </div>
+
+                            <div className="footer-info-block">
+                                <Title level={5} className="footer-heading">Email</Title>
+                                <a href="mailto:support@ticketbox.vn" className="footer-email">
+                                    <MailOutlined /> support@ticketbooking.vn
+                                </a>
+                            </div>
+
+                            <div className="footer-info-block">
+                                <Title level={5} className="footer-heading">Văn phòng chính</Title>
+                                <Text className="footer-address">
+                                    <EnvironmentOutlined /> Tầng 12, Tòa nhà Viettel, 285 Cách Mạng Tháng Tám, Phường 12, Quận 10, TP. Hồ Chí Minh
+                                </Text>
+                            </div>
+                        </Col>
+
+                        {/* Column 2: Customer & Organizer Links */}
+                        <Col xs={24} md={8}>
+                            <div className="footer-group">
+                                <Title level={5} className="footer-heading">Dành cho Khách hàng</Title>
+                                <Link to="/terms-customer" className="footer-link">Điều khoản sử dụng cho khách hàng</Link>
+                            </div>
+
+                            <div className="footer-group">
+                                <Title level={5} className="footer-heading">Dành cho Ban Tổ chức</Title>
+                                <Link to="/terms-organizer" className="footer-link">Điều khoản sử dụng cho ban tổ chức</Link>
+                            </div>
+                        </Col>
+
+                        {/* Column 3: About Company */}
+                        <Col xs={24} md={8}>
+                            <Title level={5} className="footer-heading">Về công ty chúng tôi</Title>
+                            <Space direction="vertical" size={8} className="footer-links-list">
+                                <Link to="/about" className="footer-link">Quy chế hoạt động</Link>
+                                <Link to="/privacy" className="footer-link">Chính sách bảo mật thông tin</Link>
+                                <Link to="/dispute" className="footer-link">Cơ chế giải quyết tranh chấp/ khiếu nại</Link>
+                                <Link to="/payment-privacy" className="footer-link">Chính sách bảo mật thanh toán</Link>
+                                <Link to="/return-policy" className="footer-link">Chính sách đổi trả và kiểm hàng</Link>
+                                <Link to="/shipping" className="footer-link">Điều kiện vận chuyển và giao nhận</Link>
+                                <Link to="/payment-methods" className="footer-link">Phương thức thanh toán</Link>
                             </Space>
-                        </div>
-                    </Col>
-
-                    <Col xs={12} sm={12} md={6}>
-                        <Title level={5}>Dành cho Khách hàng</Title>
-                        <Space direction="vertical" className="footer-links">
-                            <Link to="/huong-dan">Hướng dẫn mua vé</Link>
-                            <Link to="/chinh-sach">Chính sách & Quy định</Link>
-                            <Link to="/bao-mat">Chính sách bảo mật</Link>
-                            <Link to="/thanh-toan">Phương thức thanh toán</Link>
-                            <Link to="/faq">Câu hỏi thường gặp</Link>
-                        </Space>
-                    </Col>
-
-                    <Col xs={12} sm={12} md={6}>
-                        <Title level={5}>Dành cho Ban tổ chức</Title>
-                        <Space direction="vertical" className="footer-links">
-                            <Link to="/organizer">Tạo sự kiện</Link>
-                            <Link to="/organizer/login">Đăng nhập Organizer</Link>
-                            <Link to="/bao-cao">Báo cáo & Thống kê</Link>
-                            <Link to="/ho-tro">Hỗ trợ tổ chức</Link>
-                        </Space>
-                    </Col>
-
-                    <Col xs={24} sm={12} md={6}>
-                        <Title level={5}>Liên hệ với chúng tôi</Title>
-                        <Space direction="vertical" className="footer-contact">
-                            <Text><PhoneOutlined /> Hotline: 1900.6408</Text>
-                            <Text><MailOutlined /> support@ticketbooking.vn</Text>
-                            <Text className="address-text">
-                                <EnvironmentOutlined /> Tầng 8, Tòa nhà Sohude, 15 Lê Thánh Tôn, P. Bến Nghé, Q.1, TP.HCM
-                            </Text>
-                        </Space>
-                    </Col>
-                </Row>
-
-                <Divider style={{ borderColor: '#f0f0f0', margin: '40px 0 24px' }} />
-
-                <div className="footer-bottom">
-                    <Text type="secondary">© 2026 TicketBooking. All rights reserved.</Text>
-                    <Space size="large" className="footer-policy-links">
-                        <Link to="/terms">Điều khoản sử dụng</Link>
-                        <Link to="/privacy">Bảo mật</Link>
-                    </Space>
+                        </Col>
+                    </Row>
                 </div>
-            </div>
+
+                {/* Bottom Section */}
+                <div className="footer-bottom-section">
+                    <Row gutter={[24, 32]}>
+                        {/* Ticketbooking App */}
+                        <Col xs={24} md={8}>
+                            <Title level={5} className="footer-heading">Ứng dụng Ticketbooking</Title>
+                            <Space direction="horizontal" size={16} wrap>
+                                <a href="#" className="app-download-btn">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" />
+                                </a>
+                                <a href="#" className="app-download-btn">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="Download on the App Store" />
+                                </a>
+                            </Space>
+                        </Col>
+
+                        {/* Organizer App */}
+                        <Col xs={24} md={8}>
+                            <Title level={5} className="footer-heading">Ứng dụng check-in cho Ban tổ chức</Title>
+                            <Space direction="horizontal" size={16} wrap>
+                                <a href="#" className="app-download-btn">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" />
+                                </a>
+                                <a href="#" className="app-download-btn">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="Download on the App Store" />
+                                </a>
+                            </Space>
+                        </Col>
+
+                        {/* Follow (Language removed) */}
+                        <Col xs={24} md={8}>
+                            <div className="footer-social-group">
+                                <Title level={5} className="footer-heading">Follow us</Title>
+                                <Space size={16} className="social-icons">
+                                    <a href="#" className="social-icon facebook"><FacebookFilled /></a>
+                                    <a href="#" className="social-icon instagram"><InstagramFilled /></a>
+                                    <a href="#" className="social-icon tiktok"><GlobalOutlined /></a>
+                                    <a href="#" className="social-icon linkedin"><LinkedinFilled /></a>
+                                </Space>
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
+            </Container>
         </AntFooter>
     );
 };

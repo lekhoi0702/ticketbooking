@@ -62,7 +62,7 @@ export const useCreateEvent = () => {
             setLoadingData(true);
             const [categoriesRes, venuesRes] = await Promise.all([
                 api.getCategories(),
-                api.getVenues()
+                api.getVenues(user?.user_id || 1)
             ]);
 
             if (categoriesRes.success) {

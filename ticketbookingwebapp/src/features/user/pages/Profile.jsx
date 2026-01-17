@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, Card, Avatar, Space, Typography, Divider, Button } from 'antd';
 import { UserOutlined, ShoppingOutlined, HistoryOutlined, LockOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useAuth } from '@context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import MyOrdersTab from '@features/user/components/Account/MyOrdersTab';
 import MyTicketsTab from '@features/user/components/Account/MyTicketsTab';
 import ChangePasswordTab from '@features/user/components/Account/ChangePasswordTab';
@@ -13,13 +13,21 @@ const { Title, Text } = Typography;
 const Profile = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('orders');
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!isAuthenticated) {
             navigate('/', { replace: true });
         }
     }, [isAuthenticated, navigate]);
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && ['orders', 'tickets', 'password'].includes(tab)) {
+            setActiveTab(tab);
+        }
+    }, [searchParams]);
 
     const tabItems = [
         {

@@ -1,18 +1,19 @@
 import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import EventCard from './EventCard';
 import './EventSection.css';
 
-const EventSection = ({ title, events, showViewMore = true }) => {
+const EventSection = ({ title, events, showViewMore = true, viewMoreLink = "/events" }) => {
     return (
         <section className="event-section">
             <Container>
                 <div className="section-header">
                     <h2 className="section-title">{title}</h2>
                     {showViewMore && (
-                        <a href="#view-more" className="view-more-link">
+                        <Link to={viewMoreLink} className="view-more-link">
                             Xem thêm →
-                        </a>
+                        </Link>
                     )}
                 </div>
                 <Row className="g-4">

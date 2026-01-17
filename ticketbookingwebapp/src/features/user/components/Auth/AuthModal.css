@@ -4,11 +4,13 @@
     border-radius: 16px;
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
     background-color: #ffffff;
+    color: #333;
 }
 
 .auth-modal .modal-header {
     padding: 1.5rem 1.5rem 0;
     position: relative;
+    border-bottom: none;
 }
 
 .auth-modal .btn-close {
@@ -38,18 +40,18 @@
     margin: 0 auto 1.5rem;
     background: #f0fff4;
     /* Light green background */
-    border: 2px solid #28c76f;
+    border: 2px solid #52c41a;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #28c76f;
+    color: #52c41a;
     font-size: 1.75rem;
     transition: all 0.3s ease;
 }
 
 .auth-modal-icon:hover {
-    background: #28c76f;
+    background: #52c41a;
     color: white;
     transform: translateY(-5px);
 }
@@ -72,29 +74,31 @@
 }
 
 .auth-tabs .nav-link:hover {
-    color: #28c76f;
+    color: #52c41a;
 }
 
 .auth-tabs .nav-link.active {
-    color: #28c76f;
+    color: #52c41a;
     background: none;
-    border-bottom-color: #28c76f;
+    border-bottom-color: #52c41a;
 }
 
 /* Form Styling */
 .auth-modal .form-control {
-    border: 1px solid #e9ecef;
+    border: 1px solid #e9ecef !important;
+    background-color: #fff !important;
+    color: #333 !important;
     border-radius: 10px;
     transition: all 0.3s;
 }
 
 .auth-modal .form-control:focus {
-    border-color: #28c76f;
-    box-shadow: 0 0 0 4px rgba(40, 199, 111, 0.1);
+    border-color: #52c41a !important;
+    box-shadow: 0 0 0 4px rgba(82, 196, 26, 0.1) !important;
 }
 
 .auth-modal .btn-primary {
-    background: #28c76f;
+    background: #52c41a;
     border: none;
     border-radius: 10px;
     padding: 0.85rem;
@@ -102,13 +106,13 @@
     font-weight: 700;
     letter-spacing: 1px;
     transition: all 0.3s;
-    box-shadow: 0 4px 14px rgba(40, 199, 111, 0.3);
+    box-shadow: 0 4px 14px rgba(82, 196, 26, 0.3);
 }
 
 .auth-modal .btn-primary:hover {
-    background: #24b465;
+    background: #73d13d;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(40, 199, 111, 0.4);
+    box-shadow: 0 6px 20px rgba(82, 196, 26, 0.4);
 }
 
 .auth-modal .btn-primary:disabled {

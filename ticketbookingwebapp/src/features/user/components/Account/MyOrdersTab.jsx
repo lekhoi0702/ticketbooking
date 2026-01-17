@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Tag, Button, Space, Typography, Empty, message } from 'antd';
-import { ShoppingOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Typography, Empty, Button, Space, message } from 'antd';
+import { EyeOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
 import { formatCurrency } from '@shared/utils/eventUtils';
@@ -38,13 +38,13 @@ const MyOrdersTab = () => {
 
     const getStatusConfig = (status) => {
         const configs = {
-            'PAID': { color: 'success', label: 'Đã thanh toán' },
-            'PENDING': { color: 'warning', label: 'Chờ thanh toán' },
-            'CANCELLED': { color: 'error', label: 'Đã hủy' },
-            'COMPLETED': { color: 'blue', label: 'Hoàn thành' },
-            'CANCELLATION_PENDING': { color: 'processing', label: 'Đang xử lý hủy' }
+            'PAID': { color: '#52c41a', label: 'Đã thanh toán' },
+            'PENDING': { color: '#faad14', label: 'Chờ thanh toán' },
+            'CANCELLED': { color: '#ff4d4f', label: 'Đã hủy' },
+            'COMPLETED': { color: '#1890ff', label: 'Hoàn thành' },
+            'CANCELLATION_PENDING': { color: '#1890ff', label: 'Đang xử lý hủy' }
         };
-        return configs[status] || { color: 'default', label: status };
+        return configs[status] || { color: '#888', label: status };
     };
 
     const columns = [
@@ -52,25 +52,25 @@ const MyOrdersTab = () => {
             title: 'Mã đơn',
             dataIndex: 'order_code',
             key: 'order_code',
-            render: (text) => <Text strong>{text}</Text>,
+            render: (text) => <Text strong style={{ color: '#fff' }}>{text}</Text>,
         },
         {
             title: 'Sự kiện',
             dataIndex: 'event_name',
             key: 'event_name',
-            render: (text) => <Text ellipsis>{text || 'Đơn hàng dịch vụ'}</Text>,
+            render: (text) => <Text ellipsis style={{ color: '#eee' }}>{text || 'Đơn hàng dịch vụ'}</Text>,
         },
         {
             title: 'Ngày đặt',
             dataIndex: 'created_at',
             key: 'created_at',
-            render: (date) => new Date(date).toLocaleDateString('vi-VN'),
+            render: (date) => <span style={{ color: '#ccc' }}>{new Date(date).toLocaleDateString('vi-VN')}</span>,
         },
         {
             title: 'Tổng tiền',
             dataIndex: 'total_amount',
             key: 'total_amount',
-            render: (amount) => <Text strong>{formatCurrency(amount)}</Text>,
+            render: (amount) => <Text strong style={{ color: '#52c41a' }}>{formatCurrency(amount)}</Text>,
         },
         {
             title: 'Trạng thái',
@@ -78,7 +78,16 @@ const MyOrdersTab = () => {
             key: 'order_status',
             render: (status) => {
                 const config = getStatusConfig(status);
-                return <Tag color={config.color}>{config.label.toUpperCase()}</Tag>;
+                return (
+                    <span style={{
+                        color: config.color,
+                        fontWeight: 'bold',
+                        fontSize: '12px',
+                        letterSpacing: '0.5px'
+                    }}>
+                        {config.label.toUpperCase()}
+                    </span>
+                );
             },
         },
         {
@@ -90,6 +99,7 @@ const MyOrdersTab = () => {
                         type="link"
                         icon={<EyeOutlined />}
                         onClick={() => navigate(`/order-success/${record.order_code}`)}
+                        style={{ color: '#52c41a' }}
                     >
                         Chi tiết
                     </Button>
@@ -108,15 +118,11 @@ const MyOrdersTab = () => {
     ];
 
     const canRequestRefund = (order) => {
-        // Can request refund if:
-        // 1. Order is PAID
-        // 2. Sale period is still active (is_sale_active = true)
         return order.order_status === 'PAID' && order.is_sale_active;
     };
 
     const handleRefundRequest = async (order) => {
         const { Modal } = await import('antd');
-
         Modal.confirm({
             title: 'Xác nhận yêu cầu hoàn tiền',
             content: `Bạn có chắc chắn muốn yêu cầu hoàn tiền cho đơn hàng ${order.order_code}? Yêu cầu sẽ được gửi đến ban tổ chức để xét duyệt.`,
@@ -128,7 +134,7 @@ const MyOrdersTab = () => {
                     const res = await api.cancelOrder(order.order_id);
                     if (res.success) {
                         message.success(res.message || 'Yêu cầu hoàn tiền đã được gửi thành công!');
-                        fetchOrders(); // Refresh orders list
+                        fetchOrders();
                     } else {
                         message.error(res.message || 'Không thể gửi yêu cầu hoàn tiền');
                     }
@@ -144,10 +150,10 @@ const MyOrdersTab = () => {
 
     if (orders.length === 0) {
         return (
-            <div style={{ padding: '40px 0' }}>
+            <div style={{ padding: '40px 0', textAlign: 'center' }}>
                 <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description="Bạn chưa có đơn đặt vé nào"
+                    description={<span style={{ color: '#888' }}>Bạn chưa có đơn đặt vé nào</span>}
                 >
                     <Button type="primary" onClick={() => navigate('/')}>
                         Khám phá sự kiện
@@ -164,6 +170,7 @@ const MyOrdersTab = () => {
             rowKey="order_id"
             pagination={{ pageSize: 5 }}
             scroll={{ x: true }}
+            className="dark-table"
         />
     );
 };

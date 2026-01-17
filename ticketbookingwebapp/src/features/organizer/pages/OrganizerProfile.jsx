@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Row, Col, Statistic, Typography, Button, Space, message, Divider, Table } from 'antd';
-import { DollarOutlined, ShoppingCartOutlined, RollbackOutlined, CalendarOutlined, ReloadOutlined, LogoutOutlined } from '@ant-design/icons';
+import { DollarOutlined, ShoppingCartOutlined, RollbackOutlined, CalendarOutlined, ReloadOutlined, LogoutOutlined, EditOutlined } from '@ant-design/icons';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
 
@@ -155,6 +155,18 @@ const OrganizerProfile = () => {
             <Divider orientation="left">Thông tin tài khoản</Divider>
             <Card style={{ borderRadius: 12 }}>
                 <Row gutter={[24, 24]}>
+                    <Col span={24}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <Title level={4} style={{ margin: 0 }}>Thông tin nhà tổ chức</Title>
+                            <Button
+                                type="primary"
+                                icon={<EditOutlined />}
+                                onClick={() => navigate('/organizer/profile/edit')}
+                            >
+                                Chỉnh sửa thông tin
+                            </Button>
+                        </div>
+                    </Col>
                     <Col span={12} md={8}>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Tên nhà tổ chức</Text>
                         <Title level={5} style={{ margin: 0 }}>{user?.full_name}</Title>

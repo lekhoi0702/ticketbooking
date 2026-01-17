@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Typography, Space, Tag } from 'antd';
-import { EnvironmentOutlined, ClockCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { EnvironmentOutlined, ClockCircleOutlined, ArrowRightOutlined, FireOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '@shared/utils/eventUtils';
 import './EventCard.css';
@@ -20,9 +20,9 @@ const EventCard = ({ event }) => {
                             <span className="event-card-buy-btn">Mua vé <ArrowRightOutlined /></span>
                         </div>
                         {event.badge && (
-                            <Tag color="#52c41a" className="event-card-badge">
-                                {event.badge.toUpperCase()}
-                            </Tag>
+                            <div className="event-card-badge-hot">
+                                <FireOutlined className="badge-icon" /> {event.badge.toUpperCase()}
+                            </div>
                         )}
                     </div>
                 }

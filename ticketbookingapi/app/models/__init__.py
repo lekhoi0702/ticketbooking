@@ -8,7 +8,8 @@ from app.models.order import Order
 from app.models.payment import Payment
 from app.models.ticket import Ticket
 from app.models.discount import Discount
-from app.models.review import Review
+from app.models.banner import Banner
+from app.models.organizer_info import OrganizerInfo
 
 __all__ = [
     'Role',
@@ -21,5 +22,6 @@ __all__ = [
     'Payment',
     'Ticket',
     'Discount',
-    'Review'
+    'Banner',
+    'OrganizerInfo'
 ]

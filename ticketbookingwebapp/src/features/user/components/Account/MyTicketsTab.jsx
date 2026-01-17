@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Modal, Spinner } from 'react-bootstrap';
+import { Card, Button, Modal } from 'react-bootstrap';
 import { FaTicketAlt, FaCalendar, FaMapMarkerAlt, FaChair, FaDownload, FaCheckCircle } from 'react-icons/fa';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
@@ -101,15 +101,20 @@ const MyTicketsTab = () => {
         }
 
         const statuses = {
-            'ACTIVE': { bg: 'success', text: 'Chưa sử dụng', icon: FaCheckCircle },
-            'CANCELLED': { bg: 'danger', text: 'Đã hủy', icon: null },
-            'REFUNDED': { bg: 'warning', text: 'Đã hoàn tiền', icon: null }
+            'ACTIVE': { color: '#52c41a', text: 'Chưa sử dụng', icon: FaCheckCircle },
+            'CANCELLED': { color: '#ff4d4f', text: 'Đã hủy', icon: null },
+            'REFUNDED': { color: '#faad14', text: 'Đã hoàn tiền', icon: null }
         };
-        const s = statuses[status] || { bg: 'secondary', text: status, icon: null };
+        const s = statuses[status] || { color: '#888', text: status, icon: null };
         return (
-            <div className={`badge bg-${s.bg} px-3 py-2 d-inline-flex align-items-center gap-2 rounded-pill`}>
-                {s.icon && <s.icon className="me-1" />}
-                {s.text}
+            <div className="d-inline-flex align-items-center gap-2" style={{
+                color: s.color,
+                fontWeight: 'bold',
+                fontSize: '12px',
+                letterSpacing: '0.5px'
+            }}>
+                {s.icon && <s.icon size={14} />}
+                {s.text.toUpperCase()}
             </div>
         );
     };
@@ -123,7 +128,7 @@ const MyTicketsTab = () => {
                     <div style={{ fontSize: '80px', color: 'rgba(0, 0, 0, 0.05)' }}>
                         <FaTicketAlt />
                     </div>
-                    <h3 className="mb-3 mt-4">Bạn chưa có vé nào</h3>
+                    <h3 className="mb-3 mt-4 text-white">Bạn chưa có vé nào</h3>
                     <p className="text-muted mb-4">
                         Khám phá các sự kiện hấp dẫn và đặt vé ngay để không bỏ lỡ những trải nghiệm tuyệt vời!
                     </p>
@@ -139,91 +144,71 @@ const MyTicketsTab = () => {
         <>
             <div className="tickets-list">
                 {tickets.map((ticket) => (
-                    <Card
-                        className="border-0 shadow-sm mb-4 rounded-4 overflow-hidden ticket-compact-card clickable-card"
-                        key={ticket.ticket_id}
-                        onClick={() => handleShowQR(ticket)}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <div className="ticket-compact-content p-3 flex-grow-1 bg-white position-relative">
-                            <div className="notch notch-top" style={{ top: '-10px', left: '-10px', position: 'absolute', width: '20px', height: '20px', backgroundColor: '#f8f9fa', borderRadius: '50%', zIndex: 2 }}></div>
-                            <div className="notch notch-bottom" style={{ bottom: '-10px', left: '-10px', position: 'absolute', width: '20px', height: '20px', backgroundColor: '#f8f9fa', borderRadius: '50%', zIndex: 2 }}></div>
-
-                            <div className="d-flex justify-content-between align-items-center">
-                                <div className="flex-grow-1">
-                                    <div className="d-flex justify-content-between align-items-start mb-1 pe-3">
-                                        <h6 className="fw-bold mb-0 text-uppercase text-truncate" style={{ fontSize: '1.1rem', color: '#1f2937', maxWidth: '75%' }}>
-                                            {ticket.event_name || 'Sự kiện'}
-                                        </h6>
-                                        <div style={{ transform: 'scale(0.9)', transformOrigin: 'right top' }}>
-                                            {getStatusBadge(ticket.ticket_status)}
-                                        </div>
-                                    </div>
-
-                                    <div className="d-flex gap-2 align-items-center">
-                                        <div className="small text-muted d-flex align-items-center">
-                                            <FaCalendar className="me-2 text-primary" />
-                                            {formatTime(ticket.event_date)} {formatDate(ticket.event_date)}
-                                        </div>
-
-                                        {ticket.seat ? (
-                                            <div className="bg-white border px-3 py-1 rounded-pill d-inline-flex align-items-center fw-bold small">
-                                                <FaChair className="me-1 text-success small" />
-                                                {ticket.seat.row_name}{ticket.seat.seat_number}
-                                            </div>
-                                        ) : (
-                                            <div className="d-inline-flex align-items-center fw-bold small" style={{ background: 'rgba(45, 194, 117, 0.15)', color: '#2dc275', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', border: '1px solid rgba(45, 194, 117, 0.3)' }}>
-                                                <FaTicketAlt className="me-2" />
-                                                {ticket.ticket_type_name}
-                                            </div>
-                                        )}
-                                    </div>
+                    <div className="ticket-card-container mb-4" key={ticket.ticket_id} onClick={() => handleShowQR(ticket)}>
+                        <div className="ticket-main-part">
+                            <div className="ticket-event-info">
+                                <div className="ticket-status-label">
+                                    {getStatusBadge(ticket.ticket_status)}
                                 </div>
-
-                                <div className="text-end d-flex flex-column justify-content-between h-100">
-                                    <div>
-                                        <div className="fw-bold text-dark fs-5">{formatCurrency(ticket.price)}</div>
-                                        <div className="small text-muted mb-2">Mã: {ticket.ticket_code}</div>
+                                <h3 className="ticket-event-title">{ticket.event_name || 'Sự kiện'}</h3>
+                                <div className="ticket-details-grid">
+                                    <div className="detail-item">
+                                        <FaCalendar className="detail-icon" />
+                                        <span>{formatTime(ticket.event_date)} {formatDate(ticket.event_date)}</span>
                                     </div>
-
-                                    <div className="bg-light p-1 rounded-2 text-center d-flex align-items-center justify-content-center" style={{ width: '85px', height: '85px', margin: '0px 0px 0px auto' }}>
-                                        <div className="w-100 h-100 bg-white d-flex align-items-center justify-content-center rounded border overflow-hidden">
-                                            {ticket.ticket_code ? (
-                                                <img
-                                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticket.ticket_code}`}
-                                                    alt="QR Code"
-                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'block';
-                                                    }}
-                                                />
-                                            ) : null}
-                                            <div style={{ display: 'none' }}>
-                                                {ticket.ticket_code ? (
-                                                    <QRCodeSVG value={ticket.ticket_code} size={65} level="L" />
-                                                ) : (
-                                                    <div style={{ fontSize: '8px' }}>NO CODE</div>
-                                                )}
-                                            </div>
-                                        </div>
+                                    <div className="detail-item">
+                                        <FaMapMarkerAlt className="detail-icon" />
+                                        <span>{ticket.venue_name || 'Địa điểm'}</span>
+                                    </div>
+                                    <div className="detail-item">
+                                        <FaChair className="detail-icon" />
+                                        <span>{ticket.seat ? `${ticket.seat.row_name}${ticket.seat.seat_number}` : (ticket.ticket_type_name || 'Vé tham dự')}</span>
                                     </div>
                                 </div>
                             </div>
+                            <div className="ticket-bottom-info">
+                                <div className="info-group">
+                                    <div className="info-label">MÃ VÉ</div>
+                                    <div className="info-value code-font">{ticket.ticket_code}</div>
+                                </div>
+                                <div className="info-group">
+                                    <div className="info-label">GIÁ VÉ</div>
+                                    <div className="info-value">{formatCurrency(ticket.price)}</div>
+                                </div>
+                            </div>
                         </div>
-                    </Card>
+
+                        <div className="ticket-perforation-divider">
+                            <div className="perforation-notch notch-top"></div>
+                            <div className="perforation-line"></div>
+                            <div className="perforation-notch notch-bottom"></div>
+                        </div>
+
+                        <div className="ticket-stub-part">
+                            <div className="stub-qr-wrapper">
+                                {ticket.ticket_code && (
+                                    <QRCodeSVG
+                                        id={`qr-${ticket.ticket_id}`}
+                                        value={ticket.ticket_code}
+                                        size={110}
+                                        level="H"
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 ))}
             </div>
 
             {/* QR Code Modal */}
             <Modal show={showQRModal} onHide={handleCloseQR} centered size="md">
-                <Modal.Header closeButton className="border-0 pb-0">
+                <Modal.Header closeButton className="border-0 pb-0 bg-dark text-white">
                     <Modal.Title className="fw-bold">Vé Điện Tử</Modal.Title>
                 </Modal.Header>
-                <Modal.Body className="text-center p-4">
+                <Modal.Body className="text-center p-4 bg-dark text-white">
                     {selectedTicket && (
                         <div className="qr-modal-content">
-                            <div className="qr-code-wrapper mb-4 p-4 bg-white rounded-4 shadow-sm border border-success border-opacity-10 d-inline-block">
+                            <div className="qr-code-wrapper mb-4 p-4 bg-white rounded-4 shadow-sm d-inline-block">
                                 <QRCodeSVG
                                     id="ticket-qr-code-tab"
                                     value={selectedTicket.ticket_code || 'TICKET'}
@@ -232,21 +217,21 @@ const MyTicketsTab = () => {
                                 />
                             </div>
 
-                            <div className="qr-ticket-details border-top pt-4">
+                            <div className="qr-ticket-details border-top border-secondary pt-4">
                                 <div className="mb-2 d-flex justify-content-center">
                                     {getStatusBadge(selectedTicket.ticket_status)}
                                 </div>
-                                <div className="badge bg-light text-dark d-inline-block mb-3 px-3 py-2 rounded-pill border">
-                                    {selectedTicket.ticket_type_name || 'Vé tham dự'}
+                                <div className="mb-3 px-3 py-1 d-inline-block fw-bold" style={{ color: '#52c41a', fontSize: '13px' }}>
+                                    {(selectedTicket.ticket_type_name || 'Vé tham dự').toUpperCase()}
                                 </div>
-                                <h4 className="fw-bold mb-2">{selectedTicket.event_name}</h4>
+                                <h4 className="fw-bold mb-2 text-white">{selectedTicket.event_name}</h4>
                                 <div className="text-secondary small mb-3">
                                     <div className="mb-1"><FaCalendar className="me-2" />{formatDate(selectedTicket.event_date)}</div>
                                     <div><FaMapMarkerAlt className="me-2" />{selectedTicket.venue_name}</div>
                                 </div>
-                                <div className="p-3 bg-light rounded-3 mb-4">
+                                <div className="p-3 bg-secondary bg-opacity-10 rounded-3 mb-4">
                                     <div className="text-muted small mb-1">Mã xác nhận</div>
-                                    <div className="h5 mb-0 fw-bold font-monospace">{selectedTicket.ticket_code}</div>
+                                    <div className="h5 mb-0 fw-bold font-monospace text-white">{selectedTicket.ticket_code}</div>
                                 </div>
 
                                 <p className="text-muted small mb-4 fst-italic">
@@ -263,7 +248,7 @@ const MyTicketsTab = () => {
                                         <FaDownload className="me-2" />
                                         Tải vé về điện thoại
                                     </Button>
-                                    <Button variant="outline-secondary" onClick={handleCloseQR} className="border-0">
+                                    <Button variant="outline-light" onClick={handleCloseQR} className="border-0">
                                         Đóng
                                     </Button>
                                 </div>
@@ -274,48 +259,174 @@ const MyTicketsTab = () => {
             </Modal>
 
             <style>{`
-                .ticket-compact-card {
-                    background: #ffffff !important;
-                    border: 1px solid rgba(0, 0, 0, 0.05) !important;
-                    border-radius: 16px !important;
-                    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-                    overflow: hidden;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-                }
-
-                .ticket-compact-card.clickable-card {
-                    cursor: pointer;
-                }
-
-                .ticket-compact-card:hover {
-                    transform: translateY(-8px);
-                    box-shadow: 0 12px 24px rgba(45, 194, 117, 0.15) !important;
-                    border-color: rgba(45, 194, 117, 0.3) !important;
-                }
-
-                .ticket-compact-content {
-                    background: #ffffff !important;
-                    padding: 24px !important;
+                .ticket-card-container {
+                    display: flex;
+                    height: 200px;
+                    border-radius: 16px;
                     position: relative;
+                    background: #121212;
+                    border: 2px solid #ffffff;
+                    margin-bottom: 24px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    -webkit-mask-image: radial-gradient(circle at calc(100% - 180px) 0, transparent 15px, black 16px),
+                                      radial-gradient(circle at calc(100% - 180px) 100%, transparent 15px, black 16px);
+                    mask-image: radial-gradient(circle at calc(100% - 180px) 0, transparent 15px, black 16px),
+                                radial-gradient(circle at calc(100% - 180px) 100%, transparent 15px, black 16px);
+                    -webkit-mask-composite: source-in;
+                    mask-composite: intersect;
                 }
 
-                .tickets-list {
-                    max-width: 100%;
+                .ticket-card-container:hover {
+                    transform: translateY(-5px);
+                    border-color: #52c41a;
+                    box-shadow: 0 10px 30px rgba(82, 196, 26, 0.15);
                 }
-                .ticket-stamp {
-                    color: #c0392b;
-                    border: 3px double #c0392b;
-                    display: inline-block;
-                    padding: 4px 12px;
+
+                .perforation-notch {
+                    position: absolute;
+                    width: 32px;
+                    height: 32px;
+                    border: 2px solid #ffffff;
+                    border-radius: 50%;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 10;
+                    background: transparent;
+                }
+
+                .notch-top { top: -17px; }
+                .notch-bottom { bottom: -17px; }
+
+                .ticket-card-container:hover .perforation-notch {
+                    border-color: #52c41a;
+                }
+
+                .ticket-main-part {
+                    flex: 1;
+                    padding: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    background: transparent;
+                }
+
+                .ticket-event-title {
+                    font-size: 1.4rem;
+                    font-weight: 800;
+                    color: #fff;
+                    margin: 8px 0;
                     text-transform: uppercase;
-                    border-radius: 8px;
-                    font-family: 'Courier New', Courier, monospace;
-                    font-weight: 700;
-                    font-size: 14px;
-                    transform: rotate(-12deg);
+                }
+
+                .ticket-details-grid {
+                    display: flex;
+                    gap: 20px;
+                }
+
+                .detail-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #b0b3b8;
+                    font-size: 0.85rem;
+                }
+
+                .detail-icon { color: #52c41a; }
+
+                .ticket-bottom-info {
+                    margin-top: auto;
+                    border-top: 1px dashed rgba(255,255,255,0.1);
+                    padding-top: 12px;
+                    display: flex;
+                    gap: 40px;
+                    justify-content: flex-start;
+                }
+
+                .info-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+
+                .info-label {
+                    font-size: 0.65rem;
+                    color: #666;
+                    font-weight: 800;
+                    letter-spacing: 0.5px;
+                }
+
+                .info-value {
+                    font-size: 1.1rem;
+                    font-weight: 800;
+                    color: #52c41a;
+                }
+
+                .code-font {
+                    font-family: 'Courier New', monospace;
+                    color: #fff;
                     letter-spacing: 1px;
-                    background: rgba(192, 57, 43, 0.05);
-                    white-space: nowrap;
+                }
+
+                .ticket-perforation-divider {
+                    width: 0;
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .perforation-line {
+                    height: calc(100% - 40px);
+                    border-left: 1px dashed rgba(255,255,255,0.2);
+                }
+
+                .ticket-stub-part {
+                    width: 180px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 24px;
+                    border-left: 1px dashed rgba(255,255,255,0.2);
+                    background: rgba(255,255,255,0.02);
+                }
+
+                .stub-qr-wrapper {
+                    background: white;
+                    padding: 8px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                }
+
+                .ticket-status-label { margin-bottom: 8px; }
+
+                .ticket-stamp {
+                    color: #ff4d4f;
+                    border: 2px solid #ff4d4f;
+                    padding: 2px 8px;
+                    text-transform: uppercase;
+                    border-radius: 4px;
+                    font-weight: 800;
+                    font-size: 11px;
+                    transform: rotate(-10deg);
+                    display: inline-block;
+                }
+
+                @media (max-width: 768px) {
+                    .ticket-card-container {
+                        flex-direction: column;
+                        height: auto;
+                        -webkit-mask-image: none;
+                        mask-image: none;
+                    }
+                    .ticket-stub-part {
+                        width: 100%;
+                        border-left: none;
+                        border-top: 1px dashed rgba(255,255,255,0.2);
+                    }
+                    .perforation-notch { display: none; }
                 }
             `}</style>
         </>

@@ -1,103 +1,105 @@
-/* HeroBanner.css - TicketBooking Style */
+/* HeroBanner.css */
 
-.hero-banner-section {
-    width: 100%;
-    background-color: #18181b;
-    position: relative;
-    overflow: hidden;
-}
-
-.hero-carousel {
-    position: relative;
+.hero-banner-container {
     width: 100%;
     overflow: hidden;
-}
-
-.carousel-inner {
-    display: flex;
-    transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
-    width: 100%;
-}
-
-.carousel-item-custom {
-    min-width: 100%;
-    height: 480px;
     position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.banner-img {
+.banner-slide {
+    position: relative;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
 }
 
-.banner-overlay-custom {
+.banner-overlay {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(to right, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%);
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.1) 100%);
     display: flex;
     align-items: center;
-}
-
-.banner-text {
-    max-width: 600px;
     padding-left: 80px;
 }
 
-.banner-title-custom {
-    font-size: 52px;
-    font-weight: 800;
-    color: white;
-    margin-bottom: 10px;
-    line-height: 1.1;
-    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+.banner-content {
+    max-width: 600px;
+    text-align: left;
+    animation: fadeUp 0.8s ease-out;
 }
 
-.banner-subtitle-custom {
-    font-size: 18px;
-    color: #9ca3af;
-    margin-bottom: 30px;
-    font-weight: 500;
+.banner-title {
+    color: #fff !important;
+    font-size: 48px !important;
+    font-weight: 800 !important;
+    margin-bottom: 24px !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    line-height: 1.2 !important;
 }
 
-.btn-view-details-custom {
-    background-color: #2dc275;
-    color: white;
-    border: none;
-    padding: 14px 40px;
-    font-size: 16px;
-    font-weight: 700;
-    border-radius: 4px;
-    transition: all 0.2s;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.banner-button {
+    height: 48px !important;
+    padding: 0 32px !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+    background-color: #52c41a;
+    border-color: #52c41a;
+    box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
 }
 
-.btn-view-details-custom:hover {
-    background-color: #29a664;
+.banner-button:hover {
+    background-color: #73d13d !important;
+    border-color: #73d13d !important;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(45, 194, 117, 0.3);
 }
 
-.banner-text {
-    padding-left: 20px;
+/* Ant Carousel Customization */
+.hero-banner-container .ant-carousel .slick-dots {
+    bottom: 24px !important;
+    z-index: 10;
 }
+
+.hero-banner-container .ant-carousel .slick-dots li button {
+    height: 4px !important;
+    background: rgba(255, 255, 255, 0.4) !important;
+    border-radius: 2px !important;
+    transition: all 0.3s;
+}
+
+.hero-banner-container .ant-carousel .slick-dots li.slick-active button {
+    width: 32px !important;
+    background: #52c41a !important;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @media (max-width: 768px) {
-    .carousel-item-custom {
-        height: 350px;
+    .banner-overlay {
+        padding-left: 24px;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
+        align-items: flex-end;
+        padding-bottom: 48px;
     }
 
-    .carousel-indicators-numbers {
-        display: none;
+    .banner-content {
+        width: 100%;
     }
 
-    .carousel-control-prev,
-    .carousel-control-next {
-        display: none;
+    .banner-title {
+        font-size: 32px !important;
+        margin-bottom: 16px !important;
     }
 }

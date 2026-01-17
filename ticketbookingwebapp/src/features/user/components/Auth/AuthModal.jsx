@@ -126,7 +126,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     className="py-2 px-3 bg-light border-0"
-                                    placeholder="Nhập email hoặc số điện thoại"
                                 />
                             </Form.Group>
 
@@ -141,7 +140,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                     value={formData.password}
                                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                                     className="py-2 px-3 bg-light border-0"
-                                    placeholder="Nhập mật khẩu"
                                 />
                             </Form.Group>
 
@@ -181,7 +179,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                     value={formData.full_name}
                                     onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                                     className="py-2 px-3 bg-light border-0"
-                                    placeholder="Nhập họ và tên"
                                 />
                             </Form.Group>
 
@@ -197,7 +194,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                     className="py-2 px-3 bg-light border-0"
                                     pattern="[0-9]{10}"
-                                    placeholder="Nhập số điện thoại 10 chữ số"
                                 />
                             </Form.Group>
 
@@ -212,7 +208,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     className="py-2 px-3 bg-light border-0"
-                                    placeholder="example@gmail.com"
                                 />
                             </Form.Group>
 
@@ -228,7 +223,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                                     className="py-2 px-3 bg-light border-0"
                                     minLength="6"
-                                    placeholder="Tối thiểu 6 ký tự"
                                 />
                             </Form.Group>
 

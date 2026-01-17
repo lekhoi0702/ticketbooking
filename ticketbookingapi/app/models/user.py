@@ -19,7 +19,6 @@ class User(db.Model):
     role = db.relationship('Role', backref='users')
     events = db.relationship('Event', backref='manager', lazy=True)
     orders = db.relationship('Order', backref='user', lazy=True)
-    reviews = db.relationship('Review', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

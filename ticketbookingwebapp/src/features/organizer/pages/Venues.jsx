@@ -69,7 +69,7 @@ const OrganizerVenues = () => {
         try {
             setLoading(true);
             // Use organizer API to get venues owned by this user
-            const res = await api.getVenues(user.id);
+            const res = await api.getVenues(user.user_id);
             if (res.success) setVenues(res.data);
         } catch (error) {
             console.error("Error fetching venues:", error);
@@ -121,7 +121,7 @@ const OrganizerVenues = () => {
                 // Create
                 const res = await api.createVenue({
                     ...values,
-                    manager_id: user.id
+                    manager_id: user.user_id
                 });
                 if (res.success) {
                     message.success("Tạo địa điểm mới thành công");
@@ -355,9 +355,11 @@ const OrganizerVenues = () => {
                                         </div>
                                         <Space size={4}>
                                             {venue.status === 'MAINTENANCE' && <Tag color="warning" icon={<ToolOutlined />}>BẢO TRÌ</Tag>}
-                                            <Tag color={venue.is_active ? 'success' : 'default'}>
-                                                {venue.is_active ? 'SẴN SÀNG' : 'BẢN NHÁP'}
-                                            </Tag>
+                                            {venue.status !== 'MAINTENANCE' && (
+                                                <Tag color={venue.is_active ? 'success' : 'default'}>
+                                                    {venue.is_active ? 'SẴN SÀNG' : 'BẢN NHÁP'}
+                                                </Tag>
+                                            )}
                                         </Space>
                                     </div>
 

@@ -25,6 +25,8 @@ import {
     ShoppingOutlined
 } from '@ant-design/icons';
 
+import { getImageUrl } from '@shared/utils/eventUtils';
+
 const { Text } = Typography;
 
 const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDeleteClick }) => {
@@ -53,11 +55,7 @@ const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDe
                     <Image
                         width={60}
                         height={60}
-                        src={
-                            record.banner_image_url?.startsWith('http')
-                                ? record.banner_image_url
-                                : `http://127.0.0.1:5000${record.banner_image_url}`
-                        }
+                        src={getImageUrl(record.banner_image_url)}
                         fallback="/placeholder-event.png"
                         style={{ borderRadius: 4, objectFit: 'cover', border: '1px solid #f0f0f0' }}
                     />

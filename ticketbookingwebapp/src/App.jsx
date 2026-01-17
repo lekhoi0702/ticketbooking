@@ -19,6 +19,7 @@ import SearchResults from '@features/user/pages/SearchResults';
 import CategoryEvents from '@features/user/pages/CategoryEvents';
 import Profile from '@features/user/pages/Profile';
 import Login from '@features/user/pages/Login';
+import AllEvents from '@features/user/pages/AllEvents';
 
 // Organizer Imports
 import OrganizerLayout from '@features/organizer/components/OrganizerLayout';
@@ -33,6 +34,7 @@ import EventOrders from '@features/organizer/pages/EventOrders';
 import OrganizerVenues from '@features/organizer/pages/Venues';
 import TicketManagement from '@features/organizer/pages/TicketManagement';
 import OrganizerProfile from '@features/organizer/pages/OrganizerProfile';
+import OrganizerProfileEdit from '@features/organizer/pages/OrganizerProfileEdit';
 import ManageOrders from '@features/organizer/pages/ManageOrders';
 import DiscountManagement from '@features/organizer/pages/DiscountManagement';
 
@@ -41,9 +43,13 @@ import AdminLayout from '@features/admin/components/AdminLayout';
 import UsersManagement from '@features/admin/pages/Users';
 import AdminEventsManagement from '@features/admin/pages/Events';
 import AdminOrdersManagement from '@features/admin/pages/Orders';
-import VenuesManagement from '@features/admin/pages/Venues';
+
 import EventDeletionRequests from '@features/admin/pages/EventDeletionRequests';
 import AdminLogin from '@features/admin/pages/Login';
+import AdminProfile from '@features/admin/pages/Profile';
+import AdminStatistics from '@features/admin/pages/Statistics';
+import AdminCategories from '@features/admin/pages/Categories';
+import AdminBanners from '@features/admin/pages/Banners';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -80,6 +86,7 @@ function App() {
               {/* User Routes */}
               <Route element={<UserLayout />}>
                 <Route path="/" element={<Home />} />
+                <Route path="/events" element={<AllEvents />} />
                 <Route path="/event/:id" element={<EventDetail />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/category/:id" element={<CategoryEvents />} />
@@ -124,10 +131,14 @@ function App() {
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<Navigate to="events" />} />
                 <Route path="users" element={<UsersManagement />} />
+                <Route path="categories" element={<AdminCategories />} />
+                <Route path="banners" element={<AdminBanners />} />
                 <Route path="events" element={<AdminEventsManagement />} />
                 <Route path="orders" element={<AdminOrdersManagement />} />
-                <Route path="venues" element={<VenuesManagement />} />
+
                 <Route path="event-deletion-requests" element={<EventDeletionRequests />} />
+                <Route path="statistics" element={<AdminStatistics />} />
+                <Route path="profile" element={<AdminProfile />} />
               </Route>
 
               {/* Organizer Routes */}
@@ -151,6 +162,7 @@ function App() {
                 <Route path="venues" element={<OrganizerVenues />} />
                 <Route path="tickets" element={<TicketManagement />} />
                 <Route path="profile" element={<OrganizerProfile />} />
+                <Route path="profile/edit" element={<OrganizerProfileEdit />} />
                 <Route path="orders" element={<ManageOrders />} />
                 <Route path="discounts" element={<DiscountManagement />} />
               </Route>

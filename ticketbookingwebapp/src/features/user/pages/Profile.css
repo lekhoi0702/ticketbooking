@@ -1,7 +1,8 @@
 .profile-page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    padding: 40px 20px;
+    min-height: calc(100vh - 120px);
+    /* Adjust for header height */
+    background: #000000;
+    padding: 60px 20px;
 }
 
 .profile-container {
@@ -11,14 +12,27 @@
 
 .profile-header-card {
     margin-bottom: 24px;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    background: #121212 !important;
+    border: 1px solid #333 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .profile-tabs-card {
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    background: #121212 !important;
+    border: 1px solid #333 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     min-height: 500px;
+}
+
+.profile-header-card .ant-typography,
+.profile-tabs-card .ant-typography {
+    color: #fff !important;
+}
+
+.profile-header-card .ant-typography-secondary {
+    color: #b0b3b8 !important;
 }
 
 .profile-tabs-card .ant-tabs-nav {
@@ -28,10 +42,65 @@
 .profile-tabs-card .ant-tabs-tab {
     font-size: 16px;
     padding: 12px 24px;
+    color: #b0b3b8 !important;
 }
 
 .profile-tabs-card .ant-tabs-tab-active {
     font-weight: 600;
+}
+
+/* Table Dark Theme Fixes */
+.profile-tabs-card .ant-table {
+    background: transparent !important;
+    color: #fff !important;
+}
+
+.profile-tabs-card .ant-table-thead>tr>th {
+    background: #1a1a1a !important;
+    color: #fff !important;
+    border-bottom: 1px solid #333 !important;
+}
+
+.profile-tabs-card .ant-table-tbody>tr>td {
+    border-bottom: 1px solid #222 !important;
+    background: transparent !important;
+    color: #e4e6eb !important;
+}
+
+.profile-tabs-card .ant-table-row:hover>td {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.profile-tabs-card .ant-pagination-item,
+.profile-tabs-card .ant-pagination-prev,
+.profile-tabs-card .ant-pagination-next {
+    background: #1a1a1a !important;
+    border-color: #333 !important;
+}
+
+.profile-tabs-card .ant-pagination-item a {
+    color: #fff !important;
+}
+
+.profile-tabs-card .ant-empty-description {
+    color: #b0b3b8 !important;
+}
+
+/* Form and Typography Visibility Fixes */
+.profile-tabs-card .ant-form-item-label>label {
+    color: #ffffff !important;
+}
+
+.profile-tabs-card .ant-typography,
+.profile-tabs-card h1.ant-typography,
+.profile-tabs-card h2.ant-typography,
+.profile-tabs-card h3.ant-typography,
+.profile-tabs-card h4.ant-typography {
+    color: #ffffff !important;
+}
+
+.profile-tabs-card .ant-typography-secondary {
+    color: #b0b3b8 !important;
 }
 
 @media (max-width: 768px) {

@@ -1,0 +1,113 @@
+/* AllEvents.css - Dark Theme */
+
+.all-events-wrapper {
+    min-height: 100vh;
+    width: 100%;
+    background-color: #000000;
+    color: #ffffff;
+    padding-top: 40px;
+    padding-bottom: 60px;
+}
+
+/* Ensure breadcrumb text is visible on dark background */
+.all-events-wrapper .breadcrumb-item {
+    color: #b0b3b8;
+}
+
+.all-events-wrapper .breadcrumb-item.active {
+    color: #ffffff;
+}
+
+.all-events-wrapper .breadcrumb-item a {
+    color: #b0b3b8;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.all-events-wrapper .breadcrumb-item a:hover {
+    color: var(--primary-teal);
+}
+
+.all-events-wrapper .breadcrumb-item+.breadcrumb-item::before {
+    color: #9ca3af;
+}
+
+.all-events-header {
+    margin-bottom: 40px;
+}
+
+.all-events-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+}
+
+.all-events-subtitle {
+    font-size: 1.1rem;
+    color: #b0b3b8;
+}
+
+.all-events-divider {
+    height: 4px;
+    width: 60px;
+    background-color: var(--primary-teal);
+    margin-top: 20px;
+    border-radius: 2px;
+}
+
+.empty-events-state {
+    text-align: center;
+    padding: 80px 0;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 24px;
+    opacity: 0.3;
+    color: #ffffff;
+}
+
+.empty-title {
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.empty-text {
+    color: #b0b3b8;
+    font-size: 1.2rem;
+}
+
+/* Category Sections */
+.category-section {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.category-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary-teal);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.category-line {
+    height: 1px;
+    background: linear-gradient(to right, rgba(0, 188, 156, 0.5), transparent);
+    border-radius: 1px;
+}
+
+.category-count {
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Hover effect for sections */
+.category-section:hover .category-line {
+    background: linear-gradient(to right, rgba(0, 188, 156, 1), transparent);
+    transition: all 0.3s ease;
+}

@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap');
 
 :root {
   --ticketbooking-green: #52c41a;
-  --ticketbooking-bg: #f5f7fa;
-  --ticketbooking-text: #303133;
+  --ticketbooking-bg: #ffffff;
+  --ticketbooking-text: #1f2937;
+  --ticketbooking-gray: #f9fafb;
 }
 
 body {
@@ -61,4 +62,39 @@ main {
 .btn-primary:hover {
   background-color: #73d13d !important;
   border-color: #73d13d !important;
+}
+
+/* DARK MODE / THEME COMPATIBILITY FOR BREADCRUMBS */
+/* This ensures breadcrumbs are visible on dark backgrounds */
+
+/* Default Breadcrumb Item */
+.breadcrumb-item {
+  color: #9ca3af !important;
+  /* Light gray for separators/inactive */
+}
+
+/* Active Breadcrumb Item (Current Page) */
+.breadcrumb-item.active {
+  color: #f3f4f6 !important;
+  /* White/Off-white for current page */
+}
+
+/* Separator color */
+.breadcrumb-item+.breadcrumb-item::before {
+  color: #6b7280 !important;
+  /* Gray for '/' separator */
+}
+
+/* Link in Breadcrumb */
+.breadcrumb-item a {
+  color: #52c41a !important;
+  /* Green for links */
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb-item a:hover {
+  color: #73d13d !important;
+  /* Lighter green on hover */
+  text-decoration: underline;
 }

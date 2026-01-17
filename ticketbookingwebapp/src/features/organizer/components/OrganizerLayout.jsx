@@ -98,11 +98,13 @@ const OrganizerLayout = () => {
                         zIndex: 100,
                     }}
                 >
-                    <div style={{ height: 64, display: 'flex', alignItems: 'center', padding: '0 24px', gap: 12 }}>
-                        <AppstoreOutlined style={{ fontSize: 24, color: '#52c41a' }} />
-                        <Title level={4} style={{ margin: 0, fontSize: '1.2rem', color: '#303133', fontWeight: 700 }}>
-                            Organizer
+                    <div style={{ height: 64, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '0 24px', justifyContent: 'center' }}>
+                        <Title level={4} style={{ margin: 0, fontSize: '1.2rem', color: '#303133', fontFamily: "'Outfit', sans-serif", fontWeight: 800, letterSpacing: '-1px', lineHeight: 1 }}>
+                            TICKETBOOKING
                         </Title>
+                        <Text style={{ color: '#909399', fontSize: '11px', marginTop: 4, letterSpacing: '0.5px' }}>
+                            ORGANIZER DASHBOARD
+                        </Text>
                     </div>
                     <Menu
                         mode="inline"

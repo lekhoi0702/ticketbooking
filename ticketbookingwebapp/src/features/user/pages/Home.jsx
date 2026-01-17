@@ -14,6 +14,7 @@ function Home() {
     const [theaterEvents, setTheaterEvents] = useState([]);
     const [sportsEvents, setSportsEvents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [banners, setBanners] = useState([]);
 
     useEffect(() => {
         loadEvents();
@@ -22,6 +23,16 @@ function Home() {
     const loadEvents = async () => {
         try {
             setLoading(true);
+
+            // Load Banners
+            const bannerResponse = await api.getPublicBanners();
+            console.log('Banner Response:', bannerResponse);
+            if (bannerResponse.success) {
+                console.log('Banners loaded:', bannerResponse.data);
+                setBanners(bannerResponse.data);
+            } else {
+                console.error('Failed to load banners:', bannerResponse);
+            }
 
             // Load featured events
             const featuredResponse = await api.getFeaturedEvents(4);
@@ -70,12 +81,13 @@ function Home() {
 
     return (
         <main>
-            <HeroBanner />
+            <HeroBanner banners={banners} />
 
             {featuredEvents.length > 0 && (
                 <EventSection
                     title="Sự kiện đặc biệt"
                     events={featuredEvents.map(transformEvent)}
+                    viewMoreLink="/events"
                 />
             )}
 
@@ -97,6 +109,7 @@ function Home() {
                 <EventSection
                     title="Nhạc sống"
                     events={musicEvents.map(transformEvent)}
+                    viewMoreLink="/category/1"
                 />
             )}
 
@@ -104,6 +117,7 @@ function Home() {
                 <EventSection
                     title="Sân khấu & Nghệ thuật"
                     events={theaterEvents.map(transformEvent)}
+                    viewMoreLink="/category/2"
                 />
             )}
 
@@ -111,6 +125,7 @@ function Home() {
                 <EventSection
                     title="Thể Thao"
                     events={sportsEvents.map(transformEvent)}
+                    viewMoreLink="/category/3"
                 />
             )}
         </main>

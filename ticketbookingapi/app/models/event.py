@@ -24,7 +24,6 @@ class Event(db.Model):
 
     # Relationships
     ticket_types = db.relationship('TicketType', backref='event', lazy=True, cascade='all, delete-orphan')
-    reviews = db.relationship('Review', backref='event', lazy=True, cascade='all, delete-orphan')
 
     def to_dict(self, include_details=False):
         data = {

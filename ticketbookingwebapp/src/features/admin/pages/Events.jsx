@@ -82,6 +82,8 @@ import {
 
 import { api } from '@services/api';
 
+import { getImageUrl } from '@shared/utils/eventUtils';
+
 import SeatMapTemplateView from '@features/organizer/components/SeatMapTemplateView';
 
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
@@ -417,15 +419,10 @@ const AdminEventsManagement = () => {
             render: (_, record) => (
 
                 <Image
-
                     width={80}
-
                     height={45}
-
-                    src={record.banner_image_url?.startsWith('http') ? record.banner_image_url : `http://127.0.0.1:5000${record.banner_image_url}`}
-
-                    style={{ borderRadius: 4, objectFit: 'cover' }}
-
+                    src={getImageUrl(record.banner_image_url)}
+                    style={{ borderRadius: 12, objectFit: 'cover' }}
                 />
 
             ),
@@ -784,7 +781,7 @@ const AdminEventsManagement = () => {
 
                                     inset: 0,
 
-                                    backgroundImage: `url(${selectedEvent.banner_image_url || 'https://via.placeholder.com/800x400?text=No+Image'})`,
+                                    backgroundImage: `url(${getImageUrl(selectedEvent.banner_image_url)})`,
 
                                     backgroundSize: 'cover',
 
@@ -812,7 +809,7 @@ const AdminEventsManagement = () => {
 
                                     <img
 
-                                        src={selectedEvent.banner_image_url || 'https://via.placeholder.com/200x200?text=No+Image'}
+                                        src={getImageUrl(selectedEvent.banner_image_url)}
 
                                         alt={selectedEvent.event_name}
 
@@ -937,139 +934,12 @@ const AdminEventsManagement = () => {
                                             <div style={{ padding: '20px 0', textAlign: 'center', color: '#8c8c8c' }}>
 
                                                 Không có thông tin sơ đồ chỗ ngồi
-
                                             </div>
-
                                         )}
-
                                     </Col>
-
-
-
-                                    <Col span={8}>
-
-                                        <Title level={5}>Hành động</Title>
-
-                                        <Space direction="vertical" style={{ width: '100%' }}>
-
-                                            {selectedEvent.status === 'PENDING_APPROVAL' && (
-
-                                                <div style={{ display: 'flex', gap: 8 }}>
-
-                                                    <Button
-
-                                                        type="primary"
-
-                                                        block
-
-                                                        icon={<CheckCircleOutlined />}
-
-                                                        onClick={() => handleUpdateStatus(selectedEvent.event_id, 'APPROVED')}
-
-                                                        loading={actionLoading}
-
-                                                    >
-
-                                                        Phê duyệt
-
-                                                    </Button>
-
-                                                    <Button
-
-                                                        danger
-
-                                                        block
-
-                                                        icon={<CloseCircleOutlined />}
-
-                                                        onClick={() => handleUpdateStatus(selectedEvent.event_id, 'REJECTED')}
-
-                                                        loading={actionLoading}
-
-                                                    >
-
-                                                        Từ chối
-
-                                                    </Button>
-
-                                                </div>
-
-                                            )}
-
-
-
-                                            {selectedEvent.status === 'APPROVED' && (
-
-                                                <Button
-
-                                                    type="primary"
-
-                                                    block
-
-                                                    onClick={() => handleUpdateStatus(selectedEvent.event_id, 'PUBLISHED')}
-
-                                                    loading={actionLoading}
-
-                                                >
-
-                                                    Công khai bán vé
-
-                                                </Button>
-
-                                            )}
-
-
-
-                                            <Button
-
-                                                block
-
-                                                icon={selectedEvent.is_featured ? <StarFilled style={{ color: '#fadb14' }} /> : <StarOutlined />}
-
-                                                onClick={() => toggleFeatured(selectedEvent)}
-
-                                                loading={actionLoading}
-
-                                            >
-
-                                                {selectedEvent.is_featured ? 'Bỏ nổi bật' : 'Đặt làm nổi bật'}
-
-                                            </Button>
-
-
-
-                                            {(selectedEvent.status === 'PENDING_APPROVAL' || selectedEvent.status === 'REJECTED' || selectedEvent.status === 'PENDING_DELETION') && (
-
-                                                <Button
-
-                                                    danger
-
-                                                    block
-
-                                                    icon={<DeleteOutlined />}
-
-                                                    onClick={() => handleDeleteEvent(selectedEvent.event_id)}
-
-                                                    loading={actionLoading}
-
-                                                >
-
-                                                    Xóa vĩnh viễn
-
-                                                </Button>
-
-                                            )}
-
-                                        </Space>
-
-                                    </Col>
-
                                 </Row>
-
                             </div>
-
                         </div>
-
                     )}
 
                 </Spin>

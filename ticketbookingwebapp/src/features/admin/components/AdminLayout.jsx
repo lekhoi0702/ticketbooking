@@ -7,7 +7,6 @@ import {
     Menu,
     Typography,
     Avatar,
-    Dropdown,
     Button,
     Space,
     theme as antdTheme
@@ -17,16 +16,17 @@ import {
     CalendarOutlined,
     FileTextOutlined,
     EnvironmentOutlined,
-    LogoutOutlined,
     TeamOutlined,
     ExclamationCircleOutlined,
+    BarChartOutlined,
+    TagsOutlined
 } from '@ant-design/icons';
 
 const { Header, Sider, Content } = Layout;
 const { Text, Title } = Typography;
 
 const AdminLayout = () => {
-    const { user, logout, isAuthenticated } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -36,6 +36,12 @@ const AdminLayout = () => {
             icon: <TeamOutlined />,
             label: 'Người dùng',
             onClick: () => navigate('/admin/users'),
+        },
+        {
+            key: '/admin/categories',
+            icon: <TagsOutlined />,
+            label: 'Quản lý thể loại',
+            onClick: () => navigate('/admin/categories'),
         },
         {
             key: '/admin/events',
@@ -49,11 +55,18 @@ const AdminLayout = () => {
             label: 'Đơn hàng',
             onClick: () => navigate('/admin/orders'),
         },
+
         {
-            key: '/admin/venues',
-            icon: <EnvironmentOutlined />,
-            label: 'Địa điểm',
-            onClick: () => navigate('/admin/venues'),
+            key: '/admin/statistics',
+            icon: <BarChartOutlined />,
+            label: 'Thống kê',
+            onClick: () => navigate('/admin/statistics'),
+        },
+        {
+            key: '/admin/banners',
+            icon: <FileTextOutlined />,
+            label: 'Quản lý Banner',
+            onClick: () => navigate('/admin/banners'),
         },
         {
             key: '/admin/event-deletion-requests',
@@ -63,34 +76,7 @@ const AdminLayout = () => {
         },
     ];
 
-    const handleLogout = async () => {
-        try {
-            await logout();
-            navigate('/admin/login');
-        } catch (error) {
-            console.error("Logout failed:", error);
-        }
-    };
 
-    const userMenuItems = {
-        items: [
-            {
-                key: 'profile',
-                label: 'Cá nhân',
-                icon: <UserOutlined />,
-            },
-            {
-                type: 'divider',
-            },
-            {
-                key: 'logout',
-                label: 'Đăng xuất',
-                icon: <LogoutOutlined />,
-                danger: true,
-                onClick: handleLogout,
-            },
-        ],
-    };
 
     if (!isAuthenticated || user?.role !== 'ADMIN') {
         return <AdminLogin />;
@@ -113,13 +99,17 @@ const AdminLayout = () => {
                 <div style={{
                     height: 64,
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: 16,
                 }}>
-                    <Title level={4} style={{ color: 'white', margin: 0 }}>
+                    <Title level={4} style={{ color: 'white', margin: 0, fontFamily: "'Outfit', sans-serif", fontWeight: 800, letterSpacing: '-1px', lineHeight: 1 }}>
                         TICKETBOOKING
                     </Title>
+                    <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: '11px', marginTop: 4, letterSpacing: '1px' }}>
+                        ADMIN DASHBOARD
+                    </Text>
                 </div>
                 <Menu
                     theme="dark"
@@ -147,17 +137,18 @@ const AdminLayout = () => {
                         zIndex: 1000,
                     }}
                 >
-                    <Dropdown menu={userMenuItems} placement="bottomRight">
-                        <Space style={{ cursor: 'pointer', padding: '0 8px' }}>
-                            <Avatar
-                                style={{ backgroundColor: '#1890ff' }}
-                                icon={<UserOutlined />}
-                            />
-                            <Text strong>
-                                Chào, {user?.full_name || user?.email?.split('@')[0] || 'Admin'}
-                            </Text>
-                        </Space>
-                    </Dropdown>
+                    <Space
+                        style={{ cursor: 'pointer', padding: '0 8px' }}
+                        onClick={() => navigate('/admin/profile')}
+                    >
+                        <Avatar
+                            style={{ backgroundColor: '#1890ff' }}
+                            icon={<UserOutlined />}
+                        />
+                        <Text strong>
+                            Chào, {user?.full_name || user?.email?.split('@')[0] || 'Admin'}
+                        </Text>
+                    </Space>
                 </Header>
                 <Content style={{ margin: '24px 24px 0', minHeight: 280 }}>
                     <div style={{

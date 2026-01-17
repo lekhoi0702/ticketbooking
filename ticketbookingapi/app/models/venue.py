@@ -9,7 +9,7 @@ class Venue(db.Model):
     address = db.Column(db.String(500), nullable=False)
     city = db.Column(db.String(100), nullable=False, index=True)
     capacity = db.Column(db.Integer, nullable=False)
-    manager_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=False, default=1) # Default to 1 for migration
+    manager_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=False)
     vip_seats = db.Column(db.Integer, default=0)
     standard_seats = db.Column(db.Integer, default=0)
     economy_seats = db.Column(db.Integer, default=0)
