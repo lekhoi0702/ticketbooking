@@ -1,5 +1,8 @@
 from flask import Blueprint, jsonify, request
 from app.services.organizer_service import OrganizerService
+from app.services.organizer_event_service import OrganizerEventService
+from app.services.organizer_venue_service import OrganizerVenueService
+from app.services.organizer_stats_service import OrganizerStatsService
 
 organizer_bp = Blueprint("organizer", __name__)
 
@@ -8,7 +11,7 @@ def get_dashboard_stats():
     """Get dashboard statistics for organizer"""
     try:
         manager_id = request.args.get('manager_id', 1, type=int)
-        data = OrganizerService.get_dashboard_stats(manager_id)
+        data = OrganizerStatsService.get_dashboard_stats(manager_id)
         return jsonify({'success': True, 'data': data}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -19,8 +22,24 @@ def get_organizer_events():
     try:
         manager_id = request.args.get('manager_id', 1, type=int)
         status = request.args.get('status')
-        events = OrganizerService.get_events(manager_id, status)
+        events = OrganizerEventService.get_events(manager_id, status)
         return jsonify({'success': True, 'data': events}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@organizer_bp.route("/organizer/events/<int:event_id>/duplicate", methods=["POST"])
+def add_showtime(event_id):
+    """Duplicate an event to create a new showtime (recurrence)"""
+    try:
+        data = request.get_json()
+        new_event = OrganizerEventService.add_showtime(event_id, data)
+        return jsonify({
+            'success': True,
+            'message': 'Thêm suất diễn thành công',
+            'data': new_event.to_dict(include_details=True)
+        }), 201
+    except ValueError as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -30,7 +49,7 @@ def create_event():
     try:
         data = request.form
         files = request.files
-        new_event = OrganizerService.create_event(data, files)
+        new_event = OrganizerEventService.create_event(data, files)
         return jsonify({
             'success': True,
             'message': 'Event created successfully',
@@ -47,7 +66,7 @@ def update_event(event_id):
     try:
         data = request.form
         files = request.files
-        event = OrganizerService.update_event(event_id, data, files)
+        event = OrganizerEventService.update_event(event_id, data, files)
         return jsonify({
             'success': True,
             'message': 'Event updated successfully',
@@ -63,7 +82,7 @@ def delete_event(event_id):
     """Request event deletion"""
     try:
         data = request.get_json() or {}
-        deletion_request, active_orders = OrganizerService.delete_event(event_id, data)
+        deletion_request, active_orders = OrganizerEventService.delete_event(event_id, data)
         
         message_text = 'Yêu cầu xóa sự kiện đã được gửi đến Admin để phê duyệt.'
         if active_orders > 0:
@@ -87,7 +106,7 @@ def delete_event(event_id):
 def get_event_ticket_types(event_id):
     """Get ticket types for an event"""
     try:
-        ticket_types = OrganizerService.get_event_ticket_types(event_id)
+        ticket_types = OrganizerEventService.get_event_ticket_types(event_id)
         return jsonify({
             'success': True,
             'data': [tt.to_dict() for tt in ticket_types]
@@ -100,7 +119,7 @@ def create_ticket_type(event_id):
     """Create a new ticket type for an event"""
     try:
         data = request.get_json()
-        ticket_type = OrganizerService.create_ticket_type(event_id, data)
+        ticket_type = OrganizerEventService.create_ticket_type(event_id, data)
         return jsonify({
             'success': True,
             'message': 'Ticket type created successfully',
@@ -114,7 +133,7 @@ def update_ticket_type(ticket_type_id):
     """Update a ticket type"""
     try:
         data = request.get_json()
-        ticket_type = OrganizerService.update_ticket_type(ticket_type_id, data)
+        ticket_type = OrganizerEventService.update_ticket_type(ticket_type_id, data)
         return jsonify({
             'success': True,
             'message': 'Ticket type updated successfully',
@@ -129,7 +148,7 @@ def update_ticket_type(ticket_type_id):
 def delete_ticket_type(ticket_type_id):
     """Delete a ticket type"""
     try:
-        OrganizerService.delete_ticket_type(ticket_type_id)
+        OrganizerEventService.delete_ticket_type(ticket_type_id)
         return jsonify({
             'success': True,
             'message': 'Ticket type deleted successfully'
@@ -183,7 +202,7 @@ def get_organizer_venues():
     """Get all venues managed by organizer"""
     try:
         manager_id = request.args.get('manager_id', 1, type=int)
-        venues = OrganizerService.get_venues(manager_id)
+        venues = OrganizerVenueService.get_venues(manager_id)
         return jsonify({
             'success': True,
             'data': [v.to_dict() for v in venues]
@@ -196,7 +215,7 @@ def create_organizer_venue():
     """Create a new venue"""
     try:
         data = request.get_json()
-        new_venue = OrganizerService.create_venue(data)
+        new_venue = OrganizerVenueService.create_venue(data)
         return jsonify({
             'success': True,
             'message': 'Venue created successfully',
@@ -209,7 +228,7 @@ def create_organizer_venue():
 def get_organizer_venue(venue_id):
     """Get a single venue"""
     try:
-        venue = OrganizerService.get_venue(venue_id)
+        venue = OrganizerVenueService.get_venue(venue_id)
         if not venue:
              return jsonify({'success': False, 'message': 'Venue not found'}), 404
         return jsonify({
@@ -224,7 +243,7 @@ def update_organizer_venue(venue_id):
     """Update venue details"""
     try:
         data = request.get_json()
-        venue = OrganizerService.update_venue(venue_id, data)
+        venue = OrganizerVenueService.update_venue(venue_id, data)
         return jsonify({
             'success': True,
             'message': 'Venue updated successfully',
@@ -276,7 +295,7 @@ def get_organizer_stats():
     """Get detailed statistics for organizer"""
     try:
         manager_id = request.args.get('manager_id', 1, type=int)
-        data = OrganizerService.get_organizer_stats_detailed(manager_id)
+        data = OrganizerStatsService.get_organizer_stats_detailed(manager_id)
         return jsonify({'success': True, 'data': data}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -293,7 +312,7 @@ def get_organizer_orders():
         if not manager_id:
              return jsonify({'success': False, 'message': 'Missing manager_id'}), 400
 
-        orders_data, pagination = OrganizerService.get_organizer_orders_paginated(manager_id, search, page, per_page)
+        orders_data, pagination = OrganizerStatsService.get_organizer_orders_paginated(manager_id, search, page, per_page)
         
         return jsonify({
             'success': True,

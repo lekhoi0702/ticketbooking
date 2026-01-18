@@ -61,4 +61,10 @@ export const eventApi = {
         if (!response.ok) throw new Error('Failed to fetch banners');
         return await response.json();
     },
+
+    async getRecommendedEvents(eventId, limit = 8) {
+        const response = await fetch(`${API_BASE_URL}/events/${eventId}/recommended?limit=${limit}`);
+        if (!response.ok) throw new Error('Failed to fetch recommended events');
+        return await response.json();
+    },
 };

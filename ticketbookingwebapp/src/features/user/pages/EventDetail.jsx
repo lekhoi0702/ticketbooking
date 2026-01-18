@@ -1,7 +1,6 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, Card, Nav } from 'react-bootstrap';
-import { FaMapMarkerAlt } from 'react-icons/fa';
+import { Container, Row, Col, Nav, Tab, Tabs } from 'react-bootstrap';
 
 // Hooks
 import { useEventDetail } from '@shared/hooks/useEventDetail';
@@ -12,16 +11,21 @@ import EventHero from '@features/user/components/Event/EventHero';
 import TicketSelection from '@features/user/components/Event/TicketSelection';
 import StickyBookingBar from '@features/user/components/Event/StickyBookingBar';
 import AuthModal from '@features/user/components/Auth/AuthModal';
+import ScheduleCalendar from '@features/user/components/Event/ScheduleCalendar';
+import EventVenueInfo from '@features/user/components/Event/EventVenueInfo';
+import EventOrganizerCard from '@features/user/components/Event/EventOrganizerCard';
+import RecommendedEvents from '@features/user/components/Event/RecommendedEvents';
+import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 // Utils & Styles
 import './EventDetail.css';
-import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 function EventDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
     const [showAuthModal, setShowAuthModal] = React.useState(false);
+    const [activeTab, setActiveTab] = React.useState('tickets');
 
     const {
         event,
@@ -86,7 +90,7 @@ function EventDetail() {
                 <Container>
                     <Nav className="nav-pills">
                         <Nav.Link href="#description" className="nav-item">Giới thiệu</Nav.Link>
-                        <Nav.Link href="#tickets" className="nav-item">Thông tin vé</Nav.Link>
+                        <Nav.Link href="#booking-section" className="nav-item">Mua vé</Nav.Link>
                         <Nav.Link href="#venue" className="nav-item">Địa điểm</Nav.Link>
                         <Nav.Link href="#organizer" className="nav-item d-lg-none">Ban tổ chức</Nav.Link>
                     </Nav>
@@ -103,66 +107,60 @@ function EventDetail() {
                             </div>
                         </section>
 
-                        <div id="tickets">
-                            <TicketSelection
-                                event={event}
-                                activeTicketType={activeTicketType}
-                                setActiveTicketType={setActiveTicketType}
-                                selectedTickets={selectedTickets}
-                                handleTicketQuantityChange={handleTicketQuantityChange}
-                                handleSeatSelection={handleSeatSelection}
-                                hasSeatMap={hasSeatMap}
-                                setHasSeatMap={setHasSeatMap}
-                            />
+                        <div id="booking-section" className="event-tabs-wrapper">
+                            <Tabs
+                                activeKey={activeTab}
+                                onSelect={(k) => setActiveTab(k)}
+                                id="event-booking-tabs"
+                                className="custom-event-tabs mb-4"
+                                variant="pills"
+                                justify
+                            >
+                                <Tab eventKey="tickets" title="Chọn vé - Chỗ ngồi">
+                                    <div className="tab-content-wrapper" id="tickets">
+                                        <TicketSelection
+                                            event={event}
+                                            activeTicketType={activeTicketType}
+                                            setActiveTicketType={setActiveTicketType}
+                                            selectedTickets={selectedTickets}
+                                            handleTicketQuantityChange={handleTicketQuantityChange}
+                                            handleSeatSelection={handleSeatSelection}
+                                            hasSeatMap={hasSeatMap}
+                                            setHasSeatMap={setHasSeatMap}
+                                        />
+                                    </div>
+                                </Tab>
+
+                                <Tab eventKey="schedule" title="Lịch diễn">
+                                    <div className="tab-content-wrapper">
+                                        <ScheduleCalendar
+                                            currentEvent={event}
+                                            schedules={event.schedule || []}
+                                            onSelectSchedule={(eventId) => navigate(`/event/${eventId}`)}
+                                            selectedScheduleId={event.event_id}
+                                        />
+                                    </div>
+                                </Tab>
+                            </Tabs>
                         </div>
 
-                        <section className="detail-section" id="venue">
-                            <h3 className="section-title">Địa điểm</h3>
-                            <div className="venue-info">
-                                <h5>{event.venue?.venue_name}</h5>
-                                <p className="text-muted"><FaMapMarkerAlt className="me-2" />{event.venue?.address}, {event.venue?.city}</p>
-                                <div className="venue-map-placeholder">
-                                    <a
-                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venue?.address + ', ' + event.venue?.city)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="btn btn-outline-secondary w-100"
-                                    >
-                                        Xem bản đồ trên Google Maps
-                                    </a>
-                                </div>
-                            </div>
-                        </section>
+                        <EventVenueInfo venue={event.venue} />
                     </Col>
 
                     <Col lg={4}>
                         {/* Sidebar Info */}
-                        <Card className="sidebar-card" id="organizer">
-                            <Card.Header className="bg-white">
-                                <h5 className="mb-0">Thông tin ban tổ chức</h5>
-                            </Card.Header>
-                            <Card.Body>
-                                <div className="organizer-info">
-                                    <div className="organizer-avatar">
-                                        {event.organizer_info?.logo_url ? (
-                                            <img src={event.organizer_info.logo_url} alt={event.organizer_info.organization_name} />
-                                        ) : (
-                                            (event.organizer_info?.organization_name || event.event_name).charAt(0).toString().toUpperCase()
-                                        )}
-                                    </div>
-                                    <div className="organizer-details">
-                                        <h6>{event.organizer_info?.organization_name || 'Ban tổ chức sự kiện'}</h6>
-                                        <p className="text-muted small mb-0">
-                                            {event.organizer_info?.description || 'Chuyên tổ chức các sự kiện giải trí hàng đầu'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <Button variant="outline-success" className="w-100 mt-3">Theo dõi</Button>
-                            </Card.Body>
-                        </Card>
+                        <div id="organizer">
+                            <EventOrganizerCard
+                                organizerInfo={event.organizer_info}
+                                eventName={event.event_name}
+                            />
+                        </div>
                     </Col>
                 </Row>
             </Container>
+
+            {/* Recommended Events - Full Width */}
+            <RecommendedEvents eventId={event.event_id} />
 
             {/* Sticky Bottom Bar */}
             <StickyBookingBar

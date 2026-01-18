@@ -14,6 +14,7 @@ class Venue(db.Model):
     standard_seats = db.Column(db.Integer, default=0)
     economy_seats = db.Column(db.Integer, default=0)
     seat_map_template = db.Column(db.JSON, nullable=True) # Template for seat layout
+    map_embed_code = db.Column(db.Text, nullable=True) # Google Maps Embed Code (HTML iframe)
     contact_phone = db.Column(db.String(20))
     is_active = db.Column(db.Boolean, default=True, index=True)
     status = db.Column(db.String(50), default='ACTIVE', index=True) # ACTIVE, MAINTENANCE, INACTIVE
@@ -33,6 +34,7 @@ class Venue(db.Model):
             'standard_seats': self.standard_seats,
             'economy_seats': self.economy_seats,
             'seat_map_template': self.seat_map_template,
+            'map_embed_code': self.map_embed_code,
             'contact_phone': self.contact_phone,
             'is_active': self.is_active,
             'status': self.status

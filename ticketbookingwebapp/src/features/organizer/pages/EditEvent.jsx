@@ -103,7 +103,8 @@ const EditEvent = () => {
                     total_capacity: event.total_capacity,
                     status: event.status,
                     is_featured: event.is_featured,
-                    manager_id: event.manager_id
+                    manager_id: event.manager_id,
+                    schedule: event.schedule || [] // Add schedule data
                 });
 
                 if (event.banner_image_url) {
@@ -226,6 +227,7 @@ const EditEvent = () => {
                                     <EventDateTime
                                         formData={formData}
                                         handleInputChange={handleInputChange}
+                                        existingSchedule={formData.schedule || []}
                                         disabled={isReadOnly || loading}
                                     />
                                 </Card>

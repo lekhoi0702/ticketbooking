@@ -8,17 +8,17 @@ import {
     Space,
     Alert,
     Modal,
-    Spin,
-    message
+    Spin
 } from 'antd';
 import {
     PlusOutlined,
     SearchOutlined,
-    ReloadOutlined,
-    ExclamationCircleOutlined
+    ReloadOutlined
 } from '@ant-design/icons';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import EventTable from '@features/organizer/components/EventTable';
+import DeleteEventModal from '@features/organizer/components/DeleteEventModal';
+import AddShowtimeForm from '@features/organizer/components/AddShowtimeForm';
 import { useEventList } from '@shared/hooks/useEventList';
 
 const { Text } = Typography;
@@ -36,9 +36,11 @@ const EventList = () => {
         showDeleteModal,
         setShowDeleteModal,
         eventToDelete,
+        setEventToDelete,
         deleting
     } = useEventList();
     const [searchTerm, setSearchTerm] = useState('');
+    const [isAddShowtimeModalOpen, setIsAddShowtimeModalOpen] = useState(null);
 
     const filteredEvents = events.filter(event =>
         event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -97,57 +99,35 @@ const EventList = () => {
                             handlePublishEvent={handlePublishEvent}
                             handleCancelApproval={handleCancelApproval}
                             handleDeleteClick={handleDeleteClick}
+                            setIsAddShowtimeModalOpen={setIsAddShowtimeModalOpen}
                         />
                     </div>
                 </Card>
 
-                <Modal
-                    title={
-                        <Space>
-                            <ExclamationCircleOutlined style={{ color: '#faad14' }} />
-                            <span>Yêu cầu xóa sự kiện</span>
-                        </Space>
-                    }
+                {/* Delete Modal */}
+                <DeleteEventModal
                     open={showDeleteModal}
-                    onOk={handleDeleteConfirm}
                     onCancel={() => setShowDeleteModal(false)}
-                    confirmLoading={deleting}
-                    okText="Gửi yêu cầu"
-                    cancelText="Hủy bỏ"
-                    okButtonProps={{ danger: true }}
+                    onConfirm={handleDeleteConfirm}
+                    loading={deleting}
+                    event={eventToDelete}
+                    setEvent={setEventToDelete}
+                />
+
+                {/* Add Showtime Modal */}
+                <Modal
+                    title="Thêm suất diễn mới"
+                    open={!!isAddShowtimeModalOpen}
+                    onCancel={() => setIsAddShowtimeModalOpen(null)}
+                    footer={null}
                 >
-                    <p>
-                        Bạn muốn xóa sự kiện <strong>{eventToDelete?.event_name}</strong>?
-                    </p>
-
-                    {eventToDelete?.sold_tickets > 0 && (
-                        <Text type="warning" strong style={{ display: 'block', marginBottom: 8 }}>
-                            Sự kiện này đã có {eventToDelete.sold_tickets} vé được bán.
-                        </Text>
-                    )}
-
-                    <div style={{ marginTop: 16 }}>
-                        <Text strong>Lý do xóa sự kiện:</Text>
-                        <Input.TextArea
-                            placeholder="Vui lòng nhập lý do xóa sự kiện..."
-                            rows={3}
-                            style={{ marginTop: 8 }}
-                            onChange={(e) => {
-                                setEventToDelete(prev => ({
-                                    ...prev,
-                                    deleteReason: e.target.value
-                                }));
+                    {isAddShowtimeModalOpen && (
+                        <AddShowtimeForm
+                            sourceEvent={isAddShowtimeModalOpen}
+                            onSuccess={() => {
+                                setIsAddShowtimeModalOpen(null);
+                                fetchEvents();
                             }}
-                        />
-                    </div>
-
-                    {eventToDelete?.status === 'PUBLISHED' && (
-                        <Alert
-                            message="Không thể xóa"
-                            description="Sự kiện đang ở trạng thái CÔNG KHAI. Vui lòng chuyển về BẢN NHÁP trước khi xóa."
-                            type="error"
-                            showIcon
-                            style={{ marginTop: 16 }}
                         />
                     )}
                 </Modal>

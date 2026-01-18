@@ -1,8 +1,13 @@
 .app-main-footer {
-    background-color: #ffffff;
-    color: #4b5563;
-    padding: 60px 0 40px;
+    background-color: transparent;
+    padding: 0;
     font-family: 'Inter', sans-serif;
+    border-top: none;
+}
+
+.footer-content-wrapper {
+    background-color: #ffffff;
+    padding: 60px 0 40px;
     border-top: 1px solid #e5e7eb;
 }
 
@@ -144,8 +149,46 @@
     border-top: 1px solid #f3f4f6;
 }
 
+/* Company Info Bar (Dark Footer) */
+.footer-company-info-bar {
+    background-color: #1A1A1A;
+    color: #b0b3b8;
+    padding: 40px 0;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.footer-company-info-bar .company-logo {
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+.footer-company-info-bar .company-tagline {
+    display: block;
+    margin-bottom: 8px;
+    color: #9ca3af;
+}
+
+.footer-company-info-bar .copyright {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.footer-company-info-bar .company-details p {
+    margin-bottom: 6px;
+    color: #d1d5db;
+}
+
+.footer-company-info-bar .bocongthuong-icon {
+    max-width: 150px;
+    height: auto;
+}
+
 @media (max-width: 768px) {
-    .app-main-footer {
+    .footer-content-wrapper {
         padding: 40px 0;
     }
 
@@ -161,5 +204,9 @@
 
     .footer-hotline {
         font-size: 20px;
+    }
+
+    .footer-company-info-bar .ant-col {
+        margin-bottom: 24px;
     }
 }

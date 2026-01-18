@@ -81,9 +81,30 @@ def get_event(event_id):
                 'message': 'Event not found'
             }), 404
         
+        event_data = event.to_dict(include_details=True)
+        
+        # If part of a group, fetch siblings for schedule
+        if event.group_id:
+            siblings = Event.query.filter(
+                Event.group_id == event.group_id,
+                Event.status == 'PUBLISHED',
+                Event.event_id != event.event_id,
+                Event.start_datetime >= datetime.utcnow()
+            ).order_by(Event.start_datetime.asc()).all()
+            
+            event_data['schedule'] = [
+                {
+                    'event_id': s.event_id,
+                    'start_datetime': s.start_datetime.isoformat(),
+                    'end_datetime': s.end_datetime.isoformat()
+                } for s in siblings
+            ]
+        else:
+             event_data['schedule'] = []
+
         return jsonify({
             'success': True,
-            'data': event.to_dict(include_details=True)
+            'data': event_data
         }), 200
         
     except Exception as e:
@@ -147,6 +168,27 @@ def search_events():
         
     except Exception as e:
         print(f"Error in search_events: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@events_bp.route("/events/<int:event_id>/recommended", methods=["GET"])
+def get_recommended_events(event_id):
+    """Get recommended events based on the same category"""
+    try:
+        from app.services.organizer_event_service import OrganizerEventService
+        
+        limit = request.args.get('limit', 8, type=int)
+        recommended = OrganizerEventService.get_recommended_events(event_id, limit)
+        
+        return jsonify({
+            'success': True,
+            'data': recommended
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in get_recommended_events: {str(e)}")
         return jsonify({
             'success': False,
             'message': str(e)

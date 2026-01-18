@@ -1,129 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
-import { Link as RouterLink } from 'react-router-dom';
 import {
     Box,
     Grid,
-    Card,
-    CardContent,
     Typography,
-    Avatar,
     Stack,
-    IconButton,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Chip,
     CircularProgress,
-    Paper,
-    LinearProgress,
-    Tooltip
+    Snackbar,
+    Alert
 } from '@mui/material';
 import {
     Event as EventIcon,
     AttachMoney as MoneyIcon,
-    ConfirmationNumber as TicketIcon,
-    TrendingUp as TrendingUpIcon,
-    Refresh as RefreshIcon,
-    ArrowForward as ArrowForwardIcon,
-    CheckCircle as CheckCircleIcon,
-    Cancel as CancelIcon
+    ConfirmationNumber as TicketIcon
 } from '@mui/icons-material';
-import { Snackbar, Alert, Button } from '@mui/material';
-
-const StatCard = ({ title, value, icon, color, trend, link }) => (
-    <Card
-        sx={{
-            height: '100%',
-            position: 'relative',
-            overflow: 'hidden',
-            '&:hover': {
-                boxShadow: 4,
-                transform: 'translateY(-4px)',
-                transition: 'all 0.3s ease'
-            },
-            transition: 'all 0.3s ease'
-        }}
-    >
-        <CardContent>
-            <Stack spacing={2}>
-                <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                    <Box>
-                        <Typography variant="h6" color="text.secondary" gutterBottom>
-                            {title}
-                        </Typography>
-                        <Typography variant="h3" sx={{ fontWeight: 700, color: color }}>
-                            {value}
-                        </Typography>
-                    </Box>
-                    <Avatar
-                        sx={{
-                            bgcolor: `${color}15`,
-                            color: color,
-                            width: 56,
-                            height: 56
-                        }}
-                    >
-                        {icon}
-                    </Avatar>
-                </Stack>
-
-                {trend && (
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <TrendingUpIcon sx={{ fontSize: 16, color: 'success.main' }} />
-                        <Typography variant="body2" color="success.main" sx={{ fontWeight: 600 }}>
-                            {trend}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            so với tháng trước
-                        </Typography>
-                    </Stack>
-                )}
-
-                {link && (
-                    <Box
-                        component={RouterLink}
-                        to={link}
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                            color: color,
-                            textDecoration: 'none',
-                            fontSize: '0.875rem',
-                            fontWeight: 500,
-                            '&:hover': {
-                                gap: 1,
-                                transition: 'all 0.2s'
-                            }
-                        }}
-                    >
-                        Xem chi tiết
-                        <ArrowForwardIcon sx={{ fontSize: 16 }} />
-                    </Box>
-                )}
-            </Stack>
-        </CardContent>
-
-        {/* Decorative background */}
-        <Box
-            sx={{
-                position: 'absolute',
-                right: -20,
-                bottom: -20,
-                width: 120,
-                height: 120,
-                borderRadius: '50%',
-                bgcolor: `${color}08`,
-                zIndex: 0
-            }}
-        />
-    </Card>
-);
+import StatCard from '@features/organizer/components/StatCard';
+import RecentOrdersTable from '@features/organizer/components/RecentOrdersTable';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -244,148 +137,11 @@ const Dashboard = () => {
             </Grid>
 
             {/* Recent Orders Table */}
-            <Card>
-                <CardContent>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                        <Box>
-                            <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                Giao dịch gần đây
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Danh sách các đơn hàng mới nhất
-                            </Typography>
-                        </Box>
-                        <Tooltip title="Làm mới">
-                            <IconButton onClick={fetchStats} color="primary">
-                                <RefreshIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Stack>
-
-                    <TableContainer>
-                        <Table>
-                            <TableHead>
-                                <TableRow sx={{ bgcolor: 'action.hover' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Mã Đơn</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Khách Hàng</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Sự Kiện</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }} align="right">Tổng Tiền</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Thanh Toán</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Ngày</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }} align="center">Hành Động</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {stats.recentOrders.length > 0 ? (
-                                    stats.recentOrders.map((order) => (
-                                        <TableRow
-                                            key={order.order_id}
-                                            sx={{
-                                                '&:hover': {
-                                                    bgcolor: 'action.hover'
-                                                }
-                                            }}
-                                        >
-                                            <TableCell>
-                                                <Typography
-                                                    variant="body2"
-                                                    sx={{
-                                                        fontFamily: "'Roboto Mono', monospace",
-                                                        fontWeight: 700,
-                                                        color: 'primary.main',
-                                                        bgcolor: 'rgba(45, 194, 117, 0.1)',
-                                                        padding: '4px 12px',
-                                                        borderRadius: '8px',
-                                                        display: 'inline-block',
-                                                        letterSpacing: '0.5px',
-                                                        border: '1px solid rgba(45, 194, 117, 0.2)',
-                                                        fontSize: '0.8rem'
-                                                    }}
-                                                >
-                                                    {order.order_code}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Box>
-                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                        {order.customer_name}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        {order.customer_email}
-                                                    </Typography>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography
-                                                    variant="body2"
-                                                    sx={{
-                                                        maxWidth: 250,
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}
-                                                >
-                                                    {order.event_name}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <Typography variant="body2" sx={{ fontWeight: 700, color: 'success.main' }}>
-                                                    {formatCurrency(order.total_amount)}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={order.payment_method || (order.status === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán')}
-                                                    size="small"
-                                                    color={order.payment_method === 'VNPAY' ? 'info' : (order.status === 'PAID' ? 'success' : 'default')}
-                                                    variant="outlined"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {new Date(order.created_at).toLocaleDateString('vi-VN')}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                {order.order_status === 'CANCELLATION_PENDING' || order.status === 'CANCELLATION_PENDING' ? (
-                                                    <Stack direction="row" spacing={1} justifyContent="center">
-                                                        <Tooltip title="Duyệt Hủy">
-                                                            <IconButton size="small" color="success" onClick={(e) => { e.stopPropagation(); handleProcessCancellation(order.order_id, 'approve'); }}>
-                                                                <CheckCircleIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                        <Tooltip title="Từ Chối">
-                                                            <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleProcessCancellation(order.order_id, 'reject'); }}>
-                                                                <CancelIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </Stack>
-                                                ) : (
-                                                    <Typography variant="caption" color="text.disabled">---</Typography>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={6}>
-                                            <Box sx={{ textAlign: 'center', py: 6 }}>
-                                                <TicketIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                                                <Typography variant="h6" color="text.secondary">
-                                                    Chưa có giao dịch nào
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Các đơn hàng mới sẽ hiển thị tại đây
-                                                </Typography>
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </CardContent>
-            </Card>
+            <RecentOrdersTable
+                orders={stats.recentOrders}
+                onProcessCancellation={handleProcessCancellation}
+                onRefresh={fetchStats}
+            />
 
             <Snackbar
                 open={toast.show}

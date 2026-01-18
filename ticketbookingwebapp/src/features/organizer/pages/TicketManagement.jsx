@@ -9,22 +9,17 @@ import {
     Space,
     message,
     Modal,
-    Divider,
-    Descriptions,
-    Badge,
     Select
 } from 'antd';
 import {
-    SearchOutlined,
     QrcodeOutlined,
     CheckCircleOutlined,
     UserOutlined,
-    CalendarOutlined,
-    ClockCircleOutlined,
     BarcodeOutlined
 } from '@ant-design/icons';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
+import TicketCheckInModal from '@features/organizer/components/TicketCheckInModal';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -242,69 +237,13 @@ const TicketManagement = () => {
                 </Card>
             )}
 
-            <Modal
-                title={[
-                    <Space key="title">
-                        <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                        <span>Xác nhận Check-in</span>
-                    </Space>
-                ]}
+            <TicketCheckInModal
                 open={showCheckInModal}
+                ticket={checkInTicket}
                 onCancel={() => setShowCheckInModal(false)}
-                footer={[
-                    <Button key="cancel" onClick={() => setShowCheckInModal(false)}>
-                        Hủy
-                    </Button>,
-                    <Button
-                        key="submit"
-                        type="primary"
-                        onClick={() => handleQuickCheckIn(checkInTicket?.ticket_code)}
-                        loading={checkInLoading}
-                        size="large"
-                    >
-                        Xác nhận CHECK-IN
-                    </Button>
-                ]}
-            >
-                {checkInTicket && (
-                    <div style={{ padding: '0 20px' }}>
-                        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                            <Badge status="processing" />
-                            <Title level={3} style={{ margin: '10px 0', color: '#1890ff' }}>
-                                {checkInTicket.ticket_code}
-                            </Title>
-                            <Tag color="blue" style={{ fontSize: 16, padding: '5px 10px' }}>
-                                {checkInTicket.ticket_type_name}
-                            </Tag>
-                        </div>
-
-                        <Descriptions column={1} bordered size="small">
-                            <Descriptions.Item label="Sự kiện">
-                                <Text strong>{checkInTicket.event_name}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Khách hàng">
-                                {checkInTicket.holder_name}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Email">
-                                {checkInTicket.holder_email}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Ghế ngồi">
-                                {checkInTicket.seat_id ? `Ghế ID: ${checkInTicket.seat_id}` : 'Tự do'}
-                            </Descriptions.Item>
-                        </Descriptions>
-
-                        <Divider plain>Thông tin kiểm soát</Divider>
-                        <Space style={{ width: '100%', justifyContent: 'center' }}>
-                            <Tag icon={<CalendarOutlined />}>
-                                {new Date().toLocaleDateString('vi-VN')}
-                            </Tag>
-                            <Tag icon={<ClockCircleOutlined />}>
-                                {new Date().toLocaleTimeString('vi-VN')}
-                            </Tag>
-                        </Space>
-                    </div>
-                )}
-            </Modal>
+                onConfirm={handleQuickCheckIn}
+                loading={checkInLoading}
+            />
         </div>
     );
 };

@@ -29,7 +29,7 @@ import { getImageUrl } from '@shared/utils/eventUtils';
 
 const { Text } = Typography;
 
-const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDeleteClick }) => {
+const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDeleteClick, setIsAddShowtimeModalOpen }) => {
     const navigate = useNavigate();
 
     const getStatusConfig = (status) => {
@@ -136,6 +136,15 @@ const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDe
                             icon={<ShoppingOutlined />}
                             onClick={() => navigate(`/organizer/event/${record.event_id}/orders`)}
                             style={{ color: '#1890ff' }}
+                        />
+                    </Tooltip>
+
+                    <Tooltip title="Thêm suất diễn">
+                        <Button
+                            type="text"
+                            icon={<ClockCircleOutlined />}
+                            onClick={() => setIsAddShowtimeModalOpen(record)}
+                            style={{ color: '#faad14' }}
                         />
                     </Tooltip>
 

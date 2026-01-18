@@ -25,8 +25,14 @@ def create_app():
     def uploaded_file(filename):
         from flask import make_response, abort
         
-        # DEBUG: Hardcode exact path to ensure no resolution errors
-        uploads_dir = r'C:\Users\khoi.le\Desktop\ticketbooking\uploads'
+        # Dynamic path resolution relative to this file
+        # __file__ is .../ticketbookingapi/app/__init__.py
+        # We want .../ticketbooking/uploads
+        current_app_dir = os.path.dirname(os.path.abspath(__file__)) # .../app
+        api_root = os.path.dirname(current_app_dir) # .../ticketbookingapi
+        project_root = os.path.dirname(api_root) # .../ticketbooking
+        uploads_dir = os.path.join(project_root, 'uploads')
+        
         full_path = os.path.join(uploads_dir, filename)
         
         # Debug logging

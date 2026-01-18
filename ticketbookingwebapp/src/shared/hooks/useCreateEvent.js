@@ -42,6 +42,7 @@ export const useCreateEvent = () => {
         total_capacity: 0,
         status: 'PENDING_APPROVAL',
         is_featured: true,
+        extra_showtimes: [],
         manager_id: user?.user_id || 1
     });
 
@@ -260,6 +261,13 @@ export const useCreateEvent = () => {
             }
             if (formData.sale_end_datetime) {
                 formDataToSend.append('sale_end_datetime', formData.sale_end_datetime);
+            }
+
+            // Append extra showtimes
+            if (formData.extra_showtimes && formData.extra_showtimes.length > 0) {
+                formData.extra_showtimes.forEach(st => {
+                    formDataToSend.append('extra_showtimes', JSON.stringify(st));
+                });
             }
 
             // Add banner image if a new one was selected

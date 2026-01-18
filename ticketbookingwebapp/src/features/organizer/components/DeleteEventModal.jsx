@@ -1,25 +1,70 @@
 import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal, Input, Typography, Alert, Space } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
-const DeleteEventModal = ({ show, onHide, eventName, onConfirm, deleting }) => {
+const { Text } = Typography;
+
+const DeleteEventModal = ({
+    open,
+    onCancel,
+    onConfirm,
+    loading,
+    event,
+    setEvent
+}) => {
+    if (!event) return null;
+
     return (
-        <Modal show={show} onHide={onHide} centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Xác Nhận Xóa</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                Bạn có chắc chắn muốn xóa sự kiện <strong>{eventName}</strong>?
-                <br />
-                <small className="text-muted">Hành động này không thể hoàn tác.</small>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={onHide} disabled={deleting}>
-                    Hủy
-                </Button>
-                <Button variant="danger" onClick={onConfirm} disabled={deleting}>
-                    {deleting ? 'Đang xóa...' : 'Xóa'}
-                </Button>
-            </Modal.Footer>
+        <Modal
+            title={
+                <Space>
+                    <ExclamationCircleOutlined style={{ color: '#faad14' }} />
+                    <span>Yêu cầu xóa sự kiện</span>
+                </Space>
+            }
+            open={open}
+            onOk={onConfirm}
+            onCancel={onCancel}
+            confirmLoading={loading}
+            okText="Gửi yêu cầu"
+            cancelText="Hủy bỏ"
+            okButtonProps={{ danger: true }}
+        >
+            <p>
+                Bạn muốn xóa sự kiện <strong>{event.event_name}</strong>?
+            </p>
+
+            {event.sold_tickets > 0 && (
+                <Text type="warning" strong style={{ display: 'block', marginBottom: 8 }}>
+                    Sự kiện này đã có {event.sold_tickets} vé được bán.
+                </Text>
+            )}
+
+            <div style={{ marginTop: 16 }}>
+                <Text strong>Lý do xóa sự kiện:</Text>
+                <Input.TextArea
+                    placeholder="Vui lòng nhập lý do xóa sự kiện..."
+                    rows={3}
+                    style={{ marginTop: 8 }}
+                    onChange={(e) => {
+                        setEvent(prev => ({
+                            ...prev,
+                            deleteReason: e.target.value
+                        }));
+                    }}
+                    value={event.deleteReason || ''}
+                />
+            </div>
+
+            {event.status === 'PUBLISHED' && (
+                <Alert
+                    message="Không thể xóa"
+                    description="Sự kiện đang ở trạng thái CÔNG KHAI. Vui lòng chuyển về BẢN NHÁP trước khi xóa."
+                    type="error"
+                    showIcon
+                    style={{ marginTop: 16 }}
+                />
+            )}
         </Modal>
     );
 };

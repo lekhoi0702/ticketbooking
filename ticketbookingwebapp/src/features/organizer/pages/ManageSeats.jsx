@@ -2,24 +2,15 @@ import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Card,
-    Button,
     Row,
     Col,
     Space,
     Typography,
     Alert,
-    Spin,
-    Divider,
-    Badge,
-    Result
+    Spin
 } from 'antd';
 import {
-    ArrowLeftOutlined,
-    SaveOutlined,
-    AppstoreOutlined,
-    CheckCircleOutlined,
-    ExclamationCircleOutlined,
-    InfoCircleOutlined
+    AppstoreOutlined
 } from '@ant-design/icons';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
@@ -28,11 +19,13 @@ import SeatMap from '@features/user/components/Event/SeatMap';
 import TicketTypeSidebar from '@features/organizer/components/TicketTypeSidebar';
 import SeatMapTemplateView from '@features/organizer/components/SeatMapTemplateView';
 import SeatGridInitializer from '@features/organizer/components/SeatGridInitializer';
+import SeatMapHeader from '@features/organizer/components/ManageSeats/SeatMapHeader';
+import SeatMapLegend from '@features/organizer/components/ManageSeats/SeatMapLegend';
 
 // Hooks
 import { useManageSeats } from '@shared/hooks/useManageSeats';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const ManageSeats = () => {
     const { eventId } = useParams();
@@ -73,39 +66,16 @@ const ManageSeats = () => {
         <Spin spinning={loading} tip="Đang tải dữ liệu...">
             <div>
                 {/* Page Header Area */}
-                <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Space size={16}>
-                        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} disabled={loading} />
-                        <Title level={4} style={{ margin: 0 }}>Thiết lập sơ đồ ghế</Title>
-                    </Space>
-
-                    {venueTemplate && (
-                        <Space size={24}>
-                            {activeTicketType && (
-                                <Text strong style={{ color: isComplete ? '#52c41a' : '#ff4d4f' }}>
-                                    {isComplete
-                                        ? <Space><CheckCircleOutlined /> Đã đủ số lượng</Space>
-                                        : <Space><ExclamationCircleOutlined /> Còn thiếu: {activeTicketType.quantity - selectedTemplateSeats.length} ghế</Space>
-                                    }
-                                </Text>
-                            )}
-                            <Button
-                                type="primary"
-                                icon={<SaveOutlined />}
-                                onClick={() => {
-                                    if (selectedTemplateSeats.length !== activeTicketType.quantity) {
-                                        message.warning(`Vui lòng chọn đủ ${activeTicketType.quantity} ghế.`);
-                                        return;
-                                    }
-                                    handleSaveTemplateAssignment();
-                                }}
-                                disabled={initializing || !activeTicketType || loading}
-                            >
-                                Lưu cấu hình
-                            </Button>
-                        </Space>
-                    )}
-                </div>
+                <SeatMapHeader
+                    onBack={() => navigate(-1)}
+                    loading={loading}
+                    venueTemplate={venueTemplate}
+                    activeTicketType={activeTicketType}
+                    selectedCount={selectedTemplateSeats.length}
+                    isComplete={isComplete}
+                    onSave={handleSaveTemplateAssignment}
+                    initializing={initializing}
+                />
 
                 {error && (
                     <Alert
@@ -198,13 +168,7 @@ const ManageSeats = () => {
                             </div>
 
                             {/* Legend */}
-                            <div style={{ padding: '16px 24px', borderTop: '1px solid #f0f0f0' }}>
-                                <Space size={32}>
-                                    <Space><Badge color="#d9d9d9" /> <Text type="secondary" style={{ fontSize: 12 }}>Chưa gán</Text></Space>
-                                    <Space><Badge color="#52c41a" /> <Text type="secondary" style={{ fontSize: 12 }}>Đã gán hạng này</Text></Space>
-                                    <Space><Badge color="#ff4d4f" /> <Text type="secondary" style={{ fontSize: 12 }}>Hạng vé khác</Text></Space>
-                                </Space>
-                            </div>
+                            <SeatMapLegend />
                         </Card>
 
                         <Alert

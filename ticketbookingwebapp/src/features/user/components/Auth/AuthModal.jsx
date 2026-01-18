@@ -88,11 +88,14 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
     };
 
     return (
-        <Modal show={show} onHide={handleClose} centered size="md" className="auth-modal">
-            <Modal.Header closeButton className="border-0 pb-0 shadow-none">
-                <div className="w-100 d-flex flex-column align-items-center mt-3">
-                    <div className="auth-modal-icon">
-                        <FaUser />
+        <Modal show={show} onHide={handleClose} centered size="sm" className="auth-modal">
+            <Modal.Header closeButton className="auth-modal-header border-0">
+                <div className="auth-header-content">
+                    <h3 className="auth-header-title">
+                        {activeTab === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+                    </h3>
+                    <div className="auth-mascot">
+                        <img src="/mascot.svg" alt="Mascot" />
                     </div>
                 </div>
             </Modal.Header>
@@ -103,11 +106,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                     className="auth-tabs mb-4 nav-justified border-0"
                 >
                     <Tab eventKey="login" title="Đăng nhập">
-                        <div className="text-center mb-4 mt-3">
-                            <h4 className="fw-bold">Chào mừng trở lại!</h4>
-                            <p className="text-muted small">Đăng nhập để đặt vé và quản lý đơn hàng</p>
-                        </div>
-
                         {error && (
                             <Alert variant={error.type} className="rounded-3 border-0 py-2 small">
                                 {error.msg}
@@ -116,37 +114,31 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
 
                         <Form onSubmit={handleSubmit}>
                             <Form.Group className="mb-3">
-                                <Form.Label className="small fw-bold">
-                                    <FaEnvelope className="me-2 text-muted" />
-                                    Email hoặc Số điện thoại
-                                </Form.Label>
                                 <Form.Control
                                     required
                                     type="text"
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    className="py-2 px-3 bg-light border-0"
+                                    placeholder="Nhập email hoặc số điện thoại"
+                                    className="auth-input"
                                 />
                             </Form.Group>
 
                             <Form.Group className="mb-4">
-                                <Form.Label className="small fw-bold">
-                                    <FaLock className="me-2 text-muted" />
-                                    Mật khẩu
-                                </Form.Label>
                                 <Form.Control
                                     required
                                     type="password"
                                     value={formData.password}
                                     onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                    className="py-2 px-3 bg-light border-0"
+                                    placeholder="Nhập mật khẩu"
+                                    className="auth-input"
                                 />
                             </Form.Group>
 
                             <Button
                                 variant="primary"
                                 type="submit"
-                                className="w-100 py-2 fw-bold"
+                                className="w-100 auth-submit-btn"
                                 disabled={loading}
                             >
                                 {loading ? <LoadingOutlined spin className="me-2" /> : null}
@@ -157,11 +149,6 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                     </Tab>
 
                     <Tab eventKey="register" title="Đăng ký">
-                        <div className="text-center mb-4 mt-3">
-                            <h4 className="fw-bold">Tạo tài khoản mới</h4>
-                            <p className="text-muted small">Đăng ký để bắt đầu trải nghiệm</p>
-                        </div>
-
                         {error && (
                             <Alert variant={error.type} className="rounded-3 border-0 py-2 small">
                                 {error.msg}
@@ -170,58 +157,46 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
 
                         <Form onSubmit={handleSubmit}>
                             <Form.Group className="mb-3">
-                                <Form.Label className="small fw-bold">
-                                    <FaUser className="me-2 text-muted" />
-                                    Họ và tên
-                                </Form.Label>
                                 <Form.Control
                                     required
                                     value={formData.full_name}
                                     onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                                    className="py-2 px-3 bg-light border-0"
+                                    placeholder="Họ và tên"
+                                    className="auth-input"
                                 />
                             </Form.Group>
 
                             <Form.Group className="mb-3">
-                                <Form.Label className="small fw-bold">
-                                    <FaPhone className="me-2 text-muted" />
-                                    Số điện thoại
-                                </Form.Label>
                                 <Form.Control
                                     required
                                     type="tel"
                                     value={formData.phone}
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                    className="py-2 px-3 bg-light border-0"
+                                    placeholder="Số điện thoại"
+                                    className="auth-input"
                                     pattern="[0-9]{10}"
                                 />
                             </Form.Group>
 
                             <Form.Group className="mb-3">
-                                <Form.Label className="small fw-bold">
-                                    <FaEnvelope className="me-2 text-muted" />
-                                    Email
-                                </Form.Label>
                                 <Form.Control
                                     required
                                     type="email"
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    className="py-2 px-3 bg-light border-0"
+                                    placeholder="Email"
+                                    className="auth-input"
                                 />
                             </Form.Group>
 
                             <Form.Group className="mb-4">
-                                <Form.Label className="small fw-bold">
-                                    <FaLock className="me-2 text-muted" />
-                                    Mật khẩu
-                                </Form.Label>
                                 <Form.Control
                                     required
                                     type="password"
                                     value={formData.password}
                                     onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                    className="py-2 px-3 bg-light border-0"
+                                    placeholder="Mật khẩu"
+                                    className="auth-input"
                                     minLength="6"
                                 />
                             </Form.Group>
@@ -229,7 +204,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                             <Button
                                 variant="primary"
                                 type="submit"
-                                className="w-100 py-2 fw-bold"
+                                className="w-100 auth-submit-btn"
                                 disabled={loading}
                             >
                                 {loading ? <LoadingOutlined spin className="me-2" /> : null}

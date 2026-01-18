@@ -149,6 +149,7 @@ export const useEventList = () => {
         deleting,
         showDeleteModal,
         eventToDelete,
+        setEventToDelete,
         setShowDeleteModal,
         handleDeleteClick,
         handleDeleteConfirm,

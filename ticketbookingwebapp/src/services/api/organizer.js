@@ -27,6 +27,19 @@ export const organizerApi = {
         return await response.json();
     },
 
+    async addShowtime(eventId, showtimeData) {
+        const response = await fetch(`${API_BASE_URL}/organizer/events/${eventId}/duplicate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(showtimeData),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to add showtime');
+        }
+        return await response.json();
+    },
+
     async updateEvent(eventId, formData) {
         const response = await fetch(`${API_BASE_URL}/organizer/events/${eventId}`, {
             method: 'PUT',

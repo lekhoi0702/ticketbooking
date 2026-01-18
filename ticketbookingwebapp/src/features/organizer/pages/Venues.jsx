@@ -5,14 +5,11 @@ import {
     Typography,
     Space,
     Tag,
-    Modal,
-    Input,
     message,
     Spin,
     Divider,
     Row,
-    Col,
-    Form
+    Col
 } from 'antd';
 import {
     ReloadOutlined,
@@ -27,6 +24,7 @@ import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import VenueSeatMapEditor from '@features/organizer/components/VenueSeatMapEditor';
+import VenueFormModal from '@features/organizer/components/VenueFormModal';
 
 const { Text, Title } = Typography;
 
@@ -43,7 +41,6 @@ const OrganizerVenues = () => {
 
     // Create/Edit Venue State
     const [showVenueModal, setShowVenueModal] = useState(false);
-    const [venueForm] = Form.useForm();
     const [editingVenue, setEditingVenue] = useState(null);
 
     useEffect(() => {
@@ -68,58 +65,12 @@ const OrganizerVenues = () => {
     // --- VENUE CRUD OPERATIONS ---
     const handleCreateVenue = () => {
         setEditingVenue(null);
-        venueForm.resetFields();
         setShowVenueModal(true);
     };
 
     const handleEditVenue = (venue) => {
         setEditingVenue(venue);
-        venueForm.setFieldsValue({
-            venue_name: venue.venue_name,
-            address: venue.address,
-            city: venue.city,
-            contact_phone: venue.contact_phone,
-            capacity: venue.capacity,
-            vip_seats: venue.vip_seats,
-            standard_seats: venue.standard_seats,
-            economy_seats: venue.economy_seats
-        });
         setShowVenueModal(true);
-    };
-
-    const handleVenueModalOk = async () => {
-        try {
-            const values = await venueForm.validateFields();
-            setSaving(true);
-
-            if (editingVenue) {
-                // Update
-                const res = await api.updateVenue(editingVenue.venue_id, {
-                    ...values,
-                    status: editingVenue.status
-                });
-                if (res.success) {
-                    message.success("Cập nhật địa điểm thành công");
-                    setShowVenueModal(false);
-                    fetchVenues();
-                }
-            } else {
-                // Create
-                const res = await api.createVenue({
-                    ...values,
-                    manager_id: user.user_id
-                });
-                if (res.success) {
-                    message.success("Tạo địa điểm mới thành công");
-                    setShowVenueModal(false);
-                    fetchVenues();
-                }
-            }
-        } catch (error) {
-            message.error(error.message || "Có lỗi xảy ra");
-        } finally {
-            setSaving(false);
-        }
     };
 
     // --- SEAT MAP EDITOR Handlers ---
@@ -251,58 +202,14 @@ const OrganizerVenues = () => {
                     })}
                 </Row>
 
-                {/* Create/Edit Modal */}
-                <Modal
-                    title={editingVenue ? "Cập nhật địa điểm" : "Tạo địa điểm mới"}
-                    open={showVenueModal}
-                    onOk={handleVenueModalOk}
+                {/* Create/Edit Modal extracted */}
+                <VenueFormModal
+                    visible={showVenueModal}
                     onCancel={() => setShowVenueModal(false)}
-                    confirmLoading={saving}
-                >
-                    <Form
-                        form={venueForm}
-                        layout="vertical"
-                        initialValues={{
-                            capacity: 0,
-                            vip_seats: 0,
-                            standard_seats: 0,
-                            economy_seats: 0,
-                            city: 'Hồ Chí Minh'
-                        }}
-                    >
-                        <Form.Item
-                            name="venue_name"
-                            label="Tên địa điểm"
-                            rules={[{ required: true, message: 'Vui lòng nhập tên địa điểm' }]}
-                        >
-                            <Input placeholder="Ví dụ: Nhà hát lớn Hà Nội" />
-                        </Form.Item>
-
-                        <Row gutter={16}>
-                            <Form.Item
-                                name="city"
-                                label="Thành phố/Tỉnh"
-                                rules={[{ required: true, message: 'Vui lòng nhập thành phố' }]}
-                            >
-                                <Input />
-                            </Form.Item>
-                            <Form.Item
-                                name="contact_phone"
-                                label="Số điện thoại liên hệ"
-                            >
-                                <Input />
-                            </Form.Item>
-                        </Row>
-
-                        <Form.Item
-                            name="address"
-                            label="Địa chỉ chi tiết"
-                            rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
-                        >
-                            <Input.TextArea rows={2} />
-                        </Form.Item>
-                    </Form>
-                </Modal>
+                    onSuccess={fetchVenues}
+                    editingVenue={editingVenue}
+                    user={user}
+                />
 
                 {/* Seat Map Editor Component */}
                 <VenueSeatMapEditor
