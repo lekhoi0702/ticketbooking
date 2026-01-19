@@ -55,6 +55,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 import { AuthProvider, useAuth } from '@context/AuthContext';
+import { FavoriteProvider } from '@context/FavoriteContext';
 
 // Protected Route Component with Role Support
 const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/" }) => {
@@ -83,90 +84,92 @@ function App() {
     <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#52c41a' }} spin /> }}>
       <AntdApp>
         <AuthProvider>
-          <Router>
-            <PageTitleUpdater />
-            <Routes>
-              {/* User Routes */}
-              <Route element={
-                <ConfigProvider theme={DarkThemeConfig}>
-                  <UserLayout />
-                </ConfigProvider>
-              }>
-                <Route path="/" element={<Home />} />
-                <Route path="/events" element={<AllEvents />} />
-                <Route path="/event/:id" element={<EventDetail />} />
-                <Route path="/search" element={<SearchResults />} />
-                <Route path="/category/:id" element={<CategoryEvents />} />
+          <FavoriteProvider>
+            <Router>
+              <PageTitleUpdater />
+              <Routes>
+                {/* User Routes */}
+                <Route element={
+                  <ConfigProvider theme={DarkThemeConfig}>
+                    <UserLayout />
+                  </ConfigProvider>
+                }>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/events" element={<AllEvents />} />
+                  <Route path="/event/:id" element={<EventDetail />} />
+                  <Route path="/search" element={<SearchResults />} />
+                  <Route path="/category/:id" element={<CategoryEvents />} />
+                  <Route
+                    path="/checkout/:eventId"
+                    element={
+                      <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
+                        <Checkout />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/order-success/:orderCode" element={<OrderSuccess />} />
+                  <Route path="/payment/vnpay-return" element={<VNPayReturn />} />
+                  <Route
+                    path="/my-orders"
+                    element={<Navigate to="/profile?tab=orders" replace />}
+                  />
+                  <Route
+                    path="/my-tickets"
+                    element={<Navigate to="/profile?tab=tickets" replace />}
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
+
+                {/* Admin Routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Navigate to="events" />} />
+                  <Route path="users" element={<UsersManagement />} />
+                  <Route path="categories" element={<AdminCategories />} />
+                  <Route path="banners" element={<AdminBanners />} />
+                  <Route path="events" element={<AdminEventsManagement />} />
+                  <Route path="orders" element={<AdminOrdersManagement />} />
+
+                  <Route path="event-deletion-requests" element={<EventDeletionRequests />} />
+                  <Route path="statistics" element={<AdminStatistics />} />
+                  <Route path="profile" element={<AdminProfile />} />
+                </Route>
+
+                {/* Organizer Routes */}
+                <Route path="/organizer/home" element={<OrganizerHome />} />
+                <Route path="/organizer/login" element={<OrganizerLogin />} />
                 <Route
-                  path="/checkout/:eventId"
+                  path="/organizer"
                   element={
-                    <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
-                      <Checkout />
+                    <ProtectedRoute allowedRoles={['ORGANIZER', 'ADMIN']} redirectTo="/organizer/home">
+                      <OrganizerLayout />
                     </ProtectedRoute>
                   }
-                />
-                <Route path="/order-success/:orderCode" element={<OrderSuccess />} />
-                <Route path="/payment/vnpay-return" element={<VNPayReturn />} />
-                <Route
-                  path="/my-orders"
-                  element={<Navigate to="/profile?tab=orders" replace />}
-                />
-                <Route
-                  path="/my-tickets"
-                  element={<Navigate to="/profile?tab=tickets" replace />}
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-              </Route>
-
-              {/* Admin Routes */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Navigate to="events" />} />
-                <Route path="users" element={<UsersManagement />} />
-                <Route path="categories" element={<AdminCategories />} />
-                <Route path="banners" element={<AdminBanners />} />
-                <Route path="events" element={<AdminEventsManagement />} />
-                <Route path="orders" element={<AdminOrdersManagement />} />
-
-                <Route path="event-deletion-requests" element={<EventDeletionRequests />} />
-                <Route path="statistics" element={<AdminStatistics />} />
-                <Route path="profile" element={<AdminProfile />} />
-              </Route>
-
-              {/* Organizer Routes */}
-              <Route path="/organizer/home" element={<OrganizerHome />} />
-              <Route path="/organizer/login" element={<OrganizerLogin />} />
-              <Route
-                path="/organizer"
-                element={
-                  <ProtectedRoute allowedRoles={['ORGANIZER', 'ADMIN']} redirectTo="/organizer/home">
-                    <OrganizerLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Navigate to="events" />} />
-                <Route path="events" element={<EventList />} />
-                <Route path="create-event" element={<CreateEvent />} />
-                <Route path="edit-event/:eventId" element={<EditEvent />} />
-                <Route path="event/:eventId" element={<OrganizerEventDetails />} />
-                <Route path="manage-seats/:eventId" element={<ManageSeats />} />
-                <Route path="event/:eventId/orders" element={<EventOrders />} />
-                <Route path="venues" element={<OrganizerVenues />} />
-                <Route path="tickets" element={<TicketManagement />} />
-                <Route path="profile" element={<OrganizerProfile />} />
-                <Route path="profile/edit" element={<OrganizerProfileEdit />} />
-                <Route path="orders" element={<ManageOrders />} />
-                <Route path="discounts" element={<DiscountManagement />} />
-              </Route>
-            </Routes>
-          </Router>
+                >
+                  <Route index element={<Navigate to="events" />} />
+                  <Route path="events" element={<EventList />} />
+                  <Route path="create-event" element={<CreateEvent />} />
+                  <Route path="edit-event/:eventId" element={<EditEvent />} />
+                  <Route path="event/:eventId" element={<OrganizerEventDetails />} />
+                  <Route path="manage-seats/:eventId" element={<ManageSeats />} />
+                  <Route path="event/:eventId/orders" element={<EventOrders />} />
+                  <Route path="venues" element={<OrganizerVenues />} />
+                  <Route path="tickets" element={<TicketManagement />} />
+                  <Route path="profile" element={<OrganizerProfile />} />
+                  <Route path="profile/edit" element={<OrganizerProfileEdit />} />
+                  <Route path="orders" element={<ManageOrders />} />
+                  <Route path="discounts" element={<DiscountManagement />} />
+                </Route>
+              </Routes>
+            </Router>
+          </FavoriteProvider>
         </AuthProvider>
       </AntdApp>
     </ConfigProvider>

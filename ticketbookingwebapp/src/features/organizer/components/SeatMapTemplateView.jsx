@@ -21,8 +21,58 @@ const SeatMapTemplateView = ({
     handleSeatMouseEnter,
     toggleAreaSeats
 }) => {
+    // Robust seat matching logic
+    const isSameSeat = (s1, s2) => {
+        if (!s1 || !s2) return false;
+
+        const r1 = String(s1.row_name || '').trim().toUpperCase();
+        const r2 = String(s2.row_name || '').trim().toUpperCase();
+
+        // Row must match
+        if (r1 !== r2) return false;
+
+        // Seat number match - try numeric comparison if possible
+        const n1 = String(s1.seat_number || '').trim();
+        const n2 = String(s2.seat_number || '').trim();
+
+        if (n1 !== n2) {
+            // Fallback to numeric comparison to handle "01" vs "1"
+            const p1 = parseInt(n1, 10);
+            const p2 = parseInt(n2, 10);
+            if (isNaN(p1) || isNaN(p2) || p1 !== p2) {
+                return false;
+            }
+        }
+
+        // Lenient Area Match
+        const cleanArea = (a) => {
+            if (!a) return '';
+            return String(a)
+                .trim()
+                .toUpperCase()
+                .replace(/^(KHU VỰC|KHU|KHÁN ĐÀI|AREA|ZONE|SECTION)\s+/g, '') // Remove common prefixes
+                .replace(/\s+/g, '') // Remove all internal spaces
+                .trim();
+        };
+
+        const a1 = s1.area || s1.area_name || '';
+        const a2 = s2.area || s2.area_name || s2.name || '';
+
+        const ca1 = cleanArea(a1);
+        const ca2 = cleanArea(a2);
+
+        // Only compare if both have a non-empty cleaned area name
+        if (ca1 && ca2 && ca1 !== ca2) return false;
+
+        return true;
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', userSelect: 'none' }}>
+            {/* Debug info - can be removed after testing */}
+            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginBottom: 8 }}>
+                Ghế hiện có: {selectedTemplateSeats?.length || 0} | Tổng ghế đã gán: {allOccupiedSeats?.length || 0}
+            </div>
             {/* Stage element */}
             <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{
@@ -73,14 +123,13 @@ const SeatMapTemplateView = ({
 
                         const availableSeatsCount = seatsInArea.filter(t =>
                             !allOccupiedSeats.some(s =>
-                                s.row_name === t.row_name &&
-                                String(s.seat_number) === String(t.seat_number) &&
+                                isSameSeat(s, t) &&
                                 String(s.ticket_type_id) !== String(activeTicketType?.ticket_type_id)
                             )
                         ).length;
 
                         const selectedInAreaCount = selectedTemplateSeats.filter(s =>
-                            s.area === area.name
+                            String(s.area || s.area_name || '').trim().toUpperCase() === String(area.name).trim().toUpperCase()
                         ).length;
 
                         const isAllSelected = selectedInAreaCount >= availableSeatsCount && availableSeatsCount > 0;
@@ -158,16 +207,8 @@ const SeatMapTemplateView = ({
                                                         area: area.name
                                                     };
 
-                                                    const isSelected = selectedTemplateSeats.some(s =>
-                                                        String(s.row_name) === String(t.row_name) &&
-                                                        String(s.seat_number) === String(t.seat_number) &&
-                                                        (!s.area || s.area === t.area)
-                                                    );
-                                                    const occupiedBy = allOccupiedSeats.find(s =>
-                                                        String(s.row_name) === String(t.row_name) &&
-                                                        String(s.seat_number) === String(t.seat_number) &&
-                                                        (!s.area || s.area === t.area)
-                                                    );
+                                                    const isSelected = selectedTemplateSeats.some(s => isSameSeat(s, t));
+                                                    const occupiedBy = allOccupiedSeats.find(s => isSameSeat(s, t));
 
                                                     return (
                                                         <TemplateSeat
@@ -192,14 +233,8 @@ const SeatMapTemplateView = ({
                 ) : Array.isArray(venueTemplate) ? (
                     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
                         {venueTemplate.map((t, idx) => {
-                            const isSelected = selectedTemplateSeats.some(s =>
-                                String(s.row_name) === String(t.row_name) &&
-                                String(s.seat_number) === String(t.seat_number)
-                            );
-                            const occupiedBy = allOccupiedSeats.find(s =>
-                                String(s.row_name) === String(t.row_name) &&
-                                String(s.seat_number) === String(t.seat_number)
-                            );
+                            const isSelected = selectedTemplateSeats.some(s => isSameSeat(s, t));
+                            const occupiedBy = allOccupiedSeats.find(s => isSameSeat(s, t));
 
                             return (
                                 <TemplateSeat

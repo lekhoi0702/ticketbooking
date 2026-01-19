@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { message } from 'antd';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
 
@@ -108,12 +109,13 @@ export const useEventList = () => {
                 setEvents(prev => prev.map(e =>
                     e.event_id === eventId ? { ...e, status: 'PUBLISHED' } : e
                 ));
+                message.success('Sự kiện đã được đăng công khai thành công');
             } else {
-                alert(response.message || 'Không thể đăng sự kiện');
+                message.error(response.message || 'Không thể đăng sự kiện');
             }
         } catch (err) {
             console.error('Error publishing event:', err);
-            alert(err.message || 'Không thể đăng sự kiện');
+            message.error(err.message || 'Không thể đăng sự kiện');
         } finally {
             setLoading(false);
         }
@@ -131,12 +133,13 @@ export const useEventList = () => {
                 setEvents(prev => prev.map(e =>
                     e.event_id === eventId ? { ...e, status: 'DRAFT' } : e
                 ));
+                message.success('Sự kiện đã được chuyển về trạng thái bản nháp');
             } else {
-                alert(response.message || 'Không thể hủy yêu cầu duyệt');
+                message.error(response.message || 'Không thể chuyển trạng thái sự kiện');
             }
         } catch (err) {
             console.error('Error cancelling approval:', err);
-            alert(err.message || 'Không thể hủy yêu cầu duyệt');
+            message.error(err.message || 'Không thể kết nối đến server');
         } finally {
             setLoading(false);
         }

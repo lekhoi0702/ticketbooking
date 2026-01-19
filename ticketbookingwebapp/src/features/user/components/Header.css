@@ -12,10 +12,10 @@
 }
 
 .header-top-wrapper {
-    background: #ffffff;
+    background: rgb(45, 194, 117);
     padding: 0 40px;
     height: 72px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: none;
 }
 
 .header-bottom-nav {
@@ -56,7 +56,7 @@
     font-size: 28px !important;
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     font-weight: 800 !important;
-    color: #1f2937 !important;
+    color: #ffffff !important;
     letter-spacing: -1px;
     line-height: 1 !important;
 }
@@ -118,18 +118,25 @@
     color: #909399 !important;
 }
 
-.header-search .ant-input-search .ant-input-group .ant-input-search-button {
-    border-top-right-radius: 8px !important;
-    border-bottom-right-radius: 8px !important;
-    background-color: #52c41a !important;
-    border-color: #52c41a !important;
-    box-shadow: none !important;
+/* SEARCH INPUT STYLING - Magnitude glass as prefix */
+.custom-search-input {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    padding-left: 12px !important;
+    border: none !important;
     height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
-.header-search .ant-input-search .ant-input-group .ant-input-search-button:hover {
-    background-color: #73d13d !important;
-    border-color: #73d13d !important;
+.custom-search-input .ant-input {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.custom-search-input:hover,
+.custom-search-input:focus-within {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Search Suggestions Dropdown */
@@ -212,13 +219,13 @@
 .nav-btn,
 .login-btn-text {
     font-weight: 600 !important;
-    color: #1f2937 !important;
+    color: #ffffff !important;
 }
 
 .organizer-btn {
     font-weight: 600 !important;
-    color: #1f2937 !important;
-    border: 1px solid #1f2937 !important;
+    color: #ffffff !important;
+    border: 1px solid #ffffff !important;
     border-radius: 50px !important;
     height: 40px !important;
     padding: 0 24px !important;
@@ -230,29 +237,27 @@
 }
 
 .nav-btn:hover {
-    color: #52c41a !important;
-    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .organizer-btn:hover {
-    color: #52c41a !important;
-    border-color: #52c41a !important;
-    background-color: transparent !important;
+    color: #ffffff !important;
+    border-color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
     transform: translateY(-1px);
 }
 
-.login-btn-text {
-    color: #52c41a !important;
-}
+
 
 .login-btn-text:hover {
-    color: #389e0d !important;
-    background-color: rgba(82, 196, 26, 0.1);
+    color: #ffffff !important;
+    opacity: 0.8;
 }
 
 .user-name {
     font-weight: 700 !important;
-    color: #1f2937 !important;
+    color: #ffffff !important;
     font-size: 14px;
 }
 

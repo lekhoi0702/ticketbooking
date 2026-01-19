@@ -35,6 +35,8 @@ class Event(db.Model):
             'description': self.description,
             'start_datetime': self.start_datetime.isoformat() if self.start_datetime else None,
             'end_datetime': self.end_datetime.isoformat() if self.end_datetime else None,
+            'sale_start_datetime': self.sale_start_datetime.isoformat() if self.sale_start_datetime else None,
+            'sale_end_datetime': self.sale_end_datetime.isoformat() if self.sale_end_datetime else None,
             'banner_image_url': self.banner_image_url,
             'total_capacity': self.total_capacity,
             'sold_tickets': self.sold_tickets,

@@ -1,7 +1,74 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Row, Col, Space, Button, message } from 'antd';
+import { Modal, Form, Input, Space, Button, message, AutoComplete } from 'antd';
 import VenueLocationSearch from './VenueLocationSearch';
 import { api } from '@services/api';
+
+// Danh sách tỉnh/thành phố Việt Nam
+const vietnameseCities = [
+    'Hà Nội',
+    'Hồ Chí Minh',
+    'Đà Nẵng',
+    'Hải Phòng',
+    'Cần Thơ',
+    'An Giang',
+    'Bà Rịa - Vũng Tàu',
+    'Bắc Giang',
+    'Bắc Kạn',
+    'Bạc Liêu',
+    'Bắc Ninh',
+    'Bến Tre',
+    'Bình Định',
+    'Bình Dương',
+    'Bình Phước',
+    'Bình Thuận',
+    'Cà Mau',
+    'Cao Bằng',
+    'Đắk Lắk',
+    'Đắk Nông',
+    'Điện Biên',
+    'Đồng Nai',
+    'Đồng Tháp',
+    'Gia Lai',
+    'Hà Giang',
+    'Hà Nam',
+    'Hà Tĩnh',
+    'Hải Dương',
+    'Hậu Giang',
+    'Hòa Bình',
+    'Hưng Yên',
+    'Khánh Hòa',
+    'Kiên Giang',
+    'Kon Tum',
+    'Lai Châu',
+    'Lâm Đồng',
+    'Lạng Sơn',
+    'Lào Cai',
+    'Long An',
+    'Nam Định',
+    'Nghệ An',
+    'Ninh Bình',
+    'Ninh Thuận',
+    'Phú Thọ',
+    'Phú Yên',
+    'Quảng Bình',
+    'Quảng Nam',
+    'Quảng Ngãi',
+    'Quảng Ninh',
+    'Quảng Trị',
+    'Sóc Trăng',
+    'Sơn La',
+    'Tây Ninh',
+    'Thái Bình',
+    'Thái Nguyên',
+    'Thanh Hóa',
+    'Thừa Thiên Huế',
+    'Tiền Giang',
+    'Trà Vinh',
+    'Tuyên Quang',
+    'Vĩnh Long',
+    'Vĩnh Phúc',
+    'Yên Bái'
+];
 
 const VenueFormModal = ({
     visible,
@@ -21,7 +88,6 @@ const VenueFormModal = ({
                     venue_name: editingVenue.venue_name,
                     address: editingVenue.address,
                     city: editingVenue.city,
-                    contact_phone: editingVenue.contact_phone,
                     capacity: editingVenue.capacity,
                     vip_seats: editingVenue.vip_seats,
                     standard_seats: editingVenue.standard_seats,
@@ -80,6 +146,12 @@ const VenueFormModal = ({
         }
     };
 
+    // Filter cities based on search input
+    const cityOptions = vietnameseCities.map(city => ({
+        value: city,
+        label: city
+    }));
+
     return (
         <Modal
             title={editingVenue ? "Cập nhật địa điểm" : "Tạo địa điểm mới"}
@@ -101,25 +173,22 @@ const VenueFormModal = ({
                     <Input placeholder="Ví dụ: Nhà hát lớn Hà Nội" />
                 </Form.Item>
 
-                <Row gutter={16}>
-                    <Col span={12}>
-                        <Form.Item
-                            name="city"
-                            label="Thành phố/Tỉnh"
-                            rules={[{ required: true, message: 'Vui lòng nhập thành phố' }]}
-                        >
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item
-                            name="contact_phone"
-                            label="Số điện thoại liên hệ"
-                        >
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                </Row>
+
+                <Form.Item
+                    name="city"
+                    label="Thành phố/Tỉnh"
+                    rules={[{ required: true, message: 'Vui lòng chọn thành phố' }]}
+                >
+                    <AutoComplete
+                        options={cityOptions}
+                        placeholder="Chọn hoặc nhập tên thành phố/tỉnh"
+                        filterOption={(inputValue, option) =>
+                            option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
+                    />
+                </Form.Item>
+
 
                 {/* Extracted Location Component */}
                 <VenueLocationSearch

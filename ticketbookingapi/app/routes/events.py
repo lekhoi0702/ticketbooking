@@ -226,3 +226,109 @@ def get_event_ticket_types(event_id):
             'message': str(e)
         }), 500
 
+@events_bp.route("/events/favorites/toggle", methods=["POST"])
+def toggle_favorite():
+    """Toggle favorite status for an event"""
+    try:
+        from app.services.event_service import EventService
+        data = request.get_json()
+        user_id = data.get('user_id')
+        event_id = data.get('event_id')
+        
+        if not user_id or not event_id:
+            return jsonify({
+                'success': False,
+                'message': 'User ID and Event ID are required'
+            }), 400
+            
+        is_added, message = EventService.toggle_favorite(user_id, event_id)
+        
+        return jsonify({
+            'success': True,
+            'is_favorite': is_added,
+            'message': message
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@events_bp.route("/events/favorites/user/<int:user_id>", methods=["GET"])
+def get_user_favorites(user_id):
+    """Get all favorite events for a user"""
+    try:
+        from app.services.event_service import EventService
+        favorites = EventService.get_user_favorites(user_id)
+        
+        return jsonify({
+            'success': True,
+            'data': favorites
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@events_bp.route("/events/favorites/ids/<int:user_id>", methods=["GET"])
+def get_user_favorite_ids(user_id):
+    """Get list of event IDs favorited by user"""
+    try:
+        from app.services.event_service import EventService
+        favorite_ids = EventService.get_user_favorite_ids(user_id)
+        
+        return jsonify({
+            'success': True,
+            'data': favorite_ids
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@events_bp.route("/events/favorites/cleanup", methods=["POST"])
+def cleanup_expired_favorites():
+    """Cleanup favorites for expired events (admin/system endpoint)"""
+    try:
+        from app.models.favorite_event import FavoriteEvent
+        from datetime import datetime
+        
+        # Get current time
+        now = datetime.utcnow()
+        
+        # Find all events that have ended
+        expired_events = Event.query.filter(Event.end_datetime <= now).all()
+        expired_event_ids = [event.event_id for event in expired_events]
+        
+        if not expired_event_ids:
+            return jsonify({
+                'success': True,
+                'message': 'No expired events found',
+                'removed_count': 0
+            }), 200
+        
+        # Delete favorites for expired events
+        deleted_count = FavoriteEvent.query.filter(
+            FavoriteEvent.event_id.in_(expired_event_ids)
+        ).delete(synchronize_session=False)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully removed {deleted_count} favorites for {len(expired_event_ids)} expired events',
+            'removed_count': deleted_count,
+            'expired_event_count': len(expired_event_ids)
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500

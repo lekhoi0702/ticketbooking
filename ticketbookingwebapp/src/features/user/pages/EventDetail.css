@@ -464,6 +464,44 @@
     min-height: 450px;
 }
 
+.event-hero-favorite-btn-wrapper {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.event-hero-favorite-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding: 8px 16px !important;
+    border-radius: 30px !important;
+    color: white !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.event-hero-favorite-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.event-hero-favorite-btn.active {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.event-hero-favorite-btn.active .anticon {
+    color: #ffb400 !important;
+}
+
 /* Left Panel (Info - The Stub) */
 .ticket-hero-left {
     background-color: #2d3748;
@@ -887,4 +925,30 @@
     border: none;
     padding: 0;
     margin: 0;
+}
+
+/* Ticket Selection Tabs */
+.custom-tabs .nav-link {
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 600;
+    padding: 10px 20px !important;
+}
+
+.custom-tabs .nav-link.active {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    /* Chữ đen trên nền trắng */
+    border-radius: 8px 8px 0 0 !important;
+    font-weight: 700;
+}
+
+.custom-tabs .nav-link.active span {
+    color: #000000 !important;
+    /* Đảm bảo text bên trong cũng đen */
+}
+
+.custom-tabs .nav-link:hover:not(.active) {
+    color: #2dc275 !important;
+    background: rgba(255, 255, 255, 0.05);
 }

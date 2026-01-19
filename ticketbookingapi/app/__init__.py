@@ -16,7 +16,8 @@ def create_app():
     # Import models to ensure they are registered
     from app.models import (
         Role, User, EventCategory, Venue, Event, 
-        TicketType, Order, Payment, Ticket, Discount, Banner, OrganizerInfo
+        TicketType, Order, Payment, Ticket, Discount, Banner, OrganizerInfo,
+        FavoriteEvent
     )
     from app.models.event_deletion_request import EventDeletionRequest
 

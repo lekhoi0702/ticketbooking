@@ -36,29 +36,37 @@ def get_all_event_seats(event_id):
     """Lấy toàn bộ danh sách ghế đã được gán của một sự kiện (cho tất cả hạng vé)"""
     try:
         # Optimized query using only the fields we need
+        # Include seat_id and status if needed for frontend logic
         seats = db.session.query(
-            Seat.row_name, 
-            Seat.seat_number, 
+            Seat.seat_id,
+            Seat.row_name,
+            Seat.seat_number,
             Seat.ticket_type_id,
             Seat.area_name,
             Seat.x_pos,
-            Seat.y_pos
+            Seat.y_pos,
+            Seat.status
         ).join(TicketType).filter(TicketType.event_id == event_id).all()
-        
+
         return jsonify({
             'success': True,
             'data': [
                 {
+                    'seat_id': s.seat_id,
                     'row_name': s.row_name,
                     'seat_number': s.seat_number,
                     'ticket_type_id': s.ticket_type_id,
                     'area_name': s.area_name,
                     'x_pos': s.x_pos,
-                    'y_pos': s.y_pos
+                    'y_pos': s.y_pos,
+                    'status': s.status
                 } for s in seats
             ]
         }), 200
     except Exception as e:
+        import traceback
+        print(f"Error in get_all_event_seats: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @seats_bp.route("/seats/initialize-default", methods=["POST"])

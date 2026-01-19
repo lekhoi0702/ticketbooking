@@ -19,14 +19,14 @@ const DeleteEventModal = ({
             title={
                 <Space>
                     <ExclamationCircleOutlined style={{ color: '#faad14' }} />
-                    <span>Yêu cầu xóa sự kiện</span>
+                    <span>Xác nhận xóa sự kiện</span>
                 </Space>
             }
             open={open}
             onOk={onConfirm}
             onCancel={onCancel}
             confirmLoading={loading}
-            okText="Gửi yêu cầu"
+            okText="Xác nhận"
             cancelText="Hủy bỏ"
             okButtonProps={{ danger: true }}
         >
@@ -35,26 +35,14 @@ const DeleteEventModal = ({
             </p>
 
             {event.sold_tickets > 0 && (
-                <Text type="warning" strong style={{ display: 'block', marginBottom: 8 }}>
-                    Sự kiện này đã có {event.sold_tickets} vé được bán.
-                </Text>
-            )}
-
-            <div style={{ marginTop: 16 }}>
-                <Text strong>Lý do xóa sự kiện:</Text>
-                <Input.TextArea
-                    placeholder="Vui lòng nhập lý do xóa sự kiện..."
-                    rows={3}
-                    style={{ marginTop: 8 }}
-                    onChange={(e) => {
-                        setEvent(prev => ({
-                            ...prev,
-                            deleteReason: e.target.value
-                        }));
-                    }}
-                    value={event.deleteReason || ''}
+                <Alert
+                    message="Cảnh báo: Đã có vé được bán"
+                    description={`Sự kiện này đã có ${event.sold_tickets} vé được bán. Việc xóa sự kiện sẽ yêu cầu Admin phê duyệt.`}
+                    type="warning"
+                    showIcon
+                    style={{ marginBottom: 16 }}
                 />
-            </div>
+            )}
 
             {event.status === 'PUBLISHED' && (
                 <Alert

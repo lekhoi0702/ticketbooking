@@ -1,0 +1,65 @@
+/* Adjust Schedule List inside Tab */
+.tab-content-wrapper .schedule-selector {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Ticket Selection White Theme - specifically for #ticket-selection */
+#ticket-selection.detail-section {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+#ticket-selection .section-title {
+    color: #111111 !important;
+}
+
+#ticket-selection .card {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+#ticket-selection .custom-tabs {
+    border-bottom: 1px solid #eee;
+}
+
+#ticket-selection .nav-link {
+    color: #666 !important;
+}
+
+#ticket-selection .nav-link:hover {
+    background: #f5f5f5 !important;
+}
+
+#ticket-selection .nav-link.active {
+    background: #2dc275 !important;
+    color: #fff !important;
+}
+
+#ticket-selection .ticket-name {
+    color: #111 !important;
+}
+
+#ticket-selection .text-muted {
+    color: #666 !important;
+}
+
+#ticket-selection .quantity-selector {
+    background: #f5f5f5 !important;
+    border: 1px solid #ddd !important;
+}
+
+#ticket-selection .qty-val {
+    color: #111 !important;
+}
+
+#ticket-selection .text-dark {
+    color: #111 !important;
+}
+
+#ticket-selection .fw-bold {
+    color: #111 !important;
+}

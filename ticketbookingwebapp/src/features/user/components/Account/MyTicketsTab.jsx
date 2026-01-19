@@ -191,7 +191,7 @@ const MyTicketsTab = () => {
                                         <QRCodeSVG
                                             id={`qr-${ticket.ticket_id}`}
                                             value={ticket.ticket_code}
-                                            size={110}
+                                            size={90}
                                             level="H"
                                         />
                                     )}
@@ -203,55 +203,52 @@ const MyTicketsTab = () => {
             )}
 
             {/* QR Code Modal */}
-            <Modal show={showQRModal} onHide={handleCloseQR} centered size="md">
-                <Modal.Header closeButton className="border-0 pb-0 bg-dark text-white">
-                    <Modal.Title className="fw-bold">Vé Điện Tử</Modal.Title>
+            <Modal show={showQRModal} onHide={handleCloseQR} centered dialogClassName="custom-qr-modal">
+                <Modal.Header closeButton className="border-0 pb-0 bg-dark text-white custom-modal-header">
+                    <Modal.Title className="fw-bold fs-5">Vé Điện Tử</Modal.Title>
                 </Modal.Header>
-                <Modal.Body className="text-center p-4 bg-dark text-white">
+                <Modal.Body className="text-center p-3 bg-dark text-white">
                     {selectedTicket && (
-                        <div className="qr-modal-content">
-                            <div className="qr-code-wrapper mb-4 p-4 bg-white rounded-4 shadow-sm d-inline-block">
+                        <div className="qr-modal-horizontal">
+                            <div className="qr-code-wrapper p-3 bg-white rounded-4 shadow-sm">
                                 <QRCodeSVG
                                     id="ticket-qr-code-tab"
                                     value={selectedTicket.ticket_code || 'TICKET'}
-                                    size={256}
+                                    size={160}
                                     level="H"
                                 />
                             </div>
 
-                            <div className="qr-ticket-details border-top border-secondary pt-4">
-                                <div className="mb-2 d-flex justify-content-center">
+                            <div className="qr-ticket-info-side text-center">
+                                <div className="mb-2">
                                     {getStatusBadge(selectedTicket.ticket_status)}
                                 </div>
-                                <div className="mb-3 px-3 py-1 d-inline-block fw-bold" style={{ color: '#52c41a', fontSize: '13px' }}>
+                                <div className="mb-2 px-3 py-1 d-inline-block fw-bold" style={{ color: '#52c41a', fontSize: '12px' }}>
                                     {(selectedTicket.ticket_type_name || 'Vé tham dự').toUpperCase()}
                                 </div>
-                                <h4 className="fw-bold mb-2 text-white">{selectedTicket.event_name}</h4>
-                                <div className="text-secondary small mb-3">
+                                <h5 className="fw-bold mb-1 text-white">{selectedTicket.event_name}</h5>
+                                <div className="text-secondary small mb-2" style={{ fontSize: '12px' }}>
                                     <div className="mb-1"><FaCalendar className="me-2" />{formatDate(selectedTicket.event_date)}</div>
-                                    <div><FaMapMarkerAlt className="me-2" />{selectedTicket.venue_name}</div>
-                                </div>
-                                <div className="p-3 bg-secondary bg-opacity-10 rounded-3 mb-4">
-                                    <div className="text-muted small mb-1">Mã xác nhận</div>
-                                    <div className="h5 mb-0 fw-bold font-monospace text-white">{selectedTicket.ticket_code}</div>
+                                    <div className="mb-1"><FaMapMarkerAlt className="me-2" />{selectedTicket.venue_name}</div>
+                                    <div className="fw-bold text-white mt-2" style={{ fontSize: '13px' }}>
+                                        <FaChair className="me-2" style={{ color: '#52c41a' }} />
+                                        {selectedTicket.seat ? `HÀNG GHẾ: ${selectedTicket.seat.row_name}${selectedTicket.seat.seat_number}` : `LOẠI VÉ: ${selectedTicket.ticket_type_name || 'Vé tham dự'}`}
+                                    </div>
                                 </div>
 
-                                <p className="text-muted small mb-4 fst-italic">
+
+                                <p className="text-muted small mb-3 fst-italic" style={{ fontSize: '11px' }}>
                                     Vui lòng xuất trình mã QR này để nhân viên quét khi vào cổng
                                 </p>
 
-                                <div className="d-grid gap-2">
+                                <div className="d-grid mt-auto">
                                     <Button
                                         variant="success"
-                                        size="lg"
-                                        className="rounded-3 shadow-sm fw-bold"
+                                        className="rounded-3 shadow-sm fw-bold py-2"
                                         onClick={downloadQR}
                                     >
                                         <FaDownload className="me-2" />
                                         Tải vé về điện thoại
-                                    </Button>
-                                    <Button variant="outline-light" onClick={handleCloseQR} className="border-0">
-                                        Đóng
                                     </Button>
                                 </div>
                             </div>
@@ -263,18 +260,19 @@ const MyTicketsTab = () => {
             <style>{`
                 .ticket-card-container {
                     display: flex;
-                    height: 200px;
+                    height: 145px;
+                    max-width: 700px;
+                    margin: 0 0 24px 0;
                     border-radius: 16px;
                     position: relative;
                     background: #121212;
                     border: 2px solid #333;
-                    margin-bottom: 24px;
                     cursor: pointer;
                     transition: all 0.3s ease;
-                    -webkit-mask-image: radial-gradient(circle at calc(100% - 180px) 0, transparent 15px, black 16px),
-                                      radial-gradient(circle at calc(100% - 180px) 100%, transparent 15px, black 16px);
-                    mask-image: radial-gradient(circle at calc(100% - 180px) 0, transparent 15px, black 16px),
-                                radial-gradient(circle at calc(100% - 180px) 100%, transparent 15px, black 16px);
+                    -webkit-mask-image: radial-gradient(circle at calc(100% - 150px) 0, transparent 12px, black 13px),
+                                      radial-gradient(circle at calc(100% - 150px) 100%, transparent 12px, black 13px);
+                    mask-image: radial-gradient(circle at calc(100% - 150px) 0, transparent 12px, black 13px),
+                                radial-gradient(circle at calc(100% - 150px) 100%, transparent 12px, black 13px);
                     -webkit-mask-composite: source-in;
                     mask-composite: intersect;
                 }
@@ -306,7 +304,7 @@ const MyTicketsTab = () => {
 
                 .ticket-main-part {
                     flex: 1;
-                    padding: 24px;
+                    padding: 12px 18px;
                     display: flex;
                     flex-direction: column;
                     justify-content: space-between;
@@ -314,10 +312,10 @@ const MyTicketsTab = () => {
                 }
 
                 .ticket-event-title {
-                    font-size: 1.4rem;
+                    font-size: 1.15rem;
                     font-weight: 800;
                     color: #fff;
-                    margin: 8px 0;
+                    margin: 2px 0;
                     text-transform: uppercase;
                 }
 
@@ -339,7 +337,7 @@ const MyTicketsTab = () => {
                 .ticket-bottom-info {
                     margin-top: auto;
                     border-top: 1px dashed rgba(255,255,255,0.1);
-                    padding-top: 12px;
+                    padding-top: 8px;
                     display: flex;
                     gap: 40px;
                     justify-content: flex-start;
@@ -385,12 +383,12 @@ const MyTicketsTab = () => {
                 }
 
                 .ticket-stub-part {
-                    width: 180px;
+                    width: 150px;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: 24px;
+                    padding: 16px;
                     border-left: 1px dashed rgba(255,255,255,0.2);
                     background: rgba(255,255,255,0.02);
                 }
@@ -429,6 +427,27 @@ const MyTicketsTab = () => {
                         border-top: 1px dashed rgba(255,255,255,0.2);
                     }
                     .perforation-notch { display: none; }
+                }
+
+                /* Horizontal Modal Layout */
+                .qr-modal-horizontal {
+                    display: flex;
+                    align-items: center;
+                    text-align: center;
+                    padding: 10px;
+                }
+                .qr-ticket-info-side {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                }
+                .custom-modal-header .btn-close {
+                    filter: invert(1) grayscale(100%) brightness(200%);
+                }
+
+                .custom-qr-modal {
+                    max-width: 600px;
                 }
             `}</style>
         </div>

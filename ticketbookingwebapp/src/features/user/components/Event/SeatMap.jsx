@@ -79,8 +79,8 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
     if (loading) return <LoadingSpinner tip="Đang tải sơ đồ ghế..." />;
 
     if (seats.length === 0) return (
-        <div className="text-center py-4 bg-light rounded-4 border border-dashed">
-            <p className="mb-0 text-muted">Loại vé này hiện không cần chọn số ghế cụ thể.</p>
+        <div className="text-center py-4 bg-dark bg-opacity-50 rounded-4 border border-secondary border-dashed">
+            <p className="mb-0 text-white-50">Loại vé này hiện không cần chọn số ghế cụ thể.</p>
         </div>
     );
 
@@ -105,7 +105,7 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
             <div className="seats-grid mb-4 overflow-auto py-3">
                 {rows.map(rowName => (
                     <div key={rowName} className="d-flex align-items-center justify-content-center mb-2 flex-nowrap min-w-max">
-                        <div className="fw-bold me-3 text-muted" style={{ width: '20px' }}>{rowName}</div>
+                        <div className="fw-bold me-3 text-white" style={{ width: '20px' }}>{rowName}</div>
                         <div className="d-flex gap-2">
                             {rowsData[rowName].map(seat => {
                                 const isSelected = selectedSeats.some(s => s.seat_id === seat.seat_id);
@@ -116,33 +116,39 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
                                         key={seat.seat_id}
                                         placement="top"
                                         overlay={<Tooltip id={`seat-tooltip-${seat.seat_id}`}>Ghế {seat.seat_label} - {formatPrice(ticketType.price)}</Tooltip>}
-                                    ><div
-                                        className={`seat-item cursor-pointer transition-all rounded-1 d-flex align-items-center justify-content-center
-                                                ${isSelected ? 'bg-success text-white' :
-                                                isBooked ? 'bg-secondary bg-opacity-25 text-muted cursor-not-allowed' :
-                                                    'bg-light text-dark hover-scale'}`}
-                                        style={{
-                                            width: '32px',
-                                            height: '32px',
-                                            fontSize: '10px',
-                                            border: isSelected ? '2px solid #fff' : 'none'
-                                        }}
-                                        onClick={() => toggleSeat(seat)}
                                     >
-                                            {isBooked ? <FaChair size={12} className="opacity-50" /> : seat.seat_number}
+                                        <div
+                                            className={`seat-item cursor-pointer transition-all rounded-1 d-flex align-items-center justify-content-center
+                                                    ${isSelected ? 'bg-success seat-selected' :
+                                                    isBooked ? 'bg-secondary bg-opacity-25 cursor-not-allowed seat-booked' :
+                                                        'bg-light hover-scale seat-available'}`}
+                                            style={{
+                                                width: '32px',
+                                                height: '32px',
+                                                fontSize: '11px',
+                                                fontWeight: '700',
+                                                border: isSelected ? '2px solid #fff' : 'none'
+                                            }}
+                                            onClick={() => toggleSeat(seat)}
+                                        >
+                                            {isBooked ? (
+                                                <FaChair size={12} className="opacity-50" />
+                                            ) : (
+                                                <span className="seat-number">{seat.seat_number}</span>
+                                            )}
                                         </div>
                                     </OverlayTrigger>
                                 );
                             })}
                         </div>
-                        <div className="fw-bold ms-3 text-muted" style={{ width: '20px' }}>{rowName}</div>
+                        <div className="fw-bold ms-3 text-white" style={{ width: '20px' }}>{rowName}</div>
                     </div>
                 ))}
             </div>
 
             {/* Legend */}
             <hr className="bg-secondary" />
-            <div className="d-flex justify-content-center gap-4 py-2 small fw-bold">
+            <div className="d-flex justify-content-center gap-4 py-2 small fw-bold text-white">
                 <div className="d-flex align-items-center"><span className="bg-light d-inline-block rounded-1 me-2" style={{ width: '15px', height: '15px' }}></span> Trống</div>
                 <div className="d-flex align-items-center"><span className="bg-success d-inline-block rounded-1 me-2" style={{ width: '15px', height: '15px' }}></span> Đang chọn</div>
                 <div className="d-flex align-items-center"><span className="bg-secondary bg-opacity-25 d-inline-block rounded-1 me-2" style={{ width: '15px', height: '15px' }}></span> Đã bán</div>
@@ -152,8 +158,18 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
                 .min-w-max { min-width: max-content; }
                 .hover-scale:hover { transform: scale(1.15); }
                 .letter-spacing-2 { letter-spacing: 2px; }
+                
+                /* Force seat number visibility */
+                .seat-item .seat-number { color: #000000 !important; }
+                .seat-item.seat-selected .seat-number { color: #ffffff !important; }
+                .seat-item.seat-booked .seat-number { color: rgba(255,255,255,0.5) !important; }
+                
+                /* Fallback for direct text */
+                .seat-item.seat-available { color: #000000 !important; }
+                .seat-item.seat-selected { color: #ffffff !important; }
+                .seat-item.seat-booked { color: rgba(255,255,255,0.5) !important; }
             `}</style>
-        </div>
+        </div >
     );
 };
 

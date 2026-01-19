@@ -110,16 +110,16 @@ const Header = () => {
                         </Link>
 
                         <div className="header-search">
-                            <Input.Search
+                            <Input
                                 placeholder="Tìm kiếm sự kiện, nghệ sĩ..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                onSearch={handleSearch}
                                 onPressEnter={(e) => handleSearch(e.target.value)}
-                                enterButton
+                                prefix={<SearchOutlined style={{ color: '#909399', fontSize: '18px', marginRight: '8px' }} />}
                                 size="large"
                                 allowClear
-                                style={{ width: '100%' }}
+                                className="custom-search-input"
+                                style={{ width: '100%', borderRadius: '8px', border: 'none' }}
                             />
                             {showSuggestions && (
                                 <div className="search-suggestions" ref={suggestionRef}>
@@ -179,10 +179,21 @@ const Header = () => {
                                         onClick={() => navigate('/profile')}
                                     >
                                         <Avatar
-                                            style={{ backgroundColor: '#52c41a' }}
-                                            icon={<UserOutlined />}
-                                            src={user?.avatar}
-                                        />
+                                            size={40}
+                                            style={{ backgroundColor: 'transparent', border: 'none', overflow: 'hidden' }}
+                                        >
+                                            <img
+                                                src={user?.avatar || "/mascot.svg"}
+                                                alt="Avatar"
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'contain',
+                                                    objectPosition: 'top',
+                                                    transform: 'scale(2.0) translateY(12%)'
+                                                }}
+                                            />
+                                        </Avatar>
                                         <span className="user-name">{user?.full_name}</span>
                                     </Space>
                                 </Space>

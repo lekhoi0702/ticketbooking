@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   --ticketbooking-green: #52c41a;
@@ -9,7 +9,7 @@
   --text-dark: #1f2937;
   --text-light: #6b7280;
   --border-color: #d1d5db;
-  --font-family: 'Plus Jakarta Sans', sans-serif;
+  --font-family: 'Inter', sans-serif;
 }
 
 * {
@@ -57,6 +57,26 @@ body {
 .dark-theme .info-item.ant-typography-secondary {
   color: rgba(255, 255, 255, 0.6) !important;
 }
+
+/* Exception for seat map - don't override seat colors */
+.dark-theme .app-content .seat-item.seat-available,
+.dark-theme .app-content .seat-item.seat-available span,
+.dark-theme .app-content .seat-item.seat-available .seat-number {
+  color: #000000 !important;
+}
+
+.dark-theme .app-content .seat-item.seat-selected,
+.dark-theme .app-content .seat-item.seat-selected span,
+.dark-theme .app-content .seat-item.seat-selected .seat-number {
+  color: #ffffff !important;
+}
+
+.dark-theme .app-content .seat-item.seat-booked,
+.dark-theme .app-content .seat-item.seat-booked span,
+.dark-theme .app-content .seat-item.seat-booked .seat-number {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
 
 .dark-theme .ant-card {
   background-color: #121212 !important;

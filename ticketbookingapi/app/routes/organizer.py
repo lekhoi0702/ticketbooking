@@ -87,7 +87,7 @@ def delete_event(event_id):
         if deletion_request is None:
              return jsonify({
                 'success': True,
-                'message': 'Sự kiện chưa được duyệt đã được xóa thành công ngay lập tức.',
+                'message': 'Sự kiện đã được xóa thành công.',
                 'requires_approval': False
             }), 200
 

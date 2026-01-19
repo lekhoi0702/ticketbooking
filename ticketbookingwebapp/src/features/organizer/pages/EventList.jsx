@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     Card,
     Button,
@@ -7,21 +7,32 @@ import {
     Typography,
     Space,
     Alert,
-    Modal
+    Modal,
+    Tooltip,
+    message,
+    Divider
 } from 'antd';
 import {
     PlusOutlined,
     SearchOutlined,
-    ReloadOutlined
+    ReloadOutlined,
+    EditOutlined,
+    EyeOutlined,
+    ShoppingOutlined,
+    ClockCircleOutlined,
+    CloudUploadOutlined,
+    DeleteOutlined,
+    CloseCircleOutlined
 } from '@ant-design/icons';
 import EventTable from '@features/organizer/components/EventTable';
 import DeleteEventModal from '@features/organizer/components/DeleteEventModal';
 import AddShowtimeForm from '@features/organizer/components/AddShowtimeForm';
 import { useEventList } from '@shared/hooks/useEventList';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const EventList = () => {
+    const navigate = useNavigate();
     const {
         events,
         loading,
@@ -37,26 +48,124 @@ const EventList = () => {
         setEventToDelete,
         deleting
     } = useEventList();
+
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [isAddShowtimeModalOpen, setIsAddShowtimeModalOpen] = useState(null);
 
     const filteredEvents = events.filter(event =>
         event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const selectedEvents = events.filter(e => selectedRowKeys.includes(e.event_id));
+    const firstSelected = selectedEvents[0];
+
     return (
         <div className="event-list-page">
-            {/* Header Actions */}
-            <Space style={{ marginBottom: 24 }}>
-                <Link to="/organizer/create-event">
-                    <Button type="primary" icon={<PlusOutlined />} disabled={loading || deleting}>
-                        Tạo sự kiện mới
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <Title level={4} style={{ margin: 0 }}>Quản lý sự kiện</Title>
+                <Space>
+                    <Link to="/organizer/create-event">
+                        <Button type="primary" icon={<PlusOutlined />} disabled={loading || deleting}>
+                            Tạo sự kiện mới
+                        </Button>
+                    </Link>
+                    <Button icon={<ReloadOutlined />} onClick={() => { fetchEvents(); setSelectedRowKeys([]); }} disabled={loading || deleting}>
+                        Làm mới
                     </Button>
-                </Link>
-                <Button icon={<ReloadOutlined />} onClick={fetchEvents} disabled={loading || deleting}>
-                    Làm mới
-                </Button>
-            </Space>
+                </Space>
+            </div>
+
+            {/* Selection Toolbar */}
+            {selectedRowKeys.length > 0 && (
+                <Card
+                    style={{
+                        marginBottom: 16,
+                        background: '#f6ffed',
+                        border: '1px solid #b7eb8f',
+                        borderRadius: 8
+                    }}
+                    styles={{ body: { padding: '12px 24px' } }}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Space size={16}>
+                            <Text strong>Đã chọn {selectedRowKeys.length} sự kiện</Text>
+                            <Divider type="vertical" />
+                            <Space size={8}>
+                                {selectedRowKeys.length === 1 && firstSelected && (
+                                    <>
+                                        {firstSelected.status === 'DRAFT' ? (
+                                            <Tooltip title="Chỉnh sửa thông tin sự kiện">
+                                                <Button
+                                                    type="primary"
+                                                    icon={<EditOutlined />}
+                                                    onClick={() => navigate(`/organizer/edit-event/${firstSelected.event_id}`)}
+                                                >Sửa sự kiện</Button>
+                                            </Tooltip>
+                                        ) : (
+                                            <Tooltip title="Chuyển về bản nháp để có thể chỉnh sửa">
+                                                <Button
+                                                    icon={<ReloadOutlined />}
+                                                    onClick={() => handleCancelApproval(firstSelected.event_id)}
+                                                    loading={loading}
+                                                >Lấy về sửa</Button>
+                                            </Tooltip>
+                                        )}
+                                        <Tooltip title="Xem chi tiết">
+                                            <Button
+                                                icon={<EyeOutlined />}
+                                                onClick={() => navigate(`/organizer/event/${firstSelected.event_id}`)}
+                                            >Xem</Button>
+                                        </Tooltip>
+                                        <Tooltip title="Đơn hàng">
+                                            <Button
+                                                icon={<ShoppingOutlined />}
+                                                onClick={() => navigate(`/organizer/event/${firstSelected.event_id}/orders`)}
+                                            >Đơn hàng</Button>
+                                        </Tooltip>
+                                        <Tooltip title="Thêm suất diễn">
+                                            <Button
+                                                icon={<ClockCircleOutlined />}
+                                                onClick={() => setIsAddShowtimeModalOpen(firstSelected)}
+                                            >Suất diễn</Button>
+                                        </Tooltip>
+                                        {firstSelected.status === 'APPROVED' && (
+                                            <Button
+                                                type="primary"
+                                                icon={<CloudUploadOutlined />}
+                                                onClick={() => handlePublishEvent(firstSelected.event_id)}
+                                                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+                                            >Đăng sự kiện</Button>
+                                        )}
+                                        {firstSelected.status === 'PENDING_APPROVAL' && (
+                                            <Button
+                                                danger
+                                                icon={<CloseCircleOutlined />}
+                                                onClick={() => handleCancelApproval(firstSelected.event_id)}
+                                            >Hủy duyệt</Button>
+                                        )}
+                                    </>
+                                )}
+
+                                {selectedEvents.every(e => ['DRAFT', 'REJECTED', 'PENDING_APPROVAL'].includes(e.status)) && (
+                                    <Button
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        onClick={() => {
+                                            if (selectedRowKeys.length === 1) {
+                                                handleDeleteClick(firstSelected);
+                                            } else {
+                                                message.info('Tính năng xóa hàng loạt đang được cập nhật');
+                                            }
+                                        }}
+                                    >Xóa{selectedRowKeys.length > 1 ? ' hàng loạt' : ''}</Button>
+                                )}
+                            </Space>
+                        </Space>
+                        <Button type="text" onClick={() => setSelectedRowKeys([])}>Hủy chọn</Button>
+                    </div>
+                </Card>
+            )}
 
             {error && (
                 <Alert
@@ -89,10 +198,8 @@ const EventList = () => {
                 <div style={{ padding: '0 0px' }}>
                     <EventTable
                         events={filteredEvents}
-                        handlePublishEvent={handlePublishEvent}
-                        handleCancelApproval={handleCancelApproval}
-                        handleDeleteClick={handleDeleteClick}
-                        setIsAddShowtimeModalOpen={setIsAddShowtimeModalOpen}
+                        selectedRowKeys={selectedRowKeys}
+                        onSelectionChange={setSelectedRowKeys}
                         loading={loading || deleting}
                     />
                 </div>
@@ -102,7 +209,10 @@ const EventList = () => {
             <DeleteEventModal
                 open={showDeleteModal}
                 onCancel={() => setShowDeleteModal(false)}
-                onConfirm={handleDeleteConfirm}
+                onConfirm={async () => {
+                    await handleDeleteConfirm();
+                    setSelectedRowKeys([]);
+                }}
                 loading={deleting}
                 event={eventToDelete}
                 setEvent={setEventToDelete}
@@ -121,6 +231,7 @@ const EventList = () => {
                         onSuccess={() => {
                             setIsAddShowtimeModalOpen(null);
                             fetchEvents();
+                            setSelectedRowKeys([]);
                         }}
                     />
                 )}

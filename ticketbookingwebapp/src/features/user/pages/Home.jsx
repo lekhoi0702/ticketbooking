@@ -5,6 +5,8 @@ import TrendingSection from '@features/user/components/Event/TrendingSection';
 import { api } from '@services/api';
 import { transformEvent } from '@shared/utils/eventUtils';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
+import { UPLOADS_BASE_URL } from '@shared/constants';
+import { Container } from 'react-bootstrap';
 
 function Home() {
     const [featuredEvents, setFeaturedEvents] = useState([]);
@@ -97,6 +99,35 @@ function Home() {
                     events={popularEvents.map(transformEvent)}
                 />
             )}
+
+            <section className="home-ad-section" style={{ padding: '0px 0', marginTop: '-20px', marginBottom: '-20px' }}>
+                <Container>
+                    <div
+                        className="ad-banner-wrapper"
+                        style={{
+                            position: 'relative',
+                            overflow: 'hidden',
+                            borderRadius: '16px',
+                            cursor: 'pointer',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                            transition: 'transform 0.3s ease'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    >
+                        <img
+                            src={`${UPLOADS_BASE_URL}/quangcao.webp`}
+                            alt="Quảng cáo"
+                            style={{
+                                width: '100%',
+                                height: 'auto',
+                                display: 'block',
+                                objectFit: 'cover'
+                            }}
+                        />
+                    </div>
+                </Container>
+            </section>
 
             {upcomingEvents.length > 0 && (
                 <TrendingSection

@@ -10,6 +10,7 @@ from app.models.ticket import Ticket
 from app.models.discount import Discount
 from app.models.banner import Banner
 from app.models.organizer_info import OrganizerInfo
+from app.models.favorite_event import FavoriteEvent
 
 __all__ = [
     'Role',
@@ -23,5 +24,6 @@ __all__ = [
     'Ticket',
     'Discount',
     'Banner',
-    'OrganizerInfo'
+    'OrganizerInfo',
+    'FavoriteEvent'
 ]

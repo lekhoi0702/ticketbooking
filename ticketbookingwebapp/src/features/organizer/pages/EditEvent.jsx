@@ -52,6 +52,7 @@ const EditEvent = () => {
         formData,
         bannerPreview,
         ticketTypes,
+        fieldErrors,
         setError,
         setSuccess,
         handleInputChange,
@@ -69,6 +70,9 @@ const EditEvent = () => {
         setIsLoadingData
     } = useCreateEvent();
 
+    const [eventRaw, setEventRaw] = useState(null);
+    const [allSeatsRaw, setAllSeatsRaw] = useState([]);
+
     useEffect(() => {
         if (eventId) {
             fetchEventDetails();
@@ -81,13 +85,15 @@ const EditEvent = () => {
             const res = await api.getEvent(eventId);
             if (res.success) {
                 const event = res.data;
+                setEventRaw(event);
 
                 const formatDate = (dateStr) => {
                     if (!dateStr) return '';
                     const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return '';
                     // Use local time for the date picker
                     const offset = d.getTimezoneOffset() * 60000;
-                    const localISOTime = (new Date(d - offset)).toISOString().slice(0, 16).replace('T', ' ');
+                    const localISOTime = (new Date(d - offset)).toISOString().slice(0, 16); // e.g., "2023-10-27T10:00"
                     return localISOTime;
                 };
 
@@ -96,15 +102,14 @@ const EditEvent = () => {
                     description: event.description || '',
                     category_id: event.category_id,
                     venue_id: event.venue_id,
-                    start_datetime: event.start_datetime ? event.start_datetime.replace('T', ' ').slice(0, 19) : '',
-                    end_datetime: event.end_datetime ? event.end_datetime.replace('T', ' ').slice(0, 19) : '',
-                    sale_start_datetime: event.sale_start_datetime ? event.sale_start_datetime.replace('T', ' ').slice(0, 19) : '',
-                    sale_end_datetime: event.sale_end_datetime ? event.sale_end_datetime.replace('T', ' ').slice(0, 19) : '',
-                    total_capacity: event.total_capacity,
+                    start_datetime: formatDate(event.start_datetime),
+                    end_datetime: formatDate(event.end_datetime),
+                    sale_start_datetime: formatDate(event.sale_start_datetime),
+                    sale_end_datetime: formatDate(event.sale_end_datetime),
+                    total_capacity: event.total_capacity || 0,
                     status: event.status,
                     is_featured: event.is_featured,
-                    manager_id: event.manager_id,
-                    schedule: event.schedule || [] // Add schedule data
+                    schedule: event.schedule || []
                 });
 
                 if (event.banner_image_url) {
@@ -113,20 +118,52 @@ const EditEvent = () => {
                         : `http://127.0.0.1:5000${event.banner_image_url}`);
                 }
 
-                const ttRes = await api.getTicketTypes(eventId);
-                if (ttRes.success) {
-                    const enrichedTT = await Promise.all(ttRes.data.map(async (tt) => {
-                        const seatsRes = await api.getSeatsByTicketType(tt.ticket_type_id);
+                // Optimized: Fetch ALL seats for the event in one go
+                console.log('Fetching all event seats for eventId:', eventId);
+                let allEventSeats = [];
+                try {
+                    const allSeatsRes = await api.getAllEventSeats(eventId);
+                    console.log('All event seats response:', allSeatsRes);
+                    if (allSeatsRes.success && Array.isArray(allSeatsRes.data)) {
+                        allEventSeats = allSeatsRes.data;
+                        setAllSeatsRaw(allEventSeats);
+                    } else {
+                        console.warn('Failed to fetch seats or data is not an array:', allSeatsRes);
+                    }
+                } catch (seatErr) {
+                    console.error('Error fetching all event seats:', seatErr);
+                }
+
+                // Map ticket types and THEIR specific seats
+                let rawTicketTypes = event.ticket_types || [];
+                console.log('Raw ticket types from event:', rawTicketTypes);
+
+                if (rawTicketTypes && rawTicketTypes.length > 0) {
+                    const enrichedTT = rawTicketTypes.map((tt, idx) => {
+                        // Filter seats for this specific ticket type
+                        const matchedSeats = allEventSeats.filter(s =>
+                            String(s.ticket_type_id) === String(tt.ticket_type_id)
+                        ).map(s => ({
+                            ...s,
+                            // Ensure area fields are present for matching
+                            area: s.area_name || s.area || '',
+                            area_name: s.area_name || s.area || '',
+                            seat_number: String(s.seat_number),
+                            row_name: s.row_name
+                        }));
+
+                        console.log(`TT "${tt.type_name}" (ID: ${tt.ticket_type_id}) matched seats:`, matchedSeats.length);
+
                         return {
                             ...tt,
+                            id: tt.ticket_type_id, // Add id for UI keys
                             price: String(tt.price),
-                            quantity: String(tt.quantity),
-                            selectedSeats: seatsRes.success ? seatsRes.data.map(s => ({
-                                ...s,
-                                area: s.area_name
-                            })) : []
+                            quantity: String(tt.quantity || matchedSeats.length),
+                            selectedSeats: matchedSeats
                         };
-                    }));
+                    });
+
+                    console.log('Final enriched ticket types:', enrichedTT);
                     setTicketTypes(enrichedTT);
                 }
             } else {
@@ -134,7 +171,7 @@ const EditEvent = () => {
             }
         } catch (err) {
             console.error('Error fetching event details:', err);
-            setError('Lỗi khi tải thông tin sự kiện');
+            setError('Lỗi khi tải thông tin sự kiện: ' + err.message);
         } finally {
             setIsLoadingData(false);
         }
@@ -144,35 +181,7 @@ const EditEvent = () => {
         await handleSubmit(e, eventId);
     };
 
-    const handleDeleteRequest = () => {
-        Modal.confirm({
-            title: 'Xác nhận yêu cầu xóa',
-            icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
-            content: (
-                <div>
-                    <p>Hệ thống sẽ gửi yêu cầu xóa sự kiện <strong>{formData.event_name}</strong> tới quản trị viên.</p>
-                    <p>Bạn sẽ không thể sửa đổi trong thời gian chờ phê duyệt xóa.</p>
-                </div>
-            ),
-            okText: 'Xác nhận gửi',
-            okType: 'danger',
-            cancelText: 'Hủy bỏ',
-            onOk: async () => {
-                try {
-                    const formDataToSend = new FormData();
-                    formDataToSend.append('status', 'PENDING_DELETION');
-                    const res = await api.updateEvent(eventId, formDataToSend);
-                    if (res.success) {
-                        setSuccess(true);
-                    } else {
-                        message.error(res.message || 'Không thể gửi yêu cầu xóa');
-                    }
-                } catch (err) {
-                    message.error('Lỗi khi gửi yêu cầu xóa');
-                }
-            }
-        });
-    };
+
 
     if (loadingData) {
         return <LoadingSpinner tip="Đang tải dữ liệu sự kiện..." />;
@@ -209,6 +218,36 @@ const EditEvent = () => {
                     />
                 )}
 
+                {error && (
+                    <Alert
+                        message="Lỗi validation"
+                        description={error}
+                        type="error"
+                        showIcon
+                        closable
+                        onClose={() => setError(null)}
+                        style={{ marginBottom: 24 }}
+                    />
+                )}
+
+                {/* Technical Alert - Moved here to be permanently visible above the form content */}
+                <div style={{ position: 'sticky', top: 0, zIndex: 1000, margin: '0 -24px 24px -24px', padding: '0 24px 16px 24px', backgroundColor: '#f0f2f5' }}>
+                    <Alert
+                        message="HỆ THỐNG DEBUG (Quan trọng)"
+                        description={
+                            <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                                ID Sự kiện: {eventId} |
+                                {eventRaw ? ` Loại vé gốc: ${eventRaw.ticket_types?.length || 0}` : ' Đang tải TT...'} |
+                                Ghế hệ thống: {allSeatsRaw.length} |
+                                Loại vé đã xử lý: {ticketTypes.length} |
+                                Ghế đã khớp: {ticketTypes.reduce((acc, tt) => acc + (tt.selectedSeats?.length || 0), 0)}
+                            </div>
+                        }
+                        type={allSeatsRaw.length > 0 ? "success" : "warning"}
+                        showIcon
+                    />
+                </div>
+
                 <form onSubmit={handleUpdate}>
                     <Row gutter={24}>
                         <Col xs={24} lg={16}>
@@ -220,6 +259,7 @@ const EditEvent = () => {
                                         categories={categories}
                                         venues={venues}
                                         disabled={isReadOnly || loading}
+                                        fieldErrors={fieldErrors}
                                     />
                                 </Card>
 
@@ -229,6 +269,7 @@ const EditEvent = () => {
                                         handleInputChange={handleInputChange}
                                         existingSchedule={formData.schedule || []}
                                         disabled={isReadOnly || loading}
+                                        fieldErrors={fieldErrors}
                                     />
                                 </Card>
 
@@ -243,6 +284,7 @@ const EditEvent = () => {
                                         toggleAreaSelection={toggleAreaSelection}
                                         isEdit={true}
                                         disabled={isReadOnly || loading}
+                                        fieldErrors={fieldErrors}
                                     />
                                     <Alert
                                         message="Lưu ý: Hạn chế thay đổi số lượng ghế khi vé đã bắt đầu mở bán."
@@ -288,19 +330,7 @@ const EditEvent = () => {
                                             Quay lại
                                         </Button>
 
-                                        {!isReadOnly && (
-                                            <Button
-                                                type="text"
-                                                danger
-                                                block
-                                                icon={<DeleteOutlined />}
-                                                onClick={handleDeleteRequest}
-                                                style={{ marginTop: 8 }}
-                                                disabled={loading}
-                                            >
-                                                Yêu cầu xóa sự kiện
-                                            </Button>
-                                        )}
+
                                     </Space>
                                 </Card>
                             </Affix>

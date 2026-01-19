@@ -83,6 +83,52 @@
     z-index: 2;
 }
 
+.event-card-favorite-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 5;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.event-card-favorite-btn .anticon {
+    filter: drop-shadow(0 0 1px #ffb400);
+    /* Thin golden outline for the star */
+}
+
+.event-card-favorite-btn:hover {
+    transform: scale(1.15);
+    background: #fff;
+    color: #ffb400;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.event-card-favorite-btn:hover .anticon,
+.event-card-favorite-btn.active .anticon {
+    filter: drop-shadow(0 0 2px #ffb400);
+    /* Stronger glow on hover/active */
+}
+
+.event-card-favorite-btn.active {
+    background: #fff;
+}
+
+.event-card-favorite-btn.active .anticon {
+    color: #ffb400 !important;
+}
+
 .badge-icon {
     font-size: 12px;
     animation: flicker 1.5s infinite alternate;

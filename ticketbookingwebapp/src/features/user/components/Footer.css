@@ -142,9 +142,7 @@
 
 /* Bottom Section Spacing */
 .footer-bottom-section {
-    margin-top: 40px;
-    padding-top: 40px;
-    border-top: 1px solid #e5e7eb;
+    margin-top: 32px;
 }
 
 /* Company Info Bar (Dark Footer) */

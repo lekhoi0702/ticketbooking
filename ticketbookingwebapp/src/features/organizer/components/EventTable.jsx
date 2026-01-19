@@ -30,7 +30,12 @@ import { getImageUrl } from '@shared/utils/eventUtils';
 
 const { Text } = Typography;
 
-const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDeleteClick, setIsAddShowtimeModalOpen, loading }) => {
+const EventTable = ({
+    events,
+    onSelectionChange,
+    selectedRowKeys,
+    loading
+}) => {
     const navigate = useNavigate();
 
     const getStatusConfig = (status) => {
@@ -93,73 +98,18 @@ const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDe
                 );
             },
         },
-        {
-            title: 'THAO TÁC',
-            key: 'actions',
-            align: 'right',
-            render: (_, record) => (
-                <Space size={8}>
-                    {record.status === 'APPROVED' && (
-                        <Button
-                            type="text"
-                            icon={<CloudUploadOutlined />}
-                            size="small"
-                            onClick={() => handlePublishEvent(record.event_id)}
-                            style={{ color: '#52c41a' }}
-                        >
-                            Đăng
-                        </Button>
-                    )}
-
-                    <Tooltip title="Xem chi tiết">
-                        <Button
-                            type="text"
-                            icon={<EyeOutlined />}
-                            onClick={() => navigate(`/organizer/event/${record.event_id}`)}
-                            style={{ color: '#52c41a' }}
-                        />
-                    </Tooltip>
-
-                    <Tooltip title="Quản lý đơn hàng">
-                        <Button
-                            type="text"
-                            icon={<ShoppingOutlined />}
-                            onClick={() => navigate(`/organizer/event/${record.event_id}/orders`)}
-                            style={{ color: '#1890ff' }}
-                        />
-                    </Tooltip>
-
-                    <Tooltip title="Thêm suất diễn">
-                        <Button
-                            type="text"
-                            icon={<ClockCircleOutlined />}
-                            onClick={() => setIsAddShowtimeModalOpen(record)}
-                            style={{ color: '#faad14' }}
-                        />
-                    </Tooltip>
-
-                    {['DRAFT', 'REJECTED'].includes(record.status) && (
-                        <Tooltip title="Xóa">
-                            <Button
-                                type="text"
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleDeleteClick(record)}
-                                danger
-                            />
-                        </Tooltip>
-                    )}
-                </Space>
-            ),
-        },
     ];
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (keys) => {
+            onSelectionChange(keys);
+        },
+    };
 
     if (loading) {
         return (
             <div style={{ padding: 20 }}>
-                <Space style={{ marginBottom: 16 }}>
-                    <Skeleton.Button active size="small" style={{ width: 100 }} />
-                    <Skeleton.Button active size="small" style={{ width: 100 }} />
-                </Space>
                 <Skeleton active paragraph={{ rows: 5 }} />
             </div>
         );
@@ -167,6 +117,7 @@ const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDe
 
     return (
         <Table
+            rowSelection={rowSelection}
             columns={columns}
             dataSource={events}
             rowKey="event_id"
@@ -174,6 +125,17 @@ const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDe
             pagination={{ pageSize: 10 }}
             size="middle"
             locale={{ emptyText: 'Không tìm thấy dữ liệu' }}
+            onRow={(record) => ({
+                onClick: () => {
+                    const isSelected = selectedRowKeys.includes(record.event_id);
+                    if (isSelected) {
+                        onSelectionChange(selectedRowKeys.filter(key => key !== record.event_id));
+                    } else {
+                        onSelectionChange([...selectedRowKeys, record.event_id]);
+                    }
+                },
+                style: { cursor: 'pointer' }
+            })}
         />
     );
 };

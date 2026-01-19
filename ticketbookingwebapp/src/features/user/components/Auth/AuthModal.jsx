@@ -15,6 +15,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
         phone: ''
     });
     const [error, setError] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
     const { login } = useAuth();
@@ -32,30 +33,56 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const newFieldErrors = {};
 
         // Basic frontend validation
         if (activeTab === 'login') {
-            if (!validateEmailOrPhone(formData.email)) {
-                setError({ type: 'danger', msg: 'Vui lòng nhập Email hoặc Số điện thoại hợp lệ' });
-                return;
+            if (!formData.email) {
+                newFieldErrors.email = 'Vui lòng nhập Email hoặc Số điện thoại';
+            } else if (!validateEmailOrPhone(formData.email)) {
+                newFieldErrors.email = 'Email hoặc Số điện thoại không hợp lệ';
+            }
+            if (!formData.password) {
+                newFieldErrors.password = 'Vui lòng nhập mật khẩu';
             }
         } else if (activeTab === 'register') {
-            if (!validatePhone(formData.phone)) {
-                setError({ type: 'danger', msg: 'Số điện thoại không hợp lệ' });
-                return;
+            if (!formData.full_name) {
+                newFieldErrors.full_name = 'Vui lòng nhập họ và tên';
             }
+            if (!formData.phone) {
+                newFieldErrors.phone = 'Vui lòng nhập số điện thoại';
+            } else if (!validatePhone(formData.phone)) {
+                newFieldErrors.phone = 'Số điện thoại không hợp lệ (10 chữ số)';
+            }
+            if (!formData.email) {
+                newFieldErrors.email = 'Vui lòng nhập email';
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+                newFieldErrors.email = 'Email không hợp lệ';
+            }
+            if (!formData.password) {
+                newFieldErrors.password = 'Vui lòng nhập mật khẩu';
+            } else if (formData.password.length < 6) {
+                newFieldErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+            }
+        }
+
+        if (Object.keys(newFieldErrors).length > 0) {
+            setFieldErrors(newFieldErrors);
+            return;
         }
 
         setLoading(true);
         setError(null);
+        setFieldErrors({});
 
         try {
             if (activeTab === 'register') {
                 const res = await api.register(formData);
                 if (res.success) {
                     setActiveTab('login');
-                    setError({ type: 'success', msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
+                    setError({ type: 'success', msg: 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.' });
                     setFormData({ ...formData, full_name: '', phone: '', email: '', password: '' });
+                    setFieldErrors({});
                 }
             } else {
                 const res = await api.login({
@@ -69,7 +96,20 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                 }
             }
         } catch (err) {
-            setError({ type: 'danger', msg: err.message || 'Có lỗi xảy ra' });
+            const msg = err.message || 'Có lỗi xảy ra';
+            const newFieldErrors = {};
+
+            if (msg.toLowerCase().includes('email')) {
+                newFieldErrors.email = msg;
+            } else if (msg.toLowerCase().includes('số điện thoại') || msg.toLowerCase().includes('phone')) {
+                newFieldErrors.phone = msg;
+            } else {
+                setError({ type: 'danger', msg: msg });
+            }
+
+            if (Object.keys(newFieldErrors).length > 0) {
+                setFieldErrors(newFieldErrors);
+            }
         } finally {
             setLoading(false);
         }
@@ -78,11 +118,13 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
     const handleTabChange = (tab) => {
         setActiveTab(tab);
         setError(null);
+        setFieldErrors({});
     };
 
     const handleClose = () => {
         setFormData({ email: '', password: '', full_name: '', phone: '' });
         setError(null);
+        setFieldErrors({});
         setActiveTab('login');
         onHide();
     };
@@ -112,27 +154,33 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                             </Alert>
                         )}
 
-                        <Form onSubmit={handleSubmit}>
+                        <Form onSubmit={handleSubmit} noValidate>
                             <Form.Group className="mb-3">
                                 <Form.Control
-                                    required
                                     type="text"
                                     value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    onChange={e => {
+                                        setFormData({ ...formData, email: e.target.value });
+                                        if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: null });
+                                    }}
                                     placeholder="Nhập email hoặc số điện thoại"
-                                    className="auth-input"
+                                    className={`auth-input ${fieldErrors.email ? 'is-invalid' : ''}`}
                                 />
+                                {fieldErrors.email && <div className="text-danger small mt-1">{fieldErrors.email}</div>}
                             </Form.Group>
 
                             <Form.Group className="mb-4">
                                 <Form.Control
-                                    required
                                     type="password"
                                     value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    onChange={e => {
+                                        setFormData({ ...formData, password: e.target.value });
+                                        if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: null });
+                                    }}
                                     placeholder="Nhập mật khẩu"
-                                    className="auth-input"
+                                    className={`auth-input ${fieldErrors.password ? 'is-invalid' : ''}`}
                                 />
+                                {fieldErrors.password && <div className="text-danger small mt-1">{fieldErrors.password}</div>}
                             </Form.Group>
 
                             <Button
@@ -155,50 +203,60 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                             </Alert>
                         )}
 
-                        <Form onSubmit={handleSubmit}>
+                        <Form onSubmit={handleSubmit} noValidate>
                             <Form.Group className="mb-3">
                                 <Form.Control
-                                    required
                                     value={formData.full_name}
-                                    onChange={e => setFormData({ ...formData, full_name: e.target.value })}
+                                    onChange={e => {
+                                        setFormData({ ...formData, full_name: e.target.value });
+                                        if (fieldErrors.full_name) setFieldErrors({ ...fieldErrors, full_name: null });
+                                    }}
                                     placeholder="Họ và tên"
-                                    className="auth-input"
+                                    className={`auth-input ${fieldErrors.full_name ? 'is-invalid' : ''}`}
                                 />
+                                {fieldErrors.full_name && <div className="text-danger small mt-1">{fieldErrors.full_name}</div>}
                             </Form.Group>
 
                             <Form.Group className="mb-3">
                                 <Form.Control
-                                    required
                                     type="tel"
                                     value={formData.phone}
-                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                    onChange={e => {
+                                        setFormData({ ...formData, phone: e.target.value });
+                                        if (fieldErrors.phone) setFieldErrors({ ...fieldErrors, phone: null });
+                                    }}
                                     placeholder="Số điện thoại"
-                                    className="auth-input"
-                                    pattern="[0-9]{10}"
+                                    className={`auth-input ${fieldErrors.phone ? 'is-invalid' : ''}`}
                                 />
+                                {fieldErrors.phone && <div className="text-danger small mt-1">{fieldErrors.phone}</div>}
                             </Form.Group>
 
                             <Form.Group className="mb-3">
                                 <Form.Control
-                                    required
                                     type="email"
                                     value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    onChange={e => {
+                                        setFormData({ ...formData, email: e.target.value });
+                                        if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: null });
+                                    }}
                                     placeholder="Email"
-                                    className="auth-input"
+                                    className={`auth-input ${fieldErrors.email ? 'is-invalid' : ''}`}
                                 />
+                                {fieldErrors.email && <div className="text-danger small mt-1">{fieldErrors.email}</div>}
                             </Form.Group>
 
                             <Form.Group className="mb-4">
                                 <Form.Control
-                                    required
                                     type="password"
                                     value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    onChange={e => {
+                                        setFormData({ ...formData, password: e.target.value });
+                                        if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: null });
+                                    }}
                                     placeholder="Mật khẩu"
-                                    className="auth-input"
-                                    minLength="6"
+                                    className={`auth-input ${fieldErrors.password ? 'is-invalid' : ''}`}
                                 />
+                                {fieldErrors.password && <div className="text-danger small mt-1">{fieldErrors.password}</div>}
                             </Form.Group>
 
                             <Button

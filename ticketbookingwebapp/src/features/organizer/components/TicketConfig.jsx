@@ -18,7 +18,8 @@ import {
     DeleteOutlined,
     AppstoreOutlined,
     InfoCircleOutlined,
-    EditOutlined
+    EditOutlined,
+    WarningOutlined
 } from '@ant-design/icons';
 import SeatMapTemplateView from './SeatMapTemplateView';
 
@@ -32,7 +33,9 @@ const TicketConfig = ({
     removeTicketType,
     venueTemplate,
     toggleSeatSelection,
-    toggleAreaSelection
+    toggleAreaSelection,
+    selectedVenueId, // Add this prop
+    fieldErrors = {} // Add this prop
 }) => {
     const [expandedKeys, setExpandedKeys] = useState(['0']);
     const [isDragging, setIsDragging] = useState(false);
@@ -132,23 +135,43 @@ const TicketConfig = ({
                         <div style={{ padding: '0 8px 16px 8px' }}>
                             <Row gutter={16} style={{ marginBottom: 24 }}>
                                 <Col xs={24} md={12}>
-                                    <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 12 }}>TÊN HẠNG VÉ</Text></div>
+                                    <div style={{ marginBottom: 8 }}>
+                                        <Text strong style={{ fontSize: 12 }}>TÊN HẠNG VÉ</Text>
+                                        <Text type="danger"> *</Text>
+                                    </div>
                                     <Input
                                         value={tt.type_name}
                                         onChange={(e) => handleTicketTypeChange(index, 'type_name', e.target.value)}
                                         size="large"
+                                        status={fieldErrors[`ticket_type_${index}_name`] ? 'error' : ''}
+                                        placeholder="Ví dụ: VIP, Standard..."
                                     />
+                                    {fieldErrors[`ticket_type_${index}_name`] && (
+                                        <Text type="danger" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                                            <WarningOutlined /> {fieldErrors[`ticket_type_${index}_name`]}
+                                        </Text>
+                                    )}
                                 </Col>
                                 <Col xs={24} md={12}>
-                                    <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 12 }}>GIÁ VÉ (VND)</Text></div>
+                                    <div style={{ marginBottom: 8 }}>
+                                        <Text strong style={{ fontSize: 12 }}>GIÁ VÉ (VND)</Text>
+                                        <Text type="danger"> *</Text>
+                                    </div>
                                     <InputNumber
                                         style={{ width: '100%' }}
                                         value={tt.price}
                                         onChange={(val) => handleTicketTypeChange(index, 'price', val)}
                                         size="large"
+                                        status={fieldErrors[`ticket_type_${index}_price`] ? 'error' : ''}
                                         formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                         parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        placeholder="Nhập giá vé"
                                     />
+                                    {fieldErrors[`ticket_type_${index}_price`] && (
+                                        <Text type="danger" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                                            <WarningOutlined /> {fieldErrors[`ticket_type_${index}_price`]}
+                                        </Text>
+                                    )}
                                 </Col>
                             </Row>
 
@@ -183,10 +206,23 @@ const TicketConfig = ({
                                     ) : (
                                         <div style={{ padding: '48px 0', textAlign: 'center' }}>
                                             <InfoCircleOutlined style={{ fontSize: 32, color: '#ff4d4f', marginBottom: 16, opacity: 0.5 }} /><br />
-                                            <Text type="danger">* Vui lòng chọn địa điểm tổ chức để hiển thị sơ đồ ghế.</Text>
+                                            {selectedVenueId ? (
+                                                <Text type="danger" strong>Địa điểm này chưa có sơ đồ ghế</Text>
+                                            ) : (
+                                                <Text type="danger">* Vui lòng chọn địa điểm tổ chức để hiển thị sơ đồ ghế.</Text>
+                                            )}
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Display error if no seats selected */}
+                                {fieldErrors[`ticket_type_${index}_seats`] && (
+                                    <div style={{ padding: '8px 16px', backgroundColor: '#fff2f0', borderTop: '1px solid #ffccc7' }}>
+                                        <Text type="danger" style={{ fontSize: 12 }}>
+                                            <WarningOutlined /> {fieldErrors[`ticket_type_${index}_seats`]}
+                                        </Text>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </Panel>

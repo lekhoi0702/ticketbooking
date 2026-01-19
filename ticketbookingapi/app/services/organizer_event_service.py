@@ -335,8 +335,20 @@ class OrganizerEventService:
         date_fields = ['start_datetime', 'end_datetime', 'sale_start_datetime', 'sale_end_datetime']
         for df in date_fields:
             if data.get(df):
-                update_fields.append(f"{df} = :{df}")
-                params[df] = datetime.fromisoformat(data.get(df))
+                val = data.get(df)
+                try:
+                    # Handle multiple formats: ISO (T), space-separated with or without seconds
+                    if ' ' in val:
+                        if val.count(':') == 1: # HH:MM
+                            params[df] = datetime.strptime(val, '%Y-%m-%d %H:%M')
+                        else: # HH:MM:SS
+                            params[df] = datetime.strptime(val, '%Y-%m-%d %H:%M:%S')
+                    else:
+                        params[df] = datetime.fromisoformat(val.replace('Z', '+00:00'))
+                    update_fields.append(f"{df} = :{df}")
+                except (ValueError, TypeError) as e:
+                    print(f"Warning: Failed to parse date {df}: {val}. Error: {e}")
+                    # Skip this field instead of failing the whole update
                 
         if data.get('status'):
             new_status = data.get('status')
@@ -491,7 +503,7 @@ class OrganizerEventService:
              row = db.session.execute(fetch_id, {"m": source_event.manager_id, "n": source_event.event_name, "sd": start_datetime}).fetchone()
              new_event_id = row.event_id
         
-        # Clone Ticket Types
+        # Clone Ticket Types and their Seats
         tt_query = text("SELECT * FROM TicketType WHERE event_id = :id")
         source_tts = db.session.execute(tt_query, {"id": event_id}).fetchall()
         
@@ -501,13 +513,38 @@ class OrganizerEventService:
                 VALUES (:eid, :tn, :p, :q, 0, :d)
             """)
             for tt in source_tts:
-                db.session.execute(ins_tt_sql, {
+                # Insert TT and get its NEW ID
+                res_tt = db.session.execute(ins_tt_sql, {
                     "eid": new_event_id,
                     "tn": tt.type_name,
                     "p": tt.price,
                     "q": tt.quantity,
                     "d": tt.description
                 })
+                # In some DB configurations, result.lastrowid might be None, so we might need a fallback
+                new_tt_id = res_tt.lastrowid
+                if not new_tt_id:
+                     fetch_tt_id = text("SELECT ticket_type_id FROM TicketType WHERE event_id=:eid AND type_name=:tn ORDER BY ticket_type_id DESC LIMIT 1")
+                     row_tt = db.session.execute(fetch_tt_id, {"eid": new_event_id, "tn": tt.type_name}).fetchone()
+                     new_tt_id = row_tt[0]
+
+                # Clone Seats for this TT
+                seat_query = text("SELECT * FROM Seat WHERE ticket_type_id = :ttid")
+                source_seats = db.session.execute(seat_query, {"ttid": tt.ticket_type_id}).fetchall()
+                if source_seats:
+                    ins_seat_sql = text("""
+                        INSERT INTO Seat (ticket_type_id, row_name, seat_number, status, x_pos, y_pos, area_name, is_active)
+                        VALUES (:ttid, :rn, :sn, 'AVAILABLE', :x, :y, :an, 1)
+                    """)
+                    for s in source_seats:
+                        db.session.execute(ins_seat_sql, {
+                            "ttid": new_tt_id,
+                            "rn": s.row_name,
+                            "sn": s.seat_number,
+                            "x": s.x_pos,
+                            "y": s.y_pos,
+                            "an": s.area_name
+                        })
             db.session.commit()
             
         return OrganizerEventService._fetch_event(new_event_id)
@@ -522,10 +559,9 @@ class OrganizerEventService:
         reason = data.get('reason', '')
         manager_id = data.get('manager_id', 1)
         
-        if event.status == 'PENDING_APPROVAL':
-            # Direct delete if pending approval
-            # Delete related TicketTypes first? Database constraints usually CASCADE, 
-            # but to be safe and clear:
+        if event.status in ['DRAFT', 'PENDING_APPROVAL', 'REJECTED']:
+            # Direct delete if draft, pending approval or rejected
+            # Delete related TicketTypes first to be safe and clear:
             del_tt_sql = text("DELETE FROM TicketType WHERE event_id = :id")
             db.session.execute(del_tt_sql, {"id": event_id})
             

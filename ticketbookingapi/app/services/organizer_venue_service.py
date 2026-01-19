@@ -20,6 +20,13 @@ class OrganizerVenueService:
                 for k, v in d.items():
                     if isinstance(v, datetime):
                         d[k] = v.isoformat()
+                # Parse seat_map_template from JSON string to dict
+                if 'seat_map_template' in d and d['seat_map_template']:
+                    if isinstance(d['seat_map_template'], str):
+                        try:
+                            d['seat_map_template'] = json.loads(d['seat_map_template'])
+                        except:
+                            pass
                 return d
 
         venues = []
@@ -151,7 +158,15 @@ class OrganizerVenueService:
             def __init__(self, row):
                 self.row = row
             def to_dict(self):
-                return dict(self.row._mapping)
+                d = dict(self.row._mapping)
+                # Parse seat_map_template from JSON string to dict
+                if 'seat_map_template' in d and d['seat_map_template']:
+                    if isinstance(d['seat_map_template'], str):
+                        try:
+                            d['seat_map_template'] = json.loads(d['seat_map_template'])
+                        except:
+                            pass
+                return d
                 
         return VenueWrapper(updated_venue)
 
@@ -173,6 +188,14 @@ class OrganizerVenueService:
                 for k, v in d.items():
                     if isinstance(v, datetime):
                         d[k] = v.isoformat()
+                
+                # Parse seat_map_template from JSON string to dict
+                if 'seat_map_template' in d and d['seat_map_template']:
+                    if isinstance(d['seat_map_template'], str):
+                        try:
+                            d['seat_map_template'] = json.loads(d['seat_map_template'])
+                        except Exception as e:
+                            print(f"Error parsing seat_map_template: {e}")
                 return d
         return VenueWrapper(venue)
 

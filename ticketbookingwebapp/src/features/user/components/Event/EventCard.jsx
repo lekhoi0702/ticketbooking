@@ -1,13 +1,29 @@
 import React from 'react';
 import { Card, Typography, Space, Tag } from 'antd';
-import { EnvironmentOutlined, ClockCircleOutlined, ArrowRightOutlined, FireOutlined } from '@ant-design/icons';
+import { EnvironmentOutlined, ClockCircleOutlined, ArrowRightOutlined, FireOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
+import { message } from 'antd';
+import { useFavorites } from '@context/FavoriteContext';
 import { formatCurrency } from '@shared/utils/eventUtils';
 import './EventCard.css';
 
 const { Text, Title } = Typography;
 
 const EventCard = ({ event }) => {
+    const { isFavorited, toggleFavorite } = useFavorites();
+    const favorited = isFavorited(event.id);
+
+    const handleToggleFavorite = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const result = await toggleFavorite(event.id);
+        if (result.success) {
+            message.success(result.message);
+        } else {
+            message.error(result.message);
+        }
+    };
+
     return (
         <Link to={`/event/${event.id}`} className="event-card-link">
             <Card
@@ -18,6 +34,12 @@ const EventCard = ({ event }) => {
                         <img src={event.image} alt={event.title} className="event-card-img" />
                         <div className="event-card-overlay">
                             <span className="event-card-buy-btn">Mua vé <ArrowRightOutlined /></span>
+                        </div>
+                        <div
+                            className={`event-card-favorite-btn ${favorited ? 'active' : ''}`}
+                            onClick={handleToggleFavorite}
+                        >
+                            {favorited ? <StarFilled style={{ color: '#ffb400' }} /> : <StarOutlined />}
                         </div>
                         {event.badge && (
                             <div className="event-card-badge-hot">

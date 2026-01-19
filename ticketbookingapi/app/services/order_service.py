@@ -284,7 +284,7 @@ class OrderService:
                     if event:
                         # Check if any ticket type has sales ended
                         min_sale_end = None
-                        for tt in event.TicketType:
+                        for tt in event.ticket_types:
                             if tt.sale_end:
                                 if min_sale_end is None or tt.sale_end < min_sale_end:
                                     min_sale_end = tt.sale_end

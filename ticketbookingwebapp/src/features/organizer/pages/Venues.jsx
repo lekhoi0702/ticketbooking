@@ -21,7 +21,8 @@ import {
     Spin,
     Tooltip,
     Skeleton,
-    Popconfirm
+    Popconfirm,
+    Card
 } from 'antd';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
@@ -34,6 +35,8 @@ const OrganizerVenues = () => {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [venues, setVenues] = useState([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [refreshKey, setRefreshKey] = useState(0); // Add refresh key
 
     // Seat Map Editor State
     const [selectedVenue, setSelectedVenue] = useState(null);
@@ -75,12 +78,30 @@ const OrganizerVenues = () => {
         setShowVenueModal(true);
     };
 
+    const handleEditSelected = () => {
+        if (selectedRowKeys.length !== 1) {
+            message.warning('Vui lòng chọn một địa điểm để sửa');
+            return;
+        }
+        const venue = venues.find(v => v.venue_id === selectedRowKeys[0]);
+        handleEditVenue(venue);
+    };
+
     // --- SEAT MAP EDITOR Handlers ---
     const handleEditLayout = (venue) => {
         setSelectedVenue(venue);
         const template = venue.seat_map_template || { areas: [] };
         setEditorInitialAreas(template.areas || []);
         setShowEditModal(true);
+    };
+
+    const handleEditLayoutSelected = () => {
+        if (selectedRowKeys.length !== 1) {
+            message.warning('Vui lòng chọn một địa điểm để chỉnh sửa sơ đồ');
+            return;
+        }
+        const venue = venues.find(v => v.venue_id === selectedRowKeys[0]);
+        handleEditLayout(venue);
     };
 
     const handleSaveLayout = async (newAreas) => {
@@ -97,7 +118,10 @@ const OrganizerVenues = () => {
             if (res.success) {
                 message.success("Cập nhật sơ đồ địa điểm thành công!");
                 setShowEditModal(false);
-                fetchVenues();
+                setSelectedVenue(null);
+                setSelectedRowKeys([]); // Clear selection to force re-render
+                await fetchVenues(); // Wait for fetch to complete
+                setRefreshKey(prev => prev + 1); // Force table refresh
             }
         } catch (error) {
             message.error(error.message);
@@ -119,6 +143,25 @@ const OrganizerVenues = () => {
         }
     };
 
+    const handleToggleMaintenanceSelected = async () => {
+        if (selectedRowKeys.length === 0) {
+            message.warning('Vui lòng chọn ít nhất một địa điểm');
+            return;
+        }
+
+        try {
+            for (const venueId of selectedRowKeys) {
+                const venue = venues.find(v => v.venue_id === venueId);
+                if (venue) {
+                    await handleToggleMaintenance(venue);
+                }
+            }
+            setSelectedRowKeys([]);
+        } catch (error) {
+            message.error('Có lỗi xảy ra khi chuyển trạng thái');
+        }
+    };
+
     const handleDeleteVenue = async (venueId) => {
         try {
             const res = await api.deleteVenue(venueId);
@@ -129,6 +172,30 @@ const OrganizerVenues = () => {
         } catch (error) {
             message.error(error.message || 'Lỗi khi xóa địa điểm');
         }
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedRowKeys.length === 0) {
+            message.warning('Vui lòng chọn ít nhất một địa điểm để xóa');
+            return;
+        }
+
+        try {
+            for (const venueId of selectedRowKeys) {
+                await handleDeleteVenue(venueId);
+            }
+            setSelectedRowKeys([]);
+        } catch (error) {
+            message.error('Có lỗi xảy ra khi xóa');
+        }
+    };
+
+    // Row selection configuration
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (selectedKeys) => {
+            setSelectedRowKeys(selectedKeys);
+        },
     };
 
     // Table columns configuration
@@ -228,56 +295,6 @@ const OrganizerVenues = () => {
                 );
             },
         },
-        {
-            title: 'Thao tác',
-            key: 'actions',
-            width: 280,
-            fixed: 'right',
-            render: (_, record) => (
-                <Space size="small">
-                    <Button
-                        type="link"
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditVenue(record)}
-                    >
-                        Sửa
-                    </Button>
-                    <Button
-                        type="link"
-                        size="small"
-                        icon={<AppstoreOutlined />}
-                        onClick={() => handleEditLayout(record)}
-                    >
-                        Sơ đồ
-                    </Button>
-                    <Button
-                        type="link"
-                        size="small"
-                        danger={record.status !== 'MAINTENANCE'}
-                        icon={<ToolOutlined />}
-                        onClick={() => handleToggleMaintenance(record)}
-                    >
-                        {record.status === 'MAINTENANCE' ? 'Hoàn tất' : 'Bảo trì'}
-                    </Button>
-                    <Popconfirm
-                        title="Bạn có chắc chắn muốn xóa địa điểm này?"
-                        onConfirm={() => handleDeleteVenue(record.venue_id)}
-                        okText="Có"
-                        cancelText="Không"
-                    >
-                        <Button
-                            type="link"
-                            size="small"
-                            danger
-                            icon={<DeleteOutlined />}
-                        >
-                            Xóa
-                        </Button>
-                    </Popconfirm>
-                </Space>
-            ),
-        },
     ];
 
     if (loading) {
@@ -295,7 +312,7 @@ const OrganizerVenues = () => {
     return (
         <Spin spinning={saving} tip="Đang xử lý...">
             <div style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24, alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
                     <Space>
                         <Button
                             type="primary"
@@ -313,10 +330,70 @@ const OrganizerVenues = () => {
                     </Space>
                 </div>
 
+                {/* Toolbar for selected items */}
+                {selectedRowKeys.length > 0 && (
+                    <Card
+                        size="small"
+                        style={{
+                            marginBottom: 16,
+                            background: '#e6f7ff',
+                            borderColor: '#91d5ff'
+                        }}
+                    >
+                        <Space>
+                            <span style={{ fontWeight: 600 }}>
+                                Đã chọn {selectedRowKeys.length} địa điểm
+                            </span>
+                            <Button
+                                type="primary"
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={handleEditSelected}
+                                disabled={selectedRowKeys.length !== 1}
+                            >
+                                Sửa
+                            </Button>
+                            <Button
+                                type="default"
+                                size="small"
+                                icon={<AppstoreOutlined />}
+                                onClick={handleEditLayoutSelected}
+                                disabled={selectedRowKeys.length !== 1}
+                            >
+                                Sơ đồ
+                            </Button>
+                            <Button
+                                type="default"
+                                size="small"
+                                icon={<ToolOutlined />}
+                                onClick={handleToggleMaintenanceSelected}
+                            >
+                                Bảo trì
+                            </Button>
+                            <Popconfirm
+                                title={`Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} địa điểm đã chọn?`}
+                                onConfirm={handleDeleteSelected}
+                                okText="Có"
+                                cancelText="Không"
+                            >
+                                <Button
+                                    danger
+                                    size="small"
+                                    icon={<DeleteOutlined />}
+                                >
+                                    Xóa
+                                </Button>
+                            </Popconfirm>
+                        </Space>
+                    </Card>
+                )}
+
                 <Table
+                    key={refreshKey}
                     columns={columns}
                     dataSource={venues}
                     rowKey="venue_id"
+                    rowSelection={rowSelection}
                     pagination={{
                         pageSize: 10,
                         showSizeChanger: true,

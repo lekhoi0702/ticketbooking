@@ -75,12 +75,7 @@ const Footer = () => {
                                     <Link to="/payment-methods" className="footer-link">Phương thức thanh toán</Link>
                                 </Space>
                             </Col>
-                        </Row>
-                    </div>
 
-                    {/* Bottom Section */}
-                    <div className="footer-bottom-section">
-                        <Row gutter={[24, 32]}>
                             {/* Ticketbooking App */}
                             <Col xs={24} md={8}>
                                 <Title level={5} className="footer-heading">Ứng dụng Ticketbooking</Title>
@@ -107,7 +102,7 @@ const Footer = () => {
                                 </Space>
                             </Col>
 
-                            {/* Follow (Language removed) */}
+                            {/* Follow us */}
                             <Col xs={24} md={8}>
                                 <div className="footer-social-group">
                                     <Title level={5} className="footer-heading">Follow us</Title>

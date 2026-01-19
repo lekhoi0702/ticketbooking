@@ -73,4 +73,37 @@ export const eventApi = {
         if (!response.ok) throw new Error('Failed to fetch ticket types');
         return await response.json();
     },
+
+    async toggleFavorite(userId, eventId, token) {
+        const response = await fetch(`${API_BASE_URL}/events/favorites/toggle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ user_id: userId, event_id: eventId })
+        });
+        if (!response.ok) throw new Error('Failed to toggle favorite');
+        return await response.json();
+    },
+
+    async getFavoriteEvents(userId, token) {
+        const response = await fetch(`${API_BASE_URL}/events/favorites/user/${userId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) throw new Error('Failed to fetch favorites');
+        return await response.json();
+    },
+
+    async getFavoriteEventIds(userId, token) {
+        const response = await fetch(`${API_BASE_URL}/events/favorites/ids/${userId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) throw new Error('Failed to fetch favorite IDs');
+        return await response.json();
+    },
 };
