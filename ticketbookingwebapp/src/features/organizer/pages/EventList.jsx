@@ -7,15 +7,13 @@ import {
     Typography,
     Space,
     Alert,
-    Modal,
-    Spin
+    Modal
 } from 'antd';
 import {
     PlusOutlined,
     SearchOutlined,
     ReloadOutlined
 } from '@ant-design/icons';
-import LoadingSpinner from '@shared/components/LoadingSpinner';
 import EventTable from '@features/organizer/components/EventTable';
 import DeleteEventModal from '@features/organizer/components/DeleteEventModal';
 import AddShowtimeForm from '@features/organizer/components/AddShowtimeForm';
@@ -46,93 +44,88 @@ const EventList = () => {
         event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    if (loading) {
-        return <LoadingSpinner tip="Đang tải dữ liệu..." />;
-    }
-
     return (
-        <>
-            <Spin spinning={loading || deleting} fullscreen tip={deleting ? "Đang xóa sự kiện..." : "Vui lòng đợi..."} />
-            <div>
-                {/* Header Actions */}
-                <Space style={{ marginBottom: 24 }}>
-                    <Link to="/organizer/create-event">
-                        <Button type="primary" icon={<PlusOutlined />} disabled={loading || deleting}>
-                            Tạo sự kiện mới
-                        </Button>
-                    </Link>
-                    <Button icon={<ReloadOutlined />} onClick={fetchEvents} disabled={loading || deleting}>
-                        Làm mới
+        <div className="event-list-page">
+            {/* Header Actions */}
+            <Space style={{ marginBottom: 24 }}>
+                <Link to="/organizer/create-event">
+                    <Button type="primary" icon={<PlusOutlined />} disabled={loading || deleting}>
+                        Tạo sự kiện mới
                     </Button>
-                </Space>
+                </Link>
+                <Button icon={<ReloadOutlined />} onClick={fetchEvents} disabled={loading || deleting}>
+                    Làm mới
+                </Button>
+            </Space>
 
-                {error && (
-                    <Alert
-                        message="Lỗi"
-                        description={error}
-                        type="error"
-                        showIcon
-                        style={{ marginBottom: 24 }}
+            {error && (
+                <Alert
+                    message="Lỗi"
+                    description={error}
+                    type="error"
+                    showIcon
+                    style={{ marginBottom: 24 }}
+                />
+            )}
+
+            <Card
+                styles={{ body: { padding: 0 } }}
+                extra={
+                    <Text type="secondary">
+                        Tổng số: <Text strong style={{ color: '#52c41a' }}>{filteredEvents.length}</Text> sự kiện
+                    </Text>
+                }
+                title={
+                    <Input
+                        prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ width: 300 }}
+                        allowClear
+                        placeholder="Tìm kiếm sự kiện..."
+                    />
+                }
+            >
+                <div style={{ padding: '0 0px' }}>
+                    <EventTable
+                        events={filteredEvents}
+                        handlePublishEvent={handlePublishEvent}
+                        handleCancelApproval={handleCancelApproval}
+                        handleDeleteClick={handleDeleteClick}
+                        setIsAddShowtimeModalOpen={setIsAddShowtimeModalOpen}
+                        loading={loading || deleting}
+                    />
+                </div>
+            </Card>
+
+            {/* Delete Modal */}
+            <DeleteEventModal
+                open={showDeleteModal}
+                onCancel={() => setShowDeleteModal(false)}
+                onConfirm={handleDeleteConfirm}
+                loading={deleting}
+                event={eventToDelete}
+                setEvent={setEventToDelete}
+            />
+
+            {/* Add Showtime Modal */}
+            <Modal
+                title="Thêm suất diễn mới"
+                open={!!isAddShowtimeModalOpen}
+                onCancel={() => setIsAddShowtimeModalOpen(null)}
+                footer={null}
+            >
+                {isAddShowtimeModalOpen && (
+                    <AddShowtimeForm
+                        sourceEvent={isAddShowtimeModalOpen}
+                        onSuccess={() => {
+                            setIsAddShowtimeModalOpen(null);
+                            fetchEvents();
+                        }}
                     />
                 )}
-
-                <Card
-                    styles={{ body: { padding: 0 } }}
-                    extra={
-                        <Text type="secondary">
-                            Tổng số: <Text strong style={{ color: '#52c41a' }}>{filteredEvents.length}</Text> sự kiện
-                        </Text>
-                    }
-                    title={
-                        <Input
-                            prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ width: 300 }}
-                            allowClear
-                        />
-                    }
-                >
-                    <div style={{ padding: '0 0px' }}>
-                        <EventTable
-                            events={filteredEvents}
-                            handlePublishEvent={handlePublishEvent}
-                            handleCancelApproval={handleCancelApproval}
-                            handleDeleteClick={handleDeleteClick}
-                            setIsAddShowtimeModalOpen={setIsAddShowtimeModalOpen}
-                        />
-                    </div>
-                </Card>
-
-                {/* Delete Modal */}
-                <DeleteEventModal
-                    open={showDeleteModal}
-                    onCancel={() => setShowDeleteModal(false)}
-                    onConfirm={handleDeleteConfirm}
-                    loading={deleting}
-                    event={eventToDelete}
-                    setEvent={setEventToDelete}
-                />
-
-                {/* Add Showtime Modal */}
-                <Modal
-                    title="Thêm suất diễn mới"
-                    open={!!isAddShowtimeModalOpen}
-                    onCancel={() => setIsAddShowtimeModalOpen(null)}
-                    footer={null}
-                >
-                    {isAddShowtimeModalOpen && (
-                        <AddShowtimeForm
-                            sourceEvent={isAddShowtimeModalOpen}
-                            onSuccess={() => {
-                                setIsAddShowtimeModalOpen(null);
-                                fetchEvents();
-                            }}
-                        />
-                    )}
-                </Modal>
-            </div>
-        </>
+            </Modal>
+        </div>
     );
 };
 

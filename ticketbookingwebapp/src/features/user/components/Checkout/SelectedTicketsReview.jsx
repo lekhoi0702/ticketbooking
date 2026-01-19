@@ -1,10 +1,9 @@
 import React from 'react';
-import { Card, ListGroup, Button } from 'react-bootstrap';
-import { FaTicketAlt, FaChair } from 'react-icons/fa';
-import { formatCurrency } from '@shared/utils/eventUtils';
+import { Card, Button, Badge } from 'react-bootstrap';
+import { FaArrowLeft, FaTicketAlt, FaChair } from 'react-icons/fa';
 
 /**
- * Component hiển thị danh sách vé đã chọn
+ * Component hiển thị review các vé đã chọn
  */
 const SelectedTicketsReview = ({
     ticketTypes,
@@ -13,70 +12,83 @@ const SelectedTicketsReview = ({
     hasSeatMap,
     onGoBack
 }) => {
-    const selectedTypes = ticketTypes.filter(tt => selectedTickets[tt.ticket_type_id] > 0);
+    // Filter only selected ticket types
+    const selectedTicketTypes = ticketTypes.filter(
+        tt => selectedTickets[tt.ticket_type_id] > 0
+    );
 
-    if (selectedTypes.length === 0) {
+    if (selectedTicketTypes.length === 0) {
         return null;
     }
 
     return (
-        <Card className="mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
-            <Card.Header className="bg-white py-3 border-bottom">
+        <Card className="mb-4 border-0 shadow-sm rounded-4">
+            <Card.Header className="bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <h5 className="mb-0 fw-bold">
                     <FaTicketAlt className="me-2 text-primary" />
                     Vé Đã Chọn
                 </h5>
+                <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={onGoBack}
+                    className="d-flex align-items-center gap-2"
+                >
+                    <FaArrowLeft />
+                    Quay lại
+                </Button>
             </Card.Header>
-            <Card.Body className="p-0">
-                <ListGroup variant="flush">
-                    {selectedTypes.map(tt => (
-                        <ListGroup.Item key={tt.ticket_type_id} className="p-4 border-bottom-0">
+            <Card.Body className="p-4">
+                {selectedTicketTypes.map(ticketType => {
+                    const quantity = selectedTickets[ticketType.ticket_type_id];
+                    const seats = selectedSeats[ticketType.ticket_type_id] || [];
+                    const hasSeats = hasSeatMap[ticketType.ticket_type_id];
+
+                    return (
+                        <div
+                            key={ticketType.ticket_type_id}
+                            className="mb-3 pb-3 border-bottom"
+                        >
                             <div className="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <h6 className="fw-bold mb-1">{tt.type_name}</h6>
+                                    <h6 className="mb-1 fw-bold">{ticketType.type_name}</h6>
                                     <div className="text-muted small">
-                                        Số lượng: {selectedTickets[tt.ticket_type_id]}
+                                        {ticketType.price.toLocaleString('vi-VN')}đ × {quantity} vé
                                     </div>
                                 </div>
                                 <div className="text-end">
-                                    <div className="fw-bold text-primary">
-                                        {formatCurrency(tt.price * selectedTickets[tt.ticket_type_id])}
-                                    </div>
-                                    <div className="text-muted small">
-                                        {formatCurrency(tt.price)} / vé
+                                    <Badge bg="primary" className="px-3 py-2">
+                                        {quantity} vé
+                                    </Badge>
+                                    <div className="fw-bold mt-1">
+                                        {(ticketType.price * quantity).toLocaleString('vi-VN')}đ
                                     </div>
                                 </div>
                             </div>
-                            {hasSeatMap[tt.ticket_type_id] && selectedSeats[tt.ticket_type_id] && (
-                                <div className="mt-3 bg-light p-3 rounded-3">
-                                    <div className="small fw-bold text-muted mb-2 text-uppercase">
-                                        Vị trí ghế
-                                    </div>
-                                    <div className="d-flex flex-wrap gap-2">
-                                        {selectedSeats[tt.ticket_type_id].map(seat => (
-                                            <div
-                                                key={seat.seat_id}
-                                                className="bg-white border px-3 py-1 rounded-pill small fw-bold"
+
+                            {/* Show selected seats if applicable */}
+                            {hasSeats && seats.length > 0 && (
+                                <div className="mt-2 p-2 bg-light rounded">
+                                    <small className="text-muted d-flex align-items-center gap-1">
+                                        <FaChair className="text-primary" />
+                                        <strong>Ghế đã chọn:</strong>
+                                    </small>
+                                    <div className="mt-1">
+                                        {seats.map((seat, idx) => (
+                                            <Badge
+                                                key={idx}
+                                                bg="secondary"
+                                                className="me-1 mb-1"
                                             >
-                                                <FaChair className="me-1 text-success small" />
-                                                {seat.seat_label}
-                                            </div>
+                                                {seat.seat_label || `${seat.row_label}${seat.seat_number}`}
+                                            </Badge>
                                         ))}
                                     </div>
                                 </div>
                             )}
-                        </ListGroup.Item>
-                    ))}
-                </ListGroup>
-                <div className="p-4 bg-light border-top text-center">
-                    <Button
-                        variant="link"
-                        onClick={onGoBack}
-                        className="text-decoration-none text-muted small p-0"
-                    >
-                        Thay đổi lựa chọn vé hoặc chỗ ngồi? Quay lại
-                    </Button>
-                </div>
+                        </div>
+                    );
+                })}
             </Card.Body>
         </Card>
     );

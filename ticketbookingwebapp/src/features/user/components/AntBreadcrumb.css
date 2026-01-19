@@ -1,0 +1,107 @@
+/* Ant Design Breadcrumb Styles */
+
+.ant-breadcrumb {
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.ant-breadcrumb-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ant-breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+}
+
+.ant-breadcrumb-link {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    color: rgba(0, 0, 0, 0.65) !important;
+    text-decoration: none !important;
+    transition: all 0.3s;
+    cursor: pointer;
+    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    line-height: 1.5715;
+    border-radius: 4px;
+}
+
+.ant-breadcrumb-link:hover {
+    color: #1890ff !important;
+    background-color: rgba(24, 144, 255, 0.1) !important;
+}
+
+.ant-breadcrumb-link-active {
+    color: rgba(0, 0, 0, 0.85);
+    cursor: text;
+}
+
+.ant-breadcrumb-link-active:hover {
+    color: rgba(0, 0, 0, 0.85);
+    background-color: transparent;
+}
+
+.ant-breadcrumb-icon {
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.ant-breadcrumb-text {
+    display: inline-block;
+}
+
+.ant-breadcrumb-separator {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 8px;
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 10px;
+}
+
+/* Dark theme support */
+.all-events-wrapper .ant-breadcrumb-link,
+.category-events-wrapper .ant-breadcrumb-link,
+.search-results-wrapper .ant-breadcrumb-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.all-events-wrapper .ant-breadcrumb-link:hover,
+.category-events-wrapper .ant-breadcrumb-link:hover,
+.search-results-wrapper .ant-breadcrumb-link:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.all-events-wrapper .ant-breadcrumb-link-active,
+.category-events-wrapper .ant-breadcrumb-link-active,
+.search-results-wrapper .ant-breadcrumb-link-active {
+    color: #ffffff !important;
+    font-weight: 500;
+}
+
+.all-events-wrapper .ant-breadcrumb-separator,
+.category-events-wrapper .ant-breadcrumb-separator,
+.search-results-wrapper .ant-breadcrumb-separator {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .ant-breadcrumb {
+        font-size: 12px;
+    }
+
+    .ant-breadcrumb-separator {
+        margin: 0 6px;
+    }
+}

@@ -6,7 +6,6 @@ import { FaShoppingCart } from 'react-icons/fa';
 import { useCheckout } from '@shared/hooks/useCheckout';
 
 // Components
-import SelectedTicketsReview from '@features/user/components/Checkout/SelectedTicketsReview';
 import CustomerInfoForm from '@features/user/components/Checkout/CustomerInfoForm';
 import PaymentMethodSelector from '@features/user/components/Checkout/PaymentMethodSelector';
 import OrderSummary from '@features/user/components/Checkout/OrderSummary';
@@ -57,15 +56,6 @@ const Checkout = () => {
             <Form onSubmit={handleSubmit}>
                 <Row>
                     <Col lg={8}>
-                        {/* Selected Tickets Review */}
-                        <SelectedTicketsReview
-                            ticketTypes={ticketTypes}
-                            selectedTickets={selectedTickets}
-                            selectedSeats={selectedSeats}
-                            hasSeatMap={hasSeatMap}
-                            onGoBack={() => navigate(-1)}
-                        />
-
                         {/* Customer Information */}
                         <CustomerInfoForm
                             customerInfo={customerInfo}

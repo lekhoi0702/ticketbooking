@@ -1,20 +1,36 @@
 from sqlalchemy import text
 from app.extensions import db
+from datetime import datetime
+import json
 
 class OrganizerVenueService:
     @staticmethod
     def get_venues(manager_id):
         query = text("""
-            SELECT * FROM venues 
-            WHERE manager_id = :manager_id
+            SELECT * FROM Venue 
+            WHERE manager_id = :manager_id AND status != 'MAINTENANCE'
         """)
         result = db.session.execute(query, {"manager_id": manager_id})
-        return [dict(row._mapping) for row in result]
+        
+        class VenueWrapper:
+            def __init__(self, row):
+                self.row = row
+            def to_dict(self):
+                d = dict(self.row._mapping)
+                for k, v in d.items():
+                    if isinstance(v, datetime):
+                        d[k] = v.isoformat()
+                return d
+
+        venues = []
+        for row in result:
+            venues.append(VenueWrapper(row))
+        return venues
 
     @staticmethod
     def create_venue(data):
         query = text("""
-            INSERT INTO venues (
+            INSERT INTO Venue (
                 venue_name, address, city, capacity, manager_id,
                 vip_seats, standard_seats, economy_seats,
                 contact_phone, seat_map_template, map_embed_code, status
@@ -35,7 +51,7 @@ class OrganizerVenueService:
             "standard_seats": int(data.get('standard_seats', 0)),
             "economy_seats": int(data.get('economy_seats', 0)),
             "contact_phone": data.get('contact_phone'),
-            "seat_map_template": data.get('seat_map_template'),
+            "seat_map_template": json.dumps(data.get('seat_map_template')) if data.get('seat_map_template') and isinstance(data.get('seat_map_template'), dict) else data.get('seat_map_template'),
             "map_embed_code": data.get('map_embed_code'),
             "status": 'ACTIVE'
         }
@@ -51,7 +67,7 @@ class OrganizerVenueService:
         
         # For simplicity in this specific "Core" style request without specialized DB knowledge,
         # we often rely on driver quirks. But a standardized simple way:
-        fetch_query = text("SELECT * FROM venues WHERE venue_name = :venue_name AND manager_id = :manager_id ORDER BY venue_id DESC LIMIT 1")
+        fetch_query = text("SELECT * FROM Venue WHERE venue_name = :venue_name AND manager_id = :manager_id ORDER BY venue_id DESC LIMIT 1")
         result = db.session.execute(fetch_query, {"venue_name": params['venue_name'], "manager_id": params['manager_id']})
         venue = result.fetchone()
         
@@ -78,7 +94,7 @@ class OrganizerVenueService:
     @staticmethod
     def update_venue(venue_id, data):
         # First check existence
-        check_query = text("SELECT * FROM venues WHERE venue_id = :venue_id")
+        check_query = text("SELECT * FROM Venue WHERE venue_id = :venue_id")
         result = db.session.execute(check_query, {"venue_id": venue_id})
         venue = result.fetchone()
         if not venue:
@@ -117,13 +133,13 @@ class OrganizerVenueService:
              params['status'] = data['status']
         if 'seat_map_template' in data:
              update_fields.append("seat_map_template = :seat_map_template")
-             params['seat_map_template'] = data['seat_map_template']
+             params['seat_map_template'] = json.dumps(data['seat_map_template']) if isinstance(data['seat_map_template'], dict) else data['seat_map_template']
         if 'map_embed_code' in data:
              update_fields.append("map_embed_code = :map_embed_code")
              params['map_embed_code'] = data['map_embed_code']
              
         if update_fields:
-            sql = f"UPDATE venues SET {', '.join(update_fields)} WHERE venue_id = :venue_id"
+            sql = f"UPDATE Venue SET {', '.join(update_fields)} WHERE venue_id = :venue_id"
             db.session.execute(text(sql), params)
             db.session.commit()
             
@@ -141,7 +157,7 @@ class OrganizerVenueService:
 
     @staticmethod
     def get_venue(venue_id):
-        query = text("SELECT * FROM venues WHERE venue_id = :venue_id")
+        query = text("SELECT * FROM Venue WHERE venue_id = :venue_id")
         result = db.session.execute(query, {"venue_id": venue_id})
         venue = result.fetchone()
         
@@ -151,5 +167,40 @@ class OrganizerVenueService:
             def __init__(self, row):
                 self.row = row
             def to_dict(self):
-                return dict(self.row._mapping)
+                if not self.row: return {}
+                d = dict(self.row._mapping)
+                from datetime import datetime
+                for k, v in d.items():
+                    if isinstance(v, datetime):
+                        d[k] = v.isoformat()
+                return d
         return VenueWrapper(venue)
+
+
+    @staticmethod
+    def delete_venue(venue_id):
+        # Check if venue exists
+        check_query = text("SELECT * FROM Venue WHERE venue_id = :venue_id")
+        result = db.session.execute(check_query, {"venue_id": venue_id})
+        venue = result.fetchone()
+        
+        if not venue:
+             raise ValueError('Địa điểm không tồn tại')
+             
+        # Check for events using this venue
+        event_check_query = text("""
+            SELECT COUNT(*) as event_count 
+            FROM Event 
+            WHERE venue_id = :venue_id
+        """)
+        event_result = db.session.execute(event_check_query, {"venue_id": venue_id})
+        event_count = event_result.fetchone()[0]
+        
+        if event_count > 0:
+            raise ValueError(f'Không thể xóa địa điểm này vì đã có {event_count} sự kiện đang sử dụng. Vui lòng xóa hoặc chuyển các sự kiện sang địa điểm khác trước.')
+        
+        # Safe to delete
+        delete_query = text("DELETE FROM Venue WHERE venue_id = :venue_id")
+        db.session.execute(delete_query, {"venue_id": venue_id})
+        db.session.commit()
+        return True

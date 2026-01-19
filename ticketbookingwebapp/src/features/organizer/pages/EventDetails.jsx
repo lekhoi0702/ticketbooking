@@ -27,12 +27,14 @@ import {
     CloseCircleOutlined,
     AppstoreOutlined,
     InfoCircleOutlined,
-    HomeOutlined
+    HomeOutlined,
+    PlusOutlined
 } from '@ant-design/icons';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { api } from '@services/api';
 import { getImageUrl } from '@shared/utils/eventUtils';
 import SeatMapTemplateView from '@features/organizer/components/SeatMapTemplateView';
+import AddShowtimeModal from '@features/organizer/components/AddShowtimeModal';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -47,6 +49,8 @@ const EventDetails = () => {
     const [venueTemplate, setVenueTemplate] = useState(null);
     const [eventSeats, setEventSeats] = useState([]);
     const [loadingMap, setLoadingMap] = useState(false);
+
+    const [showAddShowtimeModal, setShowAddShowtimeModal] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -176,6 +180,15 @@ const EventDetails = () => {
                             onClick={handleCancelApproval}
                         >
                             Hủy duyệt
+                        </Button>
+                    )}
+                    {['APPROVED', 'PUBLISHED'].includes(event.status) && (
+                        <Button
+                            type="default"
+                            icon={<PlusOutlined />}
+                            onClick={() => setShowAddShowtimeModal(true)}
+                        >
+                            Thêm suất diễn
                         </Button>
                     )}
                     <Button
@@ -349,6 +362,17 @@ const EventDetails = () => {
                     </Space>
                 </Col>
             </Row>
+
+            <AddShowtimeModal
+                visible={showAddShowtimeModal}
+                onCancel={() => setShowAddShowtimeModal(false)}
+                onSuccess={() => {
+                    setShowAddShowtimeModal(false);
+                    fetchData();
+                }}
+                eventId={eventId}
+                eventData={event}
+            />
         </div>
     );
 };

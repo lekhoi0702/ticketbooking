@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaList, FaCalendarAlt, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { parseLocalDateTime } from '@shared/utils/eventUtils';
 import './ScheduleCalendar.css';
 
 const ScheduleCalendar = ({ currentEvent, schedules, onSelectSchedule, selectedScheduleId }) => {
@@ -16,10 +17,16 @@ const ScheduleCalendar = ({ currentEvent, schedules, onSelectSchedule, selectedS
         ...schedules
     ];
 
-    // Group schedules by date
+
+    // Group schedules by date - Use parseLocalDateTime to prevent timezone issues
     const schedulesByDate = allSchedules.reduce((acc, schedule) => {
-        const date = new Date(schedule.start_datetime);
-        const dateKey = date.toISOString().split('T')[0];
+        const date = parseLocalDateTime(schedule.start_datetime);
+        if (!date) return acc;
+        // Create dateKey from local date components to avoid UTC conversion
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateKey = `${year}-${month}-${day}`;
         if (!acc[dateKey]) {
             acc[dateKey] = [];
         }
@@ -104,8 +111,8 @@ const ScheduleCalendar = ({ currentEvent, schedules, onSelectSchedule, selectedS
         const targetMonth = targetDate.getMonth();
 
         return allSchedules.filter(schedule => {
-            const scheduleDate = new Date(schedule.start_datetime);
-            return scheduleDate.getFullYear() === targetYear && scheduleDate.getMonth() === targetMonth;
+            const scheduleDate = parseLocalDateTime(schedule.start_datetime);
+            return scheduleDate && scheduleDate.getFullYear() === targetYear && scheduleDate.getMonth() === targetMonth;
         }).length;
     };
 
@@ -158,20 +165,23 @@ const ScheduleCalendar = ({ currentEvent, schedules, onSelectSchedule, selectedS
                 </div>
             ) : (
                 <div className="schedule-list-view">
-                    {allSchedules.map(schedule => (
-                        <div
-                            key={schedule.event_id}
-                            className={`schedule-list-item ${selectedScheduleId === schedule.event_id ? 'selected' : ''}`}
-                            onClick={() => onSelectSchedule(schedule.event_id)}
-                        >
-                            <div className="schedule-item-time">
-                                {new Date(schedule.start_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                    {allSchedules.map(schedule => {
+                        const scheduleDate = parseLocalDateTime(schedule.start_datetime);
+                        return (
+                            <div
+                                key={schedule.event_id}
+                                className={`schedule-list-item ${selectedScheduleId === schedule.event_id ? 'selected' : ''}`}
+                                onClick={() => onSelectSchedule(schedule.event_id)}
+                            >
+                                <div className="schedule-item-time">
+                                    {scheduleDate ? scheduleDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                                </div>
+                                <div className="schedule-item-date">
+                                    {scheduleDate ? scheduleDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
+                                </div>
                             </div>
-                            <div className="schedule-item-date">
-                                {new Date(schedule.start_datetime).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

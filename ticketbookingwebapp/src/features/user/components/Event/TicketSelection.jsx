@@ -12,6 +12,24 @@ const TicketSelection = ({
     hasSeatMap,
     setHasSeatMap
 }) => {
+    // Debug logging
+    console.log('TicketSelection - event:', event);
+    console.log('TicketSelection - ticket_types:', event?.ticket_types);
+
+    // Check if ticket types exist
+    if (!event || !event.ticket_types || event.ticket_types.length === 0) {
+        return (
+            <section id="ticket-selection" className="detail-section">
+                <h3 className="section-title">Chọn vé & Chỗ ngồi</h3>
+                <Card className="mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
+                    <Card.Body className="p-4 text-center">
+                        <p className="text-muted mb-0">Sự kiện này chưa có loại vé nào.</p>
+                    </Card.Body>
+                </Card>
+            </section>
+        );
+    }
+
     return (
         <section id="ticket-selection" className="detail-section">
             <h3 className="section-title">Chọn vé & Chỗ ngồi</h3>

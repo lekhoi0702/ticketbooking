@@ -9,27 +9,27 @@
     padding-bottom: 60px;
 }
 
-/* Ensure breadcrumb text is visible on dark background */
-.all-events-wrapper .breadcrumb-item {
-    color: #b0b3b8;
+/* Ant Design Breadcrumb - Dark Theme Override */
+.all-events-wrapper .ant-breadcrumb {
+    margin-bottom: 24px;
 }
 
-.all-events-wrapper .breadcrumb-item.active {
-    color: #ffffff;
+.all-events-wrapper .ant-breadcrumb-link {
+    color: #ffffff !important;
 }
 
-.all-events-wrapper .breadcrumb-item a {
-    color: #b0b3b8;
-    text-decoration: none;
-    transition: color 0.2s;
+.all-events-wrapper .ant-breadcrumb-link:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-.all-events-wrapper .breadcrumb-item a:hover {
-    color: var(--primary-teal);
+.all-events-wrapper .ant-breadcrumb-link-active {
+    color: #ffffff !important;
+    font-weight: 600;
 }
 
-.all-events-wrapper .breadcrumb-item+.breadcrumb-item::before {
-    color: #9ca3af;
+.all-events-wrapper .ant-breadcrumb-separator {
+    color: rgba(255, 255, 255, 0.65) !important;
 }
 
 .all-events-header {

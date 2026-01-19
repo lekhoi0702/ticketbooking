@@ -153,7 +153,7 @@ export const organizerApi = {
     },
 
     // Venue Management
-    async getVenues(managerId = 1) {
+    async getOrganizerVenues(managerId = 1) {
         const response = await fetch(`${API_BASE_URL}/organizer/venues?manager_id=${managerId}`);
         if (!response.ok) throw new Error('Failed to fetch venues');
         return await response.json();
@@ -187,6 +187,17 @@ export const organizerApi = {
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to update venue');
+        }
+        return await response.json();
+    },
+
+    async deleteVenue(venueId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/venues/${venueId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to delete venue');
         }
         return await response.json();
     },

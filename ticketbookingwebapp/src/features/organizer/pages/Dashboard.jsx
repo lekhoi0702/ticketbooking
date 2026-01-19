@@ -8,7 +8,8 @@ import {
     Stack,
     CircularProgress,
     Snackbar,
-    Alert
+    Alert,
+    Skeleton
 } from '@mui/material';
 import {
     Event as EventIcon,
@@ -78,13 +79,24 @@ const Dashboard = () => {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <Stack alignItems="center" spacing={2}>
-                    <CircularProgress size={60} thickness={4} />
-                    <Typography variant="h6" color="text.secondary">
-                        Đang tải dữ liệu...
-                    </Typography>
-                </Stack>
+            <Box>
+                {/* Welcome Loading */}
+                <Box sx={{ mb: 4 }}>
+                    <Skeleton variant="text" width={300} height={40} sx={{ mb: 1 }} />
+                    <Skeleton variant="text" width={400} height={24} />
+                </Box>
+
+                {/* Stats Loading */}
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                    {[1, 2, 3].map((item) => (
+                        <Grid item xs={12} sm={6} md={4} key={item}>
+                            <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 2 }} />
+                        </Grid>
+                    ))}
+                </Grid>
+
+                {/* Table Loading */}
+                <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
             </Box>
         );
     }

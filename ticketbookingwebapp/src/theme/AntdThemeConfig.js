@@ -1,32 +1,40 @@
+import { theme } from 'antd';
+
 export const AntdThemeConfig = {
     token: {
-        colorPrimary: '#52c41a', // Ant Design Green
+        colorPrimary: '#52c41a',
         colorSuccess: '#52c41a',
         colorWarning: '#faad14',
         colorError: '#ff4d4f',
         colorInfo: '#1890ff',
-        borderRadius: 6,
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'"
+        borderRadius: 8,
+        fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     },
+    algorithm: theme.defaultAlgorithm,
     components: {
-        Layout: {
-            headerBg: '#ffffff',
-            bodyBg: '#f5f7fa',
-            triggerBg: '#ffffff',
-        },
-        Menu: {
-            itemBg: 'transparent',
-            itemSelectedBg: '#f6ffed',
-            itemSelectedColor: '#52c41a',
-            itemHoverBg: '#f5f5f5',
-        },
         Button: {
-            borderRadius: 4,
-            fontWeight: 500,
+            borderRadius: 8,
+            controlHeight: 40,
+            fontWeight: 600,
         },
         Card: {
+            borderRadiusLG: 16,
+        },
+        Input: {
             borderRadius: 8,
-            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)'
+            controlHeight: 40,
+        },
+        Table: {
+            borderRadius: 12,
+        },
+        Tabs: {
+            itemSelectedColor: '#52c41a',
+            itemHoverColor: '#52c41a',
+            inkBarColor: '#52c41a',
+        },
+        Menu: {
+            itemSelectedBg: 'rgba(82, 196, 26, 0.1)',
+            itemSelectedColor: '#52c41a',
         }
     }
 };

@@ -119,10 +119,10 @@ class OrderService:
             if not ticket_type:
                 raise ValueError(f'Ticket type {ticket_type_id} not found')
             
-            # If seats are provided, quantity should match seat_ids length
+            # If Seat are provided, quantity should match seat_ids length
             if seat_ids:
                 if len(seat_ids) != quantity:
-                    raise ValueError(f'Quantity ({quantity}) does not match number of selected seats ({len(seat_ids)})')
+                    raise ValueError(f'Quantity ({quantity}) does not match number of selected Seat ({len(seat_ids)})')
                 
                 # Check status each seat
                 for seat_id in seat_ids:
@@ -132,10 +132,10 @@ class OrderService:
                     if seat.status != 'AVAILABLE':
                         raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được đặt')
             
-            # Check availability (for non-seat tickets)
+            # Check availability (for non-seat Ticket)
             available = ticket_type.quantity - ticket_type.sold_quantity
             if available < quantity:
-                raise ValueError(f'Not enough tickets available for {ticket_type.type_name}. Only {available} left.')
+                raise ValueError(f'Not enough Ticket available for {ticket_type.type_name}. Only {available} left.')
             
             total_amount += float(ticket_type.price) * quantity
             ticket_types_to_update.append({
@@ -178,7 +178,7 @@ class OrderService:
         db.session.add(order)
         db.session.flush()  # Get order_id
         
-        # Create tickets
+        # Create Ticket
         created_tickets = []
         for ticket_info in ticket_types_to_update:
             ticket_type = ticket_info['ticket_type']
@@ -284,7 +284,7 @@ class OrderService:
                     if event:
                         # Check if any ticket type has sales ended
                         min_sale_end = None
-                        for tt in event.ticket_types:
+                        for tt in event.TicketType:
                             if tt.sale_end:
                                 if min_sale_end is None or tt.sale_end < min_sale_end:
                                     min_sale_end = tt.sale_end
@@ -384,7 +384,7 @@ class OrderService:
             if ticket_type:
                 ticket_type.sold_quantity -= 1
                 
-                # Update event sold tickets
+                # Update event sold Ticket
                 event = Event.query.get(ticket_type.event_id)
                 if event:
                     event.sold_tickets -= 1
@@ -437,3 +437,5 @@ class OrderService:
         # Sort by created_at descending
         all_tickets.sort(key=lambda x: x.get('order_date', ''), reverse=True)
         return all_tickets
+
+

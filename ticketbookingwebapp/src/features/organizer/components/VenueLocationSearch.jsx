@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Space, Typography, message } from 'antd';
+import { Form, Input, Button, Space, Typography, message, Skeleton } from 'antd';
 import { EnvironmentOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -13,10 +13,15 @@ const VenueLocationSearch = ({ form, mapPreviewUrl, setMapPreviewUrl }) => {
     const watchedCity = Form.useWatch('city', form);
 
     useEffect(() => {
+        if (!watchedAddress || watchedAddress.length <= 5) {
+            setSearchResults([]);
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
         const timer = setTimeout(() => {
-            if (watchedAddress && watchedAddress.length > 5) {
-                performSearch(watchedAddress, watchedCity || '');
-            }
+            performSearch(watchedAddress, watchedCity || '');
         }, 1000); // 1s Debounce
 
         return () => clearTimeout(timer);
@@ -36,6 +41,8 @@ const VenueLocationSearch = ({ form, mapPreviewUrl, setMapPreviewUrl }) => {
             }
         } catch (err) {
             console.error("Search error", err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -60,7 +67,7 @@ const VenueLocationSearch = ({ form, mapPreviewUrl, setMapPreviewUrl }) => {
             </Form.Item>
 
             {/* Search Results Dropdown */}
-            {(searchResults.length > 0) && (
+            {(loading || searchResults.length > 0) && (
                 <div style={{
                     marginBottom: 24,
                     border: '1px solid #d9d9d9',
@@ -72,36 +79,45 @@ const VenueLocationSearch = ({ form, mapPreviewUrl, setMapPreviewUrl }) => {
                     position: 'relative' // Keeps it in flow but allows overlay feel if needed
                 }}>
                     <div style={{ padding: '8px 12px', background: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>Kết quả tìm kiếm ({searchResults.length}) - Chọn địa điểm đúng nhất:</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            {loading ? 'Đang tìm kiếm...' : `Kết quả tìm kiếm (${searchResults.length}) - Chọn địa điểm đúng nhất:`}
+                        </Text>
                     </div>
                     <div style={{ maxHeight: 200, overflowY: 'auto' }}>
-                        {searchResults.map((item, idx) => (
-                            <div
-                                key={idx}
-                                style={{
-                                    padding: '10px 12px',
-                                    borderBottom: '1px solid #f0f0f0',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'start'
-                                }}
-                                onClick={() => handleSelectLocation(item)}
-                                onMouseEnter={(e) => e.currentTarget.style.background = '#e6f7ff'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
-                            >
-                                <EnvironmentOutlined style={{ marginRight: 10, marginTop: 4, color: '#1890ff' }} />
-                                <div>
-                                    <div style={{ fontWeight: 500 }}>{item.display_name.split(',')[0]}</div>
-                                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>{item.display_name}</div>
-                                </div>
+                        {loading ? (
+                            <div style={{ padding: 12 }}>
+                                <Skeleton active avatar paragraph={{ rows: 1 }} />
+                                <Skeleton active avatar paragraph={{ rows: 1 }} />
                             </div>
-                        ))}
+                        ) : (
+                            searchResults.map((item, idx) => (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        padding: '10px 12px',
+                                        borderBottom: '1px solid #f0f0f0',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'start'
+                                    }}
+                                    onClick={() => handleSelectLocation(item)}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = '#e6f7ff'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+                                >
+                                    <EnvironmentOutlined style={{ marginRight: 10, marginTop: 4, color: '#1890ff' }} />
+                                    <div>
+                                        <div style={{ fontWeight: 500 }}>{item.display_name.split(',')[0]}</div>
+                                        <div style={{ fontSize: 12, color: '#8c8c8c' }}>{item.display_name}</div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             )}
 
             {/* Spacer if no results to restore spacing */}
-            {searchResults.length === 0 && <div style={{ marginBottom: 24 }}></div>}
+            {!loading && searchResults.length === 0 && <div style={{ marginBottom: 24 }}></div>}
 
             {/* Hidden field for storage */}
             <Form.Item

@@ -23,7 +23,7 @@ const EventOrganizerCard = ({ organizerInfo, eventName }) => {
                         </p>
                     </div>
                 </div>
-                <Button variant="outline-success" className="w-100 mt-3">Theo dõi</Button>
+
             </Card.Body>
         </Card>
     );

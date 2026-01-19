@@ -1,0 +1,45 @@
+/* CategoryEvents.css - Dark Theme */
+
+.category-events-wrapper {
+    min-height: 100vh;
+    width: 100%;
+    background-color: #000000;
+    color: #ffffff;
+    padding-top: 40px;
+    padding-bottom: 60px;
+}
+
+/* Ant Design Breadcrumb - Dark Theme Override */
+.category-events-wrapper .ant-breadcrumb {
+    margin-bottom: 24px;
+}
+
+.category-events-wrapper .ant-breadcrumb-link {
+    color: #ffffff !important;
+}
+
+.category-events-wrapper .ant-breadcrumb-link:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.category-events-wrapper .ant-breadcrumb-link-active {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.category-events-wrapper .ant-breadcrumb-separator {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.category-events-wrapper .category-header h2 {
+    color: #ffffff;
+}
+
+.category-events-wrapper .category-header .text-muted {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.category-events-wrapper hr {
+    border-color: rgba(255, 255, 255, 0.1);
+}

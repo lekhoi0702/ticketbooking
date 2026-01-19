@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Input, Button, Tag, Space, Typography, message } from 'antd';
+import { Card, Table, Input, Button, Tag, Space, Typography, message, Skeleton } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
@@ -60,11 +60,11 @@ const ManageOrders = () => {
             dataIndex: 'customer_name',
             key: 'customer_name',
             render: (text, record) => (
-                <Space direction="vertical" size={0}>
-                    <Text strong>{text}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{record.customer_email}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{record.customer_phone}</Text>
-                </Space>
+                <div>
+                    <div><Text strong>{record.customer_name || 'N/A'}</Text></div>
+                    <div><Text type="secondary" style={{ fontSize: 12 }}>Email: {record.customer_email || 'N/A'}</Text></div>
+                    <div><Text type="secondary" style={{ fontSize: 12 }}>SĐT: {record.customer_phone || 'N/A'}</Text></div>
+                </div>
             )
         },
         {
@@ -120,16 +120,12 @@ const ManageOrders = () => {
                 }
             }
         ];
-        return <Table columns={ticketColumns} dataSource={record.tickets} pagination={false} size="small" rowKey="code" />;
+        return <Table columns={ticketColumns} dataSource={record.Ticket} pagination={false} size="small" rowKey="code" />;
     };
 
     return (
         <div className="manage-orders-page">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <div>
-                    <Title level={2}>Quản lý Đơn hàng</Title>
-                    <Text type="secondary">Danh sách đơn hàng và vé đã bán</Text>
-                </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
                 <Button icon={<ReloadOutlined />} onClick={() => fetchOrders(pagination.current, pagination.pageSize, searchText)}>Làm mới</Button>
             </div>
 
@@ -144,15 +140,25 @@ const ManageOrders = () => {
                     />
                 </div>
 
-                <Table
-                    columns={columns}
-                    dataSource={orders}
-                    rowKey="order_id"
-                    pagination={pagination}
-                    onChange={handleTableChange}
-                    loading={loading}
-                    expandable={{ expandedRowRender, rowExpandable: record => record.tickets && record.tickets.length > 0 }}
-                />
+                {loading ? (
+                    <div style={{ padding: 20 }}>
+                        <Skeleton active paragraph={{ rows: 10 }} />
+                    </div>
+                ) : (
+                    <Table
+                        columns={columns}
+                        dataSource={orders}
+                        rowKey="order_id"
+                        pagination={pagination}
+                        onChange={handleTableChange}
+                        loading={false}
+                        expandable={{
+                            expandedRowRender,
+                            rowExpandable: record => record.Ticket && record.Ticket.length > 0,
+                            expandRowByClick: true
+                        }}
+                    />
+                )}
             </Card>
         </div>
     );

@@ -67,4 +67,10 @@ export const eventApi = {
         if (!response.ok) throw new Error('Failed to fetch recommended events');
         return await response.json();
     },
+
+    async getTicketTypes(eventId) {
+        const response = await fetch(`${API_BASE_URL}/events/${eventId}/ticket-types`);
+        if (!response.ok) throw new Error('Failed to fetch ticket types');
+        return await response.json();
+    },
 };

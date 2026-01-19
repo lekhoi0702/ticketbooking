@@ -3,7 +3,7 @@ import { Table, Typography, Empty, Button, Space, message } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
-import { formatCurrency } from '@shared/utils/eventUtils';
+import { formatCurrency, parseLocalDateTime } from '@shared/utils/eventUtils';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
@@ -64,7 +64,10 @@ const MyOrdersTab = () => {
             title: 'Ngày đặt',
             dataIndex: 'created_at',
             key: 'created_at',
-            render: (date) => <span style={{ color: '#ccc' }}>{new Date(date).toLocaleDateString('vi-VN')}</span>,
+            render: (date) => {
+                const orderDate = parseLocalDateTime(date);
+                return <span style={{ color: '#ccc' }}>{orderDate ? orderDate.toLocaleDateString('vi-VN') : 'N/A'}</span>;
+            },
         },
         {
             title: 'Tổng tiền',
@@ -146,9 +149,7 @@ const MyOrdersTab = () => {
         });
     };
 
-    if (loading) return <LoadingSpinner tip="Đang tải lịch sử đặt vé..." />;
-
-    if (orders.length === 0) {
+    if (orders.length === 0 && !loading) {
         return (
             <div style={{ padding: '40px 0', textAlign: 'center' }}>
                 <Empty
@@ -171,6 +172,7 @@ const MyOrdersTab = () => {
             pagination={{ pageSize: 5 }}
             scroll={{ x: true }}
             className="dark-table"
+            loading={loading}
         />
     );
 };

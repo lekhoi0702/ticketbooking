@@ -6,46 +6,46 @@ class OrganizerStatsService:
     @staticmethod
     def get_dashboard_stats(manager_id):
         # 1. Total Revenue
-        # Revenue from paid orders containing tickets for events managed by this organizer
+        # Revenue from paid Order containing Ticket for Event managed by this organizer
         rev_sql = text("""
             SELECT COALESCE(SUM(t.price), 0) as total_revenue
-            FROM tickets t
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-            JOIN events e ON tt.event_id = e.event_id
-            JOIN orders o ON t.order_id = o.order_id
+            FROM Ticket t
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
+            JOIN `Order` o ON t.order_id = o.order_id
             WHERE e.manager_id = :mid
             AND o.order_status = 'PAID'
             AND t.ticket_status IN ('ACTIVE', 'USED')
         """)
         total_revenue = db.session.execute(rev_sql, {"mid": manager_id}).scalar()
 
-        # 2. Total Tickets Sold
+        # 2. Total Ticket Sold
         sold_sql = text("""
             SELECT COALESCE(SUM(sold_tickets), 0) 
-            FROM events WHERE manager_id = :mid
+            FROM Event WHERE manager_id = :mid
         """)
         total_tickets_sold = db.session.execute(sold_sql, {"mid": manager_id}).scalar()
         
-        # 3. Ongoing Events
+        # 3. Ongoing Event
         ongoing_sql = text("""
-            SELECT COUNT(*) FROM events 
+            SELECT COUNT(*) FROM Event 
             WHERE manager_id = :mid AND status IN ('PUBLISHED', 'ONGOING')
         """)
         ongoing_events = db.session.execute(ongoing_sql, {"mid": manager_id}).scalar()
         
-        # 4. Recent Orders
-        # This is tricky because an order might contain tickets from multiple organizers.
-        # But usually user sees orders relevant to them.
-        # Logic: Select orders that have at least one ticket for an event managed by this organizer.
+        # 4. Recent Order
+        # This is tricky because an order might contain Ticket from multiple organizers.
+        # But usually user sees Order relevant to them.
+        # Logic: Select Order that have at least one ticket for an event managed by this organizer.
         recent_orders_sql = text("""
             SELECT DISTINCT o.order_id, o.order_code, o.total_amount, o.order_status, 
                    o.created_at, e.event_name, o.customer_name, o.customer_email,
                    p.payment_method
-            FROM orders o
-            JOIN tickets t ON o.order_id = t.order_id
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-            JOIN events e ON tt.event_id = e.event_id
-            LEFT JOIN payments p ON o.order_id = p.order_id
+            FROM `Order` o
+            JOIN Ticket t ON o.order_id = t.order_id
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
+            LEFT JOIN Payment p ON o.order_id = p.order_id
             WHERE e.manager_id = :mid
             ORDER BY o.created_at DESC
             LIMIT 10
@@ -80,20 +80,20 @@ class OrganizerStatsService:
         # Revenue
         rev_sql = text("""
             SELECT COALESCE(SUM(t.price), 0)
-            FROM tickets t
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-            JOIN events e ON tt.event_id = e.event_id
+            FROM Ticket t
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
             WHERE e.manager_id = :mid
             AND t.ticket_status IN ('ACTIVE', 'USED')
         """)
         total_revenue = db.session.execute(rev_sql, {"mid": manager_id}).scalar()
             
-        # Sold Tickets
+        # Sold Ticket
         sold_sql = text("""
             SELECT COUNT(t.ticket_id)
-            FROM tickets t
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-            JOIN events e ON tt.event_id = e.event_id
+            FROM Ticket t
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
             WHERE e.manager_id = :mid
             AND t.ticket_status IN ('ACTIVE', 'USED')
         """)
@@ -102,24 +102,24 @@ class OrganizerStatsService:
         # Refunded
         ref_sql = text("""
             SELECT COUNT(t.ticket_id)
-            FROM tickets t
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-            JOIN events e ON tt.event_id = e.event_id
+            FROM Ticket t
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
             WHERE e.manager_id = :mid
             AND t.ticket_status IN ('REFUNDED', 'CANCELLED')
         """)
         refunded_tickets = db.session.execute(ref_sql, {"mid": manager_id}).scalar()
             
-        # Total Events
-        evt_sql = text("SELECT COUNT(*) FROM events WHERE manager_id = :mid")
+        # Total Event
+        evt_sql = text("SELECT COUNT(*) FROM Event WHERE manager_id = :mid")
         total_events = db.session.execute(evt_sql, {"mid": manager_id}).scalar()
 
         # Best Selling
         best_sql = text("""
             SELECT e.event_id, e.event_name, e.total_capacity, COUNT(t.ticket_id) as sold_count
-            FROM events e
-            JOIN ticket_types tt ON e.event_id = tt.event_id
-            JOIN tickets t ON tt.ticket_type_id = t.ticket_type_id
+            FROM Event e
+            JOIN TicketType tt ON e.event_id = tt.event_id
+            JOIN Ticket t ON tt.ticket_type_id = t.ticket_type_id
             WHERE e.manager_id = :mid
             AND t.ticket_status IN ('ACTIVE', 'USED')
             GROUP BY e.event_id
@@ -139,9 +139,9 @@ class OrganizerStatsService:
         # Highest Revenue
         hrev_sql = text("""
             SELECT e.event_id, e.event_name, SUM(t.price) as revenue
-            FROM events e
-            JOIN ticket_types tt ON e.event_id = tt.event_id
-            JOIN tickets t ON tt.ticket_type_id = t.ticket_type_id
+            FROM Event e
+            JOIN TicketType tt ON e.event_id = tt.event_id
+            JOIN Ticket t ON tt.ticket_type_id = t.ticket_type_id
             WHERE e.manager_id = :mid
             AND t.ticket_status IN ('ACTIVE', 'USED')
             GROUP BY e.event_id
@@ -168,15 +168,15 @@ class OrganizerStatsService:
     @staticmethod
     def get_organizer_orders_paginated(manager_id, search, page, per_page):
         # Base query structure for counting and data
-        # We need orders that contain tickets for this manager's events
+        # We need Order that contain Ticket for this manager's Event
         
         # 1. Count Total
         count_sql_str = """
             SELECT COUNT(DISTINCT o.order_id)
-            FROM orders o
-            JOIN tickets t ON o.order_id = t.order_id
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-            JOIN events e ON tt.event_id = e.event_id
+            FROM `Order` o
+            JOIN Ticket t ON o.order_id = t.order_id
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
             WHERE e.manager_id = :mid
         """
         
@@ -200,10 +200,10 @@ class OrganizerStatsService:
         
         data_sql_str = """
             SELECT DISTINCT o.*
-            FROM orders o
-            JOIN tickets t ON o.order_id = t.order_id
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-            JOIN events e ON tt.event_id = e.event_id
+            FROM `Order` o
+            JOIN Ticket t ON o.order_id = t.order_id
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
             WHERE e.manager_id = :mid
         """
         
@@ -230,15 +230,15 @@ class OrganizerStatsService:
             # Check Order ID
             oid = orow.order_id
             
-            # Fetch tickets for this order AND this manager (to calculate correct revenue/count for THIS manager)
-            # An order might have tickets from multiple managers? 
-            # If so, we only show tickets relevant to this manager.
+            # Fetch Ticket for this order AND this manager (to calculate correct revenue/count for THIS manager)
+            # An order might have Ticket from multiple managers? 
+            # If so, we only show Ticket relevant to this manager.
             
             t_sql = text("""
                 SELECT t.*, tt.type_name, e.event_name, e.end_datetime
-                FROM tickets t
-                JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-                JOIN events e ON tt.event_id = e.event_id
+                FROM Ticket t
+                JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+                JOIN Event e ON tt.event_id = e.event_id
                 WHERE t.order_id = :oid AND e.manager_id = :mid
             """)
             
@@ -275,7 +275,7 @@ class OrganizerStatsService:
                 'status': orow.order_status,
                 'revenue': float(org_revenue),
                 'ticket_count': len(t_rows),
-                'tickets': ticket_list
+                'Ticket': ticket_list
             })
             
         # Pagination object to mimic Flask-SQLAlchemy Pagination
@@ -287,3 +287,6 @@ class OrganizerStatsService:
                 self.pages = (total + per_page - 1) // per_page
                 
         return orders_data, Pagination(total_items, page, per_page)
+
+
+

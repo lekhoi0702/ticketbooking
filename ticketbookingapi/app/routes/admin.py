@@ -162,6 +162,9 @@ def update_event_status(event_id):
             
         if 'status' in data:
             new_status = data.get('status')
+            if new_status == 'APPROVED':
+                 new_status = 'PUBLISHED'
+            
             valid_statuses = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION']
             if new_status not in valid_statuses:
                 return jsonify({'success': False, 'message': 'Trạng thái không hợp lệ'}), 400

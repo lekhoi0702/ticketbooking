@@ -757,182 +757,111 @@ const AdminEventsManagement = () => {
 
                 onCancel={() => setShowModal(false)}
 
-                footer={null}
-
+                footer={selectedEvent && selectedEvent.status === 'PENDING_APPROVAL' ? (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '10px 24px' }}>
+                        <Button
+                            danger
+                            disabled={actionLoading}
+                            onClick={() => handleUpdateStatus(selectedEvent.event_id, 'REJECTED')}
+                        >
+                            Từ chối
+                        </Button>
+                        <Button
+                            type="primary"
+                            loading={actionLoading}
+                            onClick={() => handleUpdateStatus(selectedEvent.event_id, 'APPROVED')}
+                        >
+                            Duyệt sự kiện
+                        </Button>
+                    </div>
+                ) : null}
                 width={800}
-
                 style={{ top: 20 }}
-
                 styles={{ body: { padding: 0 } }}
-
             >
-
                 <Spin spinning={actionLoading} tip="Đang xử lý...">
-
                     {selectedEvent && (
-
                         <div>
-
                             <div style={{ height: 200, position: 'relative', overflow: 'hidden' }}>
-
                                 <div style={{
-
                                     position: 'absolute',
-
                                     inset: 0,
-
                                     backgroundImage: `url(${getImageUrl(selectedEvent.banner_image_url)})`,
-
                                     backgroundSize: 'cover',
-
                                     backgroundPosition: 'center',
-
                                     filter: 'blur(10px) brightness(0.7)'
-
                                 }} />
-
                                 <div style={{
-
                                     position: 'relative',
-
                                     height: '100%',
-
                                     display: 'flex',
-
                                     alignItems: 'center',
-
                                     padding: '0 32px',
-
                                     gap: 24
-
                                 }}>
-
                                     <img
-
                                         src={getImageUrl(selectedEvent.banner_image_url)}
-
                                         alt={selectedEvent.event_name}
-
                                         style={{
-
                                             width: 120,
-
                                             height: 120,
-
                                             borderRadius: 8,
-
                                             objectFit: 'cover',
-
                                             border: '3px solid white',
-
                                             boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-
                                         }}
-
                                     />
-
                                     <div style={{ color: 'white' }}>
-
                                         <Title level={4} style={{ color: 'white', margin: 0 }}>{selectedEvent.event_name}</Title>
-
                                         <Space split={<Divider type="vertical" style={{ borderColor: 'rgba(255,255,255,0.3)' }} />}>
-
                                             <Text style={{ color: 'rgba(255,255,255,0.8)' }}>
-
                                                 <EnvironmentOutlined /> {selectedEvent.venue?.name || selectedEvent.venue_name}
-
                                             </Text>
-
                                             <Text style={{ color: 'rgba(255,255,255,0.8)' }}>
-
                                                 <CalendarOutlined /> {new Date(selectedEvent.start_datetime).toLocaleDateString('vi-VN')}
-
                                             </Text>
-
                                         </Space>
-
                                         <div style={{ marginTop: 12 }}>
-
                                             {getStatusConfig(selectedEvent.status).label}
-
                                         </div>
-
                                     </div>
-
                                 </div>
-
                             </div>
 
-
-
                             <div style={{ padding: 32 }}>
-
                                 <Row gutter={32}>
-
-                                    <Col span={16}>
-
+                                    <Col span={24}>
                                         <Title level={5}>Mô tả</Title>
-
                                         <Paragraph type="secondary">
-
                                             {selectedEvent.description || 'Không có mô tả cho sự kiện này.'}
-
                                         </Paragraph>
-
-
 
                                         <Divider />
 
-
-
                                         <Space direction="vertical" size={16} style={{ width: '100%' }}>
-
                                             <Text strong><AppstoreOutlined /> Sơ đồ chỗ ngồi</Text>
-
                                         </Space>
-
                                         {loadingMap ? (
-
                                             <div style={{ padding: '40px 0', textAlign: 'center' }}>
-
                                                 <Spin tip="Đang tải sơ đồ...">
-
                                                     <div style={{ padding: 20 }} />
-
                                                 </Spin>
-
                                             </div>
-
                                         ) : venueTemplate ? (
-
-                                            <Card size="small" style={{ background: '#fafafa' }}>
-
+                                            <Card size="small" style={{ background: '#262626', border: '1px solid #434343' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 16, fontSize: 11 }}>
-
-                                                    <Space><Badge color="#f0f0f0" /> <Text type="secondary">Trống</Text></Space>
-
-                                                    <Space><Badge color="#52c41a" /> <Text type="secondary">Đã gán</Text></Space>
-
-                                                    <Space><Badge color="#ff4d4f" /> <Text type="secondary">Hỏng/khác</Text></Space>
-
+                                                    <Space><Badge color="#f0f0f0" /> <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Trống</Text></Space>
+                                                    <Space><Badge color="#52c41a" /> <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Đã gán</Text></Space>
+                                                    <Space><Badge color="#ff4d4f" /> <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Hỏng/khác</Text></Space>
                                                 </div>
-
                                                 <SeatMapTemplateView
-
                                                     venueTemplate={venueTemplate}
-
                                                     selectedTemplateSeats={[]}
-
                                                     allOccupiedSeats={eventSeats}
-
                                                 />
-
                                             </Card>
-
                                         ) : (
-
                                             <div style={{ padding: '20px 0', textAlign: 'center', color: '#8c8c8c' }}>
-
                                                 Không có thông tin sơ đồ chỗ ngồi
                                             </div>
                                         )}
@@ -941,9 +870,7 @@ const AdminEventsManagement = () => {
                             </div>
                         </div>
                     )}
-
                 </Spin>
-
             </Modal>
 
             <style dangerouslySetInnerHTML={{

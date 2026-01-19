@@ -133,7 +133,20 @@ const SeatMapTemplateView = ({
                                     {[...Array(area.rows)].map((_, rIdx) => {
                                         const rowName = String.fromCharCode(65 + rIdx);
                                         return (
-                                            <div key={rowName} style={{ display: 'flex', gap: 8 }}>
+                                            <div key={rowName} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <div style={{
+                                                    width: 24,
+                                                    height: 32,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: 'rgba(255,255,255,0.5)',
+                                                    fontWeight: 'bold',
+                                                    fontSize: 12,
+                                                    userSelect: 'none'
+                                                }}>
+                                                    {rowName}
+                                                </div>
                                                 {[...Array(area.cols)].map((_, cIdx) => {
                                                     const seatNumber = String(cIdx + 1);
                                                     const seatId = `${rIdx + 1}-${cIdx + 1}`;

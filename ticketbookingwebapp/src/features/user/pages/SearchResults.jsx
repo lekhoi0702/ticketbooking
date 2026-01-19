@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Container, Row, Col, Spinner, Breadcrumb } from 'react-bootstrap';
+import { Container, Row, Col, Spinner } from 'react-bootstrap';
+import { FaHome } from 'react-icons/fa';
 import { api } from '@services/api';
 import EventCard from '@features/user/components/Event/EventCard';
+import AntBreadcrumb from '@features/user/components/AntBreadcrumb';
 import { transformEvent } from '@shared/utils/eventUtils';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
@@ -42,18 +44,12 @@ const SearchResults = () => {
 
     return (
         <Container className="py-4" style={{ minHeight: '70vh' }}>
-            <Breadcrumb className="mb-4">
-                <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>Trang chủ</Breadcrumb.Item>
-                <Breadcrumb.Item active>Kết quả tìm kiếm</Breadcrumb.Item>
-            </Breadcrumb>
-
-            <div className="search-results-header mb-5">
-                <h2 className="fw-bold">
-                    Kết quả tìm kiếm cho: <span className="text-primary">"{searchQuery}"</span>
-                </h2>
-                <p className="text-muted">Tìm thấy {events.length} sự kiện phù hợp</p>
-                <hr />
-            </div>
+            <AntBreadcrumb
+                items={[
+                    { label: 'Trang chủ', path: '/', icon: <FaHome /> },
+                    { label: 'Kết quả tìm kiếm', path: `/search?q=${searchQuery}` }
+                ]}
+            />
 
             {events.length > 0 ? (
                 <Row className="g-4">
@@ -65,7 +61,7 @@ const SearchResults = () => {
                 </Row>
             ) : (
                 <div className="text-center py-5">
-                    <div className="mb-4" style={{ fontSize: '4rem', opacity: 0.2 }}>🔍</div>
+                    <div className="mb-4" style={{ fontSize: '4rem', opacity: 0.5, filter: 'brightness(0) invert(1)' }}>🔍</div>
                     <h3>Rất tiếc, không tìm thấy sự kiện phù hợp</h3>
                     <p className="text-muted">Bạn hãy thử tìm kiếm với từ khóa khác nhé</p>
                     <Link to="/" className="btn btn-primary mt-3 px-4 rounded-pill">Quay lại trang chủ</Link>

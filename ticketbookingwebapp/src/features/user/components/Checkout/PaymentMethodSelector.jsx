@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from 'react-bootstrap';
-import { FaCreditCard } from 'react-icons/fa';
+import { UPLOADS_BASE_URL } from '@shared/constants';
 
 /**
  * Component hiển thị phương thức thanh toán duy nhất (Online)
@@ -13,11 +13,15 @@ const PaymentMethodSelector = () => {
             </Card.Header>
             <Card.Body className="p-4 pt-0">
                 <div className="p-3 border rounded-4 bg-primary bg-opacity-10 border-primary border-opacity-25 d-flex align-items-center">
-                    <div className="bg-primary p-3 rounded-circle me-3 shadow-sm">
-                        <FaCreditCard className="text-white fs-4" />
+                    <div className="bg-white p-2 rounded-3 me-3 shadow-sm" style={{ width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img
+                            src={`${UPLOADS_BASE_URL}/logo/vnpay-logo-inkythuatso-01.jpg`}
+                            alt="VNPay"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
                     </div>
                     <div>
-                        <strong className="d-block fs-5 text-primary">Thanh toán online qua VNPay</strong>
+                        <strong className="d-block fs-5 text-primary">Thanh toán online qua VNPAY</strong>
                         <small className="text-muted">Hỗ trợ ATM, Thẻ quốc tế Visa/MasterCard, QR Code</small>
                     </div>
                 </div>

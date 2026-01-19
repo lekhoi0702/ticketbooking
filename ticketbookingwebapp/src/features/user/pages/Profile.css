@@ -1,8 +1,8 @@
 .profile-page {
     min-height: calc(100vh - 120px);
-    /* Adjust for header height */
-    background: #000000;
     padding: 60px 20px;
+    background: #000000 !important;
+    color: #ffffff !important;
 }
 
 .profile-container {
@@ -10,7 +10,8 @@
     margin: 0 auto;
 }
 
-.profile-header-card {
+.profile-header-card,
+.profile-tabs-card {
     margin-bottom: 24px;
     border-radius: 20px;
     background: #121212 !important;
@@ -19,10 +20,6 @@
 }
 
 .profile-tabs-card {
-    border-radius: 20px;
-    background: #121212 !important;
-    border: 1px solid #333 !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     min-height: 500px;
 }
 
@@ -45,8 +42,12 @@
     color: #b0b3b8 !important;
 }
 
-.profile-tabs-card .ant-tabs-tab-active {
-    font-weight: 600;
+.profile-tabs-card .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: var(--ticketbooking-green) !important;
+}
+
+.profile-tabs-card .ant-tabs-ink-bar {
+    background: var(--ticketbooking-green) !important;
 }
 
 /* Table Dark Theme Fixes */
@@ -91,16 +92,39 @@
     color: #ffffff !important;
 }
 
-.profile-tabs-card .ant-typography,
+.profile-tabs-card .ant-input,
+.profile-tabs-card .ant-input-password,
+.profile-tabs-card .ant-input-affix-wrapper {
+    background: #1a1a1a !important;
+    border: 1px solid #333 !important;
+    color: #fff !important;
+}
+
+.profile-tabs-card .ant-input::placeholder,
+.profile-tabs-card .ant-input-password::placeholder {
+    color: #666 !important;
+}
+
+.profile-tabs-card .ant-input:focus,
+.profile-tabs-card .ant-input-focused,
+.profile-tabs-card .ant-input-affix-wrapper-focused {
+    border-color: #52c41a !important;
+    box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.1) !important;
+}
+
+.profile-tabs-card .ant-input-affix-wrapper .ant-input {
+    background: transparent !important;
+}
+
+.profile-tabs-card .ant-input-password .anticon {
+    color: #b0b3b8 !important;
+}
+
 .profile-tabs-card h1.ant-typography,
 .profile-tabs-card h2.ant-typography,
 .profile-tabs-card h3.ant-typography,
 .profile-tabs-card h4.ant-typography {
     color: #ffffff !important;
-}
-
-.profile-tabs-card .ant-typography-secondary {
-    color: #b0b3b8 !important;
 }
 
 @media (max-width: 768px) {

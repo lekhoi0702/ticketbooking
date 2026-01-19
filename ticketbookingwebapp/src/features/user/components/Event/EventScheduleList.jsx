@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { parseLocalDateTime } from '@shared/utils/eventUtils';
 
 const EventScheduleList = ({ event }) => {
     if (!event.schedule || event.schedule.length === 0) return null;
+
+    const currentEventDate = parseLocalDateTime(event.start_datetime);
 
     return (
         <div className="schedule-selector" id="schedule">
@@ -13,19 +16,22 @@ const EventScheduleList = ({ event }) => {
                     to={`/event/${event.event_id}`}
                     className="schedule-item active"
                 >
-                    <div className="time">{new Date(event.start_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
-                    <div className="date">{new Date(event.start_datetime).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</div>
+                    <div className="time">{currentEventDate ? currentEventDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}</div>
+                    <div className="date">{currentEventDate ? currentEventDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : 'N/A'}</div>
                 </Link>
-                {event.schedule.map(s => (
-                    <Link
-                        key={s.event_id}
-                        to={`/event/${s.event_id}`}
-                        className={`schedule-item ${s.event_id === event.event_id ? 'active' : ''}`}
-                    >
-                        <div className="time">{new Date(s.start_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
-                        <div className="date">{new Date(s.start_datetime).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</div>
-                    </Link>
-                ))}
+                {event.schedule.map(s => {
+                    const scheduleDate = parseLocalDateTime(s.start_datetime);
+                    return (
+                        <Link
+                            key={s.event_id}
+                            to={`/event/${s.event_id}`}
+                            className={`schedule-item ${s.event_id === event.event_id ? 'active' : ''}`}
+                        >
+                            <div className="time">{scheduleDate ? scheduleDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}</div>
+                            <div className="date">{scheduleDate ? scheduleDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : 'N/A'}</div>
+                        </Link>
+                    );
+                })}
             </div>
         </div>
     );

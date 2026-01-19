@@ -1,28 +1,29 @@
 import React from 'react';
 import { Button } from 'react-bootstrap';
 import { FaMapMarkerAlt, FaCalendar } from 'react-icons/fa';
-import { getImageUrl } from '@shared/utils/eventUtils';
+import { getImageUrl, parseLocalDateTime } from '@shared/utils/eventUtils';
 
 const EventHero = ({ event }) => {
     const bannerUrl = getImageUrl(event.banner_image_url, 'https://via.placeholder.com/1200x600?text=TicketBooking');
 
-    // Date Logic
-    const startDate = new Date(event.start_datetime);
-    const dateStr = startDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const timeStr = startDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    // Date Logic - Use parseLocalDateTime to prevent timezone issues
+    const startDate = parseLocalDateTime(event.start_datetime);
+    const dateStr = startDate ? startDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+    const timeStr = startDate ? startDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
 
     // If end date is same day, show range
     let timeRange = timeStr;
-    if (event.end_datetime) {
-        const endDate = new Date(event.end_datetime);
-        if (startDate.toDateString() === endDate.toDateString()) {
+    if (event.end_datetime && startDate) {
+        const endDate = parseLocalDateTime(event.end_datetime);
+        if (endDate && startDate.toDateString() === endDate.toDateString()) {
             const endTimeStr = endDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
             timeRange = `${timeStr} - ${endTimeStr}`;
         }
     }
 
     // Formatting for new design: "19:30 - 21:00, 24 Tháng 01, 2026"
-    const displayDateTime = `${timeRange}, ${startDate.getDate()} Tháng ${startDate.getMonth() + 1}, ${startDate.getFullYear()}`;
+    const displayDateTime = startDate ? `${timeRange}, ${startDate.getDate()} Tháng ${startDate.getMonth() + 1}, ${startDate.getFullYear()}` : 'Chưa xác định';
+
 
     const venueName = event.venue?.venue_name || 'Địa điểm chưa cập nhật';
     const venueFullAddress = event.venue?.address || '';

@@ -162,7 +162,7 @@ const AdminOrdersManagement = () => {
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
                     <Text strong style={{ fontSize: 13 }}>{record.customer_name}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{record.customer_phone || 'N/A'}</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>SĐT: {record.customer_phone || 'N/A'}</Text>
                 </Space>
             ),
         },

@@ -1,32 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Card,
-    Button,
-    Typography,
-    Space,
-    Tag,
-    message,
-    Spin,
-    Divider,
-    Row,
-    Col
-} from 'antd';
-import {
     ReloadOutlined,
     EnvironmentOutlined,
     EditOutlined,
     PlusOutlined,
     AppstoreOutlined,
     ToolOutlined,
-    PhoneOutlined
+    PhoneOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    DeleteOutlined
 } from '@ant-design/icons';
+import {
+    Table,
+    Button,
+    Typography,
+    Space,
+    Tag,
+    message,
+    Spin,
+    Tooltip,
+    Skeleton,
+    Popconfirm
+} from 'antd';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
-import LoadingSpinner from '@shared/components/LoadingSpinner';
 import VenueSeatMapEditor from '@features/organizer/components/VenueSeatMapEditor';
 import VenueFormModal from '@features/organizer/components/VenueFormModal';
 
-const { Text, Title } = Typography;
+const { Title } = Typography;
 
 const OrganizerVenues = () => {
     const { user } = useAuth();
@@ -52,7 +54,7 @@ const OrganizerVenues = () => {
     const fetchVenues = async () => {
         try {
             setLoading(true);
-            const res = await api.getVenues(user.user_id);
+            const res = await api.getOrganizerVenues(user.user_id);
             if (res.success) setVenues(res.data);
         } catch (error) {
             console.error("Error fetching venues:", error);
@@ -117,92 +119,214 @@ const OrganizerVenues = () => {
         }
     };
 
-    if (loading && venues.length === 0) {
-        return <LoadingSpinner tip="Đang tải danh sách địa điểm..." />;
+    const handleDeleteVenue = async (venueId) => {
+        try {
+            const res = await api.deleteVenue(venueId);
+            if (res.success) {
+                message.success('Xóa địa điểm thành công');
+                fetchVenues();
+            }
+        } catch (error) {
+            message.error(error.message || 'Lỗi khi xóa địa điểm');
+        }
+    };
+
+    // Table columns configuration
+    const columns = [
+        {
+            title: 'Tên địa điểm',
+            dataIndex: 'venue_name',
+            key: 'venue_name',
+            width: 200,
+            fixed: 'left',
+            render: (text, record) => (
+                <div>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>{text}</div>
+                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                        <EnvironmentOutlined /> {record.city || 'Chưa cập nhật'}
+                    </div>
+                </div>
+            ),
+        },
+        {
+            title: 'Địa chỉ',
+            dataIndex: 'address',
+            key: 'address',
+            width: 250,
+            ellipsis: {
+                showTitle: false,
+            },
+            render: (address) => (
+                <Tooltip placement="topLeft" title={address}>
+                    <EnvironmentOutlined /> {address}
+                </Tooltip>
+            ),
+        },
+        {
+            title: 'Liên hệ',
+            dataIndex: 'contact_phone',
+            key: 'contact_phone',
+            width: 130,
+            render: (phone) => phone ? (
+                <>
+                    <PhoneOutlined /> {phone}
+                </>
+            ) : (
+                <span style={{ color: '#bfbfbf' }}>Chưa có</span>
+            ),
+        },
+        {
+            title: 'Khu vực',
+            key: 'areas',
+            width: 90,
+            align: 'center',
+            render: (_, record) => {
+                const template = record.seat_map_template || { areas: [] };
+                const areaCount = template.areas?.length || 0;
+                return <span style={{ fontWeight: 600 }}>{areaCount}</span>;
+            },
+        },
+        {
+            title: 'Tổng ghế',
+            key: 'total_seats',
+            width: 100,
+            align: 'center',
+            render: (_, record) => {
+                const template = record.seat_map_template || { areas: [] };
+                const totalSeats = template.areas?.reduce((sum, a) => sum + (a.rows * a.cols), 0) || record.capacity || 0;
+                return <span style={{ fontWeight: 600 }}>{totalSeats}</span>;
+            },
+        },
+        {
+            title: 'Ghế hỏng',
+            key: 'locked_seats',
+            width: 100,
+            align: 'center',
+            render: (_, record) => {
+                const template = record.seat_map_template || { areas: [] };
+                const lockedCount = template.areas?.reduce((sum, a) => sum + (a.locked_seats?.length || 0), 0) || 0;
+                return (
+                    <span style={{ fontWeight: 600, color: lockedCount > 0 ? '#ff4d4f' : '#52c41a' }}>
+                        {lockedCount}
+                    </span>
+                );
+            },
+        },
+        {
+            title: 'Trạng thái',
+            key: 'status',
+            width: 120,
+            align: 'center',
+            render: (_, record) => {
+                if (record.status === 'MAINTENANCE') {
+                    return <Tag color="warning" icon={<ToolOutlined />}>BẢO TRÌ</Tag>;
+                }
+                return record.is_active ? (
+                    <Tag color="success" icon={<CheckCircleOutlined />}>SẴN SÀNG</Tag>
+                ) : (
+                    <Tag color="default" icon={<CloseCircleOutlined />}>BẢN NHÁP</Tag>
+                );
+            },
+        },
+        {
+            title: 'Thao tác',
+            key: 'actions',
+            width: 280,
+            fixed: 'right',
+            render: (_, record) => (
+                <Space size="small">
+                    <Button
+                        type="link"
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditVenue(record)}
+                    >
+                        Sửa
+                    </Button>
+                    <Button
+                        type="link"
+                        size="small"
+                        icon={<AppstoreOutlined />}
+                        onClick={() => handleEditLayout(record)}
+                    >
+                        Sơ đồ
+                    </Button>
+                    <Button
+                        type="link"
+                        size="small"
+                        danger={record.status !== 'MAINTENANCE'}
+                        icon={<ToolOutlined />}
+                        onClick={() => handleToggleMaintenance(record)}
+                    >
+                        {record.status === 'MAINTENANCE' ? 'Hoàn tất' : 'Bảo trì'}
+                    </Button>
+                    <Popconfirm
+                        title="Bạn có chắc chắn muốn xóa địa điểm này?"
+                        onConfirm={() => handleDeleteVenue(record.venue_id)}
+                        okText="Có"
+                        cancelText="Không"
+                    >
+                        <Button
+                            type="link"
+                            size="small"
+                            danger
+                            icon={<DeleteOutlined />}
+                        >
+                            Xóa
+                        </Button>
+                    </Popconfirm>
+                </Space>
+            ),
+        },
+    ];
+
+    if (loading) {
+        return (
+            <div style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24, gap: 10 }}>
+                    <Skeleton.Button active size="default" style={{ width: 150 }} />
+                    <Skeleton.Button active size="default" style={{ width: 100 }} />
+                </div>
+                <Skeleton active paragraph={{ rows: 10 }} />
+            </div>
+        );
     }
 
     return (
-        <Spin spinning={loading || saving} tip="Vui lòng đợi...">
-            <div>
-                <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
-                    <Title level={4}>Quản lý địa điểm</Title>
+        <Spin spinning={saving} tip="Đang xử lý...">
+            <div style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24, alignItems: 'center' }}>
                     <Space>
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateVenue}>Tạo địa điểm</Button>
-                        <Button icon={<ReloadOutlined />} onClick={fetchVenues} disabled={loading || saving}>Làm mới</Button>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleCreateVenue}
+                        >
+                            Tạo địa điểm
+                        </Button>
+                        <Button
+                            icon={<ReloadOutlined />}
+                            onClick={fetchVenues}
+                        >
+                            Làm mới
+                        </Button>
                     </Space>
-                </Space>
+                </div>
 
-                <Row gutter={[24, 24]}>
-                    {venues.map((venue) => {
-                        const template = venue.seat_map_template || { areas: [] };
-                        const areaCount = template.areas?.length || 0;
-                        const totalSeats = template.areas?.reduce((sum, a) => sum + (a.rows * a.cols), 0) || 0;
-                        const lockedCount = template.areas?.reduce((sum, a) => sum + (a.locked_seats?.length || 0), 0) || 0;
+                <Table
+                    columns={columns}
+                    dataSource={venues}
+                    rowKey="venue_id"
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Tổng ${total} địa điểm`,
+                    }}
+                    scroll={{ x: 1200 }}
+                    bordered
+                />
 
-                        return (
-                            <Col xs={24} md={12} lg={8} key={venue.venue_id}>
-                                <Card
-                                    hoverable
-                                    actions={[
-                                        <Button type="link" icon={<EditOutlined />} onClick={() => handleEditVenue(venue)} disabled={loading || saving}>Sửa TT</Button>,
-                                        <Button type="link" icon={<AppstoreOutlined />} onClick={() => handleEditLayout(venue)} disabled={loading || saving}>Sơ đồ ghế</Button>,
-                                        <Button
-                                            type="link"
-                                            danger={venue.status !== 'MAINTENANCE'}
-                                            icon={<ToolOutlined />}
-                                            onClick={() => handleToggleMaintenance(venue)}
-                                            disabled={loading || saving}
-                                        >
-                                            {venue.status === 'MAINTENANCE' ? 'Bảo trì xong' : 'Bảo trì'}
-                                        </Button>
-                                    ]}
-                                >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                                        <div>
-                                            <Title level={5} style={{ margin: 0 }}>{venue.venue_name}</Title>
-                                            <Text type="secondary" style={{ fontSize: 12 }}>
-                                                <EnvironmentOutlined /> {venue.city || 'Chưa cập nhật'}
-                                            </Text>
-                                        </div>
-                                        <Space size={4}>
-                                            {venue.status === 'MAINTENANCE' && <Tag color="warning" icon={<ToolOutlined />}>BẢO TRÌ</Tag>}
-                                            {venue.status !== 'MAINTENANCE' && (
-                                                <Tag color={venue.is_active ? 'success' : 'default'}>
-                                                    {venue.is_active ? 'SẴN SÀNG' : 'BẢN NHÁP'}
-                                                </Tag>
-                                            )}
-                                        </Space>
-                                    </div>
-
-                                    <div style={{ marginBottom: 12 }}>
-                                        <Text type="secondary"><EnvironmentOutlined /> {venue.address}</Text>
-                                        <br />
-                                        <Text type="secondary"><PhoneOutlined /> {venue.contact_phone || 'Không có sđt'}</Text>
-                                    </div>
-
-                                    <Divider style={{ margin: '12px 0' }} />
-
-                                    <Row gutter={16}>
-                                        <Col span={8}>
-                                            <Text type="secondary" style={{ fontSize: 11 }}>KHU VỰC</Text><br />
-                                            <Text strong>{areaCount}</Text>
-                                        </Col>
-                                        <Col span={8}>
-                                            <Text type="secondary" style={{ fontSize: 11 }}>TỔNG GHẾ</Text><br />
-                                            <Text strong>{totalSeats || venue.capacity}</Text>
-                                        </Col>
-                                        <Col span={8}>
-                                            <Text type="secondary" style={{ fontSize: 11 }}>GHẾ HỎNG</Text><br />
-                                            <Text strong style={{ color: lockedCount > 0 ? '#ff4d4f' : 'inherit' }}>{lockedCount}</Text>
-                                        </Col>
-                                    </Row>
-                                </Card>
-                            </Col>
-                        );
-                    })}
-                </Row>
-
-                {/* Create/Edit Modal extracted */}
+                {/* Create/Edit Modal */}
                 <VenueFormModal
                     visible={showVenueModal}
                     onCancel={() => setShowVenueModal(false)}

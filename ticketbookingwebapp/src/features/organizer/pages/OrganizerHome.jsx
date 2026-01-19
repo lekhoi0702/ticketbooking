@@ -82,7 +82,7 @@ const OrganizerHome = () => {
                         style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
                         onClick={() => navigate('/')}
                     >
-                        <Title level={4} style={{ margin: 0, color: '#52c41a', fontWeight: 800 }}>TICKETBOOKING</Title>
+                        <Title level={4} style={{ margin: 0, color: '#000000', fontWeight: 800 }}>TICKETBOOKING</Title>
                     </div>
                     <Space size={24}>
                         <Button type="text" onClick={() => navigate('/')} style={{ fontWeight: 600 }}>Tới trang bán vé</Button>
@@ -212,7 +212,7 @@ const OrganizerHome = () => {
 
                 <Footer style={{ textAlign: 'center', padding: '60px 0', borderTop: '1px solid #f0f0f0', background: '#fff' }}>
                     <div style={{ marginBottom: 16 }}>
-                        <Title level={4} style={{ color: '#52c41a', margin: 0, fontWeight: 800 }}>TICKETBOOKING</Title>
+                        <Title level={4} style={{ color: '#000000', margin: 0, fontWeight: 800 }}>TICKETBOOKING</Title>
                     </div>
                     <Text type="secondary" style={{ fontSize: 13 }}>
                         © 2026 TicketBooking Organizer Portal. Giải pháp quản lý sự kiện chuyên nghiệp bậc nhất.

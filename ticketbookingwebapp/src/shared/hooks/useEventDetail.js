@@ -23,9 +23,20 @@ export const useEventDetail = (eventId) => {
             setLoading(true);
             const response = await api.getEvent(eventId);
             if (response.success) {
-                setEvent(response.data);
-                if (response.data.ticket_types?.length > 0) {
-                    setActiveTicketType(response.data.ticket_types[0]);
+                const eventData = response.data;
+
+                // Fix: Convert ticket_types to array if it's an object
+                if (eventData.ticket_types && typeof eventData.ticket_types === 'object' && !Array.isArray(eventData.ticket_types)) {
+                    console.log('Converting ticket_types object to array');
+                    eventData.ticket_types = Object.values(eventData.ticket_types);
+                }
+
+                console.log('Event data after conversion:', eventData);
+                console.log('Ticket types is array?', Array.isArray(eventData.ticket_types));
+
+                setEvent(eventData);
+                if (eventData.ticket_types?.length > 0) {
+                    setActiveTicketType(eventData.ticket_types[0]);
                 }
             }
         } catch (error) {

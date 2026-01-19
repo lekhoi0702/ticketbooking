@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Modal, Form, Input, Select, DatePicker, InputNumber, Tag, Space, message, Typography, Popconfirm } from 'antd';
+import { Card, Table, Button, Modal, Form, Input, Select, DatePicker, InputNumber, Tag, Space, message, Typography, Popconfirm, Skeleton } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
@@ -113,24 +113,26 @@ const DiscountManagement = () => {
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
-                <div>
-                    <Title level={2}>Mã Giảm Giá</Title>
-                    <Text type="secondary">Quản lý các chương trình khuyến mãi cho sự kiện</Text>
-                </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24, alignItems: 'center' }}>
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
                     Tạo mã mới
                 </Button>
             </div>
 
             <Card bordered={false} style={{ borderRadius: 12 }}>
-                <Table
-                    columns={columns}
-                    dataSource={discounts}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={{ pageSize: 5 }}
-                />
+                {loading ? (
+                    <div style={{ padding: 20 }}>
+                        <Skeleton active paragraph={{ rows: 5 }} />
+                    </div>
+                ) : (
+                    <Table
+                        columns={columns}
+                        dataSource={discounts}
+                        rowKey="id"
+                        loading={false}
+                        pagination={{ pageSize: 5 }}
+                    />
+                )}
             </Card>
 
             <Modal

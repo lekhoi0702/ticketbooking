@@ -47,8 +47,8 @@ def get_events():
         elif sort == 'popular':
             query = query.order_by(Event.sold_tickets.desc())
         else:
-            # Default order by created_at descending
-            query = query.order_by(Event.created_at.desc())
+            # Default sorting: Priority for featured events, then by sales volume, then newest
+            query = query.order_by(Event.is_featured.desc(), Event.sold_tickets.desc(), Event.created_at.desc())
         
         # Pagination
         total = query.count()
@@ -193,3 +193,36 @@ def get_recommended_events(event_id):
             'success': False,
             'message': str(e)
         }), 500
+
+@events_bp.route("/events/<int:event_id>/ticket-types", methods=["GET"])
+def get_event_ticket_types(event_id):
+    """Get ticket types for an event (public endpoint for users)"""
+    try:
+        from app.models.ticket_type import TicketType
+        
+        # Verify event exists and is published
+        event = Event.query.get(event_id)
+        if not event:
+            return jsonify({
+                'success': False,
+                'message': 'Event not found'
+            }), 404
+        
+        # Get all active ticket types for this event
+        ticket_types = TicketType.query.filter_by(
+            event_id=event_id,
+            is_active=True
+        ).order_by(TicketType.price.asc()).all()
+        
+        return jsonify({
+            'success': True,
+            'data': [tt.to_dict() for tt in ticket_types]
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in get_event_ticket_types: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+

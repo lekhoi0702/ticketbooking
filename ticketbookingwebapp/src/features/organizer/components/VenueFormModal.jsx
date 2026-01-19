@@ -92,13 +92,6 @@ const VenueFormModal = ({
             <Form
                 form={form}
                 layout="vertical"
-                initialValues={{
-                    capacity: 0,
-                    vip_seats: 0,
-                    standard_seats: 0,
-                    economy_seats: 0,
-                    city: 'Hồ Chí Minh'
-                }}
             >
                 <Form.Item
                     name="venue_name"

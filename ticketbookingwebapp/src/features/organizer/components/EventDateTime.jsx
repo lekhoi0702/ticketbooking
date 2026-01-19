@@ -12,7 +12,7 @@ import { CalendarOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
-const EventDateTime = ({ formData, handleInputChange }) => {
+const EventDateTime = ({ formData, handleInputChange, existingSchedule }) => {
     const handleDateChange = (name, dateString) => {
         handleInputChange({ target: { name, value: dateString } });
     };
@@ -32,7 +32,7 @@ const EventDateTime = ({ formData, handleInputChange }) => {
                                 style={{ width: '100%' }}
                                 size="large"
                                 value={formData.start_datetime ? dayjs(formData.start_datetime) : null}
-                                onChange={(date, dateString) => handleDateChange('start_datetime', dateString)}
+                                onChange={(date) => handleDateChange('start_datetime', date ? date.format('YYYY-MM-DD HH:mm:ss') : '')}
                                 format="YYYY-MM-DD HH:mm:ss"
                             />
                         </Col>
@@ -43,7 +43,7 @@ const EventDateTime = ({ formData, handleInputChange }) => {
                                 style={{ width: '100%' }}
                                 size="large"
                                 value={formData.end_datetime ? dayjs(formData.end_datetime) : null}
-                                onChange={(date, dateString) => handleDateChange('end_datetime', dateString)}
+                                onChange={(date) => handleDateChange('end_datetime', date ? date.format('YYYY-MM-DD HH:mm:ss') : '')}
                                 format="YYYY-MM-DD HH:mm:ss"
                             />
                         </Col>
@@ -69,63 +69,6 @@ const EventDateTime = ({ formData, handleInputChange }) => {
                                 </div>
                             </Col>
                         )}
-                        <Col span={24}>
-                            <div style={{ marginTop: 16 }}>
-                                <Text strong style={{ fontSize: 13, color: '#8c8c8c' }}>CÁC SUẤT DIỄN BỔ SUNG</Text>
-                                {formData.extra_showtimes?.map((st, index) => (
-                                    <Row key={index} gutter={16} style={{ marginTop: 8 }} align="middle">
-                                        <Col flex="1">
-                                            <Space>
-                                                <DatePicker
-                                                    showTime
-                                                    placeholder="Bắt đầu"
-                                                    value={st.start_datetime ? dayjs(st.start_datetime) : null}
-                                                    onChange={(d, s) => {
-                                                        const newShowtimes = [...(formData.extra_showtimes || [])];
-                                                        newShowtimes[index] = { ...st, start_datetime: s };
-                                                        handleInputChange({ target: { name: 'extra_showtimes', value: newShowtimes } });
-                                                    }}
-                                                />
-                                                <span>-</span>
-                                                <DatePicker
-                                                    showTime
-                                                    placeholder="Kết thúc"
-                                                    value={st.end_datetime ? dayjs(st.end_datetime) : null}
-                                                    onChange={(d, s) => {
-                                                        const newShowtimes = [...(formData.extra_showtimes || [])];
-                                                        newShowtimes[index] = { ...st, end_datetime: s };
-                                                        handleInputChange({ target: { name: 'extra_showtimes', value: newShowtimes } });
-                                                    }}
-                                                />
-                                            </Space>
-                                        </Col>
-                                        <Col>
-                                            <Button
-                                                danger
-                                                type="text"
-                                                onClick={() => {
-                                                    const newShowtimes = formData.extra_showtimes.filter((_, i) => i !== index);
-                                                    handleInputChange({ target: { name: 'extra_showtimes', value: newShowtimes } });
-                                                }}
-                                            >
-                                                Xóa
-                                            </Button>
-                                        </Col>
-                                    </Row>
-                                ))}
-                                <Button
-                                    type="dashed"
-                                    style={{ marginTop: 8 }}
-                                    block
-                                    onClick={() => {
-                                        const newShowtimes = [...(formData.extra_showtimes || []), { start_datetime: '', end_datetime: '' }];
-                                        handleInputChange({ target: { name: 'extra_showtimes', value: newShowtimes } });
-                                    }}
-                                >
-                                    + Thêm suất diễn
-                                </Button>
-                            </div>
-                        </Col>
                     </Row>
                 </div>
 
@@ -141,7 +84,7 @@ const EventDateTime = ({ formData, handleInputChange }) => {
                                 style={{ width: '100%' }}
                                 size="large"
                                 value={formData.sale_start_datetime ? dayjs(formData.sale_start_datetime) : null}
-                                onChange={(date, dateString) => handleDateChange('sale_start_datetime', dateString)}
+                                onChange={(date) => handleDateChange('sale_start_datetime', date ? date.format('YYYY-MM-DD HH:mm:ss') : '')}
                                 format="YYYY-MM-DD HH:mm:ss"
                             />
                         </Col>
@@ -152,7 +95,7 @@ const EventDateTime = ({ formData, handleInputChange }) => {
                                 style={{ width: '100%' }}
                                 size="large"
                                 value={formData.sale_end_datetime ? dayjs(formData.sale_end_datetime) : null}
-                                onChange={(date, dateString) => handleDateChange('sale_end_datetime', dateString)}
+                                onChange={(date) => handleDateChange('sale_end_datetime', date ? date.format('YYYY-MM-DD HH:mm:ss') : '')}
                                 format="YYYY-MM-DD HH:mm:ss"
                             />
                         </Col>

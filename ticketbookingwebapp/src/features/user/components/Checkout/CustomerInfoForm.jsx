@@ -1,31 +1,15 @@
 import React from 'react';
-import { Card, Row, Col, Form, Badge } from 'react-bootstrap';
-import { FaUser, FaEnvelope, FaPhone, FaCheckCircle } from 'react-icons/fa';
+import { Card, Row, Col, Form } from 'react-bootstrap';
+import { FaUser, FaEnvelope, FaPhone } from 'react-icons/fa';
 
 /**
  * Component form thông tin khách hàng
  */
 const CustomerInfoForm = ({ customerInfo, setCustomerInfo }) => {
-    // Check if fields are pre-filled (have initial values)
-    const isPreFilled = customerInfo.name || customerInfo.email || customerInfo.phone;
-
     return (
         <Card className="mb-4 border-0 shadow-sm rounded-4">
             <Card.Header className="bg-white py-3 border-bottom">
-                <div className="d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0 fw-bold">Thông Tin Liên Hệ</h5>
-                    {isPreFilled && (
-                        <Badge bg="success" className="d-flex align-items-center gap-1 px-3 py-2">
-                            <FaCheckCircle />
-                            Đã tự động điền
-                        </Badge>
-                    )}
-                </div>
-                {isPreFilled && (
-                    <p className="text-muted small mb-0 mt-2">
-
-                    </p>
-                )}
+                <h5 className="mb-0 fw-bold">Thông Tin Liên Hệ</h5>
             </Card.Header>
             <Card.Body className="p-4">
                 <Row>

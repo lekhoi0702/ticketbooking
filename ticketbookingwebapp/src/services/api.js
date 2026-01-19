@@ -10,13 +10,16 @@ import { adminApi } from './api/admin';
  * Aggregated API service
  * This maintains backward compatibility by exporting a single 'api' object
  * containing all methods from individual modules.
+ * 
+ * NOTE: Order matters! If multiple modules export methods with the same name,
+ * the later ones will override earlier ones.
  */
 export const api = {
     ...authApi,
-    ...eventApi,
-    ...organizerApi,
+    ...organizerApi,  // Organizer-specific methods (may require auth)
     ...seatApi,
     ...orderApi,
     ...paymentApi,
     ...adminApi,
+    ...eventApi,      // Public event methods - placed last to override organizer methods with same name
 };

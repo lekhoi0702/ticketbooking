@@ -119,86 +119,88 @@ const MyTicketsTab = () => {
         );
     };
 
-    if (loading) return <LoadingSpinner tip="Đang tải vé của bạn..." />;
-
-    if (tickets.length === 0) {
-        return (
-            <Card className="border-0 shadow-sm rounded-4">
-                <Card.Body className="text-center py-5">
-                    <div style={{ fontSize: '80px', color: 'rgba(0, 0, 0, 0.05)' }}>
-                        <FaTicketAlt />
-                    </div>
-                    <h3 className="mb-3 mt-4 text-white">Bạn chưa có vé nào</h3>
-                    <p className="text-muted mb-4">
-                        Khám phá các sự kiện hấp dẫn và đặt vé ngay để không bỏ lỡ những trải nghiệm tuyệt vời!
-                    </p>
-                    <Button variant="success" size="lg" className="px-5 shadow-sm" onClick={() => navigate('/')}>
-                        Khám phá sự kiện
-                    </Button>
-                </Card.Body>
-            </Card>
-        );
-    }
-
     return (
-        <>
-            <div className="tickets-list">
-                {tickets.map((ticket) => (
-                    <div className="ticket-card-container mb-4" key={ticket.ticket_id} onClick={() => handleShowQR(ticket)}>
-                        <div className="ticket-main-part">
-                            <div className="ticket-event-info">
-                                <div className="ticket-status-label">
-                                    {getStatusBadge(ticket.ticket_status)}
-                                </div>
-                                <h3 className="ticket-event-title">{ticket.event_name || 'Sự kiện'}</h3>
-                                <div className="ticket-details-grid">
-                                    <div className="detail-item">
-                                        <FaCalendar className="detail-icon" />
-                                        <span>{formatTime(ticket.event_date)} {formatDate(ticket.event_date)}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <FaMapMarkerAlt className="detail-icon" />
-                                        <span>{ticket.venue_name || 'Địa điểm'}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <FaChair className="detail-icon" />
-                                        <span>{ticket.seat ? `${ticket.seat.row_name}${ticket.seat.seat_number}` : (ticket.ticket_type_name || 'Vé tham dự')}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="ticket-bottom-info">
-                                <div className="info-group">
-                                    <div className="info-label">MÃ VÉ</div>
-                                    <div className="info-value code-font">{ticket.ticket_code}</div>
-                                </div>
-                                <div className="info-group">
-                                    <div className="info-label">GIÁ VÉ</div>
-                                    <div className="info-value">{formatCurrency(ticket.price)}</div>
-                                </div>
-                            </div>
-                        </div>
+        <div style={{ position: 'relative', minHeight: '200px' }}>
+            {loading && (
+                <div style={{ textAlign: 'center', padding: '50px' }}>
+                    <LoadingSpinner tip="Đang tải vé của bạn..." />
+                </div>
+            )}
 
-                        <div className="ticket-perforation-divider">
-                            <div className="perforation-notch notch-top"></div>
-                            <div className="perforation-line"></div>
-                            <div className="perforation-notch notch-bottom"></div>
+            {!loading && tickets.length === 0 ? (
+                <Card className="border-0 shadow-sm rounded-4" style={{ background: '#121212', border: '1px solid #333 !important' }}>
+                    <Card.Body className="text-center py-5">
+                        <div style={{ fontSize: '80px', color: 'rgba(255, 255, 255, 0.1)' }}>
+                            <FaTicketAlt />
                         </div>
+                        <h3 className="mb-3 mt-4 text-white">Bạn chưa có vé nào</h3>
+                        <p className="text-muted mb-4">
+                            Khám phá các sự kiện hấp dẫn và đặt vé ngay để không bỏ lỡ những trải nghiệm tuyệt vời!
+                        </p>
+                        <Button variant="success" size="lg" className="px-5 shadow-sm" onClick={() => navigate('/')}>
+                            Khám phá sự kiện
+                        </Button>
+                    </Card.Body>
+                </Card>
+            ) : !loading && (
+                <div className="tickets-list">
+                    {tickets.map((ticket) => (
+                        <div className="ticket-card-container mb-4" key={ticket.ticket_id} onClick={() => handleShowQR(ticket)}>
+                            <div className="ticket-main-part">
+                                <div className="ticket-event-info">
+                                    <div className="ticket-status-label">
+                                        {getStatusBadge(ticket.ticket_status)}
+                                    </div>
+                                    <h3 className="ticket-event-title">{ticket.event_name || 'Sự kiện'}</h3>
+                                    <div className="ticket-details-grid">
+                                        <div className="detail-item">
+                                            <FaCalendar className="detail-icon" />
+                                            <span>{formatTime(ticket.event_date)} {formatDate(ticket.event_date)}</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaMapMarkerAlt className="detail-icon" />
+                                            <span>{ticket.venue_name || 'Địa điểm'}</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaChair className="detail-icon" />
+                                            <span>{ticket.seat ? `${ticket.seat.row_name}${ticket.seat.seat_number}` : (ticket.ticket_type_name || 'Vé tham dự')}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="ticket-bottom-info">
+                                    <div className="info-group">
+                                        <div className="info-label">MÃ VÉ</div>
+                                        <div className="info-value code-font">{ticket.ticket_code}</div>
+                                    </div>
+                                    <div className="info-group">
+                                        <div className="info-label">GIÁ VÉ</div>
+                                        <div className="info-value">{formatCurrency(ticket.price)}</div>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <div className="ticket-stub-part">
-                            <div className="stub-qr-wrapper">
-                                {ticket.ticket_code && (
-                                    <QRCodeSVG
-                                        id={`qr-${ticket.ticket_id}`}
-                                        value={ticket.ticket_code}
-                                        size={110}
-                                        level="H"
-                                    />
-                                )}
+                            <div className="ticket-perforation-divider">
+                                <div className="perforation-notch notch-top"></div>
+                                <div className="perforation-line"></div>
+                                <div className="perforation-notch notch-bottom"></div>
+                            </div>
+
+                            <div className="ticket-stub-part">
+                                <div className="stub-qr-wrapper">
+                                    {ticket.ticket_code && (
+                                        <QRCodeSVG
+                                            id={`qr-${ticket.ticket_id}`}
+                                            value={ticket.ticket_code}
+                                            size={110}
+                                            level="H"
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* QR Code Modal */}
             <Modal show={showQRModal} onHide={handleCloseQR} centered size="md">
@@ -265,7 +267,7 @@ const MyTicketsTab = () => {
                     border-radius: 16px;
                     position: relative;
                     background: #121212;
-                    border: 2px solid #ffffff;
+                    border: 2px solid #333;
                     margin-bottom: 24px;
                     cursor: pointer;
                     transition: all 0.3s ease;
@@ -287,7 +289,7 @@ const MyTicketsTab = () => {
                     position: absolute;
                     width: 32px;
                     height: 32px;
-                    border: 2px solid #ffffff;
+                    border: 2px solid #333;
                     border-radius: 50%;
                     left: 50%;
                     transform: translateX(-50%);
@@ -429,7 +431,7 @@ const MyTicketsTab = () => {
                     .perforation-notch { display: none; }
                 }
             `}</style>
-        </>
+        </div>
     );
 };
 

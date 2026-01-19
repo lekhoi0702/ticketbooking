@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Container, Row, Col, Breadcrumb } from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
+import { FaHome } from 'react-icons/fa';
 import { api } from '@services/api';
 import EventCard from '@features/user/components/Event/EventCard';
+import AntBreadcrumb from '@features/user/components/AntBreadcrumb';
 import { transformEvent } from '@shared/utils/eventUtils';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import './AllEvents.css';
@@ -55,12 +56,14 @@ const AllEvents = () => {
     return (
         <div className="all-events-wrapper">
             <Container>
-                <Breadcrumb className="mb-4">
-                    <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>Trang chủ</Breadcrumb.Item>
-                    <Breadcrumb.Item active>Tất cả sự kiện</Breadcrumb.Item>
-                </Breadcrumb>
+                <AntBreadcrumb
+                    items={[
+                        { label: 'Trang chủ', path: '/', icon: <FaHome /> },
+                        { label: 'Tất cả sự kiện', path: '/events' }
+                    ]}
+                />
 
-                <div className="all-events-header text-center mb-5">
+                <div className="all-events-header text-center mb-4">
                     <h2 className="all-events-title">Khám Phá Sự Kiện</h2>
                     <p className="all-events-subtitle">Tìm kiếm và lựa chọn những trải nghiệm tuyệt vời nhất dành cho bạn</p>
                     <div className="all-events-divider mx-auto"></div>

@@ -26,7 +26,7 @@ class OrganizerService:
     @staticmethod
     def approve_refund(order_id):
         # Check order
-        o_res = db.session.execute(text("SELECT order_status FROM orders WHERE order_id = :id"), {"id": order_id})
+        o_res = db.session.execute(text("SELECT order_status FROM `Order` WHERE order_id = :id"), {"id": order_id})
         order = o_res.fetchone()
         
         if not order:
@@ -34,40 +34,40 @@ class OrganizerService:
         if order.order_status != 'CANCELLATION_PENDING':
             raise ValueError('Order is not pending cancellation')
             
-        # Get tickets
-        t_res = db.session.execute(text("SELECT * FROM tickets WHERE order_id = :id"), {"id": order_id})
+        # Get Ticket
+        t_res = db.session.execute(text("SELECT * FROM Ticket WHERE order_id = :id"), {"id": order_id})
         tickets = t_res.fetchall()
         
         # Update order status
-        db.session.execute(text("UPDATE orders SET order_status = 'CANCELLED' WHERE order_id = :id"), {"id": order_id})
+        db.session.execute(text("UPDATE `Order` SET order_status = 'CANCELLED' WHERE order_id = :id"), {"id": order_id})
         
         for ticket in tickets:
             # Release seat
             if ticket.seat_id:
-                db.session.execute(text("UPDATE seats SET status = 'AVAILABLE' WHERE seat_id = :sid"), {"sid": ticket.seat_id})
+                db.session.execute(text("UPDATE Seat SET status = 'AVAILABLE' WHERE seat_id = :sid"), {"sid": ticket.seat_id})
             
             # Update sold counts
             tt_id = ticket.ticket_type_id
             
             # Decrement ticket_type sold_quantity
             db.session.execute(text("""
-                UPDATE ticket_types 
+                UPDATE TicketType 
                 SET sold_quantity = GREATEST(0, sold_quantity - 1) 
                 WHERE ticket_type_id = :tid
             """), {"tid": tt_id})
             
             # Decrement event sold_tickets
             # Need event_id from ticket_type
-            tt_row = db.session.execute(text("SELECT event_id FROM ticket_types WHERE ticket_type_id = :tid"), {"tid": tt_id}).fetchone()
+            tt_row = db.session.execute(text("SELECT event_id FROM TicketType WHERE ticket_type_id = :tid"), {"tid": tt_id}).fetchone()
             if tt_row:
                 db.session.execute(text("""
-                    UPDATE events 
+                    UPDATE Event 
                     SET sold_tickets = GREATEST(0, sold_tickets - 1) 
                     WHERE event_id = :eid
                 """), {"eid": tt_row.event_id})
             
             # Delete ticket
-            db.session.execute(text("DELETE FROM tickets WHERE ticket_id = :tid"), {"tid": ticket.ticket_id})
+            db.session.execute(text("DELETE FROM Ticket WHERE ticket_id = :tid"), {"tid": ticket.ticket_id})
             
         db.session.commit()
         return True
@@ -75,7 +75,7 @@ class OrganizerService:
     @staticmethod
     def reject_refund(order_id):
         # Check order
-        o_res = db.session.execute(text("SELECT order_status FROM orders WHERE order_id = :id"), {"id": order_id})
+        o_res = db.session.execute(text("SELECT order_status FROM `Order` WHERE order_id = :id"), {"id": order_id})
         order = o_res.fetchone()
         
         if not order:
@@ -83,51 +83,61 @@ class OrganizerService:
         if order.order_status != 'CANCELLATION_PENDING':
             raise ValueError('Order is not pending cancellation')
         
-        db.session.execute(text("UPDATE orders SET order_status = 'PAID' WHERE order_id = :id"), {"id": order_id})
+        db.session.execute(text("UPDATE `Order` SET order_status = 'PAID' WHERE order_id = :id"), {"id": order_id})
         db.session.commit()
         return True
 
     @staticmethod
     def get_event_orders(event_id):
         # Verify event
-        if not db.session.execute(text("SELECT 1 FROM events WHERE event_id = :id"), {"id": event_id}).scalar():
+        if not db.session.execute(text("SELECT 1 FROM Event WHERE event_id = :id"), {"id": event_id}).scalar():
             raise ValueError('Event not found')
             
-        # Get orders
+        # Get Order
         orders_sql = text("""
             SELECT DISTINCT o.*
-            FROM orders o
-            JOIN tickets t ON o.order_id = t.order_id
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
+            FROM `Order` o
+            JOIN Ticket t ON o.order_id = t.order_id
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             WHERE tt.event_id = :eid
         """)
-        orders = db.session.execute(orders_sql, {"eid": event_id}).fetchall()
+        orders_rows = db.session.execute(orders_sql, {"eid": event_id}).fetchall()
         
         orders_data = []
-        for order in orders:
-            # Get tickets for this order AND this event
+        for order in orders_rows:
+            # Get Ticket for this order AND this event
             t_sql = text("""
                 SELECT t.*, tt.type_name, tt.price
-                FROM tickets t
-                JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
+                FROM Ticket t
+                JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
                 WHERE t.order_id = :oid AND tt.event_id = :eid
             """)
             tickets = db.session.execute(t_sql, {"oid": order.order_id, "eid": event_id}).fetchall()
             
             order_dict = dict(order._mapping)
-            # handle datetime serialization if needed or handled by controller
-            if order_dict.get('created_at'):
-                 order_dict['created_at'] = order_dict['created_at'].isoformat()
+            # handle datetime serialization
+            for key, val in order_dict.items():
+                if isinstance(val, datetime):
+                    order_dict[key] = val.isoformat()
             
             order_dict['tickets_count'] = len(tickets)
-            order_dict['tickets'] = [dict(t._mapping) for t in tickets]
+            
+            ticket_list = []
+            for t in tickets:
+                td = dict(t._mapping)
+                for tk, tv in td.items():
+                    if isinstance(tv, datetime):
+                        td[tk] = tv.isoformat()
+                ticket_list.append(td)
+                
+            order_dict['Ticket'] = ticket_list
             orders_data.append(order_dict)
         return orders_data
 
     @staticmethod
     def search_tickets(manager_id, query_text, event_id, status):
         # Get organizer event IDs
-        ev_res = db.session.execute(text("SELECT event_id FROM events WHERE manager_id = :mid"), {"mid": manager_id})
+        ev_res = db.session.execute(text("SELECT event_id FROM Event WHERE manager_id = :mid"), {"mid": manager_id})
         org_event_ids = [r.event_id for r in ev_res]
         
         if not org_event_ids:
@@ -137,9 +147,9 @@ class OrganizerService:
         
         sql = """
             SELECT t.*, tt.type_name, e.event_name
-            FROM tickets t
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-            JOIN events e ON tt.event_id = e.event_id
+            FROM Ticket t
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
         """
         
         where_clauses = []
@@ -170,7 +180,15 @@ class OrganizerService:
             sql += " WHERE " + " AND ".join(where_clauses)
             
         result = db.session.execute(text(sql), params).fetchall()
-        return [dict(row._mapping) for row in result]
+        
+        final_results = []
+        for row in result:
+            d = dict(row._mapping)
+            for k, v in d.items():
+                if isinstance(v, datetime):
+                    d[k] = v.isoformat()
+            final_results.append(d)
+        return final_results
 
     @staticmethod
     def check_in_ticket(data):
@@ -180,9 +198,9 @@ class OrganizerService:
         # Find ticket with event info
         sql = text("""
             SELECT t.*, tt.event_id, e.manager_id, e.event_name
-            FROM tickets t
-            JOIN ticket_types tt ON t.ticket_type_id = tt.ticket_type_id
-            JOIN events e ON tt.event_id = e.event_id
+            FROM Ticket t
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
             WHERE t.ticket_code = :code
         """)
         
@@ -209,7 +227,7 @@ class OrganizerService:
              raise ValueError(f'Vé không hợp lệ (Trạng thái: {ticket.ticket_status})')
              
         now = datetime.utcnow()
-        db.session.execute(text("UPDATE tickets SET ticket_status = 'USED', checked_in_at = :now WHERE ticket_id = :tid"), 
+        db.session.execute(text("UPDATE Ticket SET ticket_status = 'USED', checked_in_at = :now WHERE ticket_id = :tid"), 
                          {"now": now, "tid": ticket.ticket_id})
         db.session.commit()
         
@@ -223,23 +241,23 @@ class OrganizerService:
     @staticmethod
     def get_organizer_profile(user_id):
         # Fetch User
-        u_res = db.session.execute(text("SELECT email, full_name FROM users WHERE user_id = :uid"), {"uid": user_id})
+        u_res = db.session.execute(text("SELECT email, full_name FROM User WHERE user_id = :uid"), {"uid": user_id})
         user = u_res.fetchone()
         if not user:
             raise ValueError('User not found')
         
         # Fetch Organizer Info
-        o_res = db.session.execute(text("SELECT * FROM organizer_info WHERE user_id = :uid"), {"uid": user_id})
+        o_res = db.session.execute(text("SELECT * FROM OrganizerInfo WHERE user_id = :uid"), {"uid": user_id})
         org_info = o_res.fetchone()
         
         if not org_info:
             # Create default
-            ins_sql = text("INSERT INTO organizer_info (user_id, organization_name) VALUES (:uid, :name)")
+            ins_sql = text("INSERT INTO OrganizerInfo (user_id, organization_name) VALUES (:uid, :name)")
             db.session.execute(ins_sql, {"uid": user_id, "name": user.full_name})
             db.session.commit()
             
             # Re-fetch
-            o_res = db.session.execute(text("SELECT * FROM organizer_info WHERE user_id = :uid"), {"uid": user_id})
+            o_res = db.session.execute(text("SELECT * FROM OrganizerInfo WHERE user_id = :uid"), {"uid": user_id})
             org_info = o_res.fetchone()
             
         data = dict(org_info._mapping)
@@ -250,7 +268,7 @@ class OrganizerService:
     @staticmethod
     def update_organizer_profile(user_id, data, files):
         # Check existence
-        check = db.session.execute(text("SELECT 1 FROM organizer_info WHERE user_id = :uid"), {"uid": user_id}).scalar()
+        check = db.session.execute(text("SELECT 1 FROM OrganizerInfo WHERE user_id = :uid"), {"uid": user_id}).scalar()
         if not check:
             raise ValueError('Organizer info not found')
         
@@ -287,7 +305,7 @@ class OrganizerService:
         params['now'] = datetime.utcnow()
         
         if update_fields:
-            sql = f"UPDATE organizer_info SET {', '.join(update_fields)} WHERE user_id = :uid"
+            sql = f"UPDATE OrganizerInfo SET {', '.join(update_fields)} WHERE user_id = :uid"
             db.session.execute(text(sql), params)
             db.session.commit()
             
@@ -299,3 +317,6 @@ class OrganizerService:
              def to_dict(self): return self.data
              
         return MockObj(OrganizerService.get_organizer_profile(user_id))
+
+
+

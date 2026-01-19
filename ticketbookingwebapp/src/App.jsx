@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation }
 import { ConfigProvider, App as AntdApp } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { AntdThemeConfig } from '@theme/AntdThemeConfig';
+import { DarkThemeConfig } from '@theme/DarkThemeConfig';
 
 // User Imports
 import UserLayout from '@features/user/components/UserLayout';
@@ -13,8 +14,7 @@ import EventDetail from '@features/user/pages/EventDetail';
 import Checkout from '@features/user/pages/Checkout';
 import OrderSuccess from '@features/user/pages/OrderSuccess';
 import VNPayReturn from '@features/user/pages/VNPayReturn';
-import MyOrders from '@features/user/pages/MyOrders';
-import MyTickets from '@features/user/pages/MyTickets';
+// MyOrders and MyTickets are now integrated into Profile
 import SearchResults from '@features/user/pages/SearchResults';
 import CategoryEvents from '@features/user/pages/CategoryEvents';
 import Profile from '@features/user/pages/Profile';
@@ -76,15 +76,22 @@ const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/" }) => {
 };
 
 
+import PageTitleUpdater from '@shared/components/PageTitleUpdater';
+
 function App() {
   return (
     <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#52c41a' }} spin /> }}>
       <AntdApp>
         <AuthProvider>
           <Router>
+            <PageTitleUpdater />
             <Routes>
               {/* User Routes */}
-              <Route element={<UserLayout />}>
+              <Route element={
+                <ConfigProvider theme={DarkThemeConfig}>
+                  <UserLayout />
+                </ConfigProvider>
+              }>
                 <Route path="/" element={<Home />} />
                 <Route path="/events" element={<AllEvents />} />
                 <Route path="/event/:id" element={<EventDetail />} />
@@ -102,19 +109,11 @@ function App() {
                 <Route path="/payment/vnpay-return" element={<VNPayReturn />} />
                 <Route
                   path="/my-orders"
-                  element={
-                    <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
-                      <MyOrders />
-                    </ProtectedRoute>
-                  }
+                  element={<Navigate to="/profile?tab=orders" replace />}
                 />
                 <Route
                   path="/my-tickets"
-                  element={
-                    <ProtectedRoute allowedRoles={['USER']} redirectTo="/">
-                      <MyTickets />
-                    </ProtectedRoute>
-                  }
+                  element={<Navigate to="/profile?tab=tickets" replace />}
                 />
                 <Route
                   path="/profile"

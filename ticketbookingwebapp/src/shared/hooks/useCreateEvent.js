@@ -31,17 +31,17 @@ export const useCreateEvent = () => {
     };
 
     const [formData, setFormData] = useState({
-        event_name: 'Sự Kiện Âm Nhạc Giai Điệu Mùa Thu 2026',
-        description: 'Chào mừng bạn đến với đêm nhạc hội tụ các nghệ sĩ hàng đầu. Một đêm nhạc đầy cảm xúc và thăng hoa.',
+        event_name: '',
+        description: '',
         category_id: '',
         venue_id: '',
-        start_datetime: getMockDate(30, 19),
-        end_datetime: getMockDate(30, 22),
-        sale_start_datetime: getMockDate(0, 8),
-        sale_end_datetime: getMockDate(29, 23),
+        start_datetime: '',
+        end_datetime: '',
+        sale_start_datetime: '',
+        sale_end_datetime: '',
         total_capacity: 0,
         status: 'PENDING_APPROVAL',
-        is_featured: true,
+        is_featured: false,
         extra_showtimes: [],
         manager_id: user?.user_id || 1
     });
@@ -49,8 +49,7 @@ export const useCreateEvent = () => {
     const [bannerImage, setBannerImage] = useState(null);
     const [bannerPreview, setBannerPreview] = useState(null);
     const [ticketTypes, setTicketTypes] = useState([
-        { type_name: 'VÉ VIP', price: '1500000', quantity: '0', description: 'Hàng ghế đầu, quà tặng kèm, buffet nhẹ.', selectedSeats: [] },
-        { type_name: 'VÉ THƯỜNG', price: '500000', quantity: '0', description: 'Trải nghiệm âm nhạc tuyệt vời.', selectedSeats: [] }
+        { type_name: '', price: '', quantity: '0', description: '', selectedSeats: [] }
     ]);
     const [activeTicketTypeIndex, setActiveTicketTypeIndex] = useState(0);
 
@@ -63,7 +62,7 @@ export const useCreateEvent = () => {
             setLoadingData(true);
             const [categoriesRes, venuesRes] = await Promise.all([
                 api.getCategories(),
-                api.getVenues(user?.user_id || 1)
+                api.getOrganizerVenues(user?.user_id || 1)
             ]);
 
             if (categoriesRes.success) {
@@ -90,9 +89,18 @@ export const useCreateEvent = () => {
 
     const fetchVenueTemplate = async (venueId) => {
         try {
-            const res = await api.getVenueById(venueId);
+            const res = await api.getVenue(venueId);
             if (res.success) {
-                setVenueTemplate(res.data.seat_map_template);
+                let template = res.data.seat_map_template;
+                if (typeof template === 'string') {
+                    try {
+                        template = JSON.parse(template);
+                    } catch (e) {
+                        console.error('Error parsing seat_map_template', e);
+                        template = null;
+                    }
+                }
+                setVenueTemplate(template);
             }
         } catch (error) {
             console.error("Error fetching venue template:", error);

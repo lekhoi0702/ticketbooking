@@ -180,7 +180,7 @@ const TicketManagement = () => {
 
     return (
         <div>
-            <Title level={4} style={{ marginBottom: 24 }}>Quản lý vé & Check-in</Title>
+
 
             <Card style={{ marginBottom: 24 }}>
                 <Space direction="vertical" style={{ width: '100%' }} size="large">

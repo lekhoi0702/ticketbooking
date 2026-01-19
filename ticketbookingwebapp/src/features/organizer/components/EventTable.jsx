@@ -9,7 +9,8 @@ import {
     Space,
     Tooltip,
     Image,
-    Card
+    Card,
+    Skeleton
 } from 'antd';
 import {
     EditOutlined,
@@ -29,7 +30,7 @@ import { getImageUrl } from '@shared/utils/eventUtils';
 
 const { Text } = Typography;
 
-const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDeleteClick, setIsAddShowtimeModalOpen }) => {
+const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDeleteClick, setIsAddShowtimeModalOpen, loading }) => {
     const navigate = useNavigate();
 
     const getStatusConfig = (status) => {
@@ -109,17 +110,6 @@ const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDe
                             Đăng
                         </Button>
                     )}
-                    {record.status === 'PENDING_APPROVAL' && (
-                        <Button
-                            type="text"
-                            icon={<CloseCircleOutlined />}
-                            size="small"
-                            onClick={() => handleCancelApproval(record.event_id)}
-                            danger
-                        >
-                            Hủy
-                        </Button>
-                    )}
 
                     <Tooltip title="Xem chi tiết">
                         <Button
@@ -148,16 +138,6 @@ const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDe
                         />
                     </Tooltip>
 
-                    <Tooltip title="Sửa">
-                        <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            onClick={() => navigate(`/organizer/edit-event/${record.event_id}`)}
-                            disabled={['REJECTED', 'PENDING_APPROVAL', 'ONGOING', 'COMPLETED'].includes(record.status)}
-                            style={{ color: '#52c41a' }}
-                        />
-                    </Tooltip>
-
                     {['DRAFT', 'REJECTED'].includes(record.status) && (
                         <Tooltip title="Xóa">
                             <Button
@@ -173,11 +153,24 @@ const EventTable = ({ events, handlePublishEvent, handleCancelApproval, handleDe
         },
     ];
 
+    if (loading) {
+        return (
+            <div style={{ padding: 20 }}>
+                <Space style={{ marginBottom: 16 }}>
+                    <Skeleton.Button active size="small" style={{ width: 100 }} />
+                    <Skeleton.Button active size="small" style={{ width: 100 }} />
+                </Space>
+                <Skeleton active paragraph={{ rows: 5 }} />
+            </div>
+        );
+    }
+
     return (
         <Table
             columns={columns}
             dataSource={events}
             rowKey="event_id"
+            loading={false}
             pagination={{ pageSize: 10 }}
             size="middle"
             locale={{ emptyText: 'Không tìm thấy dữ liệu' }}

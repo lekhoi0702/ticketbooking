@@ -166,8 +166,8 @@ const EventOrders = () => {
             render: (_, record) => (
                 <div>
                     <div><Text strong>{record.customer_name || 'N/A'}</Text></div>
-                    <div><Text type="secondary" style={{ fontSize: 12 }}>{record.customer_email}</Text></div>
-                    <div><Text type="secondary" style={{ fontSize: 12 }}>{record.customer_phone}</Text></div>
+                    <div><Text type="secondary" style={{ fontSize: 12 }}>Email: {record.customer_email}</Text></div>
+                    <div><Text type="secondary" style={{ fontSize: 12 }}>SĐT: {record.customer_phone || 'N/A'}</Text></div>
                 </div>
             ),
         },
