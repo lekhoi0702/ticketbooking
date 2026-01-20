@@ -38,7 +38,7 @@ const MyOrdersTab = () => {
 
     const getStatusConfig = (status) => {
         const configs = {
-            'PAID': { color: '#52c41a', label: 'Đã thanh toán' },
+            'PAID': { color: '#2DC275', label: 'Đã thanh toán' },
             'PENDING': { color: '#faad14', label: 'Chờ thanh toán' },
             'CANCELLED': { color: '#ff4d4f', label: 'Đã hủy' },
             'COMPLETED': { color: '#1890ff', label: 'Hoàn thành' },
@@ -73,7 +73,7 @@ const MyOrdersTab = () => {
             title: 'Tổng tiền',
             dataIndex: 'total_amount',
             key: 'total_amount',
-            render: (amount) => <Text strong style={{ color: '#52c41a' }}>{formatCurrency(amount)}</Text>,
+            render: (amount) => <Text strong style={{ color: '#2DC275' }}>{formatCurrency(amount)}</Text>,
         },
         {
             title: 'Trạng thái',
@@ -102,7 +102,7 @@ const MyOrdersTab = () => {
                         type="link"
                         icon={<EyeOutlined />}
                         onClick={() => navigate(`/order-success/${record.order_code}`)}
-                        style={{ color: '#52c41a' }}
+                        style={{ color: '#2DC275' }}
                     >
                         Chi tiết
                     </Button>

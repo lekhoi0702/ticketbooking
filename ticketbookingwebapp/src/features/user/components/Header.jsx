@@ -23,10 +23,9 @@ const Header = () => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
     const [categories, setCategories] = useState([]);
-    const [showAuthModal, setShowAuthModal] = useState(false);
     const [authRedirectPath, setAuthRedirectPath] = useState(null);
 
-    const { user, logout, isAuthenticated } = useAuth();
+    const { user, logout, isAuthenticated, showLoginModal, setShowLoginModal, triggerLogin } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const suggestionRef = useRef(null);
@@ -86,7 +85,7 @@ const Header = () => {
             navigate('/profile?tab=tickets');
         } else {
             setAuthRedirectPath('/profile?tab=tickets');
-            setShowAuthModal(true);
+            triggerLogin();
         }
     };
 
@@ -218,7 +217,7 @@ const Header = () => {
                                     <Button
                                         type="text"
                                         className="login-btn-text"
-                                        onClick={() => setShowAuthModal(true)}
+                                        onClick={triggerLogin}
                                     >
                                         Đăng nhập | Đăng ký
                                     </Button>
@@ -245,8 +244,8 @@ const Header = () => {
             </div>
 
             <AuthModal
-                show={showAuthModal}
-                onHide={() => setShowAuthModal(false)}
+                show={showLoginModal}
+                onHide={() => setShowLoginModal(false)}
                 onSuccess={handleLoginSuccess}
             />
         </AntHeader>

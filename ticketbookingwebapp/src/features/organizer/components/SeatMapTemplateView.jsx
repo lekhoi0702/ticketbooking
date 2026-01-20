@@ -147,7 +147,7 @@ const SeatMapTemplateView = ({
                                     borderBottom: '1px solid rgba(255,255,255,0.05)'
                                 }}>
                                     <Space size={12}>
-                                        <Badge status="processing" color="#52c41a" text={
+                                        <Badge status="processing" color="#2DC275" text={
                                             <Text strong style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>KHU VỰC: {area.name}</Text>
                                         } />
                                         <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>

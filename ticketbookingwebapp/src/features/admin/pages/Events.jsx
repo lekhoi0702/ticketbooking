@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AdminPortal from '@shared/components/AdminPortal';
 
 import {
 
@@ -105,6 +106,7 @@ const AdminEventsManagement = () => {
     const [showModal, setShowModal] = useState(false);
 
     const [actionLoading, setActionLoading] = useState(false);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
 
 
@@ -465,7 +467,7 @@ const AdminEventsManagement = () => {
 
                 <Space>
 
-                    <Avatar size="small" style={{ backgroundColor: '#52c41a' }}>{record.organizer_name?.charAt(0)}</Avatar>
+                    <Avatar size="small" style={{ backgroundColor: '#2DC275' }}>{record.organizer_name?.charAt(0)}</Avatar>
 
                     <Text style={{ fontSize: 13 }}>{record.organizer_name}</Text>
 
@@ -523,36 +525,7 @@ const AdminEventsManagement = () => {
 
         },
 
-        {
-
-            title: 'THAO TÁC',
-
-            key: 'actions',
-
-            align: 'right',
-
-            render: (_, record) => (
-
-                <Button
-
-                    type={record.status === 'PENDING_APPROVAL' ? "primary" : "default"}
-
-                    size="small"
-
-                    icon={<EyeOutlined />}
-
-                    onClick={() => { setSelectedEvent(record); setShowModal(true); }}
-
-                >
-
-                    {record.status === 'PENDING_APPROVAL' ? 'Duyệt' : 'Chi tiết'}
-
-                </Button>
-
-            ),
-
-        },
-
+        // Actions column removed as requested - moved to toolbar
     ];
 
 
@@ -576,37 +549,9 @@ const AdminEventsManagement = () => {
     return (
 
         <div style={{ padding: '0 24px' }}>
-
             <Card
-
-                title={
-
-                    <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-
-                        <Title level={4} style={{ margin: 0 }}>Quản Lý Sự Kiện</Title>
-
-                        <Button
-
-                            icon={<ReloadOutlined />}
-
-                            onClick={() => fetchEvents()}
-
-                            disabled={loading}
-
-                        >
-
-                            Làm mới
-
-                        </Button>
-
-                    </Space>
-
-                }
-
                 style={{ marginBottom: 24, borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
-
             >
-
                 <Row gutter={16}>
 
                     <Col xs={24} md={8}>
@@ -688,52 +633,99 @@ const AdminEventsManagement = () => {
                             <Option value="NORMAL">Sự kiện thường</Option>
 
                         </Select>
-
                     </Col>
-
                 </Row>
 
+                <Divider style={{ margin: '16px 0' }} />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        {selectedRowKeys.length > 0 && (
+                            <Space size="middle">
+                                <Text strong>{selectedRowKeys.length} đã chọn:</Text>
+                                <Button
+                                    type="primary"
+                                    icon={<CheckCircleOutlined />}
+                                    onClick={() => handleUpdateStatus(selectedRowKeys[0], 'APPROVED')}
+                                    disabled={selectedRowKeys.length > 1}
+                                    style={{ backgroundColor: '#2DC275', borderColor: '#2DC275' }}
+                                >
+                                    Phê duyệt
+                                </Button>
+                                <Button
+                                    danger
+                                    icon={<CloseCircleOutlined />}
+                                    onClick={() => handleUpdateStatus(selectedRowKeys[0], 'REJECTED')}
+                                    disabled={selectedRowKeys.length > 1}
+                                >
+                                    Từ chối
+                                </Button>
+                                <Button
+                                    icon={<EyeOutlined />}
+                                    onClick={() => {
+                                        const record = events.find(e => e.event_id === selectedRowKeys[0]);
+                                        setSelectedEvent(record);
+                                        setShowModal(true);
+                                    }}
+                                    disabled={selectedRowKeys.length > 1}
+                                >
+                                    Xem chi tiết
+                                </Button>
+                            </Space>
+                        )}
+                    </div>
+                    <Space>
+                        <Button
+                            icon={<ReloadOutlined />}
+                            onClick={() => fetchEvents()}
+                            disabled={loading}
+                        >
+                            Làm mới
+                        </Button>
+                    </Space>
+                </div>
             </Card>
 
+            {
+                pendingCount > 0 && (
 
+                    <Alert
 
-            {pendingCount > 0 && (
+                        message={
 
-                <Alert
+                            <Space>
 
-                    message={
+                                <WarningOutlined />
 
-                        <Space>
+                                <Text strong>Cần chú ý: Đang có {pendingCount} sự kiện chờ bạn phê duyệt.</Text>
 
-                            <WarningOutlined />
+                            </Space>
 
-                            <Text strong>Cần chú ý: Đang có {pendingCount} sự kiện chờ bạn phê duyệt.</Text>
+                        }
 
-                        </Space>
+                        type="warning"
 
-                    }
+                        showIcon={false}
 
-                    type="warning"
+                        style={{ marginBottom: 24, borderRadius: 8, border: 'none', backgroundColor: '#fffbe6' }}
 
-                    showIcon={false}
+                    />
 
-                    style={{ marginBottom: 24, borderRadius: 8, border: 'none', backgroundColor: '#fffbe6' }}
-
-                />
-
-            )}
+                )
+            }
 
 
 
             <Card styles={{ body: { padding: 0 } }}>
-
                 <Table
-
+                    rowSelection={{
+                        selectedRowKeys,
+                        onChange: (keys) => setSelectedRowKeys(keys),
+                    }}
+                    rowKey="event_id"
                     columns={columns}
 
                     dataSource={filteredEvents}
-
-                    rowKey="event_id"
 
                     pagination={{
 
@@ -851,7 +843,7 @@ const AdminEventsManagement = () => {
                                             <Card size="small" style={{ background: '#262626', border: '1px solid #434343' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 16, fontSize: 11 }}>
                                                     <Space><Badge color="#f0f0f0" /> <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Trống</Text></Space>
-                                                    <Space><Badge color="#52c41a" /> <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Đã gán</Text></Space>
+                                                    <Space><Badge color="#2DC275" /> <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Đã gán</Text></Space>
                                                     <Space><Badge color="#ff4d4f" /> <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Hỏng/khác</Text></Space>
                                                 </div>
                                                 <SeatMapTemplateView
@@ -877,13 +869,13 @@ const AdminEventsManagement = () => {
 
                 __html: `
 
-                .pending-row { background-color: #fffbe6 !important; }
+    .pending - row { background - color: #fffbe6!important; }
 
-                .pending-row:hover td { background-color: #fff1b8 !important; }
+                .pending - row:hover td { background - color: #fff1b8!important; }
 
-            `}} />
+`}} />
 
-        </div>
+        </div >
 
     );
 

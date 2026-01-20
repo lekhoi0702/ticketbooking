@@ -185,7 +185,7 @@ const EventOrders = () => {
             key: 'total_amount',
             width: 130,
             render: (amount) => (
-                <Text strong style={{ color: '#52c41a' }}>
+                <Text strong style={{ color: '#2DC275' }}>
                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)}
                 </Text>
             ),
@@ -226,7 +226,7 @@ const EventOrders = () => {
                             <Button
                                 type="text"
                                 icon={<CheckCircleOutlined />}
-                                style={{ color: '#52c41a' }}
+                                style={{ color: '#2DC275' }}
                                 onClick={() => handleApproveRefund(record)}
                             >
                                 Duyệt
@@ -251,27 +251,23 @@ const EventOrders = () => {
     }
 
     return (
-        <div>
-            <Card style={{ marginBottom: 24 }}>
-                <Title level={4} style={{ margin: 0 }}>
-                    Quản lý đơn hàng - {event?.event_name}
-                </Title>
-                <Text type="secondary">Quản lý và xử lý yêu cầu hoàn tiền</Text>
-            </Card>
-
-            {filteredOrders.filter(o => o.order_status === 'CANCELLATION_PENDING').length > 0 && (
-                <Alert
-                    message={`Có ${filteredOrders.filter(o => o.order_status === 'CANCELLATION_PENDING').length} yêu cầu hoàn tiền chờ xử lý`}
-                    description="Vui lòng xem xét và phê duyệt/từ chối các yêu cầu hoàn tiền từ khách hàng."
-                    type="warning"
-                    showIcon
-                    icon={<BellOutlined />}
-                    style={{ marginBottom: 16 }}
-                    closable
-                />
-            )}
+        <div style={{ paddingTop: 0 }}>
+            {
+                filteredOrders.filter(o => o.order_status === 'CANCELLATION_PENDING').length > 0 && (
+                    <Alert
+                        message={`Có ${filteredOrders.filter(o => o.order_status === 'CANCELLATION_PENDING').length} yêu cầu hoàn tiền chờ xử lý`}
+                        description="Vui lòng xem xét và phê duyệt/từ chối các yêu cầu hoàn tiền từ khách hàng."
+                        type="warning"
+                        showIcon
+                        icon={<BellOutlined />}
+                        style={{ marginBottom: 16 }}
+                        closable
+                    />
+                )
+            }
 
             <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+
                 <Space>
                     <Input
                         placeholder="Tìm theo mã đơn, email, SĐT"
@@ -297,7 +293,7 @@ const EventOrders = () => {
                 <Button icon={<ReloadOutlined />} onClick={fetchData}>
                     Làm mới
                 </Button>
-            </Space>
+            </Space >
 
             <Card>
                 <Table
@@ -316,7 +312,7 @@ const EventOrders = () => {
                 onCancel={() => setShowDetailModal(false)}
                 getStatusTag={getStatusTag}
             />
-        </div>
+        </div >
     );
 };
 

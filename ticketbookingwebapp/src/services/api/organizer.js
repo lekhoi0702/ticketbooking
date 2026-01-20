@@ -66,6 +66,20 @@ export const organizerApi = {
         return await response.json();
     },
 
+    async bulkDeleteEvents(requestBody) {
+        const response = await fetch(`${API_BASE_URL}/organizer/events/bulk-delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            // Return the error response instead of throwing
+            return error;
+        }
+        return await response.json();
+    },
+
     async getTicketTypes(eventId) {
         const response = await fetch(`${API_BASE_URL}/organizer/events/${eventId}/ticket-types`);
         if (!response.ok) throw new Error('Network response was not ok');

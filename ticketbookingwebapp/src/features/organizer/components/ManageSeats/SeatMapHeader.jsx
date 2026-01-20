@@ -37,7 +37,7 @@ const SeatMapHeader = ({
             {venueTemplate && (
                 <Space size={24}>
                     {activeTicketType && (
-                        <Text strong style={{ color: isComplete ? '#52c41a' : '#ff4d4f' }}>
+                        <Text strong style={{ color: isComplete ? '#2DC275' : '#ff4d4f' }}>
                             {isComplete
                                 ? <Space><CheckCircleOutlined /> Đã đủ số lượng</Space>
                                 : <Space><ExclamationCircleOutlined /> Còn thiếu: {activeTicketType.quantity - selectedCount} ghế</Space>

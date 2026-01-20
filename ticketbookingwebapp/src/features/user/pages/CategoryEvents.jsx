@@ -44,7 +44,7 @@ const CategoryEvents = () => {
     };
 
     if (loading) {
-        return <LoadingSpinner tip={`Đang tải sự kiện ${categoryName}...`} />;
+        return <LoadingSpinner fullScreen tip={`Đang tải sự kiện ${categoryName}...`} />;
     }
 
     return (

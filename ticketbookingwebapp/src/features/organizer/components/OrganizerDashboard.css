@@ -4,8 +4,8 @@
     --bg-main: #f4f6f9;
     --bg-card: #ffffff;
     --bg-sidebar: #ffffff;
-    --accent-green: #52c41a;
-    --accent-hover: #389e0d;
+    --accent-green: #2DC275;
+    --accent-hover: #26a65b;
     --text-primary: #303133;
     --text-muted: #909399;
     --border-subtle: #ebeef5;
@@ -238,7 +238,7 @@
 .organizer-form-control:focus {
     border-color: var(--accent-green) !important;
     background-color: #ffffff !important;
-    box-shadow: 0 0 0 4px rgba(82, 196, 26, 0.1) !important;
+    box-shadow: 0 0 0 4px rgba(45, 194, 117, 0.1) !important;
 }
 
 /* Buttons */

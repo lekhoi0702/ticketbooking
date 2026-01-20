@@ -165,7 +165,7 @@
 }
 
 .buy-btn {
-    background: linear-gradient(135deg, #2dc275 0%, #22c55e 100%) !important;
+    background: #2DC275 !important;
     border: none !important;
     font-weight: 800 !important;
     padding: 14px 40px !important;
@@ -183,6 +183,7 @@
 .buy-btn:hover {
     transform: translateY(-4px) scale(1.02);
     box-shadow: 0 15px 35px rgba(45, 194, 117, 0.5) !important;
+    background: #26a65b !important;
 }
 
 .buy-btn:active {
@@ -440,9 +441,9 @@
 }
 
 .schedule-item.active {
-    background: #2dc275;
+    background: #2DC275;
     color: #ffffff;
-    border-color: #2dc275;
+    border-color: #2DC275;
     box-shadow: 0 4px 12px rgba(45, 194, 117, 0.3);
 }
 
@@ -629,7 +630,7 @@
 
 .ticket-venue-name {
     font-weight: 700;
-    color: #4ade80;
+    color: #2DC275;
     /* Brighter Green */
     margin-bottom: 6px;
     line-height: 1.4;
@@ -670,7 +671,7 @@
 .price-value {
     font-size: 22px;
     font-weight: 800;
-    color: #4ade80;
+    color: #2DC275;
 }
 
 .price-value .arrow {
@@ -682,7 +683,7 @@
 /* Button */
 .ticket-buy-btn {
     width: 100%;
-    background-color: #2dc275 !important;
+    background-color: #2DC275 !important;
     border: none !important;
     font-weight: 700 !important;
     text-transform: uppercase;
@@ -694,9 +695,9 @@
 }
 
 .ticket-buy-btn:hover {
-    background-color: #22c55e !important;
+    background-color: #26a65b !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    box-shadow: 0 4px 12px rgba(45, 194, 117, 0.4);
 }
 
 /* Responsive */

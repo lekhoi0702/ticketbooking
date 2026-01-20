@@ -46,30 +46,30 @@ const TicketTypeSidebar = ({
                                 style={{
                                     padding: '16px 20px',
                                     cursor: 'pointer',
-                                    borderRight: isActive ? '3px solid #52c41a' : 'none',
+                                    borderRight: isActive ? '3px solid #2DC275' : 'none',
                                     backgroundColor: isActive ? '#f6ffed' : 'transparent',
                                     transition: 'all 0.3s',
                                     borderBottom: index < ticketTypes.length - 1 ? '1px solid #f0f0f0' : 'none'
                                 }}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                    <Text strong style={{ color: isActive ? '#52c41a' : 'inherit' }}>{tt.type_name}</Text>
-                                    <AppstoreOutlined style={{ color: isActive ? '#52c41a' : '#d9d9d9' }} />
+                                    <Text strong style={{ color: isActive ? '#2DC275' : 'inherit' }}>{tt.type_name}</Text>
+                                    <AppstoreOutlined style={{ color: isActive ? '#2DC275' : '#d9d9d9' }} />
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: isActive ? 8 : 0 }}>
-                                    <Text strong style={{ fontSize: 12, color: assignedCount > 0 ? (isFull ? '#52c41a' : '#faad14') : '#d9d9d9' }}>
+                                    <Text strong style={{ fontSize: 12, color: assignedCount > 0 ? (isFull ? '#2DC275' : '#faad14') : '#d9d9d9' }}>
                                         {assignedCount}
                                     </Text>
                                     <Text type="secondary" style={{ fontSize: 11 }}>/</Text>
                                     <Text type="secondary" style={{ fontSize: 11 }}>{tt.quantity} ghế</Text>
-                                    {isFull && <CheckCircleFilled style={{ fontSize: 12, color: '#52c41a', marginLeft: 4 }} />}
+                                    {isFull && <CheckCircleFilled style={{ fontSize: 12, color: '#2DC275', marginLeft: 4 }} />}
                                 </div>
                                 {isActive && (
                                     <Progress
                                         percent={Math.round(progress)}
                                         size="small"
                                         showInfo={false}
-                                        strokeColor={isFull ? '#52c41a' : '#52c41a'}
+                                        strokeColor={isFull ? '#2DC275' : '#2DC275'}
                                         trailColor="#e8e8e8"
                                     />
                                 )}

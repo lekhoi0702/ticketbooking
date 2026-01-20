@@ -12,7 +12,7 @@ const SeatMapLegend = () => {
                     <Text type="secondary" style={{ fontSize: 12 }}>Chưa gán</Text>
                 </Space>
                 <Space>
-                    <Badge color="#52c41a" />
+                    <Badge color="#2DC275" />
                     <Text type="secondary" style={{ fontSize: 12 }}>Đã gán hạng này</Text>
                 </Space>
                 <Space>

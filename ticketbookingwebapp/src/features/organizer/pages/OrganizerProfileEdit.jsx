@@ -88,10 +88,8 @@ const OrganizerProfileEdit = () => {
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <div>
-                    <Title level={2}>Chỉnh sửa thông tin</Title>
-                    <Text type="secondary">Cập nhật thông tin nhà tổ chức của bạn</Text>
-                </div>
+                <div />
+
                 <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/organizer/profile')}>
                     Quay lại
                 </Button>

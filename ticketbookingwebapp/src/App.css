@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --ticketbooking-green: #52c41a;
+  --ticketbooking-green: #2DC275;
   --ticketbooking-bg: #000000;
   --ticketbooking-text: #ffffff;
   --ticketbooking-gray: #1a1a1a;
@@ -28,11 +28,11 @@ main {
 
 /* Ant Design Overrides & Utilities */
 .text-primary-green {
-  color: #52c41a;
+  color: #2DC275;
 }
 
 .bg-primary-green {
-  background-color: #52c41a;
+  background-color: #2DC275;
 }
 
 /* Custom scrollbar */
@@ -55,8 +55,8 @@ main {
 
 /* Bootstrap Button Overrides to match Ant Design */
 .btn-primary {
-  background-color: #52c41a !important;
-  border-color: #52c41a !important;
+  background-color: #2DC275 !important;
+  border-color: #2DC275 !important;
   border-radius: 4px !important;
 }
 
@@ -88,7 +88,7 @@ main {
 
 /* Link in Breadcrumb */
 .breadcrumb-item a {
-  color: #52c41a !important;
+  color: #2DC275 !important;
   /* Green for links */
   text-decoration: none;
   transition: color 0.2s;

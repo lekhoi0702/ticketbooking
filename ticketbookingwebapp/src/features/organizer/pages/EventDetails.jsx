@@ -239,7 +239,7 @@ const EventDetails = () => {
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                                                     <div>
                                                         <Text strong style={{ fontSize: 14 }}>{tt.type_name}</Text><br />
-                                                        <Text strong style={{ fontSize: 16, color: '#52c41a' }}>
+                                                        <Text strong style={{ fontSize: 16, color: '#2DC275' }}>
                                                             {parseFloat(tt.price).toLocaleString()}đ
                                                         </Text>
                                                     </div>
@@ -252,7 +252,7 @@ const EventDetails = () => {
                                                 <Progress
                                                     percent={Math.round(percentageInType)}
                                                     size="small"
-                                                    strokeColor="#52c41a"
+                                                    strokeColor="#2DC275"
                                                     trailColor="#e8e8e8"
                                                 />
                                             </Card>
@@ -341,7 +341,7 @@ const EventDetails = () => {
                         <Card style={{ backgroundColor: '#262626', borderColor: '#262626' }}>
                             <Space direction="vertical" size={16} style={{ width: '100%' }}>
                                 <Space>
-                                    <InfoCircleOutlined style={{ color: '#52c41a' }} />
+                                    <InfoCircleOutlined style={{ color: '#2DC275' }} />
                                     <Text strong style={{ color: 'white', fontSize: 12 }}>THÔNG TIN HỆ THỐNG</Text>
                                 </Space>
 

@@ -5,7 +5,7 @@ import { useAuth } from '@context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MyOrdersTab from '@features/user/components/Account/MyOrdersTab';
 import MyTicketsTab from '@features/user/components/Account/MyTicketsTab';
-import ChangePasswordTab from '@features/user/components/Account/ChangePasswordTab';
+import ChangePasswordModal from '@features/user/components/Account/ChangePasswordModal';
 import MyFavoritesTab from '@features/user/components/Account/MyFavoritesTab';
 import './Profile.css';
 
@@ -16,6 +16,7 @@ const Profile = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('orders');
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -25,7 +26,7 @@ const Profile = () => {
 
     useEffect(() => {
         const tab = searchParams.get('tab');
-        if (tab && ['orders', 'tickets', 'password', 'favorites'].includes(tab)) {
+        if (tab && ['orders', 'tickets', 'favorites'].includes(tab)) {
             setActiveTab(tab);
         }
     }, [searchParams]);
@@ -60,16 +61,6 @@ const Profile = () => {
                 </span>
             ),
             children: <MyFavoritesTab />,
-        },
-        {
-            key: 'password',
-            label: (
-                <span>
-                    <LockOutlined />
-                    Đổi mật khẩu
-                </span>
-            ),
-            children: <ChangePasswordTab />,
         },
     ];
 
@@ -123,14 +114,24 @@ const Profile = () => {
                                 </Space>
                             </Space>
                         </Space>
-                        <Button
-                            className="logout-btn"
-                            size="large"
-                            onClick={handleLogout}
-                            icon={<LogoutOutlined />}
-                        >
-                            Đăng xuất
-                        </Button>
+                        <Space size="middle">
+                            <Button
+                                className="change-password-btn"
+                                size="large"
+                                onClick={() => setShowPasswordModal(true)}
+                                icon={<LockOutlined />}
+                            >
+                                Đổi mật khẩu
+                            </Button>
+                            <Button
+                                className="logout-btn"
+                                size="large"
+                                onClick={handleLogout}
+                                icon={<LogoutOutlined />}
+                            >
+                                Đăng xuất
+                            </Button>
+                        </Space>
                     </div>
                 </Card>
 
@@ -143,6 +144,12 @@ const Profile = () => {
                         size="large"
                     />
                 </Card>
+
+                {/* Change Password Modal */}
+                <ChangePasswordModal
+                    show={showPasswordModal}
+                    onHide={() => setShowPasswordModal(false)}
+                />
             </div>
         </div>
     );

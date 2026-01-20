@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showLoginModal, setShowLoginModal] = useState(false);
 
     useEffect(() => {
         const prefix = getScopePrefix();
@@ -38,9 +39,7 @@ export const AuthProvider = ({ children }) => {
         setToken(userToken);
         localStorage.setItem(`${prefix}token`, userToken);
         localStorage.setItem(`${prefix}user`, JSON.stringify(userData));
-
-        // Clear other scopes if necessary or keep them separate? 
-        // Keeping them separate allows being logged into multiple roles in different tabs.
+        setShowLoginModal(false);
     };
 
     const logout = () => {
@@ -51,8 +50,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem(`${prefix}user`);
     };
 
+    const triggerLogin = () => setShowLoginModal(true);
+
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token, loading }}>
+        <AuthContext.Provider value={{
+            user, token, login, logout,
+            isAuthenticated: !!token, loading,
+            showLoginModal, setShowLoginModal, triggerLogin
+        }}>
             {children}
         </AuthContext.Provider>
     );

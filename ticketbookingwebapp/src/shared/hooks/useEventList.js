@@ -145,6 +145,63 @@ export const useEventList = () => {
         }
     };
 
+    const handleBulkDelete = async (eventIds) => {
+        if (!eventIds || eventIds.length === 0) {
+            message.warning('Vui lòng chọn ít nhất một sự kiện để xóa');
+            return { success: false };
+        }
+
+        try {
+            setDeleting(true);
+
+            const requestBody = {
+                event_ids: eventIds,
+                manager_id: user.user_id
+            };
+
+            const response = await api.bulkDeleteEvents(requestBody);
+
+            if (response.success) {
+                const { success_count, failed_events } = response.data;
+
+                // Remove successfully deleted events from the list
+                setEvents(prev => prev.filter(e => !response.data.deleted_event_ids.includes(e.event_id)));
+
+                // Show appropriate message
+                if (failed_events && failed_events.length > 0) {
+                    // Some events failed to delete
+                    const { Modal } = await import('antd');
+
+                    // Build content as string
+                    const failedList = failed_events.map(evt =>
+                        `• ${evt.event_name || `ID: ${evt.event_id}`}: ${evt.reason}`
+                    ).join('\n');
+
+                    Modal.warning({
+                        title: 'Kết quả xóa sự kiện',
+                        content: `✓ Đã xóa thành công: ${success_count} sự kiện\n\n✗ Không thể xóa: ${failed_events.length} sự kiện\n\n${failedList}`,
+                        width: 500,
+                        okText: 'Đã hiểu'
+                    });
+                } else {
+                    // All events deleted successfully
+                    message.success(`Đã xóa thành công ${success_count} sự kiện`);
+                }
+
+                return { success: true, data: response.data };
+            } else {
+                message.error(response.message || 'Không thể xóa sự kiện');
+                return { success: false };
+            }
+        } catch (err) {
+            console.error('Error bulk deleting events:', err);
+            message.error(err.message || 'Không thể xóa sự kiện');
+            return { success: false };
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     return {
         events,
         loading,
@@ -156,6 +213,7 @@ export const useEventList = () => {
         setShowDeleteModal,
         handleDeleteClick,
         handleDeleteConfirm,
+        handleBulkDelete,
         handlePublishEvent,
         handleCancelApproval,
         fetchEvents

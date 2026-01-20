@@ -51,7 +51,7 @@
 }
 
 .event-card-buy-btn {
-    background: #52c41a;
+    background: #2DC275;
     color: white;
     padding: 8px 20px;
     border-radius: 20px;
@@ -161,7 +161,7 @@
 }
 
 .event-card-premium:hover .event-card-title {
-    color: #52c41a !important;
+    color: #2DC275 !important;
 }
 
 .info-item {
@@ -184,11 +184,11 @@
 }
 
 .price-amount {
-    color: #52c41a;
+    color: #2DC275;
     font-size: 18px;
 }
 
 .price-free {
-    color: #52c41a;
+    color: #2DC275;
     font-size: 18px;
 }

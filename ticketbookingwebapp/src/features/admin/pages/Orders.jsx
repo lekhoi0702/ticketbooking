@@ -27,6 +27,7 @@ import {
     SyncOutlined
 } from '@ant-design/icons';
 import { api } from '@services/api';
+import AdminPortal from '@shared/components/AdminPortal';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
 
 const { Text } = Typography;
@@ -39,6 +40,7 @@ const AdminOrdersManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [detailVisible, setDetailVisible] = useState(false);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
     useEffect(() => {
         fetchData();
@@ -149,7 +151,7 @@ const AdminOrdersManagement = () => {
             key: 'order',
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
-                    <Text strong style={{ color: '#52c41a' }}>{record.order_code}</Text>
+                    <Text strong style={{ color: '#2DC275' }}>{record.order_code}</Text>
                     <Text type="secondary" style={{ fontSize: 12 }}>
                         <HistoryOutlined /> {new Date(record.created_at).toLocaleString('vi-VN')}
                     </Text>
@@ -200,33 +202,7 @@ const AdminOrdersManagement = () => {
                 return <Tag color={config.color} icon={config.icon}>{config.label.toUpperCase()}</Tag>;
             },
         },
-        {
-            title: 'THAO TÁC',
-            key: 'actions',
-            align: 'right',
-            render: (_, record) => (
-                <Space>
-                    <Tooltip title="Xem chi tiết">
-                        <Button type="text" icon={<EyeOutlined />} style={{ color: '#52c41a' }} onClick={() => handleViewDetails(record.order_id)} />
-                    </Tooltip>
-                    {record.payment_method === 'CASH' && record.order_status === 'PENDING' && (
-                        <Button size="small" type="primary" style={{ background: '#52c41a', borderColor: '#52c41a' }} onClick={() => handleConfirmCash(record.order_id)}>
-                            Xác nhận
-                        </Button>
-                    )}
-                    {record.order_status === 'CANCELLATION_PENDING' && (
-                        <Space>
-                            <Button size="small" type="primary" style={{ background: '#52c41a', borderColor: '#52c41a' }} icon={<CheckOutlined />} onClick={() => handleProcessCancellation(record.order_id, 'approve')}>
-                                Duyệt
-                            </Button>
-                            <Button size="small" danger icon={<CloseCircleOutlined />} onClick={() => handleProcessCancellation(record.order_id, 'reject')}>
-                                Từ chối
-                            </Button>
-                        </Space>
-                    )}
-                </Space>
-            ),
-        },
+        // Actions column removed as requested - moved to toolbar
     ];
 
     if (loading) {
@@ -234,39 +210,106 @@ const AdminOrdersManagement = () => {
     }
 
     return (
-        <div>
-            <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
-                <Space>
-                    <Select
-                        placeholder="Lọc theo sự kiện"
-                        style={{ width: 300 }}
-                        allowClear
-                        showSearch
-                        optionFilterProp="label"
-                        options={events}
-                        onChange={setSelectedEventId}
-                    />
-                </Space>
-                <Button icon={<ReloadOutlined />} onClick={fetchData}>Làm mới</Button>
-            </Space>
+        <div style={{ paddingTop: 0 }}>
+            <Card style={{ marginBottom: 24, borderRadius: 12 }}>
+                <Row gutter={16}>
+                    <Col span={12}>
+                        <div style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c', fontWeight: 600 }}>LỌC THEO SỰ KIỆN</div>
+                        <Select
+                            placeholder="Tất cả sự kiện"
+                            style={{ width: '100%' }}
+                            allowClear
+                            showSearch
+                            optionFilterProp="label"
+                            options={events}
+                            onChange={setSelectedEventId}
+                            size="large"
+                        />
+                    </Col>
+                    <Col span={12}>
+                        <div style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c', fontWeight: 600 }}>TÌM KIẾM CHI TIẾT</div>
+                        <Input
+                            prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ width: '100%' }}
+                            allowClear
+                            placeholder="Tìm kiếm theo mã đơn, khách hàng..."
+                            size="large"
+                        />
+                    </Col>
+                </Row>
+                <Divider style={{ margin: '16px 0' }} />
 
-            <Card
-                title={
-                    <Input
-                        prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ width: 350 }}
-                        allowClear
-                        placeholder="Tìm kiếm theo mã đơn, khách hàng..."
-                    />
-                }
-                styles={{ body: { padding: 0 } }}
-            >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        {selectedRowKeys.length > 0 && (
+                            <Space size="middle">
+                                <Text strong>{selectedRowKeys.length} đã chọn:</Text>
+                                <Button
+                                    icon={<EyeOutlined />}
+                                    onClick={() => handleViewDetails(selectedRowKeys[0])}
+                                    disabled={selectedRowKeys.length > 1}
+                                >
+                                    Xem chi tiết
+                                </Button>
+                                {(() => {
+                                    const record = orders.find(o => o.order_id === selectedRowKeys[0]);
+                                    if (!record || selectedRowKeys.length > 1) return null;
+
+                                    return (
+                                        <>
+                                            {record.payment_method === 'CASH' && record.order_status === 'PENDING' && (
+                                                <Button
+                                                    type="primary"
+                                                    style={{ background: '#2DC275', borderColor: '#2DC275' }}
+                                                    onClick={() => handleConfirmCash(record.order_id)}
+                                                >
+                                                    Xác nhận thanh toán
+                                                </Button>
+                                            )}
+                                            {record.order_status === 'CANCELLATION_PENDING' && (
+                                                <Space>
+                                                    <Button
+                                                        type="primary"
+                                                        style={{ background: '#2DC275', borderColor: '#2DC275' }}
+                                                        icon={<CheckOutlined />}
+                                                        onClick={() => handleProcessCancellation(record.order_id, 'approve')}
+                                                    >
+                                                        Duyệt hủy
+                                                    </Button>
+                                                    <Button
+                                                        danger
+                                                        icon={<CloseCircleOutlined />}
+                                                        onClick={() => handleProcessCancellation(record.order_id, 'reject')}
+                                                    >
+                                                        Từ chối hủy
+                                                    </Button>
+                                                </Space>
+                                            )}
+                                        </>
+                                    );
+                                })()}
+                            </Space>
+                        )}
+                    </div>
+                    <Space>
+                        <Button icon={<ReloadOutlined />} onClick={fetchData} size="middle">
+                            Làm mới
+                        </Button>
+                    </Space>
+                </div>
+            </Card>
+
+            <Card styles={{ body: { padding: 0 } }}>
                 <Table
+                    rowSelection={{
+                        selectedRowKeys,
+                        onChange: (keys) => setSelectedRowKeys(keys),
+                    }}
+                    rowKey="order_id"
                     columns={columns}
                     dataSource={filteredOrders}
-                    rowKey="order_id"
                     pagination={{ pageSize: 10 }}
                 />
             </Card>
@@ -324,7 +367,7 @@ const AdminOrdersManagement = () => {
                     </>
                 )}
             </Modal>
-        </div>
+        </div >
     );
 };
 

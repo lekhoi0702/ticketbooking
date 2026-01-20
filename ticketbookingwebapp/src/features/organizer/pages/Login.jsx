@@ -55,7 +55,7 @@ const OrganizerLogin = () => {
     };
 
     return (
-        <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#52c41a' }} spin /> }}>
+        <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#2DC275' }} spin /> }}>
             <div style={{
                 minHeight: '100vh',
                 display: 'flex',
@@ -78,7 +78,7 @@ const OrganizerLogin = () => {
                     {/* Header */}
                     <div style={{
                         padding: '40px 32px 32px',
-                        background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                        background: 'linear-gradient(135deg, #2DC275 0%, #26a65b 100%)',
                         color: 'white',
                         textAlign: 'center'
                     }}>
@@ -127,7 +127,7 @@ const OrganizerLogin = () => {
                                 rules={[{ required: true, message: 'Vui lòng nhập email!' }]}
                             >
                                 <Input
-                                    prefix={<UserOutlined style={{ color: '#52c41a' }} />}
+                                    prefix={<UserOutlined style={{ color: '#2DC275' }} />}
                                     style={{ borderRadius: 8 }}
                                 />
                             </Form.Item>
@@ -138,7 +138,7 @@ const OrganizerLogin = () => {
                                 rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
                             >
                                 <Input.Password
-                                    prefix={<LockOutlined style={{ color: '#52c41a' }} />}
+                                    prefix={<LockOutlined style={{ color: '#2DC275' }} />}
                                     style={{ borderRadius: 8 }}
                                 />
                             </Form.Item>
@@ -154,8 +154,8 @@ const OrganizerLogin = () => {
                                         height: 52,
                                         fontWeight: 700,
                                         borderRadius: 8,
-                                        background: '#52c41a',
-                                        borderColor: '#52c41a',
+                                        background: '#2DC275',
+                                        borderColor: '#2DC275',
                                         boxShadow: '0 4px 12px rgba(82, 196, 26, 0.2)'
                                     }}
                                 >
@@ -176,7 +176,7 @@ const OrganizerLogin = () => {
                                 <Button
                                     type="link"
                                     size="small"
-                                    style={{ color: '#52c41a', padding: 0 }}
+                                    style={{ color: '#2DC275', padding: 0 }}
                                     onClick={() => navigate('/organizer/home')}
                                 >
                                     Liên hệ Admin

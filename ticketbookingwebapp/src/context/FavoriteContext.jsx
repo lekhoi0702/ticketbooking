@@ -35,7 +35,7 @@ export const FavoriteProvider = ({ children }) => {
 
     const toggleFavorite = async (eventId) => {
         if (!user || !token) {
-            return { success: false, message: 'Vui lòng đăng nhập để thực hiện chức năng này' };
+            return { success: false };
         }
 
         try {

@@ -3,7 +3,7 @@ from app.extensions import db
 from app.models.event import Event
 from app.models.event_category import EventCategory
 from app.models.venue import Venue
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func
 from datetime import datetime
 
 events_bp = Blueprint("events", __name__)
@@ -36,18 +36,27 @@ def get_events():
         if is_featured is not None:
             query = query.filter(Event.is_featured == is_featured)
         
-        # Apply sorting
+        # Add basic filters (e.g. upcoming) if needed before grouping
         if sort == 'upcoming':
-            # Use datetime.utcnow() to match DB convention
-            # and sort by start time ascending
             query = query.filter(Event.start_datetime >= datetime.utcnow())
+
+        # Group showtimes: Only show one record per group_id among events that matched the filters
+        # Using coalesce(group_id, event_id_as_string) to create a unique identifier for grouping
+        # CAST is necessary because event_id is int and group_id is string
+        # We use query.with_entities() on the filtered query to get the min ID per group
+        subq = query.with_entities(func.min(Event.event_id)).group_by(
+            func.coalesce(Event.group_id, func.cast(Event.event_id, db.String))
+        )
+        query = query.filter(Event.event_id.in_(subq))
+
+        # Apply sorting ONLY to the final query
+        if sort == 'upcoming':
             query = query.order_by(Event.start_datetime.asc())
         elif sort == 'newest':
             query = query.order_by(Event.created_at.desc())
         elif sort == 'popular':
             query = query.order_by(Event.sold_tickets.desc())
         else:
-            # Default sorting: Priority for featured events, then by sales volume, then newest
             query = query.order_by(Event.is_featured.desc(), Event.sold_tickets.desc(), Event.created_at.desc())
         
         # Pagination
@@ -119,12 +128,18 @@ def get_featured_events():
     try:
         limit = request.args.get('limit', 10, type=int)
         
-        events = db.session.query(Event).join(Venue, Event.venue_id == Venue.venue_id).filter(
+        query = db.session.query(Event).join(Venue, Event.venue_id == Venue.venue_id).filter(
             Event.is_featured == True,
             Event.status == 'PUBLISHED',
             Venue.status == 'ACTIVE',
             Venue.is_active == True
-        ).order_by(Event.created_at.desc()).limit(limit).all()
+        )
+        
+        # Group showtimes
+        subq = query.with_entities(func.min(Event.event_id)).group_by(
+            func.coalesce(Event.group_id, func.cast(Event.event_id, db.String))
+        )
+        events = query.filter(Event.event_id.in_(subq)).order_by(Event.created_at.desc()).limit(limit).all()
         
         return jsonify({
             'success': True,
@@ -151,7 +166,7 @@ def search_events():
                 'message': 'Search query is required'
             }), 400
         
-        events = db.session.query(Event).join(Venue, Event.venue_id == Venue.venue_id).filter(
+        query = db.session.query(Event).join(Venue, Event.venue_id == Venue.venue_id).filter(
             or_(
                 Event.event_name.like(f'%{query_text}%'),
                 Event.description.like(f'%{query_text}%')
@@ -159,7 +174,13 @@ def search_events():
             Event.status == 'PUBLISHED',
             Venue.status == 'ACTIVE',
             Venue.is_active == True
-        ).limit(limit).all()
+        )
+        
+        # Group showtimes
+        subq = query.with_entities(func.min(Event.event_id)).group_by(
+            func.coalesce(Event.group_id, func.cast(Event.event_id, db.String))
+        )
+        events = query.filter(Event.event_id.in_(subq)).limit(limit).all()
         
         return jsonify({
             'success': True,

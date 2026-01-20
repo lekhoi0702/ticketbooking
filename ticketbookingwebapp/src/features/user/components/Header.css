@@ -79,8 +79,8 @@
 
 .header-search .ant-input-wrapper:hover,
 .header-search .ant-input-wrapper:focus-within {
-    border-color: #52c41a !important;
-    box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.1);
+    border-color: #2DC275 !important;
+    box-shadow: 0 0 0 2px rgba(45, 194, 117, 0.1);
 }
 
 .header-search .ant-input {
@@ -179,7 +179,7 @@
 .view-all-results {
     padding: 12px;
     text-align: center;
-    color: #52c41a;
+    color: #2DC275;
     font-weight: 600;
     cursor: pointer;
     background: #fafafa;
@@ -212,8 +212,8 @@
 }
 
 .header-bottom-nav .nav-category-btn:hover {
-    color: #52c41a !important;
-    background: rgba(255, 255, 255, 0.1) !important;
+    color: #2DC275 !important;
+    background: rgba(45, 194, 117, 0.1) !important;
 }
 
 .nav-btn,

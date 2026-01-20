@@ -15,7 +15,7 @@ const TicketCheckInModal = ({
         <Modal
             title={[
                 <Space key="title">
-                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                    <CheckCircleOutlined style={{ color: '#2DC275' }} />
                     <span>Xác nhận Check-in</span>
                 </Space>
             ]}

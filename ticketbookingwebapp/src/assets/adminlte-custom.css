@@ -25,11 +25,13 @@
 .text-gradient-primary {
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .text-gradient-success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, #2DC275 0%, #26a65b 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }

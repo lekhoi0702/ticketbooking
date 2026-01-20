@@ -5,6 +5,7 @@ import { Container, Row, Col, Nav, Tab, Tabs } from 'react-bootstrap';
 // Hooks
 import { useEventDetail } from '@shared/hooks/useEventDetail';
 import { useAuth } from '@context/AuthContext';
+import { useFavorites } from '@context/FavoriteContext';
 
 // Sub-components
 import EventHero from '@features/user/components/Event/EventHero';
@@ -23,8 +24,8 @@ import './EventDetail.css';
 function EventDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
-    const [showAuthModal, setShowAuthModal] = React.useState(false);
+    const { isAuthenticated, showLoginModal, setShowLoginModal, triggerLogin } = useAuth();
+    const { toggleFavorite } = useFavorites();
     const [activeTab, setActiveTab] = React.useState('tickets');
 
     const {
@@ -44,7 +45,7 @@ function EventDetail() {
     } = useEventDetail(id);
 
     if (loading) {
-        return <LoadingSpinner tip="Đang tải thông tin sự kiện..." />;
+        return <LoadingSpinner fullScreen tip="Đang tải thông tin sự kiện..." />;
     }
 
     if (!event) {
@@ -64,11 +65,23 @@ function EventDetail() {
         }
 
         if (!isAuthenticated) {
-            setShowAuthModal(true);
+            triggerLogin();
             return;
         }
 
         proceedToCheckout();
+    };
+
+    const handleToggleFavorite = async (eventId) => {
+        if (!isAuthenticated) {
+            triggerLogin();
+            return;
+        }
+
+        const result = await toggleFavorite(eventId);
+        if (result.success) {
+            // Success message handled by useFavorites/API
+        }
     };
 
     const proceedToCheckout = () => {
@@ -83,7 +96,7 @@ function EventDetail() {
 
     return (
         <div className="event-detail-page">
-            <EventHero event={event} />
+            <EventHero event={event} onToggleFavorite={() => handleToggleFavorite(event.event_id)} />
 
             {/* Sticky Navigation Bar */}
             <div className="event-detail-nav">
@@ -169,12 +182,6 @@ function EventDetail() {
                 onCheckout={handleCheckout}
             />
 
-            {/* Auth Modal for Guest Users */}
-            <AuthModal
-                show={showAuthModal}
-                onHide={() => setShowAuthModal(false)}
-                onSuccess={proceedToCheckout}
-            />
         </div>
     );
 }

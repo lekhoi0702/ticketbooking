@@ -45,9 +45,9 @@
     font-weight: 600 !important;
     font-size: 16px !important;
     border-radius: 8px !important;
-    background-color: #52c41a;
-    border-color: #52c41a;
-    box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
+    background-color: #2DC275;
+    border-color: #2DC275;
+    box-shadow: 0 4px 12px rgba(45, 194, 117, 0.3);
 }
 
 .banner-button:hover {
@@ -71,7 +71,7 @@
 
 .hero-banner-container .ant-carousel .slick-dots li.slick-active button {
     width: 32px !important;
-    background: #52c41a !important;
+    background: #2DC275 !important;
 }
 
 @keyframes fadeUp {

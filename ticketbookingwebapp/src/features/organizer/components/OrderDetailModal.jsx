@@ -44,7 +44,7 @@ const OrderDetailModal = ({
                         {getStatusTag(order.order_status)}
                     </Descriptions.Item>
                     <Descriptions.Item label="Tổng tiền" span={2}>
-                        <Text strong style={{ color: '#52c41a', fontSize: 16 }}>
+                        <Text strong style={{ color: '#2DC275', fontSize: 16 }}>
                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total_amount)}
                         </Text>
                     </Descriptions.Item>

@@ -93,7 +93,7 @@ const EventTable = ({
                 const config = getStatusConfig(record.status);
                 return (
                     <Tag icon={config.icon} color={config.color}>
-                        {config.label.toUpperCase()}
+                        {record.status}
                     </Tag>
                 );
             },

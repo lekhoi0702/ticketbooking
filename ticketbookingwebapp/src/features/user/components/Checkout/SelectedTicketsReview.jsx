@@ -90,6 +90,18 @@ const SelectedTicketsReview = ({
                     );
                 })}
             </Card.Body>
+            <style>{`
+                .card h5,
+                .card h6,
+                .card div,
+                .card small,
+                .card strong {
+                    color: rgb(42, 45, 52) !important;
+                }
+                .card .text-muted {
+                    color: #6c757d !important;
+                }
+            `}</style>
         </Card>
     );
 };

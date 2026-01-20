@@ -23,8 +23,8 @@ import {
     CalendarOutlined,
     FileTextOutlined,
     AppstoreAddOutlined,
-
-    CloudUploadOutlined
+    CloudUploadOutlined,
+    PlusOutlined
 } from '@ant-design/icons';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
@@ -36,6 +36,7 @@ import EventBasicInfo from '@features/organizer/components/EventBasicInfo';
 import EventDateTime from '@features/organizer/components/EventDateTime';
 import EventBannerUpload from '@features/organizer/components/EventBannerUpload';
 import TicketConfig from '@features/organizer/components/TicketConfig';
+import ExtraShowtimesConfig from '@features/organizer/components/ExtraShowtimesConfig';
 
 const { Title, Text } = Typography;
 
@@ -62,6 +63,9 @@ const CreateEvent = () => {
         toggleSeatSelection,
         addTicketType,
         removeTicketType,
+        addShowtime,
+        removeShowtime,
+        updateShowtime,
         toggleAreaSelection,
         handleSubmit
     } = useCreateEvent();
@@ -111,17 +115,8 @@ const CreateEvent = () => {
     return (
         <>
             <Spin spinning={loading} fullscreen tip="Đang tạo sự kiện..." />
-            <div>
-                {/* Header Area */}
-                <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center' }}>
-                    <Button
-                        icon={<ArrowLeftOutlined />}
-                        onClick={() => navigate(-1)}
-                        style={{ marginRight: 16 }}
-                        disabled={loading}
-                    />
-                    <Title level={4} style={{ margin: 0 }}>Tạo sự kiện mới</Title>
-                </div>
+            <div style={{ paddingTop: 0 }}>
+
 
                 {/* Steps Progress */}
                 <Card style={{ marginBottom: 24 }}>
@@ -173,6 +168,18 @@ const CreateEvent = () => {
                                         toggleSeatSelection={toggleSeatSelection}
                                         toggleAreaSelection={toggleAreaSelection}
                                         selectedVenueId={formData.venue_id}
+                                        fieldErrors={fieldErrors}
+                                        disabled={loading}
+                                    />
+                                </Card>
+
+                                <Card title="4. Suất diễn bổ sung (Nâng cao)" headStyle={{ background: '#fafafa' }}>
+                                    <ExtraShowtimesConfig
+                                        formData={formData}
+                                        addShowtime={addShowtime}
+                                        removeShowtime={removeShowtime}
+                                        updateShowtime={updateShowtime}
+                                        venues={venues}
                                         fieldErrors={fieldErrors}
                                         disabled={loading}
                                     />

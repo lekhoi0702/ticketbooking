@@ -81,7 +81,7 @@ import PageTitleUpdater from '@shared/components/PageTitleUpdater';
 
 function App() {
   return (
-    <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#52c41a' }} spin /> }}>
+    <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#2DC275' }} spin /> }}>
       <AntdApp>
         <AuthProvider>
           <FavoriteProvider>

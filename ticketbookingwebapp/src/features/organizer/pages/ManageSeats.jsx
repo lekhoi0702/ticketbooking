@@ -114,7 +114,7 @@ const ManageSeats = () => {
                                         </span>
                                     </Space>
                                     <Text type="secondary" style={{ fontSize: 13 }}>
-                                        Đã chọn: <Text strong style={{ color: '#52c41a' }}>{selectedTemplateSeats.length}</Text> / {activeTicketType?.quantity || 0} ghế
+                                        Đã chọn: <Text strong style={{ color: '#2DC275' }}>{selectedTemplateSeats.length}</Text> / {activeTicketType?.quantity || 0} ghế
                                     </Text>
                                 </div>
                             }

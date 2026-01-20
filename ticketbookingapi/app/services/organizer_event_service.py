@@ -68,11 +68,23 @@ class OrganizerEventService:
 
     @staticmethod
     def _fetch_event(event_id):
+        # Fetch event
         query = text("SELECT * FROM Event WHERE event_id = :event_id")
         result = db.session.execute(query, {"event_id": event_id})
         row = result.fetchone()
         if not row: return None
-        return EventWrapper(row)
+        
+        # Fetch ticket types
+        tt_query = text("SELECT * FROM TicketType WHERE event_id = :event_id")
+        tt_result = db.session.execute(tt_query, {"event_id": event_id})
+        ticket_types = tt_result.fetchall()
+        
+        # Fetch venue
+        v_query = text("SELECT * FROM Venue WHERE venue_id = :venue_id")
+        v_result = db.session.execute(v_query, {"venue_id": row.venue_id})
+        venue = v_result.fetchone()
+        
+        return EventWrapper(row, ticket_types=ticket_types, venue=venue)
 
     @staticmethod
     def get_events(manager_id, status=None):
@@ -460,6 +472,17 @@ class OrganizerEventService:
             end_datetime = datetime.strptime(end_str, '%Y-%m-%d %H:%M:%S')
         except ValueError:
             end_datetime = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+        # Optional sale times
+        def parse_dt(dt_str, default):
+            if not dt_str: return default
+            try:
+                return datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                return datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+
+        sale_start = parse_dt(data.get('sale_start_datetime'), source_event.sale_start_datetime)
+        sale_end = parse_dt(data.get('sale_end_datetime'), source_event.sale_end_datetime)
+
         now = datetime.utcnow()
         
         # Insert New Event (Clone)
@@ -477,19 +500,23 @@ class OrganizerEventService:
             )
         """)
         
+        # Support custom venue and capacity for each show
+        show_venue_id = data.get('venue_id', source_event.venue_id)
+        show_capacity = data.get('total_capacity', source_event.total_capacity)
+
         params = {
             "group_id": source_event.group_id,
             "category_id": source_event.category_id,
-            "venue_id": source_event.venue_id,
+            "venue_id": int(show_venue_id),
             "manager_id": source_event.manager_id,
             "event_name": source_event.event_name,
             "description": source_event.description,
             "start_datetime": start_datetime,
             "end_datetime": end_datetime,
-            "sale_start_datetime": source_event.sale_start_datetime,
-            "sale_end_datetime": source_event.sale_end_datetime,
+            "sale_start_datetime": sale_start,
+            "sale_end_datetime": sale_end,
             "banner_image_url": source_event.banner_image_url,
-            "total_capacity": source_event.total_capacity,
+            "total_capacity": int(show_capacity),
             "now": now
         }
         
@@ -503,49 +530,89 @@ class OrganizerEventService:
              row = db.session.execute(fetch_id, {"m": source_event.manager_id, "n": source_event.event_name, "sd": start_datetime}).fetchone()
              new_event_id = row.event_id
         
-        # Clone Ticket Types and their Seats
-        tt_query = text("SELECT * FROM TicketType WHERE event_id = :id")
-        source_tts = db.session.execute(tt_query, {"id": event_id}).fetchall()
+        # Clone OR Create Ticket Types
+        custom_ticket_types = data.get('ticket_types')
         
-        if source_tts:
+        if custom_ticket_types:
+            # Create NEW ticket types for this showtime
             ins_tt_sql = text("""
                 INSERT INTO TicketType (event_id, type_name, price, quantity, sold_quantity, description)
                 VALUES (:eid, :tn, :p, :q, 0, :d)
             """)
-            for tt in source_tts:
-                # Insert TT and get its NEW ID
+            ins_seat_sql = text("""
+                INSERT INTO Seat (ticket_type_id, row_name, seat_number, status, x_pos, y_pos, area_name, is_active)
+                VALUES (:ttid, :rn, :sn, 'AVAILABLE', :x, :y, :an, 1)
+            """)
+            
+            for tt in custom_ticket_types:
                 res_tt = db.session.execute(ins_tt_sql, {
                     "eid": new_event_id,
-                    "tn": tt.type_name,
-                    "p": tt.price,
-                    "q": tt.quantity,
-                    "d": tt.description
+                    "tn": tt.get('type_name'),
+                    "p": float(tt.get('price', 0)),
+                    "q": int(tt.get('quantity', 0)),
+                    "d": tt.get('description', '')
                 })
-                # In some DB configurations, result.lastrowid might be None, so we might need a fallback
                 new_tt_id = res_tt.lastrowid
                 if not new_tt_id:
                      fetch_tt_id = text("SELECT ticket_type_id FROM TicketType WHERE event_id=:eid AND type_name=:tn ORDER BY ticket_type_id DESC LIMIT 1")
-                     row_tt = db.session.execute(fetch_tt_id, {"eid": new_event_id, "tn": tt.type_name}).fetchone()
+                     row_tt = db.session.execute(fetch_tt_id, {"eid": new_event_id, "tn": tt.get('type_name')}).fetchone()
                      new_tt_id = row_tt[0]
 
-                # Clone Seats for this TT
-                seat_query = text("SELECT * FROM Seat WHERE ticket_type_id = :ttid")
-                source_seats = db.session.execute(seat_query, {"ttid": tt.ticket_type_id}).fetchall()
-                if source_seats:
-                    ins_seat_sql = text("""
-                        INSERT INTO Seat (ticket_type_id, row_name, seat_number, status, x_pos, y_pos, area_name, is_active)
-                        VALUES (:ttid, :rn, :sn, 'AVAILABLE', :x, :y, :an, 1)
-                    """)
-                    for s in source_seats:
+                # Insert Seats if provided
+                seats = tt.get('selectedSeats')
+                if seats:
+                    for s in seats:
                         db.session.execute(ins_seat_sql, {
                             "ttid": new_tt_id,
-                            "rn": s.row_name,
-                            "sn": s.seat_number,
-                            "x": s.x_pos,
-                            "y": s.y_pos,
-                            "an": s.area_name
+                            "rn": s.get('row_name'),
+                            "sn": s.get('seat_number'),
+                            "x": s.get('x_pos'),
+                            "y": s.get('y_pos'),
+                            "an": s.get('area_name') or s.get('area')
                         })
             db.session.commit()
+            
+        else:
+            # Clone from Source Event
+            tt_query = text("SELECT * FROM TicketType WHERE event_id = :id")
+            source_tts = db.session.execute(tt_query, {"id": event_id}).fetchall()
+            
+            if source_tts:
+                ins_tt_sql = text("""
+                    INSERT INTO TicketType (event_id, type_name, price, quantity, sold_quantity, description)
+                    VALUES (:eid, :tn, :p, :q, 0, :d)
+                """)
+                for tt in source_tts:
+                    res_tt = db.session.execute(ins_tt_sql, {
+                        "eid": new_event_id,
+                        "tn": tt.type_name,
+                        "p": tt.price,
+                        "q": tt.quantity,
+                        "d": tt.description
+                    })
+                    new_tt_id = res_tt.lastrowid
+                    if not new_tt_id:
+                         fetch_tt_id = text("SELECT ticket_type_id FROM TicketType WHERE event_id=:eid AND type_name=:tn ORDER BY ticket_type_id DESC LIMIT 1")
+                         row_tt = db.session.execute(fetch_tt_id, {"eid": new_event_id, "tn": tt.type_name}).fetchone()
+                         new_tt_id = row_tt[0]
+
+                    seat_query = text("SELECT * FROM Seat WHERE ticket_type_id = :ttid")
+                    source_seats = db.session.execute(seat_query, {"ttid": tt.ticket_type_id}).fetchall()
+                    if source_seats:
+                        ins_seat_sql = text("""
+                            INSERT INTO Seat (ticket_type_id, row_name, seat_number, status, x_pos, y_pos, area_name, is_active)
+                            VALUES (:ttid, :rn, :sn, 'AVAILABLE', :x, :y, :an, 1)
+                        """)
+                        for s in source_seats:
+                            db.session.execute(ins_seat_sql, {
+                                "ttid": new_tt_id,
+                                "rn": s.row_name,
+                                "sn": s.seat_number,
+                                "x": s.x_pos,
+                                "y": s.y_pos,
+                                "an": s.area_name
+                            })
+                db.session.commit()
             
         return OrganizerEventService._fetch_event(new_event_id)
 
@@ -618,6 +685,69 @@ class OrganizerEventService:
             def __init__(self, rid): self.request_id = rid
             
         return MockRequest(lrid), active_orders
+
+    @staticmethod
+    def delete_events_bulk(event_ids, manager_id):
+        """
+        Delete multiple events at once. Only events in DRAFT status can be deleted.
+        Returns dict with success count, failed events, and error messages.
+        """
+        if not event_ids or len(event_ids) == 0:
+            raise ValueError('Không có sự kiện nào được chọn để xóa')
+        
+        results = {
+            'success_count': 0,
+            'failed_events': [],
+            'deleted_event_ids': []
+        }
+        
+        for event_id in event_ids:
+            try:
+                # Check if event exists and belongs to manager
+                check_query = text("SELECT * FROM Event WHERE event_id = :id AND manager_id = :mid")
+                event = db.session.execute(check_query, {"id": event_id, "mid": manager_id}).fetchone()
+                
+                if not event:
+                    results['failed_events'].append({
+                        'event_id': event_id,
+                        'event_name': 'Unknown',
+                        'reason': 'Không tìm thấy sự kiện hoặc bạn không có quyền xóa'
+                    })
+                    continue
+                
+                # Only allow deletion of DRAFT events
+                if event.status != 'DRAFT':
+                    results['failed_events'].append({
+                        'event_id': event_id,
+                        'event_name': event.event_name,
+                        'status': event.status,
+                        'reason': f'Chỉ có thể xóa sự kiện ở trạng thái DRAFT. Trạng thái hiện tại: {event.status}'
+                    })
+                    continue
+                
+                # Delete related TicketTypes (CASCADE should handle Seats)
+                del_tt_sql = text("DELETE FROM TicketType WHERE event_id = :id")
+                db.session.execute(del_tt_sql, {"id": event_id})
+                
+                # Delete the event
+                del_evt_sql = text("DELETE FROM Event WHERE event_id = :id")
+                db.session.execute(del_evt_sql, {"id": event_id})
+                
+                results['success_count'] += 1
+                results['deleted_event_ids'].append(event_id)
+                
+            except Exception as e:
+                results['failed_events'].append({
+                    'event_id': event_id,
+                    'event_name': event.event_name if event else 'Unknown',
+                    'reason': str(e)
+                })
+        
+        # Commit all successful deletions
+        if results['success_count'] > 0:
+            db.session.commit()
+        
+        return results
 
     @staticmethod
     def get_event_ticket_types(event_id):
@@ -727,6 +857,7 @@ class OrganizerEventService:
 
         # 2. Fetch related Event in same category, different event_id
         # Use subquery for min price to avoid GROUP BY issues
+        # Filter to group showtimes: Only show one record per group_id
         sql = text("""
             SELECT e.event_id, e.event_name, e.banner_image_url, e.start_datetime,
                    (SELECT MIN(tt.price) FROM TicketType tt WHERE tt.event_id = e.event_id) as min_price
@@ -734,6 +865,7 @@ class OrganizerEventService:
             WHERE e.category_id = :cat_id
               AND e.event_id != :eid
               AND e.status = 'PUBLISHED'
+              AND (e.group_id IS NULL OR e.event_id = (SELECT MIN(event_id) FROM Event WHERE group_id = e.group_id))
             ORDER BY e.start_datetime ASC
             LIMIT :limit
         """)

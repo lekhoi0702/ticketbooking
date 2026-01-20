@@ -43,22 +43,22 @@ const OrganizerHome = () => {
         {
             title: 'Tạo Sự Kiện Dễ Dàng',
             desc: 'Quy trình tạo sự kiện chuyên nghiệp với đầy đủ cấu hình loại vé và sơ đồ ghế.',
-            icon: <PlusCircleOutlined style={{ fontSize: 40, color: '#52c41a' }} />,
+            icon: <PlusCircleOutlined style={{ fontSize: 40, color: '#2DC275' }} />,
         },
         {
             title: 'Phân Tích Doanh Thu',
             desc: 'Theo dõi báo cáo doanh thu và lượng vé bán ra theo thời gian thực.',
-            icon: <BarChartOutlined style={{ fontSize: 40, color: '#52c41a' }} />,
+            icon: <BarChartOutlined style={{ fontSize: 40, color: '#2DC275' }} />,
         },
         {
             title: 'Quản Lý Khách Hàng',
             desc: 'Dễ dàng quản lý thông tin người mua vé và các yêu cầu hỗ trợ.',
-            icon: <TeamOutlined style={{ fontSize: 40, color: '#52c41a' }} />,
+            icon: <TeamOutlined style={{ fontSize: 40, color: '#2DC275' }} />,
         },
         {
             title: 'Hỗ Trợ 24/7',
             desc: 'Đội ngũ kỹ thuật luôn sẵn sàng hỗ trợ bạn trong mọi khâu tổ chức.',
-            icon: <CustomerServiceOutlined style={{ fontSize: 40, color: '#52c41a' }} />,
+            icon: <CustomerServiceOutlined style={{ fontSize: 40, color: '#2DC275' }} />,
         }
     ];
 
@@ -112,7 +112,7 @@ const OrganizerHome = () => {
                     }}>
                         <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', padding: '0 20px' }}>
                             <Title style={{ color: 'white', fontSize: '3.5rem', fontWeight: 900, marginBottom: 24 }}>
-                                Giải Pháp Tổ Chức<br /><span style={{ color: '#52c41a' }}>Sự Kiện Toàn Diện</span>
+                                Giải Pháp Tổ Chức<br /><span style={{ color: '#2DC275' }}>Sự Kiện Toàn Diện</span>
                             </Title>
                             <Paragraph style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.25rem', marginBottom: 40 }}>
                                 Nền tảng chuyên nghiệp giúp nhà tổ chức quản lý, quảng bá và phân phối vé sự kiện một cách hiệu quả nhất tại Việt Nam.
@@ -142,9 +142,9 @@ const OrganizerHome = () => {
                     <div style={{ padding: '100px 50px', backgroundColor: '#fff' }}>
                         <div style={{ textAlign: 'center', marginBottom: 80 }}>
                             <Title level={2} style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: 8 }}>
-                                Tại sao chọn <span style={{ color: '#52c41a' }}>TicketBooking</span>?
+                                Tại sao chọn <span style={{ color: '#2DC275' }}>TicketBooking</span>?
                             </Title>
-                            <div style={{ width: 60, height: 4, background: '#52c41a', margin: '0 auto', borderRadius: 2 }}></div>
+                            <div style={{ width: 60, height: 4, background: '#2DC275', margin: '0 auto', borderRadius: 2 }}></div>
                         </div>
 
                         <Row gutter={[40, 40]} justify="center">
@@ -178,10 +178,10 @@ const OrganizerHome = () => {
                                 maxWidth: 1000,
                                 margin: '0 auto',
                                 borderRadius: 32,
-                                background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                                background: 'linear-gradient(135deg, #2DC275 0%, #26a65b 100%)',
                                 border: 'none',
                                 overflow: 'hidden',
-                                boxShadow: '0 20px 40px rgba(82, 196, 26, 0.2)'
+                                boxShadow: '0 20px 40px rgba(45, 194, 117, 0.2)'
                             }}
                             styles={{ body: { padding: '80px 40px' } }}
                         >
@@ -199,7 +199,7 @@ const OrganizerHome = () => {
                                     fontWeight: 800,
                                     borderRadius: 12,
                                     backgroundColor: 'white',
-                                    color: '#52c41a',
+                                    color: '#2DC275',
                                     border: 'none'
                                 }}
                                 onClick={() => setShowAuthModal(true)}

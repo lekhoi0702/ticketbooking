@@ -48,7 +48,7 @@ const AllEvents = () => {
     };
 
     if (loading) {
-        return <LoadingSpinner tip="Đang tải tất cả sự kiện..." />;
+        return <LoadingSpinner fullScreen tip="Đang tải tất cả sự kiện..." />;
     }
 
     const categoryNames = Object.keys(categories).sort();

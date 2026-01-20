@@ -3,6 +3,7 @@ import { Table, Button, Modal, Form, Input, Card, Space, Typography, Tooltip, Sw
 import { PlusOutlined, EditOutlined, DeleteOutlined, WarningOutlined, UploadOutlined, LinkOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
+import AdminPortal from '@shared/components/AdminPortal';
 import { getImageUrl } from '@shared/utils/eventUtils';
 
 const { Title, Text } = Typography;
@@ -246,10 +247,9 @@ const Banners = () => {
     if (loading) return <AdminLoadingScreen tip="Đang tải banner..." />;
 
     return (
-        <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <Title level={2} style={{ margin: 0 }}>Quản lý Banner</Title>
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large">
+        <div style={{ paddingTop: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="middle">
                     Thêm banner
                 </Button>
             </div>
@@ -262,6 +262,7 @@ const Banners = () => {
                     pagination={{ pageSize: 10 }}
                 />
             </Card>
+
 
             <Modal
                 title={<Text strong style={{ fontSize: 18 }}>{isEditing ? `Chỉnh sửa: ${currentBanner?.title || 'Banner'}` : "Thêm banner mới"}</Text>}
@@ -330,7 +331,7 @@ const Banners = () => {
                     </Form.Item>
                 </Form>
             </Modal>
-        </div>
+        </div >
     );
 };
 

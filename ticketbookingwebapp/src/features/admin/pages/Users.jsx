@@ -55,7 +55,7 @@ import {
 } from '@ant-design/icons';
 
 import { api } from '@services/api';
-
+import AdminPortal from '@shared/components/AdminPortal';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
 
 
@@ -81,6 +81,7 @@ const UsersManagement = () => {
     const [creating, setCreating] = useState(false);
 
     const [form] = Form.useForm();
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
 
 
@@ -360,58 +361,7 @@ const UsersManagement = () => {
 
         },
 
-        {
-
-            title: 'THAO TÁC',
-
-            key: 'actions',
-
-            align: 'right',
-
-            render: (_, record) => (
-
-                <Space>
-
-                    <Tooltip title={!record.is_active ? "Unlock User" : "Lock User"}>
-
-                        <Button
-
-                            type="text"
-
-                            icon={record.is_active ? <LockOutlined /> : <UnlockOutlined />}
-
-                            danger={record.is_active}
-
-                            style={{ color: !record.is_active ? '#52c41a' : undefined }}
-
-                            onClick={() => handleToggleLock(record.user_id, record.full_name, record.is_active)}
-
-                        />
-
-                    </Tooltip>
-
-                    <Tooltip title="Reset Password">
-
-                        <Button
-
-                            type="text"
-
-                            icon={<KeyOutlined />}
-
-                            style={{ color: '#1890ff' }}
-
-                            onClick={() => handleResetPassword(record.user_id, record.full_name)}
-
-                        />
-
-                    </Tooltip>
-
-                </Space>
-
-            ),
-
-        },
-
+        // Actions column removed as requested - moved to toolbar
     ];
 
 
@@ -425,86 +375,77 @@ const UsersManagement = () => {
 
 
     return (
+        <div style={{ paddingTop: 0 }}>
+            <Card style={{ marginBottom: 24, borderRadius: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+                        <Space size="middle">
+                            <span style={{ fontSize: 13, color: '#8c8c8c', fontWeight: 600 }}>VAI TRÒ:</span>
+                            <Select
+                                placeholder="Lọc theo vai trò"
+                                style={{ width: 160 }}
+                                allowClear
+                                value={roleFilter}
+                                onChange={(value) => setRoleFilter(value)}
+                                options={[
+                                    { label: 'Administrator', value: 'ADMIN' },
+                                    { label: 'Organizer', value: 'ORGANIZER' },
+                                    { label: 'Customer', value: 'USER' }
+                                ]}
+                                size="large"
+                            />
+                        </Space>
 
-        <div>
-
-            <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
-
-                <Select
-
-                    placeholder="Lọc theo vai trò"
-
-                    style={{ width: 200 }}
-
-                    allowClear
-
-                    value={roleFilter}
-
-                    onChange={(value) => setRoleFilter(value)}
-
-                    options={[
-
-                        { label: 'Administrator', value: 'ADMIN' },
-
-                        { label: 'Organizer', value: 'ORGANIZER' },
-
-                        { label: 'Customer', value: 'USER' }
-
-                    ]}
-
-                />
-
-                <Space>
-
-                    <Button icon={<ReloadOutlined />} onClick={fetchUsers}>
-
-                        Làm mới
-
-                    </Button>
-
-                    <Button type="primary" icon={<UserAddOutlined />} onClick={() => setShowCreateModal(true)}>
-
-                        Thêm Organizer
-
-                    </Button>
-
-                </Space>
-
-            </Space>
+                        {selectedRowKeys.length > 0 && (
+                            <Space size="middle" style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: 24 }}>
+                                <Text strong>{selectedRowKeys.length} đã chọn:</Text>
+                                <Button
+                                    icon={<LockOutlined />}
+                                    danger
+                                    onClick={() => {
+                                        const user = users.find(u => u.user_id === selectedRowKeys[0]);
+                                        handleToggleLock(user.user_id, user.full_name, user.is_active);
+                                    }}
+                                    disabled={selectedRowKeys.length > 1}
+                                >
+                                    Khóa/Mở khóa
+                                </Button>
+                                <Button
+                                    icon={<KeyOutlined />}
+                                    onClick={() => {
+                                        const user = users.find(u => u.user_id === selectedRowKeys[0]);
+                                        handleResetPassword(user.user_id, user.full_name);
+                                    }}
+                                    disabled={selectedRowKeys.length > 1}
+                                    style={{ color: '#1890ff' }}
+                                >
+                                    Đặt lại mật khẩu
+                                </Button>
+                            </Space>
+                        )}
+                    </div>
+                    <Space>
+                        <Button icon={<ReloadOutlined />} onClick={fetchUsers}>
+                            Làm mới
+                        </Button>
+                        <Button type="primary" icon={<UserAddOutlined />} onClick={() => setShowCreateModal(true)}>
+                            Thêm Organizer
+                        </Button>
+                    </Space>
+                </div>
+            </Card>
 
 
 
-            <Card
-
-                title={
-
-                    <Input
-
-                        prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-
-                        value={searchTerm}
-
-                        onChange={(e) => setSearchTerm(e.target.value)}
-
-                        style={{ width: 350 }}
-
-                        allowClear
-
-                    />
-
-                }
-
-                styles={{ body: { padding: 0 } }}
-
-            >
-
+            <Card styles={{ body: { padding: 0 } }}>
                 <Table
-
-                    columns={columns}
-
-                    dataSource={filteredUsers}
-
+                    rowSelection={{
+                        selectedRowKeys,
+                        onChange: (keys) => setSelectedRowKeys(keys),
+                    }}
                     rowKey="user_id"
+                    columns={columns}
+                    dataSource={filteredUsers}
 
                     pagination={{ pageSize: 10 }}
 
@@ -628,7 +569,7 @@ const UsersManagement = () => {
 
             </Modal>
 
-        </div>
+        </div >
 
     );
 

@@ -109,6 +109,44 @@ def delete_event(event_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@organizer_bp.route("/organizer/events/bulk-delete", methods=["POST"])
+def bulk_delete_events():
+    """Delete multiple events at once (only DRAFT events)"""
+    try:
+        data = request.get_json()
+        event_ids = data.get('event_ids', [])
+        manager_id = data.get('manager_id', 1)
+        
+        if not event_ids:
+            return jsonify({'success': False, 'message': 'Không có sự kiện nào được chọn'}), 400
+        
+        results = OrganizerEventService.delete_events_bulk(event_ids, manager_id)
+        
+        # Build response message
+        if results['success_count'] == 0:
+            return jsonify({
+                'success': False,
+                'message': 'Không thể xóa bất kỳ sự kiện nào',
+                'data': results
+            }), 400
+        elif results['failed_events']:
+            return jsonify({
+                'success': True,
+                'message': f'Đã xóa {results["success_count"]} sự kiện. {len(results["failed_events"])} sự kiện không thể xóa.',
+                'data': results
+            }), 200
+        else:
+            return jsonify({
+                'success': True,
+                'message': f'Đã xóa thành công {results["success_count"]} sự kiện',
+                'data': results
+            }), 200
+            
+    except ValueError as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @organizer_bp.route("/organizer/events/<int:event_id>/ticket-types", methods=["GET"])
 def get_event_ticket_types(event_id):
     """Get ticket types for an event"""

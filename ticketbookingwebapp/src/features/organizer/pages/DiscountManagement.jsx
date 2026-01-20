@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Select, DatePicker, InputNumber, Tag, Space, message, Typography, Popconfirm, Skeleton } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
 
@@ -15,6 +16,9 @@ const DiscountManagement = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [editingDiscount, setEditingDiscount] = useState(null);
+    const [selectedEventInfo, setSelectedEventInfo] = useState(null);
 
     useEffect(() => {
         if (user?.user_id) {
@@ -42,19 +46,45 @@ const DiscountManagement = () => {
     const handleCreate = async (values) => {
         try {
             setSubmitting(true);
+
+            const startDate = values.date_range[0];
+            const endDate = values.date_range[1];
+
+            // Validation: Discount period must be within event sale period
+            if (values.event_id) {
+                const selectedEvent = events.find(e => e.event_id === values.event_id);
+                if (selectedEvent && selectedEvent.sale_start_datetime && selectedEvent.sale_end_datetime) {
+                    const saleStart = dayjs(selectedEvent.sale_start_datetime);
+                    const saleEnd = dayjs(selectedEvent.sale_end_datetime);
+
+                    if (startDate.isBefore(saleStart) || endDate.isAfter(saleEnd)) {
+                        form.setFields([{
+                            name: 'date_range',
+                            errors: [`Thời gian áp dụng phải nằm trong khoảng mở bán vé: ${saleStart.format('DD/MM/YYYY HH:mm')} - ${saleEnd.format('DD/MM/YYYY HH:mm')}`]
+                        }]);
+                        setSubmitting(false);
+                        return;
+                    }
+                }
+            }
+
             const payload = {
                 manager_id: user.user_id,
                 ...values,
                 code: values.code.toUpperCase(),
                 event_id: values.event_id || null,
-                start_date: values.date_range[0].toISOString(),
-                end_date: values.date_range[1].toISOString(),
+                start_date: startDate.toISOString(),
+                end_date: endDate.toISOString(),
             };
 
-            const res = await api.createDiscount(payload);
+            const res = editingDiscount
+                ? await api.updateDiscount(editingDiscount.id, payload)
+                : await api.createDiscount(payload);
+
             if (res.success) {
-                message.success('Tạo mã giảm giá thành công');
+                message.success(editingDiscount ? 'Cập nhật thành công' : 'Tạo mã giảm giá thành công');
                 setIsModalOpen(false);
+                setEditingDiscount(null);
                 form.resetFields();
                 fetchData();
             }
@@ -98,25 +128,113 @@ const DiscountManagement = () => {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            render: s => <Tag color={s === 'ACTIVE' ? 'green' : 'red'}>{s}</Tag>
-        },
-        {
-            title: 'Hành động',
-            key: 'action',
-            render: (_, r) => (
-                <Popconfirm title="Xóa mã này?" onConfirm={() => handleDelete(r.id)}>
-                    <Button danger icon={<DeleteOutlined />} size="small" />
-                </Popconfirm>
-            )
+            render: s => {
+                let color = 'green';
+                let text = 'Hoạt động';
+                if (s === 'INACTIVE') {
+                    color = 'default';
+                    text = 'Tạm dừng';
+                } else if (s === 'EXPIRED') {
+                    color = 'red';
+                    text = 'Hết hạn';
+                }
+                return <Tag color={color}>{text}</Tag>;
+            }
         }
     ];
+
+    const handleBulkDelete = async () => {
+        try {
+            setLoading(true);
+            // In this specific implementation, we'll delete them one by one or 
+            // if the API supports bulk delete, we'd use that. 
+            // Assuming individual calls for now as per current api.deleteDiscount structure
+            await Promise.all(selectedRowKeys.map(id => api.deleteDiscount(id)));
+            message.success(`Đã xóa ${selectedRowKeys.length} mã giảm giá`);
+            setSelectedRowKeys([]);
+            fetchData();
+        } catch (error) {
+            message.error('Lỗi khi xóa mã giảm giá');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleStatusUpdate = async (newStatus) => {
+        try {
+            setLoading(true);
+            await Promise.all(selectedRowKeys.map(id => api.updateDiscount(id, { status: newStatus })));
+            message.success(`Đã cập nhật trạng thái cho ${selectedRowKeys.length} mã`);
+            setSelectedRowKeys([]);
+            fetchData();
+        } catch (error) {
+            message.error('Lỗi khi cập nhật trạng thái');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEditClick = () => {
+        const discount = discounts.find(d => d.id === selectedRowKeys[0]);
+        if (discount) {
+            setEditingDiscount(discount);
+            const event = events.find(e => e.event_id === discount.event_id);
+            setSelectedEventInfo(event);
+            form.setFieldsValue({
+                ...discount,
+                date_range: [dayjs(discount.start_date), dayjs(discount.end_date)]
+            });
+            setIsModalOpen(true);
+        }
+    };
 
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24, alignItems: 'center' }}>
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-                    Tạo mã mới
-                </Button>
+                <Space>
+                    {selectedRowKeys.length > 0 && (
+                        <>
+                            {selectedRowKeys.length === 1 && (
+                                <Button
+                                    icon={<EditOutlined />}
+                                    onClick={handleEditClick}
+                                >
+                                    Chỉnh sửa
+                                </Button>
+                            )}
+                            <Button
+                                onClick={() => handleStatusUpdate('ACTIVE')}
+                                type="default"
+                                style={{ color: '#2DC275', borderColor: '#2DC275' }}
+                                loading={loading}
+                            >
+                                Kích hoạt ({selectedRowKeys.length})
+                            </Button>
+                            <Button
+                                onClick={() => handleStatusUpdate('INACTIVE')}
+                                type="default"
+                                danger
+                                loading={loading}
+                            >
+                                Tạm dừng ({selectedRowKeys.length})
+                            </Button>
+                            <Popconfirm
+                                title={`Xác nhận xóa ${selectedRowKeys.length} mã đã chọn?`}
+                                onConfirm={handleBulkDelete}
+                                okText="Xóa"
+                                cancelText="Hủy"
+                                okButtonProps={{ danger: true }}
+                            >
+                                <Button danger icon={<DeleteOutlined />} type="primary">
+                                    Xóa ({selectedRowKeys.length})
+                                </Button>
+                            </Popconfirm>
+                        </>
+                    )}
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)} style={{ background: '#2DC275', borderColor: '#2DC275' }}>
+                        Tạo mã mới
+                    </Button>
+                </Space>
             </div>
 
             <Card bordered={false} style={{ borderRadius: 12 }}>
@@ -129,6 +247,10 @@ const DiscountManagement = () => {
                         columns={columns}
                         dataSource={discounts}
                         rowKey="id"
+                        rowSelection={{
+                            selectedRowKeys,
+                            onChange: setSelectedRowKeys
+                        }}
                         loading={false}
                         pagination={{ pageSize: 5 }}
                     />
@@ -136,13 +258,28 @@ const DiscountManagement = () => {
             </Card>
 
             <Modal
-                title="Tạo mã giảm giá mới"
+                title={editingDiscount ? "Chỉnh sửa mã giảm giá" : "Tạo mã giảm giá mới"}
                 open={isModalOpen}
-                onCancel={() => setIsModalOpen(false)}
+                onCancel={() => {
+                    setIsModalOpen(false);
+                    setEditingDiscount(null);
+                    setSelectedEventInfo(null);
+                    form.resetFields();
+                }}
                 footer={null}
                 destroyOnClose
             >
-                <Form layout="vertical" form={form} onFinish={handleCreate}>
+                <Form
+                    layout="vertical"
+                    form={form}
+                    onFinish={handleCreate}
+                    onValuesChange={(changedValues) => {
+                        if ('event_id' in changedValues) {
+                            const event = events.find(e => e.event_id === changedValues.event_id);
+                            setSelectedEventInfo(event);
+                        }
+                    }}
+                >
                     <Form.Item name="name" label="Tên chương trình" rules={[{ required: true, message: 'Vui lòng nhập tên' }]}>
                         <Input placeholder="Vd: Khuyến mãi Tết" />
                     </Form.Item>
@@ -151,11 +288,24 @@ const DiscountManagement = () => {
                         <Input style={{ textTransform: 'uppercase' }} placeholder="Vd: TET2026" />
                     </Form.Item>
 
-                    <Form.Item name="event_id" label="Áp dụng cho sự kiện">
+                    <Form.Item
+                        name="event_id"
+                        label="Áp dụng cho sự kiện"
+                        help={selectedEventInfo && selectedEventInfo.sale_start_datetime && (
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                Thời gian mở bán vé: {dayjs(selectedEventInfo.sale_start_datetime).format('DD/MM/YYYY HH:mm')} - {dayjs(selectedEventInfo.sale_end_datetime).format('DD/MM/YYYY HH:mm')}
+                            </Text>
+                        )}
+                    >
                         <Select allowClear placeholder="Chọn sự kiện (Để trống = Áp dụng tất cả)">
-                            {events.map(e => (
-                                <Select.Option key={e.event_id} value={e.event_id}>{e.event_name}</Select.Option>
-                            ))}
+                            {events
+                                .filter(e => ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'PUBLISHED'].includes(e.status))
+                                .map(e => (
+                                    <Select.Option key={e.event_id} value={e.event_id}>
+                                        {e.event_name} <Tag style={{ marginLeft: 8, fontSize: 10 }}>{e.status}</Tag>
+                                    </Select.Option>
+                                ))
+                            }
                         </Select>
                     </Form.Item>
 
@@ -180,7 +330,7 @@ const DiscountManagement = () => {
                     </Form.Item>
 
                     <Button type="primary" htmlType="submit" block loading={submitting} size="large">
-                        TẠO MÃ GIẢM GIÁ
+                        {editingDiscount ? 'CẬP NHẬT MÃ GIẢM GIÁ' : 'TẠO MÃ GIẢM GIÁ'}
                     </Button>
                 </Form>
             </Modal>

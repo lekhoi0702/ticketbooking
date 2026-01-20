@@ -35,6 +35,7 @@ import EventBasicInfo from '@features/organizer/components/EventBasicInfo';
 import EventDateTime from '@features/organizer/components/EventDateTime';
 import EventBannerUpload from '@features/organizer/components/EventBannerUpload';
 import TicketConfig from '@features/organizer/components/TicketConfig';
+import ExtraShowtimesConfig from '@features/organizer/components/ExtraShowtimesConfig';
 
 const { Title, Text } = Typography;
 
@@ -62,6 +63,9 @@ const EditEvent = () => {
         toggleSeatSelection,
         addTicketType,
         removeTicketType,
+        addShowtime,
+        removeShowtime,
+        updateShowtime,
         toggleAreaSelection,
         handleSubmit,
         setFormData,
@@ -193,16 +197,7 @@ const EditEvent = () => {
         <>
             <Spin spinning={loading} fullscreen tip="Đang xử lý..." />
             <div>
-                {/* Header Area */}
-                <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center' }}>
-                    <Button
-                        icon={<ArrowLeftOutlined />}
-                        onClick={() => navigate(-1)}
-                        style={{ marginRight: 16 }}
-                        disabled={loading}
-                    />
-                    <Title level={4} style={{ margin: 0 }}>Chỉnh sửa sự kiện</Title>
-                </div>
+
 
                 {isReadOnly && (
                     <Alert
@@ -291,6 +286,18 @@ const EditEvent = () => {
                                         type="info"
                                         showIcon
                                         style={{ marginTop: 20 }}
+                                    />
+                                </Card>
+
+                                <Card title="4. Suất diễn bổ sung (Nâng cao)" headStyle={{ background: '#fafafa' }}>
+                                    <ExtraShowtimesConfig
+                                        formData={formData}
+                                        addShowtime={addShowtime}
+                                        removeShowtime={removeShowtime}
+                                        updateShowtime={updateShowtime}
+                                        venues={venues}
+                                        fieldErrors={fieldErrors}
+                                        disabled={isReadOnly || loading}
                                     />
                                 </Card>
                             </Space>

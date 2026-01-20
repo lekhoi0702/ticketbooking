@@ -57,7 +57,7 @@ const OrderSuccess = () => {
         });
     };
 
-    if (loading) return <LoadingSpinner tip="Đang tải thông tin vé..." />;
+    if (loading) return <LoadingSpinner fullScreen tip="Đang tải thông tin vé..." />;
 
     if (error || !orderData) return (
         <Container className="py-5">
@@ -215,8 +215,8 @@ const OrderSuccess = () => {
                 }
 
                 .status-pill.PAID {
-                    color: #52c41a;
-                    border: 2px solid #52c41a;
+                    color: #2DC275;
+                    border: 2px solid #2DC275;
                 }
                 
                 .status-pill.PENDING {
@@ -225,7 +225,7 @@ const OrderSuccess = () => {
                 }
 
                 .shadow-icon {
-                    filter: drop-shadow(0 0 15px rgba(82, 196, 26, 0.4));
+                    filter: drop-shadow(0 0 15px rgba(45, 194, 117, 0.4));
                 }
 
                 .section-title {
@@ -283,7 +283,7 @@ const OrderSuccess = () => {
                     font-size: 0.8rem;
                 }
 
-                .detail-icon { color: #52c41a; }
+                .detail-icon { color: #2DC275; }
 
                 .ticket-bottom-info {
                     margin-top: auto;
@@ -307,9 +307,9 @@ const OrderSuccess = () => {
                 }
 
                 .info-value {
-                    font-size: 1rem;
+                    font-size: 1.4rem;
                     font-weight: 800;
-                    color: #52c41a;
+                    color: #2DC275;
                 }
 
                 .code-font {

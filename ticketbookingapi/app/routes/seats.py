@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from app.extensions import db
 from app.models.seat import Seat
 from app.models.ticket_type import TicketType
+from app.models.event import Event
 
 seats_bp = Blueprint("seats", __name__)
 
@@ -161,6 +162,15 @@ def assign_seats_from_template():
         final_seat_count = Seat.query.filter_by(ticket_type_id=ticket_type_id).count()
         ticket_type.quantity = final_seat_count
         db.session.commit()
+
+        # 7. Cập nhật total_capacity của Event (tổng quantity của tất cả ticket types)
+        # Fetch fresh event object
+        event = db.session.query(Event).get(ticket_type.event_id)
+        if event:
+            from sqlalchemy import func
+            total_cap = db.session.query(func.sum(TicketType.quantity)).filter(TicketType.event_id == event.event_id).scalar()
+            event.total_capacity = int(total_cap or 0)
+            db.session.commit()
         
         return jsonify({
             'success': True,

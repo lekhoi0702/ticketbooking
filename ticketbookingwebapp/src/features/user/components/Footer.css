@@ -49,7 +49,7 @@
 
 .footer-hotline {
     display: block;
-    color: #52c41a;
+    color: #2DC275;
     font-size: 24px;
     font-weight: 700;
     margin: 8px 0 24px;
@@ -83,7 +83,7 @@
 }
 
 .footer-link:hover {
-    color: #52c41a;
+    color: #2DC275;
 }
 
 /* App Download Buttons */

@@ -53,7 +53,7 @@ const OrganizerProfile = () => {
             key: 'fill_rate',
             width: 100,
             align: 'right',
-            render: (val) => <span style={{ color: val > 80 ? '#52c41a' : val > 50 ? '#faad14' : '#ff4d4f' }}>{val}%</span>
+            render: (val) => <span style={{ color: val > 80 ? '#2DC275' : val > 50 ? '#faad14' : '#ff4d4f' }}>{val}%</span>
         },
     ];
 
@@ -72,10 +72,8 @@ const OrganizerProfile = () => {
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <div>
-                    <Title level={2}>Tổng quan & Doanh thu</Title>
-                    <Text type="secondary">Báo cáo hoạt động kinh doanh của bạn</Text>
-                </div>
+                <div />
+
                 <Button icon={<ReloadOutlined />} onClick={fetchStats} loading={loading}>
                     Làm mới
                 </Button>

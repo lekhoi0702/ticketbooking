@@ -64,7 +64,7 @@ def get_discounts():
             
             # Status logic
             if not d.is_active:
-                item['status'] = 'DISABLED'
+                item['status'] = 'INACTIVE'
             elif d.end_date < datetime.utcnow():
                 item['status'] = 'EXPIRED'
             else:
@@ -85,6 +85,41 @@ def get_discounts():
             'data': result
         }), 200
     except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@organizer_discount_bp.route("/organizer/discounts/<int:id>", methods=["PUT"])
+def update_discount(id):
+    try:
+        data = request.json
+        discount = Discount.query.get_or_404(id)
+        
+        if 'name' in data: discount.discount_name = data['name']
+        if 'value' in data: discount.discount_value = data['value']
+        if 'discount_type' in data: discount.discount_type = data['discount_type']
+        if 'usage_limit' in data: discount.usage_limit = data['usage_limit']
+        if 'event_id' in data: discount.event_id = data['event_id']
+
+        if 'start_date' in data:
+            start_str = data['start_date'].replace('Z', '')
+            discount.start_date = datetime.fromisoformat(start_str)
+        if 'end_date' in data:
+            end_str = data['end_date'].replace('Z', '')
+            discount.end_date = datetime.fromisoformat(end_str)
+
+        if 'status' in data:
+            new_status = data['status']
+            if new_status == 'ACTIVE':
+                # Check if it's already expired
+                if discount.end_date < datetime.utcnow():
+                    return jsonify({'success': False, 'message': 'Không thể kích hoạt mã đã hết hạn'}), 400
+                discount.is_active = True
+            elif new_status == 'INACTIVE':
+                discount.is_active = False
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Updated successfully', 'data': discount.to_dict()}), 200
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @organizer_discount_bp.route("/organizer/discounts/<int:id>", methods=["DELETE"])

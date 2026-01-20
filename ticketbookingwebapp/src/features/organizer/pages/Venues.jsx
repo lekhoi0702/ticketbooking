@@ -273,7 +273,7 @@ const OrganizerVenues = () => {
                 const template = record.seat_map_template || { areas: [] };
                 const lockedCount = template.areas?.reduce((sum, a) => sum + (a.locked_seats?.length || 0), 0) || 0;
                 return (
-                    <span style={{ fontWeight: 600, color: lockedCount > 0 ? '#ff4d4f' : '#52c41a' }}>
+                    <span style={{ fontWeight: 600, color: lockedCount > 0 ? '#ff4d4f' : '#2DC275' }}>
                         {lockedCount}
                     </span>
                 );
@@ -312,7 +312,7 @@ const OrganizerVenues = () => {
     return (
         <Spin spinning={saving} tip="Đang xử lý...">
             <div style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16, alignItems: 'center' }}>
                     <Space>
                         <Button
                             type="primary"

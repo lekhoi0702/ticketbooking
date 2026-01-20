@@ -28,15 +28,15 @@ const TemplateSeat = React.memo(({ t, isSelected, occupiedBy, activeTicketTypeId
         shadow = '0 0 10px rgba(250, 173, 20, 0.3)';
         cursor = 'default';
     } else if (isSelected) {
-        bgColor = '#52c41a';
+        bgColor = '#2DC275';
         textColor = '#ffffff';
-        borderColor = '#52c41a';
+        borderColor = '#2DC275';
         shadow = '0 0 12px rgba(82, 196, 26, 0.4)';
         transform = 'scale(1.1)';
     } else if (occupiedBy) {
         // In view-only mode (Admin), show as Green (Assigned)
         // In edit mode (Organizer), show as Red (Occupied by others)
-        bgColor = activeTicketTypeId ? '#ff4d4f' : '#52c41a';
+        bgColor = activeTicketTypeId ? '#ff4d4f' : '#2DC275';
         textColor = '#ffffff';
         borderColor = bgColor;
         cursor = activeTicketTypeId ? 'not-allowed' : 'pointer';

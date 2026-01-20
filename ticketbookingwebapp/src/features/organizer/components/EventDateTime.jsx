@@ -5,6 +5,7 @@ import {
     Typography,
     DatePicker,
     Space,
+    Divider,
     Button
 } from 'antd';
 import dayjs from 'dayjs';
@@ -12,7 +13,12 @@ import { CalendarOutlined, WarningOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
-const EventDateTime = ({ formData, handleInputChange, existingSchedule, fieldErrors: externalErrors = {} }) => {
+const EventDateTime = ({
+    formData,
+    handleInputChange,
+    existingSchedule,
+    fieldErrors: externalErrors = {}
+}) => {
     const [errors, setErrors] = useState({});
 
     // Merge external errors with internal validation errors
@@ -20,11 +26,9 @@ const EventDateTime = ({ formData, handleInputChange, existingSchedule, fieldErr
 
     const handleDateChange = (name, dateString) => {
         handleInputChange({ target: { name, value: dateString } });
-        // Clear error when user changes the field
         setErrors(prev => ({ ...prev, [name]: null }));
     };
 
-    // Validate dates whenever formData changes
     useEffect(() => {
         validateDates();
     }, [formData.start_datetime, formData.end_datetime, formData.sale_start_datetime, formData.sale_end_datetime]);
@@ -37,28 +41,21 @@ const EventDateTime = ({ formData, handleInputChange, existingSchedule, fieldErr
         const saleStart = formData.sale_start_datetime ? dayjs(formData.sale_start_datetime) : null;
         const saleEnd = formData.sale_end_datetime ? dayjs(formData.sale_end_datetime) : null;
 
-        // Validate event start time
         if (start && start.isBefore(now)) {
             newErrors.start_datetime = 'Thời gian bắt đầu phải sau thời điểm hiện tại';
         }
-
-        // Validate event end time
         if (end && start && end.isBefore(start)) {
             newErrors.end_datetime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
         }
         if (end && end.isBefore(now)) {
             newErrors.end_datetime = 'Thời gian kết thúc phải sau thời điểm hiện tại';
         }
-
-        // Validate sale start time
         if (saleStart && saleStart.isBefore(now)) {
             newErrors.sale_start_datetime = 'Thời gian mở bán phải sau thời điểm hiện tại';
         }
         if (saleStart && start && saleStart.isAfter(start)) {
             newErrors.sale_start_datetime = 'Thời gian mở bán phải trước khi sự kiện bắt đầu';
         }
-
-        // Validate sale end time
         if (saleEnd && saleStart && saleEnd.isBefore(saleStart)) {
             newErrors.sale_end_datetime = 'Thời gian kết thúc bán phải sau thời gian mở bán';
         }
@@ -69,26 +66,20 @@ const EventDateTime = ({ formData, handleInputChange, existingSchedule, fieldErr
         setErrors(newErrors);
     };
 
-    // Disable past dates
     const disabledDate = (current) => {
         return current && current < dayjs().startOf('day');
     };
 
-    // Disable end date before start date
     const disabledEndDate = (current) => {
         const start = formData.start_datetime ? dayjs(formData.start_datetime) : null;
         if (!start) return current && current < dayjs().startOf('day');
         return current && (current < dayjs().startOf('day') || current < start.startOf('day'));
     };
 
-    // Disable sale end date before sale start date
     const disabledSaleEndDate = (current) => {
         const saleStart = formData.sale_start_datetime ? dayjs(formData.sale_start_datetime) : null;
         const eventStart = formData.start_datetime ? dayjs(formData.start_datetime) : null;
-
         if (!saleStart) return current && current < dayjs().startOf('day');
-
-        // Must be after sale start and before event start
         return current && (
             current < dayjs().startOf('day') ||
             current < saleStart.startOf('day') ||
@@ -149,7 +140,6 @@ const EventDateTime = ({ formData, handleInputChange, existingSchedule, fieldErr
                             )}
                         </Col>
 
-                        {/* Existing Schedule Display (Read-only) */}
                         {existingSchedule && existingSchedule.length > 0 && (
                             <Col span={24}>
                                 <div style={{ marginTop: 24, padding: '16px', background: '#f5f5f5', borderRadius: '8px' }}>
@@ -157,7 +147,7 @@ const EventDateTime = ({ formData, handleInputChange, existingSchedule, fieldErr
                                     <div style={{ marginTop: 8 }}>
                                         {existingSchedule.map((item, idx) => (
                                             <div key={idx} style={{ marginBottom: 8, display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                <CalendarOutlined style={{ color: '#52c41a' }} />
+                                                <CalendarOutlined style={{ color: '#2DC275' }} />
                                                 <Text>
                                                     {dayjs(item.start_datetime).format('DD/MM/YYYY HH:mm')} - {dayjs(item.end_datetime).format('HH:mm')}
                                                 </Text>

@@ -30,6 +30,13 @@ const PaymentMethodSelector = () => {
                     Bạn sẽ được chuyển đến cổng thanh toán VNPay để hoàn tất giao dịch an toàn.
                 </div> */}
             </Card.Body>
+            <style>{`
+                .card h5,
+                .card strong,
+                .card small {
+                    color: rgb(42, 45, 52) !important;
+                }
+            `}</style>
         </Card>
     );
 };

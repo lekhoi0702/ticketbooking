@@ -263,6 +263,43 @@ export const useCreateEvent = () => {
         }
     };
 
+    const addShowtime = () => {
+        setFormData(prev => ({
+            ...prev,
+            extra_showtimes: [
+                ...(prev.extra_showtimes || []),
+                {
+                    id: Date.now(),
+                    start_datetime: '',
+                    end_datetime: '',
+                    sale_start_datetime: '',
+                    sale_end_datetime: '',
+                    venue_id: prev.venue_id,
+                    ticket_types: JSON.parse(JSON.stringify(ticketTypes))
+                }
+            ]
+        }));
+    };
+
+    const removeShowtime = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            extra_showtimes: prev.extra_showtimes.filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateShowtime = (index, field, value) => {
+        setFormData(prev => {
+            const newShowtimes = [...prev.extra_showtimes];
+            if (field === 'all') {
+                newShowtimes[index] = value;
+            } else {
+                newShowtimes[index] = { ...newShowtimes[index], [field]: value };
+            }
+            return { ...prev, extra_showtimes: newShowtimes };
+        });
+    };
+
     const handleSubmit = async (e, eventId = null) => {
         if (e) e.preventDefault();
 
@@ -303,6 +340,35 @@ export const useCreateEvent = () => {
 
         if (!formData.sale_end_datetime) {
             errors.sale_end_datetime = 'Vui lòng chọn thời gian kết thúc bán';
+        }
+
+        // Validate extra showtimes
+        if (formData.extra_showtimes && formData.extra_showtimes.length > 0) {
+            formData.extra_showtimes.forEach((st, idx) => {
+                const s = st.start_datetime ? dayjs(st.start_datetime) : null;
+                const e = st.end_datetime ? dayjs(st.end_datetime) : null;
+
+                if (!st.start_datetime) {
+                    errors[`extra_showtime_${idx}_start`] = 'Vui lòng chọn thời gian bắt đầu';
+                }
+                if (!st.end_datetime) {
+                    errors[`extra_showtime_${idx}_end`] = 'Vui lòng chọn thời gian kết thúc';
+                }
+                if (s && e && e.isBefore(s)) {
+                    errors[`extra_showtime_${idx}_end`] = 'Thời gian kết thúc phải sau bắt đầu';
+                }
+
+                // Optional sale times validation
+                const ss = st.sale_start_datetime ? dayjs(st.sale_start_datetime) : null;
+                const se = st.sale_end_datetime ? dayjs(st.sale_end_datetime) : null;
+
+                if (ss && se && se.isBefore(ss)) {
+                    errors[`extra_showtime_${idx}_sale_end`] = 'Kết thúc bán phải sau mở bán';
+                }
+                if (ss && s && ss.isAfter(s)) {
+                    errors[`extra_showtime_${idx}_sale_start`] = 'Mở bán phải trước khi diễn ra';
+                }
+            });
         }
 
         // Validate ticket types
@@ -456,7 +522,7 @@ export const useCreateEvent = () => {
                         (!localTT.ticket_type_id && rtt.type_name === localTT.type_name)
                     );
 
-                    if (matchedTT && localTT.selectedSeats && localTT.selectedSeats.length > 0) {
+                    if (matchedTT && localTT.selectedSeats) {
                         const assignResult = await api.assignSeatsFromTemplate({
                             ticket_type_id: matchedTT.ticket_type_id,
                             seats: localTT.selectedSeats
@@ -524,6 +590,9 @@ export const useCreateEvent = () => {
         toggleAreaSelection,
         addTicketType,
         removeTicketType,
+        addShowtime,
+        removeShowtime,
+        updateShowtime,
         handleSubmit,
         fetchVenueTemplate,
         navigate

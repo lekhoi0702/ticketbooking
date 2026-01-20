@@ -70,7 +70,27 @@ const CustomerInfoForm = ({ customerInfo, setCustomerInfo }) => {
                     }
                     .border-success:focus {
                         border-color: #28a745 !important;
-                        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+                        box-shadow: 0 0 0 0.1rem rgba(40, 167, 69, 0.25);
+                    }
+                    /* Fix white text on white background */
+                    .card .form-control,
+                    .card .form-control:focus,
+                    .card input,
+                    .card input:focus {
+                        color: rgb(42, 45, 52) !important;
+                    }
+                    .card .form-label,
+                    .card label,
+                    .card h5 {
+                        color: rgb(42, 45, 52) !important;
+                    }
+                    .card .form-control::placeholder {
+                        color: #6c757d !important;
+                        opacity: 0.7;
+                    }
+                    /* Reduce default Bootstrap focus shadow */
+                    .card .form-control:focus {
+                        box-shadow: 0 0 0 0.1rem rgba(13, 110, 253, 0.25) !important;
                     }
                 `}</style>
             </Card.Body>

@@ -158,13 +158,13 @@ const AdminLogin = () => {
 
                             }}>
 
-                                <SafetyCertificateOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+                                <SafetyCertificateOutlined style={{ fontSize: 24, color: '#2DC275' }} />
 
                             </div>
 
                             <Title level={3} style={{ margin: 0, fontWeight: 700 }}>
 
-                                ADMIN<span style={{ color: '#52c41a' }}>PANEL</span>
+                                ADMIN<span style={{ color: '#2DC275' }}>PANEL</span>
 
                             </Title>
 

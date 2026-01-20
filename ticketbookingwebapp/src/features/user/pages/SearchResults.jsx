@@ -39,7 +39,7 @@ const SearchResults = () => {
     };
 
     if (loading) {
-        return <LoadingSpinner tip="Đang tìm kiếm sự kiện..." />;
+        return <LoadingSpinner fullScreen tip="Đang tìm kiếm sự kiện..." />;
     }
 
     return (

@@ -78,7 +78,7 @@ function Home() {
     };
 
     if (loading) {
-        return <LoadingSpinner tip="Đang tải sự kiện..." />;
+        return <LoadingSpinner fullScreen tip="Đang tải sự kiện..." />;
     }
 
     return (
@@ -100,7 +100,7 @@ function Home() {
                 />
             )}
 
-            <section className="home-ad-section" style={{ padding: '0px 0', marginTop: '-20px', marginBottom: '-20px' }}>
+            <section className="home-ad-section" style={{ padding: '20px 0' }}>
                 <Container>
                     <div
                         className="ad-banner-wrapper"

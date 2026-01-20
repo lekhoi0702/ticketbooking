@@ -84,7 +84,7 @@ const VNPayReturn = () => {
                 <Card className="border-0 shadow-sm text-center" style={{ maxWidth: '500px', width: '100%' }}>
                     <Card.Body className="py-5 px-4">
                         {processing ? (
-                            <LoadingSpinner tip="Đang xử lý kết quả thanh toán..." />
+                            <LoadingSpinner fullScreen tip="Đang xử lý kết quả thanh toán..." />
                         ) : (
                             <>
                                 {success ? (

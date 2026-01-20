@@ -6,7 +6,7 @@ import { useFavorites } from '@context/FavoriteContext';
 import { message } from 'antd';
 import { getImageUrl, parseLocalDateTime } from '@shared/utils/eventUtils';
 
-const EventHero = ({ event }) => {
+const EventHero = ({ event, onToggleFavorite }) => {
     const bannerUrl = getImageUrl(event.banner_image_url, 'https://via.placeholder.com/1200x600?text=TicketBooking');
 
     // Date Logic - Use parseLocalDateTime to prevent timezone issues
@@ -38,15 +38,12 @@ const EventHero = ({ event }) => {
         return minPrice > 0 ? `${minPrice.toLocaleString('vi-VN')} đ` : 'Miễn phí';
     };
 
-    const { isFavorited, toggleFavorite } = useFavorites();
+    const { isFavorited } = useFavorites();
     const favorited = isFavorited(event.event_id);
 
     const handleToggleFavorite = async () => {
-        const result = await toggleFavorite(event.event_id);
-        if (result.success) {
-            message.success(result.message);
-        } else {
-            message.error(result.message);
+        if (onToggleFavorite) {
+            await onToggleFavorite();
         }
     };
 

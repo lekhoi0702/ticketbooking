@@ -32,7 +32,7 @@ const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner }) =
                     transition: 'all 0.3s',
                     textAlign: 'center'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#52c41a'}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2DC275'}
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = '#d9d9d9'}
             >
                 {bannerPreview ? (
@@ -59,7 +59,7 @@ const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner }) =
                             </Button>
                             <Button
                                 icon={<PictureOutlined />}
-                                style={{ color: '#52c41a', borderColor: '#52c41a' }}
+                                style={{ color: '#2DC275', borderColor: '#2DC275' }}
                             >
                                 <label style={{ cursor: 'pointer' }}>
                                     Đổi ảnh
@@ -83,7 +83,7 @@ const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner }) =
                         <Button
                             type="primary"
                             icon={<CloudUploadOutlined />}
-                            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                            style={{ backgroundColor: '#2DC275', borderColor: '#2DC275' }}
                         >
                             <label style={{ cursor: 'pointer' }}>
                                 Chọn tệp

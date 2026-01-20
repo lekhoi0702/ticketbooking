@@ -3,6 +3,8 @@ import { Row, Col, Badge, OverlayTrigger, Tooltip, Alert } from 'react-bootstrap
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { FaChair } from 'react-icons/fa';
 import { api } from '@services/api';
+import { io } from 'socket.io-client';
+import { BASE_URL } from '@shared/constants';
 
 const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoaded }) => {
     const [loading, setLoading] = useState(true);
@@ -11,6 +13,8 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
     const [rows, setRows] = useState([]);
     const [error, setError] = useState(null);
     const [rowsData, setRowsData] = useState({});
+    const [lockedByOthers, setLockedByOthers] = useState([]); // Array of seat IDs
+    const [socket, setSocket] = useState(null);
 
     useEffect(() => {
         if (ticketType) {
@@ -18,6 +22,56 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
             setSelectedSeats([]);
         }
     }, [ticketType]);
+
+    useEffect(() => {
+        if (!ticketType || !ticketType.event_id) return;
+
+        // Initialize socket connection through Vite proxy
+        const newSocket = io(window.location.origin, {
+            path: '/socket.io',
+            transports: ['polling'], // Start with polling only, let server upgrade
+            timeout: 20000,
+            forceNew: false,
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            upgrade: true // Allow upgrade to websocket
+        });
+        setSocket(newSocket);
+
+        newSocket.on('connect', () => {
+            console.log('Socket connected:', newSocket.id);
+            newSocket.emit('join_event', { event_id: ticketType.event_id });
+        });
+
+        newSocket.on('disconnect', (reason) => {
+            console.log('Socket disconnected:', reason);
+        });
+
+        newSocket.on('connect_error', (error) => {
+            console.error('Socket connection error:', error);
+        });
+
+        newSocket.on('seat_locked', (data) => {
+            console.log('Seat locked by others:', data);
+            setLockedByOthers(prev => {
+                if (prev.includes(data.seat_id)) return prev;
+                return [...prev, data.seat_id];
+            });
+        });
+
+        newSocket.on('seat_unlocked', (data) => {
+            console.log('Seat unlocked:', data);
+            setLockedByOthers(prev => prev.filter(id => id !== data.seat_id));
+        });
+
+        return () => {
+            if (newSocket && newSocket.connected) {
+                newSocket.emit('leave_event', { event_id: ticketType.event_id });
+                newSocket.disconnect();
+            }
+        };
+    }, [ticketType?.event_id]);
 
     const fetchSeats = async () => {
         try {
@@ -57,12 +111,23 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
 
     const toggleSeat = (seat) => {
         if (seat.status !== 'AVAILABLE') return;
+        if (lockedByOthers.includes(seat.seat_id)) {
+            setError("Ghế này đang được người khác chọn!");
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
 
         const isSelected = selectedSeats.some(s => s.seat_id === seat.seat_id);
         let newSelection = [];
 
         if (isSelected) {
             newSelection = selectedSeats.filter(s => s.seat_id !== seat.seat_id);
+            if (socket) {
+                socket.emit('deselect_seat', {
+                    event_id: ticketType.event_id,
+                    seat_id: seat.seat_id
+                });
+            }
         } else {
             if (selectedSeats.length >= maxSelection) {
                 setError(`Bạn chỉ có thể chọn tối đa ${maxSelection} ghế`);
@@ -70,6 +135,12 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
                 return;
             }
             newSelection = [...selectedSeats, seat];
+            if (socket) {
+                socket.emit('select_seat', {
+                    event_id: ticketType.event_id,
+                    seat_id: seat.seat_id
+                });
+            }
         }
 
         setSelectedSeats(newSelection);
@@ -109,19 +180,25 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
                         <div className="d-flex gap-2">
                             {rowsData[rowName].map(seat => {
                                 const isSelected = selectedSeats.some(s => s.seat_id === seat.seat_id);
+                                const isLockedByOther = lockedByOthers.includes(seat.seat_id);
                                 const isBooked = seat.status === 'BOOKED' || seat.status === 'RESERVED';
 
                                 return (
                                     <OverlayTrigger
                                         key={seat.seat_id}
                                         placement="top"
-                                        overlay={<Tooltip id={`seat-tooltip-${seat.seat_id}`}>Ghế {seat.seat_label} - {formatPrice(ticketType.price)}</Tooltip>}
+                                        overlay={
+                                            <Tooltip id={`seat-tooltip-${seat.seat_id}`}>
+                                                {isLockedByOther ? "Đang có người chọn" : `Ghế ${seat.seat_label} - ${formatPrice(ticketType.price)}`}
+                                            </Tooltip>
+                                        }
                                     >
                                         <div
                                             className={`seat-item cursor-pointer transition-all rounded-1 d-flex align-items-center justify-content-center
-                                                    ${isSelected ? 'bg-success seat-selected' :
+                                                        ${isSelected ? 'bg-success seat-selected' :
                                                     isBooked ? 'bg-secondary bg-opacity-25 cursor-not-allowed seat-booked' :
-                                                        'bg-light hover-scale seat-available'}`}
+                                                        isLockedByOther ? 'bg-warning seat-locked' :
+                                                            'bg-light hover-scale seat-available'}`}
                                             style={{
                                                 width: '32px',
                                                 height: '32px',
@@ -150,7 +227,8 @@ const SeatMap = ({ ticketType, onSelectionChange, maxSelection = 10, onSeatsLoad
             <hr className="bg-secondary" />
             <div className="d-flex justify-content-center gap-4 py-2 small fw-bold text-white">
                 <div className="d-flex align-items-center"><span className="bg-light d-inline-block rounded-1 me-2" style={{ width: '15px', height: '15px' }}></span> Trống</div>
-                <div className="d-flex align-items-center"><span className="bg-success d-inline-block rounded-1 me-2" style={{ width: '15px', height: '15px' }}></span> Đang chọn</div>
+                <div className="d-flex align-items-center"><span className="bg-success d-inline-block rounded-1 me-2" style={{ width: '15px', height: '15px' }}></span> Bạn chọn</div>
+                <div className="d-flex align-items-center"><span className="bg-warning d-inline-block rounded-1 me-2" style={{ width: '15px', height: '15px' }}></span> Có người đang chọn</div>
                 <div className="d-flex align-items-center"><span className="bg-secondary bg-opacity-25 d-inline-block rounded-1 me-2" style={{ width: '15px', height: '15px' }}></span> Đã bán</div>
             </div>
 

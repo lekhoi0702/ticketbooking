@@ -211,14 +211,14 @@ const VenueSeatMapEditor = ({ venueName, initialAreas, visible, onClose, onSave,
                                     marginBottom: 8,
                                     borderRadius: 8,
                                     border: '1px solid',
-                                    borderColor: activeAreaIndex === idx ? '#52c41a' : '#f0f0f0',
+                                    borderColor: activeAreaIndex === idx ? '#2DC275' : '#f0f0f0',
                                     backgroundColor: activeAreaIndex === idx ? '#f6ffed' : 'white',
                                     cursor: saving ? 'not-allowed' : 'pointer',
                                     position: 'relative',
                                     transition: 'all 0.3s'
                                 }}
                             >
-                                <Text strong style={{ color: activeAreaIndex === idx ? '#52c41a' : 'inherit' }}>{area.name}</Text><br />
+                                <Text strong style={{ color: activeAreaIndex === idx ? '#2DC275' : 'inherit' }}>{area.name}</Text><br />
                                 <Text type="secondary" style={{ fontSize: 11 }}>{area.rows} x {area.cols} ({area.rows * area.cols} ghế)</Text>
                                 <Button
                                     type="text"
@@ -289,7 +289,7 @@ const VenueSeatMapEditor = ({ venueName, initialAreas, visible, onClose, onSave,
                 __html: `
                 .seat-item:hover {
                     box-shadow: 0 0 8px rgba(82, 196, 26, 0.4);
-                    border-color: #52c41a !important;
+                    border-color: #2DC275 !important;
                 }
             `}} />
         </Modal>

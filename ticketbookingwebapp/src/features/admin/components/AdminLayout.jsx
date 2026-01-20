@@ -9,6 +9,7 @@ import {
     Avatar,
     Button,
     Space,
+    Breadcrumb,
     theme as antdTheme
 } from 'antd';
 import {
@@ -19,7 +20,8 @@ import {
     TeamOutlined,
     ExclamationCircleOutlined,
     BarChartOutlined,
-    TagsOutlined
+    TagsOutlined,
+    HomeOutlined
 } from '@ant-design/icons';
 
 const { Header, Sider, Content } = Layout;
@@ -78,6 +80,46 @@ const AdminLayout = () => {
 
 
 
+    const getBreadcrumbs = () => {
+        const pathSnippets = location.pathname.split('/').filter(i => i);
+        const breadcrumbs = [];
+
+        // Initial Home icon dẫn về trang Thống kê
+        breadcrumbs.push({
+            title: <HomeOutlined />,
+            onClick: (e) => { e.preventDefault(); navigate('/admin/statistics'); }
+        });
+
+        const pathMap = {
+            'users': 'Quản lý người dùng',
+            'categories': 'Quản lý thể loại',
+            'events': 'Quản lý sự kiện',
+            'orders': 'Quản lý đơn hàng',
+            'statistics': 'Thống kê hệ thống',
+            'banners': 'Quản lý Banner',
+            'event-deletion-requests': 'Yêu cầu xóa sự kiện',
+            'profile': 'Trang cá nhân admin'
+        };
+
+        let currentPath = '/admin';
+
+        pathSnippets.forEach((snippet) => {
+            if (snippet === 'admin') return;
+
+            currentPath += `/${snippet}`;
+            const title = pathMap[snippet];
+
+            if (title) {
+                breadcrumbs.push({
+                    title: title,
+                    onClick: (e) => { e.preventDefault(); navigate(currentPath); }
+                });
+            }
+        });
+
+        return breadcrumbs;
+    };
+
     if (!isAuthenticated || user?.role !== 'ADMIN') {
         return <AdminLogin />;
     }
@@ -130,25 +172,29 @@ const AdminLayout = () => {
                         background: '#fff',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'flex-end',
+                        justifyContent: 'space-between',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                         position: 'sticky',
                         top: 0,
                         zIndex: 1000,
                     }}
                 >
-                    <Space
-                        style={{ cursor: 'pointer', padding: '0 8px' }}
-                        onClick={() => navigate('/admin/profile')}
-                    >
-                        <Avatar
-                            style={{ backgroundColor: '#1890ff' }}
-                            icon={<UserOutlined />}
-                        />
-                        <Text strong>
-                            Chào, {user?.full_name || user?.email?.split('@')[0] || 'Admin'}
-                        </Text>
-                    </Space>
+                    <Breadcrumb items={getBreadcrumbs()} />
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <Space
+                            style={{ cursor: 'pointer', padding: '0 8px', borderLeft: '1px solid #f0f0f0', marginLeft: 8 }}
+                            onClick={() => navigate('/admin/profile')}
+                        >
+                            <Avatar
+                                style={{ backgroundColor: '#1890ff' }}
+                                icon={<UserOutlined />}
+                            />
+                            <Text strong>
+                                Chào, {user?.full_name || user?.email?.split('@')[0] || 'Admin'}
+                            </Text>
+                        </Space>
+                    </div>
                 </Header>
                 <Content style={{ margin: '24px 24px 0', minHeight: 280 }}>
                     <div style={{
@@ -160,7 +206,7 @@ const AdminLayout = () => {
                     </div>
                 </Content>
             </Layout>
-        </Layout>
+        </Layout >
     );
 };
 

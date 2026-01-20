@@ -37,11 +37,9 @@ const OrderSummary = ({
     const finalTotal = calculateTotal();
     const subTotal = finalTotal + (discountAmount || 0);
 
-    console.log("OrderSummary Render:", { discountMsg, isValidDiscount, discountAmount });
-
     return (
         <Card className="border-0 shadow-sm rounded-4 overflow-hidden order-summary-sidebar">
-            <Card.Header className="py-3" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none' }}>
+            <Card.Header className="py-3" style={{ background: '#2DC275', color: 'white', border: 'none' }}>
                 <h5 className="mb-0 fw-bold text-center">Tóm tắt đơn hàng</h5>
             </Card.Header>
             <Card.Body className="p-4">
@@ -108,6 +106,7 @@ const OrderSummary = ({
                             }}
                         />
                         <Button
+                            style={isValidDiscount ? { background: '#2DC275', borderColor: '#2DC275', color: 'white' } : {}}
                             variant={isValidDiscount ? "success" : "outline-primary"}
                             onClick={handleApply}
                             disabled={processing || !couponCode || isValidDiscount || applying}
@@ -136,17 +135,17 @@ const OrderSummary = ({
                     )}
                     <div className="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
                         <h5 className="mb-0 fw-bold">Tổng thanh toán</h5>
-                        <h4 className="mb-0 text-primary fw-bold">{formatCurrency(finalTotal)}</h4>
+                        <h4 className="mb-0 fw-bold" style={{ color: '#2DC275' }}>{formatCurrency(finalTotal)}</h4>
                     </div>
                 </div>
 
                 <Button
                     variant="primary"
                     size="lg"
-                    className="w-100 py-3 rounded-4 shadow-sm fw-bold border-0 transition-all"
+                    className="w-100 py-3 rounded-4 shadow-sm fw-bold border-0 transition-all text-white"
                     type="submit"
                     disabled={processing || getTotalTickets() === 0}
-                    style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+                    style={{ background: '#2DC275', color: '#ffffff' }}
                 >
                     {processing ? (
                         <><LoadingOutlined spin className="me-2" /> Đang xử lý...</>
@@ -161,6 +160,35 @@ const OrderSummary = ({
                     </p>
                 </div>
             </Card.Body>
+            <style>{`
+                .order-summary-sidebar h6,
+                .order-summary-sidebar span,
+                .order-summary-sidebar p,
+                .order-summary-sidebar h5,
+                .order-summary-sidebar h4,
+                .order-summary-sidebar .form-control,
+                .order-summary-sidebar input {
+                    color: rgb(42, 45, 52) !important;
+                }
+                .order-summary-sidebar .form-control::placeholder {
+                    color: #6c757d !important;
+                    opacity: 0.7;
+                }
+                .order-summary-sidebar .text-muted {
+                    color: #6c757d !important;
+                }
+                .order-summary-sidebar .text-success {
+                    color: #2DC275 !important;
+                }
+                .order-summary-sidebar .btn-primary,
+                .order-summary-sidebar .btn-primary * {
+                    color: #ffffff !important;
+                }
+                .order-summary-sidebar .form-control:focus {
+                    box-shadow: 0 0 0 0.1rem rgba(45, 194, 117, 0.25) !important;
+                    border-color: #2DC275 !important;
+                }
+            `}</style>
         </Card>
     );
 };

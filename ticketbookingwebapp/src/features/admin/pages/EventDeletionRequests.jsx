@@ -20,6 +20,7 @@ import {
     ReloadOutlined
 } from '@ant-design/icons';
 import { api } from '@services/api';
+import AdminPortal from '@shared/components/AdminPortal';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -180,7 +181,7 @@ const EventDeletionRequests = () => {
                             <Button
                                 type="text"
                                 icon={<CheckCircleOutlined />}
-                                style={{ color: '#52c41a' }}
+                                style={{ color: '#2DC275' }}
                                 onClick={() => {
                                     setSelectedRequest(record);
                                     setShowApproveModal(true);
@@ -207,19 +208,13 @@ const EventDeletionRequests = () => {
     ];
 
     return (
-        <div>
-            <Card style={{ marginBottom: 24 }}>
-                <Title level={4} style={{ margin: 0 }}>
-                    Quản lý yêu cầu xóa sự kiện
-                </Title>
-                <Text type="secondary">Xem và xử lý yêu cầu xóa sự kiện từ organizer</Text>
-            </Card>
-
-            <Space style={{ marginBottom: 16 }}>
-                <Button icon={<ReloadOutlined />} onClick={fetchRequests}>
-                    Làm mới
+        <div style={{ paddingTop: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+                <Button icon={<ReloadOutlined />} onClick={fetchRequests} size="middle">
+                    Làm mới yêu cầu
                 </Button>
-            </Space>
+            </div>
+
 
             <Card>
                 <Table

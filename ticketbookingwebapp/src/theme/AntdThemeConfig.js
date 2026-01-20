@@ -2,8 +2,8 @@ import { theme } from 'antd';
 
 export const AntdThemeConfig = {
     token: {
-        colorPrimary: '#52c41a',
-        colorSuccess: '#52c41a',
+        colorPrimary: '#2DC275',
+        colorSuccess: '#2DC275',
         colorWarning: '#faad14',
         colorError: '#ff4d4f',
         colorInfo: '#1890ff',
@@ -28,13 +28,13 @@ export const AntdThemeConfig = {
             borderRadius: 12,
         },
         Tabs: {
-            itemSelectedColor: '#52c41a',
-            itemHoverColor: '#52c41a',
-            inkBarColor: '#52c41a',
+            itemSelectedColor: '#2DC275',
+            itemHoverColor: '#2DC275',
+            inkBarColor: '#2DC275',
         },
         Menu: {
-            itemSelectedBg: 'rgba(82, 196, 26, 0.1)',
-            itemSelectedColor: '#52c41a',
+            itemSelectedBg: 'rgba(45, 194, 117, 0.1)',
+            itemSelectedColor: '#2DC275',
         }
     }
 };

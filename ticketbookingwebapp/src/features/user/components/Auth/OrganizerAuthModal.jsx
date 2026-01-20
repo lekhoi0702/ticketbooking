@@ -83,7 +83,7 @@ const OrganizerAuthModal = ({ show, onHide }) => {
                     width: 64,
                     height: 64,
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                    background: 'linear-gradient(135deg, #2DC275 0%, #26a65b 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

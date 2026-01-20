@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Typography, message, Row, Col, Statistic } from 'antd';
-import { TrophyOutlined, DollarCircleOutlined, TeamOutlined, ShoppingCartOutlined } from '@ant-design/icons';
+import { Card, Table, Typography, message, Row, Col, Statistic, Button } from 'antd';
+import AdminPortal from '@shared/components/AdminPortal';
+import { TrophyOutlined, DollarCircleOutlined, TeamOutlined, ShoppingCartOutlined, ReloadOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
 
@@ -142,9 +143,12 @@ const AdminStatistics = () => {
     if (loading) return <AdminLoadingScreen tip="Đang tính toán số liệu..." />;
 
     return (
-        <div>
-            <Title level={3} style={{ marginBottom: 24 }}>Thống kê doanh thu theo Nhà tổ chức</Title>
-
+        <div style={{ paddingTop: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+                <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading} size="middle">
+                    Làm mới số liệu
+                </Button>
+            </div>
             <Row gutter={16} style={{ marginBottom: 24 }}>
                 <Col span={8}>
                     <Card>

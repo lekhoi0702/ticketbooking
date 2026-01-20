@@ -101,7 +101,7 @@ const MyTicketsTab = () => {
         }
 
         const statuses = {
-            'ACTIVE': { color: '#52c41a', text: 'Chưa sử dụng', icon: FaCheckCircle },
+            'ACTIVE': { color: '#2DC275', text: 'Chưa sử dụng', icon: FaCheckCircle },
             'CANCELLED': { color: '#ff4d4f', text: 'Đã hủy', icon: null },
             'REFUNDED': { color: '#faad14', text: 'Đã hoàn tiền', icon: null }
         };
@@ -223,7 +223,7 @@ const MyTicketsTab = () => {
                                 <div className="mb-2">
                                     {getStatusBadge(selectedTicket.ticket_status)}
                                 </div>
-                                <div className="mb-2 px-3 py-1 d-inline-block fw-bold" style={{ color: '#52c41a', fontSize: '12px' }}>
+                                <div className="mb-2 px-3 py-1 d-inline-block fw-bold" style={{ color: '#2DC275', fontSize: '12px' }}>
                                     {(selectedTicket.ticket_type_name || 'Vé tham dự').toUpperCase()}
                                 </div>
                                 <h5 className="fw-bold mb-1 text-white">{selectedTicket.event_name}</h5>
@@ -231,7 +231,7 @@ const MyTicketsTab = () => {
                                     <div className="mb-1"><FaCalendar className="me-2" />{formatDate(selectedTicket.event_date)}</div>
                                     <div className="mb-1"><FaMapMarkerAlt className="me-2" />{selectedTicket.venue_name}</div>
                                     <div className="fw-bold text-white mt-2" style={{ fontSize: '13px' }}>
-                                        <FaChair className="me-2" style={{ color: '#52c41a' }} />
+                                        <FaChair className="me-2" style={{ color: '#2DC275' }} />
                                         {selectedTicket.seat ? `HÀNG GHẾ: ${selectedTicket.seat.row_name}${selectedTicket.seat.seat_number}` : `LOẠI VÉ: ${selectedTicket.ticket_type_name || 'Vé tham dự'}`}
                                     </div>
                                 </div>
@@ -279,8 +279,8 @@ const MyTicketsTab = () => {
 
                 .ticket-card-container:hover {
                     transform: translateY(-5px);
-                    border-color: #52c41a;
-                    box-shadow: 0 10px 30px rgba(82, 196, 26, 0.15);
+                    border-color: #2DC275;
+                    box-shadow: 0 10px 30px rgba(45, 194, 117, 0.15);
                 }
 
                 .perforation-notch {
@@ -299,7 +299,7 @@ const MyTicketsTab = () => {
                 .notch-bottom { bottom: -17px; }
 
                 .ticket-card-container:hover .perforation-notch {
-                    border-color: #52c41a;
+                    border-color: #2DC275;
                 }
 
                 .ticket-main-part {
@@ -332,7 +332,7 @@ const MyTicketsTab = () => {
                     font-size: 0.85rem;
                 }
 
-                .detail-icon { color: #52c41a; }
+                .detail-icon { color: #2DC275; }
 
                 .ticket-bottom-info {
                     margin-top: auto;
@@ -359,7 +359,7 @@ const MyTicketsTab = () => {
                 .info-value {
                     font-size: 1.1rem;
                     font-weight: 800;
-                    color: #52c41a;
+                    color: #2DC275;
                 }
 
                 .code-font {

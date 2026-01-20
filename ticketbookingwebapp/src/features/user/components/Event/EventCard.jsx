@@ -3,6 +3,7 @@ import { Card, Typography, Space, Tag } from 'antd';
 import { EnvironmentOutlined, ClockCircleOutlined, ArrowRightOutlined, FireOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { message } from 'antd';
+import { useAuth } from '@context/AuthContext';
 import { useFavorites } from '@context/FavoriteContext';
 import { formatCurrency } from '@shared/utils/eventUtils';
 import './EventCard.css';
@@ -10,17 +11,22 @@ import './EventCard.css';
 const { Text, Title } = Typography;
 
 const EventCard = ({ event }) => {
+    const { user, triggerLogin, isAuthenticated } = useAuth();
     const { isFavorited, toggleFavorite } = useFavorites();
     const favorited = isFavorited(event.id);
 
     const handleToggleFavorite = async (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (!isAuthenticated) {
+            triggerLogin();
+            return;
+        }
+
         const result = await toggleFavorite(event.id);
         if (result.success) {
             message.success(result.message);
-        } else {
-            message.error(result.message);
         }
     };
 

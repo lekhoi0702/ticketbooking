@@ -42,6 +42,7 @@ const EventList = () => {
         fetchEvents,
         handleDeleteClick,
         handleDeleteConfirm,
+        handleBulkDelete,
         showDeleteModal,
         setShowDeleteModal,
         eventToDelete,
@@ -62,8 +63,7 @@ const EventList = () => {
 
     return (
         <div className="event-list-page">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <Title level={4} style={{ margin: 0 }}>Quản lý sự kiện</Title>
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'flex-end' }}>
                 <Space>
                     <Link to="/organizer/create-event">
                         <Button type="primary" icon={<PlusOutlined />} disabled={loading || deleting}>
@@ -103,13 +103,15 @@ const EventList = () => {
                                                 >Sửa sự kiện</Button>
                                             </Tooltip>
                                         ) : (
-                                            <Tooltip title="Chuyển về bản nháp để có thể chỉnh sửa">
-                                                <Button
-                                                    icon={<ReloadOutlined />}
-                                                    onClick={() => handleCancelApproval(firstSelected.event_id)}
-                                                    loading={loading}
-                                                >Lấy về sửa</Button>
-                                            </Tooltip>
+                                            ['PENDING_APPROVAL', 'PUBLISHED'].includes(firstSelected.status) && (
+                                                <Tooltip title="Chuyển về bản nháp để có thể chỉnh sửa">
+                                                    <Button
+                                                        icon={<ReloadOutlined />}
+                                                        onClick={() => handleCancelApproval(firstSelected.event_id)}
+                                                        loading={loading}
+                                                    >Lấy về sửa</Button>
+                                                </Tooltip>
+                                            )
                                         )}
                                         <Tooltip title="Xem chi tiết">
                                             <Button
@@ -134,30 +136,40 @@ const EventList = () => {
                                                 type="primary"
                                                 icon={<CloudUploadOutlined />}
                                                 onClick={() => handlePublishEvent(firstSelected.event_id)}
-                                                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+                                                style={{ background: '#2DC275', borderColor: '#2DC275' }}
                                             >Đăng sự kiện</Button>
-                                        )}
-                                        {firstSelected.status === 'PENDING_APPROVAL' && (
-                                            <Button
-                                                danger
-                                                icon={<CloseCircleOutlined />}
-                                                onClick={() => handleCancelApproval(firstSelected.event_id)}
-                                            >Hủy duyệt</Button>
                                         )}
                                     </>
                                 )}
 
-                                {selectedEvents.every(e => ['DRAFT', 'REJECTED', 'PENDING_APPROVAL'].includes(e.status)) && (
+                                {/* Bulk delete button - only show if all selected events are DRAFT */}
+                                {selectedEvents.every(e => e.status === 'DRAFT') && (
                                     <Button
                                         danger
                                         icon={<DeleteOutlined />}
-                                        onClick={() => {
+                                        onClick={async () => {
                                             if (selectedRowKeys.length === 1) {
+                                                // Single delete - use existing modal
                                                 handleDeleteClick(firstSelected);
                                             } else {
-                                                message.info('Tính năng xóa hàng loạt đang được cập nhật');
+                                                // Bulk delete
+                                                const { Modal } = await import('antd');
+                                                Modal.confirm({
+                                                    title: 'Xác nhận xóa hàng loạt',
+                                                    content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} sự kiện đã chọn? Hành động này không thể hoàn tác.`,
+                                                    okText: 'Xóa',
+                                                    okType: 'danger',
+                                                    cancelText: 'Hủy',
+                                                    onOk: async () => {
+                                                        const result = await handleBulkDelete(selectedRowKeys);
+                                                        if (result.success) {
+                                                            setSelectedRowKeys([]);
+                                                        }
+                                                    }
+                                                });
                                             }
                                         }}
+                                        loading={deleting}
                                     >Xóa{selectedRowKeys.length > 1 ? ' hàng loạt' : ''}</Button>
                                 )}
                             </Space>
@@ -181,7 +193,7 @@ const EventList = () => {
                 styles={{ body: { padding: 0 } }}
                 extra={
                     <Text type="secondary">
-                        Tổng số: <Text strong style={{ color: '#52c41a' }}>{filteredEvents.length}</Text> sự kiện
+                        Tổng số: <Text strong style={{ color: '#2DC275' }}>{filteredEvents.length}</Text> sự kiện
                     </Text>
                 }
                 title={

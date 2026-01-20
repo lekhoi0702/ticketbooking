@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
-import { io } from 'socket.io-client';
-import { SOCKET_URL } from '@shared/constants';
 
 /**
  * Custom hook for checkout page logic

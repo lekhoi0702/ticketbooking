@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --ticketbooking-green: #52c41a;
-  --ticketbooking-bg: #000000;
+  --ticketbooking-green: #2DC275;
+  --ticketbooking-bg: rgb(39, 39, 42);
   --ticketbooking-text: #ffffff;
   --ticketbooking-gray: #1a1a1a;
   --light-gray: #e5e7eb;
@@ -29,7 +29,7 @@ body {
 }
 
 .dark-theme {
-  background-color: #000000 !important;
+  background-color: rgb(39, 39, 42) !important;
   color: #ffffff !important;
 }
 
@@ -75,6 +75,40 @@ body {
 .dark-theme .app-content .seat-item.seat-booked span,
 .dark-theme .app-content .seat-item.seat-booked .seat-number {
   color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Exception for Order Summary sidebar - use dark text on white background */
+.dark-theme .order-summary-sidebar.card {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+}
+
+.dark-theme .order-summary-sidebar h1,
+.dark-theme .order-summary-sidebar h2,
+.dark-theme .order-summary-sidebar h3,
+.dark-theme .order-summary-sidebar h4,
+.dark-theme .order-summary-sidebar h5,
+.dark-theme .order-summary-sidebar h6,
+.dark-theme .order-summary-sidebar p,
+.dark-theme .order-summary-sidebar span,
+.dark-theme .order-summary-sidebar div {
+  color: #1f2937 !important;
+}
+
+.dark-theme .order-summary-sidebar .text-muted {
+  color: #6b7280 !important;
+}
+
+.dark-theme .order-summary-sidebar .text-primary {
+  color: #2DC275 !important;
+}
+
+.dark-theme .order-summary-sidebar .text-success {
+  color: #2DC275 !important;
+}
+
+.dark-theme .order-summary-sidebar .fw-bold {
+  color: #111827 !important;
 }
 
 

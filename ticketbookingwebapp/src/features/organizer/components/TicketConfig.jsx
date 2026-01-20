@@ -79,7 +79,7 @@ const TicketConfig = ({
         <div style={{ marginTop: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <Space>
-                    <AppstoreOutlined style={{ color: '#52c41a' }} />
+                    <AppstoreOutlined style={{ color: '#2DC275' }} />
                     <Title level={5} style={{ margin: 0 }}>Các hạng vé & Sơ đồ ghế</Title>
                 </Space>
                 <Button
@@ -109,7 +109,7 @@ const TicketConfig = ({
                                     <Text type="secondary" style={{ fontSize: 13 }}>{formatCurrency(tt.price)}</Text>
                                     <Badge
                                         count={`${tt.selectedSeats?.length || 0} Ghế`}
-                                        style={{ backgroundColor: '#52c41a' }}
+                                        style={{ backgroundColor: '#2DC275' }}
                                     />
                                 </Space>
                                 {ticketTypes.length > 1 && (
