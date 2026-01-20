@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
+import { io } from 'socket.io-client';
+import { SOCKET_URL } from '@shared/constants';
 
 /**
  * Custom hook for checkout page logic
@@ -59,12 +61,8 @@ export const useCheckout = () => {
         }
     }, [user]);
 
-    // Fetch event data on mount
-    useEffect(() => {
-        fetchEventData();
-    }, [eventId]);
-
-    const fetchEventData = async () => {
+    // Define fetchEventData as a useCallback to prevent unnecessary re-creation
+    const fetchEventData = useCallback(async () => {
         try {
             setLoading(true);
             const [eventRes, ticketTypesRes] = await Promise.all([
@@ -85,7 +83,14 @@ export const useCheckout = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [eventId]); // Depend on eventId
+
+    // Fetch event data on mount
+    useEffect(() => {
+        fetchEventData();
+    }, [fetchEventData]);
+
+    // No socket connection needed in checkout - seat selection happens in EventDetail page
 
     const calculateTotal = () => {
         let total = 0;
