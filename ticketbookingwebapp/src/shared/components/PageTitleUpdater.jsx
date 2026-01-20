@@ -15,7 +15,6 @@ const TITLE_MAP = {
     '/admin/statistics': 'Thống kê hệ thống | Admin',
     '/admin/categories': 'Quản lý danh mục | Admin',
     '/admin/banners': 'Quản lý Banner | Admin',
-    '/admin/event-deletion-requests': 'Yêu cầu xóa sự kiện | Admin',
 
     // Organizer
     '/organizer/home': 'Dành cho Nhà tổ chức | TicketBooking',
@@ -25,6 +24,7 @@ const TITLE_MAP = {
     '/organizer/venues': 'Quản lý địa điểm | Organizer',
     '/organizer/tickets': 'Quản lý vé | Organizer',
     '/organizer/orders': 'Quản lý đơn hàng | Organizer',
+    '/organizer/refund-requests': 'Yêu cầu hoàn tiền | Organizer',
     '/organizer/discounts': 'Quản lý mã giảm giá | Organizer',
     '/organizer/profile': 'Hồ sơ Nhà tổ chức | Organizer',
 };

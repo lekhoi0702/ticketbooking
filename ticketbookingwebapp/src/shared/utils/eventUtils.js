@@ -24,7 +24,10 @@ export const parseLocalDateTime = (datetimeString) => {
     return date;
 };
 
-export const getImageUrl = (path, placeholder = 'https://via.placeholder.com/800x450?text=TicketBooking') => {
+// Default placeholder - using data URI to avoid external dependency
+const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450"%3E%3Crect fill="%23333" width="800" height="450"/%3E%3Ctext fill="%232DC275" font-family="Arial" font-size="32" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ETicketBooking%3C/text%3E%3C/svg%3E';
+
+export const getImageUrl = (path, placeholder = DEFAULT_PLACEHOLDER) => {
     if (!path) return placeholder;
     // Return external URLs (http/https) as-is
     if (path.startsWith('http://') || path.startsWith('https://')) return path;

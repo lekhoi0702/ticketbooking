@@ -235,5 +235,19 @@ export const adminApi = {
             throw new Error(error.message || 'Failed to delete banner');
         }
         return await response.json();
+    },
+
+    // Discount Management
+    async getAllDiscounts(eventId = null) {
+        const params = eventId ? `?event_id=${eventId}` : '';
+        const response = await fetch(`${API_BASE_URL}/admin/discounts${params}`);
+        if (!response.ok) throw new Error('Failed to fetch discounts');
+        return await response.json();
+    },
+
+    async getEventDiscounts(eventId) {
+        const response = await fetch(`${API_BASE_URL}/admin/events/${eventId}/discounts`);
+        if (!response.ok) throw new Error('Failed to fetch event discounts');
+        return await response.json();
     }
 };

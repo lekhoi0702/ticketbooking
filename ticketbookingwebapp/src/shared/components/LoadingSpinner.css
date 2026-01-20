@@ -10,8 +10,10 @@
 .loading-spinner-wrapper.fullscreen {
     position: fixed !important;
     top: 120px !important;
-    /* Starts below the header */
+    /* Starts below the header and navbar */
     left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     width: 100vw !important;
     height: calc(100vh - 120px) !important;
     background: rgb(39, 39, 42) !important;

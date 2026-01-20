@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/qrcodes/*.png
+uploads/banner/*.jpg
+uploads/banner/*.png
+uploads/organizer/**/*.jpg
+uploads/organizer/**/*.png
+
+# Keep directory structure
+!uploads/.gitkeep
+!uploads/qrcodes/.gitkeep
+!uploads/banner/.gitkeep
+!uploads/organizer/.gitkeep
+
+# SSL Certificates (keep .example files)
+*.pem
+!CA_cert.pem.example
+
+# Backup files
+*.bak
+*.backup
+*.sql.backup
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Migrations (keep version files, ignore __pycache__)
+migrations/__pycache__/
+migrations/versions/__pycache__/

@@ -70,7 +70,6 @@ def create_app():
     from app.routes.admin import admin_bp
     from app.routes.seats import seats_bp
     from app.routes.auth import auth_bp
-    from app.routes.event_deletion import event_deletion_bp
     from app.routes.organizer_discount import organizer_discount_bp
     from app.routes.banners import banners_bp
 
@@ -84,7 +83,6 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix="/api")
     app.register_blueprint(seats_bp, url_prefix="/api")
     app.register_blueprint(auth_bp, url_prefix="/api")
-    app.register_blueprint(event_deletion_bp, url_prefix="/api")
     app.register_blueprint(organizer_discount_bp, url_prefix="/api")
     app.register_blueprint(banners_bp, url_prefix="/api")
     

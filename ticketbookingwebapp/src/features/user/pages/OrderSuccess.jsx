@@ -25,6 +25,8 @@ const OrderSuccess = () => {
             const response = await api.getOrderByCode(orderCode);
 
             if (response.success) {
+                console.log('Order data:', response.data);
+                console.log('Order status:', response.data?.order?.order_status);
                 setOrderData(response.data);
             } else {
                 setError(response.message || 'Không tìm thấy đơn hàng');

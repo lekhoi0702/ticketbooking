@@ -7,7 +7,7 @@ import { message } from 'antd';
 import { getImageUrl, parseLocalDateTime } from '@shared/utils/eventUtils';
 
 const EventHero = ({ event, onToggleFavorite }) => {
-    const bannerUrl = getImageUrl(event.banner_image_url, 'https://via.placeholder.com/1200x600?text=TicketBooking');
+    const bannerUrl = getImageUrl(event.banner_image_url);
 
     // Date Logic - Use parseLocalDateTime to prevent timezone issues
     const startDate = parseLocalDateTime(event.start_datetime);

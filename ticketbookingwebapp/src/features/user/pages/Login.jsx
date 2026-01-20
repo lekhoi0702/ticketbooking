@@ -56,9 +56,23 @@ const Login = () => {
             if (activeTab === 'register') {
                 const res = await api.register(formData);
                 if (res.success) {
-                    setActiveTab('login');
-                    setError({ type: 'success', msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
-                    setFormData({ email: '', password: '', full_name: '', phone: '' });
+                    // Auto-login after successful registration
+                    const loginRes = await api.login({
+                        email: formData.email,
+                        password: formData.password,
+                        required_role: 'USER'
+                    });
+                    if (loginRes.success) {
+                        login(loginRes.user, loginRes.token);
+                        const from = location.state?.from?.pathname || "/";
+                        const fromState = location.state?.from?.state || {};
+                        navigate(from, { state: fromState, replace: true });
+                    } else {
+                        // If auto-login fails, switch to login tab
+                        setActiveTab('login');
+                        setError({ type: 'success', msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
+                        setFormData({ ...formData, full_name: '', phone: '' });
+                    }
                 }
             } else {
                 const res = await api.login({

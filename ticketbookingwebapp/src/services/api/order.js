@@ -49,6 +49,17 @@ export const orderApi = {
         return await response.json();
     },
 
+    async cancelRefundRequest(orderId) {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel-refund-request`, {
+            method: 'POST',
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to cancel refund request');
+        }
+        return await response.json();
+    },
+
     async checkDiscount(data) {
         const baseUrl = API_BASE_URL || 'http://127.0.0.1:5000/api';
         console.log('Checking discount at:', `${baseUrl}/orders/validate-discount`);

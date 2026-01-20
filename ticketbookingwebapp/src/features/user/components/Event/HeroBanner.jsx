@@ -1,6 +1,7 @@
 import React from 'react';
 import { Carousel, Button, Typography, Image } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { getImageUrl } from '@shared/utils/eventUtils';
 import './HeroBanner.css';
 
@@ -33,12 +34,29 @@ const HeroBanner = ({ banners = [] }) => {
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                             <div className="banner-overlay">
-                                <div className="banner-content">
-                                    <Title level={1} style={{ color: 'white', marginBottom: 16 }}>TICKETBOOKING</Title>
-                                    <Text style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 18 }}>
-                                        Trải nghiệm những sự kiện đẳng cấp nhất
-                                    </Text>
-                                </div>
+                                <motion.div 
+                                    className="banner-content"
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.8, delay: 0.3 }}
+                                >
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ duration: 0.6, delay: 0.5 }}
+                                    >
+                                        <Title level={1} style={{ color: 'white', marginBottom: 16 }}>TICKETBOOKING</Title>
+                                    </motion.div>
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.6, delay: 0.7 }}
+                                    >
+                                        <Text style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 18 }}>
+                                            Trải nghiệm những sự kiện đẳng cấp nhất
+                                        </Text>
+                                    </motion.div>
+                                </motion.div>
                             </div>
                         </div>
                     </div>
@@ -66,24 +84,41 @@ const HeroBanner = ({ banners = [] }) => {
                                     }}
                                 />
                                 <div className="banner-overlay">
-                                    <div className="banner-content">
+                                    <motion.div 
+                                        className="banner-content"
+                                        initial={{ opacity: 0, y: 40 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.8, delay: 0.2 }}
+                                    >
                                         {banner.title && (
-                                            <Title level={1} className="banner-title">
-                                                {banner.title}
-                                            </Title>
+                                            <motion.div
+                                                initial={{ opacity: 0, x: -30 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ duration: 0.6, delay: 0.4 }}
+                                            >
+                                                <Title level={1} className="banner-title">
+                                                    {banner.title}
+                                                </Title>
+                                            </motion.div>
                                         )}
 
                                         {banner.link && (
-                                            <Button
-                                                type="primary"
-                                                size="large"
-                                                className="banner-button"
-                                                onClick={() => navigate(banner.link)}
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.8 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ duration: 0.5, delay: 0.6 }}
                                             >
-                                                Xem Chi Tiết
-                                            </Button>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    className="banner-button"
+                                                    onClick={() => navigate(banner.link)}
+                                                >
+                                                    Xem Chi Tiết
+                                                </Button>
+                                            </motion.div>
                                         )}
-                                    </div>
+                                    </motion.div>
                                 </div>
                             </div>
                         </div>

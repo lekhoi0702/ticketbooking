@@ -6,6 +6,7 @@ from app.models.order import Order
 from app.models.payment import Payment
 from app.models.venue import Venue
 from app.models.event_category import EventCategory
+from app.models.discount import Discount
 from sqlalchemy import func
 from datetime import datetime
 
@@ -165,7 +166,7 @@ def update_event_status(event_id):
             if new_status == 'APPROVED':
                  new_status = 'PUBLISHED'
             
-            valid_statuses = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION']
+            valid_statuses = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION', 'DELETED']
             if new_status not in valid_statuses:
                 return jsonify({'success': False, 'message': 'Trạng thái không hợp lệ'}), 400
             event.status = new_status
@@ -499,6 +500,123 @@ def admin_delete_category(category_id):
         }), 200
     except Exception as e:
         db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@admin_bp.route("/admin/discounts", methods=["GET"])
+def admin_get_all_discounts():
+    """Lấy danh sách tất cả mã giảm giá (có thể lọc theo event_id)"""
+    try:
+        event_id = request.args.get('event_id', type=int)
+        
+        query = Discount.query
+        if event_id:
+            query = query.filter_by(event_id=event_id)
+        
+        discounts = query.order_by(Discount.created_at.desc()).all()
+        
+        result = []
+        for d in discounts:
+            item = {
+                'discount_id': d.discount_id,
+                'discount_code': d.discount_code,
+                'discount_name': d.discount_name,
+                'discount_type': d.discount_type,
+                'discount_value': float(d.discount_value) if d.discount_value else 0,
+                'max_discount_amount': float(d.max_discount_amount) if d.max_discount_amount else None,
+                'min_order_amount': float(d.min_order_amount) if d.min_order_amount else 0,
+                'usage_limit': d.usage_limit,
+                'used_count': d.used_count or 0,
+                'start_date': d.start_date.isoformat() if d.start_date else None,
+                'end_date': d.end_date.isoformat() if d.end_date else None,
+                'is_active': d.is_active,
+                'created_at': d.created_at.isoformat() if d.created_at else None,
+            }
+            
+            # Status logic
+            if not d.is_active:
+                item['status'] = 'INACTIVE'
+            elif d.end_date and d.end_date < datetime.utcnow():
+                item['status'] = 'EXPIRED'
+            elif d.usage_limit and d.used_count >= d.usage_limit:
+                item['status'] = 'USED_UP'
+            else:
+                item['status'] = 'ACTIVE'
+            
+            # Event info
+            if d.event_id:
+                ev = Event.query.get(d.event_id)
+                item['event_id'] = d.event_id
+                item['event_name'] = ev.event_name if ev else 'Sự kiện đã xóa'
+            else:
+                item['event_id'] = None
+                item['event_name'] = 'Tất cả sự kiện'
+            
+            # Organizer info
+            if d.manager_id:
+                organizer = User.query.get(d.manager_id)
+                item['organizer_name'] = organizer.full_name if organizer else 'N/A'
+            else:
+                item['organizer_name'] = 'Hệ thống'
+            
+            result.append(item)
+        
+        return jsonify({
+            'success': True,
+            'data': result
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@admin_bp.route("/admin/events/<int:event_id>/discounts", methods=["GET"])
+def admin_get_event_discounts(event_id):
+    """Lấy danh sách mã giảm giá của một sự kiện cụ thể"""
+    try:
+        event = Event.query.get(event_id)
+        if not event:
+            return jsonify({'success': False, 'message': 'Sự kiện không tồn tại'}), 404
+        
+        discounts = Discount.query.filter_by(event_id=event_id).order_by(Discount.created_at.desc()).all()
+        
+        result = []
+        for d in discounts:
+            item = {
+                'discount_id': d.discount_id,
+                'discount_code': d.discount_code,
+                'discount_name': d.discount_name,
+                'discount_type': d.discount_type,
+                'discount_value': float(d.discount_value) if d.discount_value else 0,
+                'max_discount_amount': float(d.max_discount_amount) if d.max_discount_amount else None,
+                'min_order_amount': float(d.min_order_amount) if d.min_order_amount else 0,
+                'usage_limit': d.usage_limit,
+                'used_count': d.used_count or 0,
+                'start_date': d.start_date.isoformat() if d.start_date else None,
+                'end_date': d.end_date.isoformat() if d.end_date else None,
+                'is_active': d.is_active,
+            }
+            
+            # Status
+            if not d.is_active:
+                item['status'] = 'INACTIVE'
+            elif d.end_date and d.end_date < datetime.utcnow():
+                item['status'] = 'EXPIRED'
+            elif d.usage_limit and d.used_count >= d.usage_limit:
+                item['status'] = 'USED_UP'
+            else:
+                item['status'] = 'ACTIVE'
+            
+            result.append(item)
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'event': {
+                'event_id': event.event_id,
+                'event_name': event.event_name
+            }
+        }), 200
+    except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
 

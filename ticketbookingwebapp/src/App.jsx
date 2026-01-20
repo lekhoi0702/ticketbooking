@@ -36,6 +36,7 @@ import TicketManagement from '@features/organizer/pages/TicketManagement';
 import OrganizerProfile from '@features/organizer/pages/OrganizerProfile';
 import OrganizerProfileEdit from '@features/organizer/pages/OrganizerProfileEdit';
 import ManageOrders from '@features/organizer/pages/ManageOrders';
+import RefundRequests from '@features/organizer/pages/RefundRequests';
 import DiscountManagement from '@features/organizer/pages/DiscountManagement';
 
 // Admin Imports
@@ -44,7 +45,6 @@ import UsersManagement from '@features/admin/pages/Users';
 import AdminEventsManagement from '@features/admin/pages/Events';
 import AdminOrdersManagement from '@features/admin/pages/Orders';
 
-import EventDeletionRequests from '@features/admin/pages/EventDeletionRequests';
 import AdminLogin from '@features/admin/pages/Login';
 import AdminProfile from '@features/admin/pages/Profile';
 import AdminStatistics from '@features/admin/pages/Statistics';
@@ -136,8 +136,6 @@ function App() {
                   <Route path="banners" element={<AdminBanners />} />
                   <Route path="events" element={<AdminEventsManagement />} />
                   <Route path="orders" element={<AdminOrdersManagement />} />
-
-                  <Route path="event-deletion-requests" element={<EventDeletionRequests />} />
                   <Route path="statistics" element={<AdminStatistics />} />
                   <Route path="profile" element={<AdminProfile />} />
                 </Route>
@@ -165,6 +163,7 @@ function App() {
                   <Route path="profile" element={<OrganizerProfile />} />
                   <Route path="profile/edit" element={<OrganizerProfileEdit />} />
                   <Route path="orders" element={<ManageOrders />} />
+                  <Route path="refund-requests" element={<RefundRequests />} />
                   <Route path="discounts" element={<DiscountManagement />} />
                 </Route>
               </Routes>

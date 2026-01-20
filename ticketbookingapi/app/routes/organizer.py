@@ -79,30 +79,14 @@ def update_event(event_id):
 
 @organizer_bp.route("/organizer/events/<int:event_id>", methods=["DELETE"])
 def delete_event(event_id):
-    """Request event deletion"""
+    """Delete event (soft delete - sets status to DELETED)"""
     try:
         data = request.get_json() or {}
-        deletion_request, active_orders = OrganizerEventService.delete_event(event_id, data)
+        OrganizerEventService.delete_event(event_id, data)
         
-        if deletion_request is None:
-             return jsonify({
-                'success': True,
-                'message': 'Sự kiện đã được xóa thành công.',
-                'requires_approval': False
-            }), 200
-
-        message_text = 'Yêu cầu xóa sự kiện đã được gửi đến Admin để phê duyệt.'
-        if active_orders > 0:
-            message_text = f'Sự kiện có {active_orders} đơn hàng chưa hủy. ' + message_text
-            
         return jsonify({
             'success': True,
-            'requires_approval': True,
-            'message': message_text,
-            'data': {
-                'request_id': deletion_request.request_id,
-                'active_orders': active_orders
-            }
+            'message': 'Sự kiện đã được xóa thành công.'
         }), 200
     except ValueError as e:
         return jsonify({'success': False, 'message': str(e)}), 400
@@ -240,6 +224,22 @@ def reject_refund(order_id):
     except ValueError as e:
         return jsonify({'success': False, 'message': str(e)}), 400
     except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@organizer_bp.route("/organizer/refund-requests", methods=["GET"])
+def get_refund_requests():
+    """Get all refund requests (CANCELLATION_PENDING orders) for organizer's events"""
+    try:
+        manager_id = request.args.get('manager_id', type=int)
+        if not manager_id:
+            return jsonify({'success': False, 'message': 'Missing manager_id'}), 400
+        
+        data = OrganizerService.get_refund_requests(manager_id)
+        return jsonify({'success': True, 'data': data}), 200
+    except Exception as e:
+        import traceback
+        print(f"[ERROR] get_refund_requests: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @organizer_bp.route("/organizer/venues", methods=["GET"])

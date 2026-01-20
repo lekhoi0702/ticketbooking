@@ -235,9 +235,26 @@ class OrderService:
         tickets = Ticket.query.filter_by(order_id=order_id).all()
         payment = Payment.query.filter_by(order_id=order_id).first()
         
+        # Enrich ticket data with ticket type name and seat info
+        tickets_data = []
+        for ticket in tickets:
+            ticket_dict = ticket.to_dict()
+            
+            # Get ticket type name
+            ticket_type = TicketType.query.get(ticket.ticket_type_id)
+            ticket_dict['ticket_type_name'] = ticket_type.type_name if ticket_type else 'N/A'
+            
+            # Get seat name
+            if ticket.seat:
+                ticket_dict['seat_name'] = f"{ticket.seat.row_name}{ticket.seat.seat_number}"
+            else:
+                ticket_dict['seat_name'] = None
+                
+            tickets_data.append(ticket_dict)
+        
         return {
             'order': order.to_dict(),
-            'tickets': [ticket.to_dict() for ticket in tickets],
+            'tickets': tickets_data,
             'payment': payment.to_dict() if payment else None
         }
 

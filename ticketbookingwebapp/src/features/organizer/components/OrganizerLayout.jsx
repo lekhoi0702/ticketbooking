@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@context/AuthContext';
 import {
@@ -11,7 +11,11 @@ import {
     ConfigProvider,
     Breadcrumb,
     Space,
-    Badge
+    Badge,
+    List,
+    Empty,
+    Spin,
+    Divider
 } from 'antd';
 import {
     UserOutlined,
@@ -21,14 +25,16 @@ import {
     HomeOutlined,
     AppstoreOutlined,
     EnvironmentOutlined,
-
     QrcodeOutlined,
     LoadingOutlined,
     ShoppingOutlined,
-    TagsOutlined
+    TagsOutlined,
+    RollbackOutlined,
+    RightOutlined
 } from '@ant-design/icons';
 import { AntdThemeConfig } from '@theme/AntdThemeConfig';
 import { usePendingRefunds } from '@shared/hooks/usePendingRefunds';
+import { api } from '@services/api';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -37,7 +43,31 @@ const OrganizerLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const { pendingCount } = usePendingRefunds();
+    const { pendingCount, refresh: refreshPendingCount } = usePendingRefunds();
+    const [notifications, setNotifications] = useState([]);
+    const [loadingNotifications, setLoadingNotifications] = useState(false);
+    const [notificationOpen, setNotificationOpen] = useState(false);
+
+    const fetchNotifications = async () => {
+        if (!user?.user_id) return;
+        try {
+            setLoadingNotifications(true);
+            const res = await api.getRefundRequests(user.user_id);
+            if (res.success) {
+                setNotifications(res.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        } finally {
+            setLoadingNotifications(false);
+        }
+    };
+
+    useEffect(() => {
+        if (notificationOpen && user?.user_id) {
+            fetchNotifications();
+        }
+    }, [notificationOpen, user?.user_id]);
 
     const handleLogout = () => {
         logout();
@@ -70,6 +100,17 @@ const OrganizerLayout = () => {
             onClick: () => navigate('/organizer/orders'),
         },
         {
+            key: '/organizer/refund-requests',
+            icon: <RollbackOutlined />,
+            label: (
+                <Space>
+                    Yêu cầu hoàn tiền
+                    {pendingCount > 0 && <Badge count={pendingCount} size="small" />}
+                </Space>
+            ),
+            onClick: () => navigate('/organizer/refund-requests'),
+        },
+        {
             key: '/organizer/discounts',
             icon: <TagsOutlined />,
             label: 'Mã giảm giá',
@@ -100,6 +141,7 @@ const OrganizerLayout = () => {
             'profile': 'Trang cá nhân',
             'edit': 'Chỉnh sửa cá nhân',
             'orders': 'Quản lý đơn hàng',
+            'refund-requests': 'Yêu cầu hoàn tiền',
             'discounts': 'Mã giảm giá'
         };
 
@@ -192,14 +234,132 @@ const OrganizerLayout = () => {
                     </Space>
 
                     <Space size={20}>
-                        <Badge count={pendingCount} offset={[-5, 5]}>
-                            <Button
-                                type="text"
-                                icon={<BellOutlined />}
-                                style={{ fontSize: 18, color: pendingCount > 0 ? '#2DC275' : '#606266' }}
-                                title={pendingCount > 0 ? `${pendingCount} yêu cầu hoàn tiền chờ xử lý` : 'Thông báo'}
-                            />
-                        </Badge>
+                        <Dropdown
+                            open={notificationOpen}
+                            onOpenChange={setNotificationOpen}
+                            trigger={['click']}
+                            placement="bottomRight"
+                            dropdownRender={() => (
+                                <div style={{
+                                    width: 380,
+                                    background: '#fff',
+                                    borderRadius: 8,
+                                    boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+                                    maxHeight: 450,
+                                    overflow: 'hidden'
+                                }}>
+                                    <div style={{ 
+                                        padding: '12px 16px', 
+                                        borderBottom: '1px solid #f0f0f0',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        <Text strong style={{ fontSize: 15 }}>
+                                            Thông báo {pendingCount > 0 && <Badge count={pendingCount} style={{ marginLeft: 8 }} />}
+                                        </Text>
+                                        {pendingCount > 0 && (
+                                            <Button 
+                                                type="link" 
+                                                size="small"
+                                                onClick={() => {
+                                                    setNotificationOpen(false);
+                                                    navigate('/organizer/refund-requests');
+                                                }}
+                                            >
+                                                Xem tất cả <RightOutlined />
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <div style={{ maxHeight: 380, overflow: 'auto' }}>
+                                        {loadingNotifications ? (
+                                            <div style={{ padding: 40, textAlign: 'center' }}>
+                                                <Spin />
+                                            </div>
+                                        ) : notifications.length === 0 ? (
+                                            <Empty 
+                                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                                description="Không có thông báo mới"
+                                                style={{ padding: '40px 0' }}
+                                            />
+                                        ) : (
+                                            <List
+                                                dataSource={notifications.slice(0, 5)}
+                                                renderItem={(item) => (
+                                                    <List.Item
+                                                        style={{ 
+                                                            padding: '12px 16px',
+                                                            cursor: 'pointer',
+                                                            transition: 'background 0.2s'
+                                                        }}
+                                                        className="notification-item-hover"
+                                                        onClick={() => {
+                                                            setNotificationOpen(false);
+                                                            navigate('/organizer/refund-requests');
+                                                        }}
+                                                    >
+                                                        <List.Item.Meta
+                                                            avatar={
+                                                                <Avatar 
+                                                                    style={{ backgroundColor: '#fff2e8', color: '#fa8c16' }}
+                                                                    icon={<RollbackOutlined />}
+                                                                />
+                                                            }
+                                                            title={
+                                                                <Text style={{ fontSize: 13 }}>
+                                                                    Yêu cầu hoàn tiền từ <Text strong>{item.customer_name || item.user_name || 'Khách hàng'}</Text>
+                                                                </Text>
+                                                            }
+                                                            description={
+                                                                <div>
+                                                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                                                        Mã đơn: {item.order_code}
+                                                                    </Text>
+                                                                    <br />
+                                                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                                                        {item.event_name} • <Text style={{ color: '#52c41a' }}>{item.total_amount?.toLocaleString()} ₫</Text>
+                                                                    </Text>
+                                                                </div>
+                                                            }
+                                                        />
+                                                    </List.Item>
+                                                )}
+                                            />
+                                        )}
+                                    </div>
+                                    {notifications.length > 5 && (
+                                        <div style={{ 
+                                            padding: '10px 16px', 
+                                            borderTop: '1px solid #f0f0f0',
+                                            textAlign: 'center'
+                                        }}>
+                                            <Button 
+                                                type="link"
+                                                onClick={() => {
+                                                    setNotificationOpen(false);
+                                                    navigate('/organizer/refund-requests');
+                                                }}
+                                            >
+                                                Xem thêm {notifications.length - 5} yêu cầu khác
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        >
+                            <Badge count={pendingCount} offset={[-5, 5]}>
+                                <Button
+                                    type="text"
+                                    icon={<BellOutlined />}
+                                    style={{ 
+                                        fontSize: 18, 
+                                        color: pendingCount > 0 ? '#2DC275' : '#606266',
+                                        animation: pendingCount > 0 ? 'bell-shake 0.5s ease-in-out' : 'none'
+                                    }}
+                                    title={pendingCount > 0 ? `${pendingCount} yêu cầu hoàn tiền chờ xử lý` : 'Thông báo'}
+                                />
+                            </Badge>
+                        </Dropdown>
 
                         <div
                             style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 4, transition: 'background 0.3s', display: 'flex', alignItems: 'center', gap: 8 }}
@@ -227,6 +387,22 @@ const OrganizerLayout = () => {
                     <Text type="secondary">© 2026 TicketBooking</Text>
                 </div>
             </Layout>
+            
+            {/* Inline styles for hover effects and animations */}
+            <style>{`
+                .notification-item-hover:hover {
+                    background: #f5f5f5 !important;
+                }
+                @keyframes bell-shake {
+                    0% { transform: rotate(0); }
+                    15% { transform: rotate(15deg); }
+                    30% { transform: rotate(-15deg); }
+                    45% { transform: rotate(10deg); }
+                    60% { transform: rotate(-10deg); }
+                    75% { transform: rotate(5deg); }
+                    100% { transform: rotate(0); }
+                }
+            `}</style>
         </Layout>
     );
 };

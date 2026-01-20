@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Nav, Tab, Tabs } from 'react-bootstrap';
+import { message } from 'antd';
 
 // Hooks
 import { useEventDetail } from '@shared/hooks/useEventDetail';
@@ -24,9 +25,10 @@ import './EventDetail.css';
 function EventDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated, showLoginModal, setShowLoginModal, triggerLogin } = useAuth();
+    const { isAuthenticated, showLoginModal, setShowLoginModal, triggerLogin, redirectIntent, clearRedirectIntent } = useAuth();
     const { toggleFavorite } = useFavorites();
     const [activeTab, setActiveTab] = React.useState('tickets');
+    const pendingActionRef = useRef(null);
 
     const {
         event,
@@ -43,6 +45,37 @@ function EventDetail() {
         calculateTotal,
         validateSelection
     } = useEventDetail(id);
+
+    // Handle pending actions after login - MUST be before any early returns
+    useEffect(() => {
+        const handlePendingAction = async () => {
+            if (!isAuthenticated || !redirectIntent || !event) return;
+            
+            // Handle favorite action
+            if (redirectIntent.action === 'favorite' && redirectIntent.eventId === parseInt(id)) {
+                clearRedirectIntent();
+                const result = await toggleFavorite(parseInt(id));
+                if (result.success) {
+                    message.success(result.message);
+                }
+            }
+            
+            // Handle checkout action
+            if (redirectIntent.action === 'checkout' && redirectIntent.eventId === parseInt(id)) {
+                clearRedirectIntent();
+                // Navigate to checkout
+                navigate(`/checkout/${event.event_id}`, {
+                    state: {
+                        selectedTickets,
+                        selectedSeats,
+                        hasSeatMap
+                    }
+                });
+            }
+        };
+        
+        handlePendingAction();
+    }, [isAuthenticated, redirectIntent, id, event, clearRedirectIntent, toggleFavorite, navigate, selectedTickets, selectedSeats, hasSeatMap]);
 
     if (loading) {
         return <LoadingSpinner fullScreen tip="Đang tải thông tin sự kiện..." />;
@@ -65,7 +98,12 @@ function EventDetail() {
         }
 
         if (!isAuthenticated) {
-            triggerLogin();
+            // Store intent to checkout after login
+            triggerLogin({ 
+                action: 'checkout', 
+                eventId: parseInt(id),
+                state: { selectedTickets, selectedSeats, hasSeatMap }
+            });
             return;
         }
 
@@ -74,13 +112,13 @@ function EventDetail() {
 
     const handleToggleFavorite = async (eventId) => {
         if (!isAuthenticated) {
-            triggerLogin();
+            triggerLogin({ action: 'favorite', eventId });
             return;
         }
 
         const result = await toggleFavorite(eventId);
         if (result.success) {
-            // Success message handled by useFavorites/API
+            message.success(result.message);
         }
     };
 

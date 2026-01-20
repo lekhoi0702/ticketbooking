@@ -23,9 +23,8 @@ const Header = () => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
     const [categories, setCategories] = useState([]);
-    const [authRedirectPath, setAuthRedirectPath] = useState(null);
 
-    const { user, logout, isAuthenticated, showLoginModal, setShowLoginModal, triggerLogin } = useAuth();
+    const { user, logout, isAuthenticated, showLoginModal, setShowLoginModal, triggerLogin, redirectIntent, clearRedirectIntent } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const suggestionRef = useRef(null);
@@ -84,15 +83,17 @@ const Header = () => {
         if (isAuthenticated) {
             navigate('/profile?tab=tickets');
         } else {
-            setAuthRedirectPath('/profile?tab=tickets');
-            triggerLogin();
+            triggerLogin({ path: '/profile?tab=tickets', action: 'navigate' });
         }
     };
 
     const handleLoginSuccess = () => {
-        if (authRedirectPath) {
-            navigate(authRedirectPath);
-            setAuthRedirectPath(null);
+        // Handle redirect intent after successful login
+        if (redirectIntent) {
+            if (redirectIntent.action === 'navigate' && redirectIntent.path) {
+                navigate(redirectIntent.path);
+            }
+            clearRedirectIntent();
         }
     };
 
@@ -217,7 +218,7 @@ const Header = () => {
                                     <Button
                                         type="text"
                                         className="login-btn-text"
-                                        onClick={triggerLogin}
+                                        onClick={() => triggerLogin()}
                                     >
                                         Đăng nhập | Đăng ký
                                     </Button>

@@ -12,7 +12,9 @@ import {
     Modal,
     Select,
     Descriptions,
-    Divider
+    Divider,
+    Row,
+    Col
 } from 'antd';
 import {
     SearchOutlined,
@@ -113,7 +115,13 @@ const AdminOrdersManagement = () => {
         try {
             const res = await api.getOrder(orderId);
             if (res.success) {
-                setSelectedOrder(res.data);
+                // Flatten nested structure: { order: {...}, tickets: [...] } -> { ...order, tickets: [...] }
+                const orderData = {
+                    ...res.data.order,
+                    tickets: res.data.tickets || [],
+                    payment: res.data.payment
+                };
+                setSelectedOrder(orderData);
                 setDetailVisible(true);
             }
         } catch (error) {
@@ -350,16 +358,22 @@ const AdminOrdersManagement = () => {
                             size="small"
                             columns={[
                                 { title: 'Mã vé', dataIndex: 'ticket_code', key: 'code', render: t => <Text code>{t}</Text> },
-                                { title: 'Loại vé', dataIndex: 'ticket_type_name', key: 'type' },
+                                { title: 'Loại vé', dataIndex: 'ticket_type_name', key: 'type', render: t => t || 'N/A' },
                                 { title: 'Ghế', dataIndex: 'seat_name', key: 'seat', render: t => t || 'Vé tự do' },
                                 { title: 'Giá', dataIndex: 'price', key: 'price', render: p => formatCurrency(p) },
                                 {
                                     title: 'Trạng thái',
-                                    dataIndex: 'status',
+                                    dataIndex: 'ticket_status',
                                     key: 'status',
                                     render: s => {
-                                        let color = s === 'sold' ? 'green' : 'default';
-                                        return <Tag color={color}>{s.toUpperCase()}</Tag>;
+                                        const statusMap = {
+                                            'ACTIVE': { color: 'green', label: 'Hoạt động' },
+                                            'USED': { color: 'blue', label: 'Đã sử dụng' },
+                                            'CANCELLED': { color: 'red', label: 'Đã hủy' },
+                                            'REFUNDED': { color: 'orange', label: 'Đã hoàn tiền' }
+                                        };
+                                        const config = statusMap[s] || { color: 'default', label: s };
+                                        return <Tag color={config.color}>{config.label}</Tag>;
                                     }
                                 }
                             ]}

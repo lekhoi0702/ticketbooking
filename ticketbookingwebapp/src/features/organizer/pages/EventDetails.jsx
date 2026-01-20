@@ -111,8 +111,7 @@ const EventDetails = () => {
             'PUBLISHED': { color: 'success', label: 'CÔNG KHAI' },
             'DRAFT': { color: 'default', label: 'NHÁP' },
             'ONGOING': { color: 'processing', label: 'ĐANG DIỄN RA' },
-            'COMPLETED': { color: 'default', label: 'ĐÃ KẾT THÚC' },
-            'PENDING_DELETION': { color: 'error', label: 'CHỜ XÓA' }
+            'COMPLETED': { color: 'default', label: 'ĐÃ KẾT THÚC' }
         };
         return configs[status] || { color: 'default', label: status };
     };
@@ -195,7 +194,7 @@ const EventDetails = () => {
                         type="primary"
                         icon={<EditOutlined />}
                         onClick={() => navigate(`/organizer/edit-event/${eventId}`)}
-                        disabled={['PENDING_APPROVAL', 'ONGOING', 'COMPLETED', 'PENDING_DELETION'].includes(event.status)}
+                        disabled={['PENDING_APPROVAL', 'ONGOING', 'COMPLETED'].includes(event.status)}
                     >
                         Sửa sự kiện
                     </Button>

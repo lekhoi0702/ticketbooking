@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -20,6 +20,10 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    
+    // Redirect intent: stores where user wants to go after login
+    // { path: string, state?: object, action?: string }
+    const [redirectIntent, setRedirectIntent] = useState(null);
 
     useEffect(() => {
         const prefix = getScopePrefix();
@@ -50,13 +54,26 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem(`${prefix}user`);
     };
 
-    const triggerLogin = () => setShowLoginModal(true);
+    // Trigger login with optional redirect intent
+    // Usage: triggerLogin() or triggerLogin({ path: '/checkout/123', state: {...}, action: 'checkout' })
+    const triggerLogin = useCallback((intent = null) => {
+        if (intent) {
+            setRedirectIntent(intent);
+        }
+        setShowLoginModal(true);
+    }, []);
+
+    // Clear redirect intent after it's been used
+    const clearRedirectIntent = useCallback(() => {
+        setRedirectIntent(null);
+    }, []);
 
     return (
         <AuthContext.Provider value={{
             user, token, login, logout,
             isAuthenticated: !!token, loading,
-            showLoginModal, setShowLoginModal, triggerLogin
+            showLoginModal, setShowLoginModal, triggerLogin,
+            redirectIntent, setRedirectIntent, clearRedirectIntent
         }}>
             {children}
         </AuthContext.Provider>

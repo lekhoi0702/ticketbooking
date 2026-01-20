@@ -77,7 +77,11 @@ import {
 
     CloudUploadOutlined,
 
-    AppstoreOutlined
+    AppstoreOutlined,
+
+    GiftOutlined,
+
+    PercentageOutlined
 
 } from '@ant-design/icons';
 
@@ -128,6 +132,10 @@ const AdminEventsManagement = () => {
 
     const [loadingMap, setLoadingMap] = useState(false);
 
+    // Discount States
+    const [eventDiscounts, setEventDiscounts] = useState([]);
+    const [loadingDiscounts, setLoadingDiscounts] = useState(false);
+
 
 
     useEffect(() => {
@@ -143,12 +151,14 @@ const AdminEventsManagement = () => {
         if (selectedEvent && showModal) {
 
             fetchEventSeatMap();
+            fetchEventDiscounts();
 
         } else {
 
             setVenueTemplate(null);
 
             setEventSeats([]);
+            setEventDiscounts([]);
 
         }
 
@@ -206,6 +216,30 @@ const AdminEventsManagement = () => {
 
         }
 
+    };
+
+    const fetchEventDiscounts = async () => {
+        try {
+            setLoadingDiscounts(true);
+            const res = await api.getEventDiscounts(selectedEvent.event_id);
+            if (res.success) {
+                setEventDiscounts(res.data);
+            }
+        } catch (error) {
+            console.error("Error fetching discounts:", error);
+        } finally {
+            setLoadingDiscounts(false);
+        }
+    };
+
+    const getDiscountStatusConfig = (status) => {
+        const configs = {
+            'ACTIVE': { color: 'success', label: 'Đang hoạt động' },
+            'INACTIVE': { color: 'default', label: 'Tạm dừng' },
+            'EXPIRED': { color: 'error', label: 'Hết hạn' },
+            'USED_UP': { color: 'warning', label: 'Hết lượt' }
+        };
+        return configs[status] || { color: 'default', label: status };
     };
 
 
@@ -380,7 +414,7 @@ const AdminEventsManagement = () => {
 
             'ONGOING': { color: 'processing', label: 'Đang diễn ra', icon: <PlayCircleOutlined /> },
 
-            'PENDING_DELETION': { color: 'error', label: 'Chờ xóa', icon: <DeleteOutlined /> }
+            'DELETED': { color: 'magenta', label: 'Đã xóa', icon: <DeleteOutlined /> }
 
         };
 
@@ -594,17 +628,23 @@ const AdminEventsManagement = () => {
 
                             <Option value="ALL">Tất cả trạng thái</Option>
 
+                            <Option value="DRAFT">Nháp</Option>
+
                             <Option value="PENDING_APPROVAL">Chờ phê duyệt</Option>
 
                             <Option value="APPROVED">Đã phê duyệt</Option>
 
-                            <Option value="PUBLISHED">Đã đang bán</Option>
+                            <Option value="PUBLISHED">Công khai</Option>
 
                             <Option value="REJECTED">Đã từ chối</Option>
 
                             <Option value="ONGOING">Đang diễn ra</Option>
 
                             <Option value="COMPLETED">Đã kết thúc</Option>
+
+                            <Option value="CANCELLED">Đã hủy</Option>
+
+                            <Option value="DELETED">Đã xóa</Option>
 
                         </Select>
 
@@ -855,6 +895,87 @@ const AdminEventsManagement = () => {
                                         ) : (
                                             <div style={{ padding: '20px 0', textAlign: 'center', color: '#8c8c8c' }}>
                                                 Không có thông tin sơ đồ chỗ ngồi
+                                            </div>
+                                        )}
+
+                                        <Divider />
+
+                                        {/* Discount/Coupon Section */}
+                                        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                            <Text strong><GiftOutlined /> Mã giảm giá ({eventDiscounts.length})</Text>
+                                        </Space>
+                                        {loadingDiscounts ? (
+                                            <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                                                <Spin size="small" />
+                                            </div>
+                                        ) : eventDiscounts.length > 0 ? (
+                                            <List
+                                                size="small"
+                                                dataSource={eventDiscounts}
+                                                style={{ marginTop: 12 }}
+                                                renderItem={(discount) => (
+                                                    <List.Item
+                                                        style={{
+                                                            background: '#fafafa',
+                                                            borderRadius: 8,
+                                                            marginBottom: 8,
+                                                            padding: '12px 16px',
+                                                            border: '1px solid #f0f0f0'
+                                                        }}
+                                                    >
+                                                        <List.Item.Meta
+                                                            avatar={
+                                                                <div style={{
+                                                                    width: 40,
+                                                                    height: 40,
+                                                                    borderRadius: 8,
+                                                                    background: discount.discount_type === 'PERCENTAGE' ? '#e6f7ff' : '#fff7e6',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center'
+                                                                }}>
+                                                                    {discount.discount_type === 'PERCENTAGE' ? (
+                                                                        <PercentageOutlined style={{ fontSize: 18, color: '#1890ff' }} />
+                                                                    ) : (
+                                                                        <GiftOutlined style={{ fontSize: 18, color: '#fa8c16' }} />
+                                                                    )}
+                                                                </div>
+                                                            }
+                                                            title={
+                                                                <Space>
+                                                                    <Text code style={{ fontSize: 13, fontWeight: 600 }}>{discount.discount_code}</Text>
+                                                                    <Tag color={getDiscountStatusConfig(discount.status).color}>
+                                                                        {getDiscountStatusConfig(discount.status).label}
+                                                                    </Tag>
+                                                                </Space>
+                                                            }
+                                                            description={
+                                                                <Space direction="vertical" size={2}>
+                                                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                                                        {discount.discount_name}
+                                                                    </Text>
+                                                                    <Space split={<Divider type="vertical" />} size={4}>
+                                                                        <Text style={{ fontSize: 12, color: '#fa541c' }}>
+                                                                            Giảm: {discount.discount_type === 'PERCENTAGE'
+                                                                                ? `${discount.discount_value}%`
+                                                                                : `${discount.discount_value.toLocaleString('vi-VN')}đ`}
+                                                                        </Text>
+                                                                        <Text type="secondary" style={{ fontSize: 11 }}>
+                                                                            Đã dùng: {discount.used_count || 0}/{discount.usage_limit || '∞'}
+                                                                        </Text>
+                                                                        <Text type="secondary" style={{ fontSize: 11 }}>
+                                                                            HSD: {new Date(discount.end_date).toLocaleDateString('vi-VN')}
+                                                                        </Text>
+                                                                    </Space>
+                                                                </Space>
+                                                            }
+                                                        />
+                                                    </List.Item>
+                                                )}
+                                            />
+                                        ) : (
+                                            <div style={{ padding: '20px 0', textAlign: 'center', color: '#8c8c8c' }}>
+                                                Sự kiện này chưa có mã giảm giá
                                             </div>
                                         )}
                                     </Col>

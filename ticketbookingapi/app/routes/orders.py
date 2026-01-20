@@ -12,6 +12,9 @@ def create_order():
         data = request.get_json()
         order, created_tickets, payment_required = OrderService.create_order(data)
         
+        # Commit the transaction to persist order and tickets
+        db.session.commit()
+        
         return jsonify({
             'success': True,
             'message': 'Order created successfully',
@@ -84,6 +87,31 @@ def cancel_order(order_id):
     except ValueError as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@orders_bp.route("/orders/<int:order_id>/cancel-refund-request", methods=["POST"])
+def cancel_refund_request(order_id):
+    """Cancel a pending refund request - revert order status back to PAID"""
+    from app.models.order import Order
+    try:
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({'success': False, 'message': 'Đơn hàng không tồn tại'}), 404
+        
+        if order.order_status != 'CANCELLATION_PENDING':
+            return jsonify({'success': False, 'message': 'Đơn hàng không có yêu cầu hoàn tiền đang chờ xử lý'}), 400
+        
+        # Revert status back to PAID
+        order.order_status = 'PAID'
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Đã hủy yêu cầu hoàn tiền thành công'
+        }), 200
+        
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500

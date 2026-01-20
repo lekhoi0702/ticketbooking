@@ -3,6 +3,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from sqlalchemy import text, func, and_, or_
 from app.extensions import db
+from app.utils.upload_helper import save_organizer_logo, allowed_file, ALLOWED_IMAGE_EXTENSIONS
 # Models are no longer strictly needed for querying but might be imported for type hints or legacy
 # keeping just in case
 from app.models.event import Event
@@ -14,9 +15,8 @@ from app.models.seat import Seat
 from app.models.organizer_info import OrganizerInfo
 from app.models.user import User
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+# Keep for backward compatibility
+ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS
 
 class OrganizerService:
     @staticmethod
@@ -86,6 +86,97 @@ class OrganizerService:
         db.session.execute(text("UPDATE `Order` SET order_status = 'PAID' WHERE order_id = :id"), {"id": order_id})
         db.session.commit()
         return True
+
+    @staticmethod
+    def get_refund_requests(manager_id):
+        """Get all orders with CANCELLATION_PENDING status for organizer's events"""
+        from decimal import Decimal
+        
+        # Get all CANCELLATION_PENDING orders for this organizer's events
+        sql = text("""
+            SELECT DISTINCT 
+                o.order_id,
+                o.order_code,
+                o.customer_name,
+                o.customer_email,
+                o.customer_phone,
+                o.total_amount,
+                o.order_status,
+                o.created_at,
+                e.event_id,
+                e.event_name,
+                e.start_datetime as event_date,
+                u.full_name as user_name,
+                u.email as user_email
+            FROM `Order` o
+            JOIN Ticket t ON o.order_id = t.order_id
+            JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+            JOIN Event e ON tt.event_id = e.event_id
+            LEFT JOIN User u ON o.user_id = u.user_id
+            WHERE e.manager_id = :mid AND o.order_status = 'CANCELLATION_PENDING'
+            ORDER BY o.created_at DESC
+        """)
+        
+        orders = db.session.execute(sql, {"mid": manager_id}).fetchall()
+        
+        result = []
+        for order in orders:
+            order_dict = dict(order._mapping)
+            
+            # Get tickets for this order
+            tickets_sql = text("""
+                SELECT t.ticket_id, t.ticket_code, t.holder_name, t.holder_email, 
+                       tt.type_name, tt.price, 
+                       s.row_name, s.seat_number, s.area_name
+                FROM Ticket t
+                JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
+                LEFT JOIN Seat s ON t.seat_id = s.seat_id
+                WHERE t.order_id = :oid
+            """)
+            tickets = db.session.execute(tickets_sql, {"oid": order.order_id}).fetchall()
+            
+            tickets_list = []
+            for ticket in tickets:
+                ticket_dict = dict(ticket._mapping)
+                # Convert Decimal to float for JSON serialization
+                if ticket_dict.get('price') is not None:
+                    ticket_dict['price'] = float(ticket_dict['price'])
+                else:
+                    ticket_dict['price'] = 0
+                
+                # Compute seat_label from individual columns
+                row_name = ticket_dict.pop('row_name', None)
+                seat_number = ticket_dict.pop('seat_number', None)
+                area_name = ticket_dict.pop('area_name', None)
+                if row_name and seat_number:
+                    seat_label = f"{area_name + ' ' if area_name else ''}{row_name}{seat_number}"
+                else:
+                    seat_label = None
+                ticket_dict['seat_label'] = seat_label
+                
+                tickets_list.append(ticket_dict)
+            
+            order_dict['tickets'] = tickets_list
+            order_dict['tickets_count'] = len(tickets_list)
+            
+            # Convert Decimal to float for JSON serialization
+            if order_dict.get('total_amount') is not None:
+                order_dict['total_amount'] = float(order_dict['total_amount'])
+            else:
+                order_dict['total_amount'] = 0
+            
+            # Format datetime fields
+            for key in ['created_at', 'event_date']:
+                val = order_dict.get(key)
+                if val is not None:
+                    if isinstance(val, datetime):
+                        order_dict[key] = val.isoformat()
+                    elif hasattr(val, 'isoformat'):
+                        order_dict[key] = val.isoformat()
+            
+            result.append(order_dict)
+        
+        return result
 
     @staticmethod
     def get_event_orders(event_id):
@@ -287,19 +378,10 @@ class OrganizerService:
         
         if 'logo' in files:
             file = files['logo']
-            if file and OrganizerService.allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"organizer_{user_id}_logo_{timestamp}_{filename}"
-                
-                logo_folder = os.path.join(UPLOAD_FOLDER, 'organizer', 'info', 'logo')
-                os.makedirs(logo_folder, exist_ok=True)
-                
-                filepath = os.path.join(logo_folder, filename)
-                file.save(filepath)
-                
+            logo_url = save_organizer_logo(file, user_id)
+            if logo_url:
                 update_fields.append("logo_url = :logo")
-                params['logo'] = f"/uploads/organizer/info/logo/{filename}"
+                params['logo'] = logo_url
         
         update_fields.append("updated_at = :now")
         params['now'] = datetime.utcnow()

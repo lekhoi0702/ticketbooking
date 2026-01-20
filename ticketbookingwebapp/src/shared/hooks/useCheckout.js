@@ -11,12 +11,28 @@ export const useCheckout = () => {
     const { eventId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
 
     // Initial state from navigation
     const initialTickets = location.state?.selectedTickets || {};
     const initialSeats = location.state?.selectedSeats || {};
     const initialHasSeatMap = location.state?.hasSeatMap || {};
+
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!isAuthenticated) {
+            // Save current path and state to redirect back after login
+            navigate('/login', {
+                state: {
+                    from: {
+                        pathname: location.pathname,
+                        state: location.state
+                    }
+                },
+                replace: true
+            });
+        }
+    }, [isAuthenticated, navigate, location.pathname, location.state]);
 
     // Loading and error states
     const [loading, setLoading] = useState(true);

@@ -191,7 +191,7 @@ const EditEvent = () => {
         return <LoadingSpinner tip="Đang tải dữ liệu sự kiện..." />;
     }
 
-    const isReadOnly = ['REJECTED', 'ONGOING', 'COMPLETED', 'PENDING_DELETION'].includes(formData.status);
+    const isReadOnly = ['REJECTED', 'ONGOING', 'COMPLETED'].includes(formData.status);
 
     return (
         <>
@@ -201,13 +201,9 @@ const EditEvent = () => {
 
                 {isReadOnly && (
                     <Alert
-                        message={formData.status === 'PENDING_DELETION' ? "Hệ thống đang xử lý yêu cầu xóa" : "Chế độ xem (Chỉ đọc)"}
-                        description={
-                            formData.status === 'PENDING_DELETION'
-                                ? "Sự kiện này đang chờ Admin phê duyệt yêu cầu xóa. Bạn không thể thay đổi thông tin."
-                                : `Sự kiện hiện đã ${formData.status === 'REJECTED' ? 'bị từ chối' : formData.status === 'ONGOING' ? 'bắt đầu' : 'kết thúc'}.`
-                        }
-                        type={formData.status === 'PENDING_DELETION' ? "info" : "warning"}
+                        message="Chế độ xem (Chỉ đọc)"
+                        description={`Sự kiện hiện đã ${formData.status === 'REJECTED' ? 'bị từ chối' : formData.status === 'ONGOING' ? 'bắt đầu' : 'kết thúc'}.`}
+                        type="warning"
                         showIcon
                         style={{ marginBottom: 24 }}
                     />

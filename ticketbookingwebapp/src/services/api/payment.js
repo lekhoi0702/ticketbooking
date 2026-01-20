@@ -21,8 +21,18 @@ export const paymentApi = {
             body: JSON.stringify({ order_id: orderId }),
         });
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to create VNPay payment URL');
+            // Try to parse error, but handle non-JSON responses (e.g., proxy failure)
+            let errorMessage = 'Failed to create VNPay payment URL';
+            try {
+                const error = await response.json();
+                errorMessage = error.message || errorMessage;
+            } catch {
+                // Response is not JSON - likely backend server is not running
+                if (response.status === 404) {
+                    errorMessage = 'Không thể kết nối đến server thanh toán. Vui lòng kiểm tra backend server.';
+                }
+            }
+            throw new Error(errorMessage);
         }
         return await response.json();
     },

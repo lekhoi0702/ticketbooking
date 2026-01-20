@@ -4,11 +4,10 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from sqlalchemy import text
 from app.extensions import db
+from app.utils.upload_helper import save_event_image, allowed_file, ALLOWED_IMAGE_EXTENSIONS
 
-# Define upload folder relative to project root
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+# Keep for backward compatibility
+ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS
 
 class EventWrapper:
     def __init__(self, row, ticket_types=None, venue=None):
@@ -87,9 +86,13 @@ class OrganizerEventService:
         return EventWrapper(row, ticket_types=ticket_types, venue=venue)
 
     @staticmethod
-    def get_events(manager_id, status=None):
+    def get_events(manager_id, status=None, include_deleted=False):
         sql = "SELECT * FROM Event WHERE manager_id = :manager_id"
         params = {"manager_id": manager_id}
+        
+        # Exclude deleted events unless explicitly requested
+        if not include_deleted:
+            sql += " AND status != 'DELETED'"
         
         if status:
             sql += " AND status = :status"
@@ -135,18 +138,11 @@ class OrganizerEventService:
     def create_event(data, files):
         manager_id = int(data.get('manager_id', 1))
         
+        # Save event banner image using upload helper
         banner_image_url = None
         if 'banner_image' in files:
             file = files['banner_image']
-            if file and OrganizerEventService.allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"{timestamp}_{filename}"
-                
-                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                filepath = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(filepath)
-                banner_image_url = f"/uploads/{filename}"
+            banner_image_url = save_event_image(file, manager_id)
         
         venue_id = int(data.get('venue_id'))
         # Check venue
@@ -315,18 +311,14 @@ class OrganizerEventService:
         update_fields = []
         params = {"event_id": event_id}
         
+        # Save event banner image using upload helper
         if 'banner_image' in files:
             file = files['banner_image']
-            if file and OrganizerEventService.allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"{timestamp}_{filename}"
-                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                filepath = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(filepath)
-                
+            manager_id = event_row.manager_id
+            banner_url = save_event_image(file, manager_id, event_id)
+            if banner_url:
                 update_fields.append("banner_image_url = :banner_image_url")
-                params['banner_image_url'] = f"/uploads/{filename}"
+                params['banner_image_url'] = banner_url
         
         mapping = {
             'event_name': 'event_name',
@@ -618,39 +610,16 @@ class OrganizerEventService:
 
     @staticmethod
     def delete_event(event_id, data):
+        """
+        Soft delete an event - sets status to 'DELETED'
+        Event will be hidden from organizer but visible to admin
+        """
         check_query = text("SELECT * FROM Event WHERE event_id = :id")
         event = db.session.execute(check_query, {"id": event_id}).fetchone()
         if not event:
             raise ValueError('Event not found')
         
-        reason = data.get('reason', '')
-        manager_id = data.get('manager_id', 1)
-        
-        if event.status in ['DRAFT', 'PENDING_APPROVAL', 'REJECTED']:
-            # Direct delete if draft, pending approval or rejected
-            # Delete related TicketTypes first to be safe and clear:
-            del_tt_sql = text("DELETE FROM TicketType WHERE event_id = :id")
-            db.session.execute(del_tt_sql, {"id": event_id})
-            
-            # Also Seat if any? Seat table usually links to TicketType/Event. Assuming clean up needed.
-            # Ideally CASCADE on FK handles this. Let's assume FKs are set.
-            
-            del_evt_sql = text("DELETE FROM Event WHERE event_id = :id")
-            db.session.execute(del_evt_sql, {"id": event_id})
-            db.session.commit()
-            return None, 0 # Return None for request object to signal direct deletion
-
-        if event.status == 'PUBLISHED':
-            raise ValueError('Không thể xóa sự kiện đang công khai. Vui lòng chuyển sự kiện về trạng thái "Bản nháp" trước khi xóa.')
-        
-        # Check existing deletion request
-        req_query = text("SELECT * FROM EventDeletionRequest WHERE event_id = :id AND request_status = 'PENDING'")
-        existing_request = db.session.execute(req_query, {"id": event_id}).fetchone()
-        if existing_request:
-            raise ValueError('Đã có yêu cầu xóa sự kiện này đang chờ phê duyệt từ Admin.')
-        
-        # Count active Order
-        # Using raw SQL join
+        # Check if event has active orders (sold tickets)
         order_count_sql = text("""
             SELECT COUNT(DISTINCT o.order_id) as cnt
             FROM `Order` o
@@ -659,32 +628,18 @@ class OrganizerEventService:
             WHERE tt.event_id = :eid
             AND o.order_status IN ('PAID', 'PENDING', 'CANCELLATION_PENDING')
         """)
-        
         cnt_row = db.session.execute(order_count_sql, {"eid": event_id}).fetchone()
         active_orders = cnt_row.cnt if cnt_row else 0
         
-        # Create Deletion Request
-        ins_req_sql = text("""
-            INSERT INTO EventDeletionRequest (event_id, organizer_id, reason, request_status, created_at)
-            VALUES (:eid, :oid, :reason, 'PENDING', :now)
-        """)
+        if active_orders > 0:
+            raise ValueError(f'Không thể xóa sự kiện có {active_orders} đơn hàng đang hoạt động. Vui lòng hủy các đơn hàng trước.')
         
-        db.session.execute(ins_req_sql, {
-            "eid": event_id,
-            "oid": manager_id,
-            "reason": reason,
-            "now": datetime.utcnow()
-        })
+        # Soft delete: Set status to 'DELETED'
+        update_sql = text("UPDATE Event SET status = 'DELETED', updated_at = :now WHERE event_id = :id")
+        db.session.execute(update_sql, {"id": event_id, "now": datetime.utcnow()})
         db.session.commit()
         
-        # Return object-like structure just for the controller (which accesses .request_id)
-        # We need to fetch the inserted request ID.
-        lrid = db.session.execute(text("SELECT MAX(request_id) as id FROM EventDeletionRequest")).fetchone().id
-        
-        class MockRequest:
-            def __init__(self, rid): self.request_id = rid
-            
-        return MockRequest(lrid), active_orders
+        return True
 
     @staticmethod
     def delete_events_bulk(event_ids, manager_id):
@@ -715,23 +670,19 @@ class OrganizerEventService:
                     })
                     continue
                 
-                # Only allow deletion of DRAFT events
-                if event.status != 'DRAFT':
+                # Only allow deletion of DRAFT, PENDING_APPROVAL, or REJECTED events
+                if event.status not in ['DRAFT', 'PENDING_APPROVAL', 'REJECTED']:
                     results['failed_events'].append({
                         'event_id': event_id,
                         'event_name': event.event_name,
                         'status': event.status,
-                        'reason': f'Chỉ có thể xóa sự kiện ở trạng thái DRAFT. Trạng thái hiện tại: {event.status}'
+                        'reason': f'Chỉ có thể xóa sự kiện ở trạng thái DRAFT, PENDING_APPROVAL hoặc REJECTED. Trạng thái hiện tại: {event.status}'
                     })
                     continue
                 
-                # Delete related TicketTypes (CASCADE should handle Seats)
-                del_tt_sql = text("DELETE FROM TicketType WHERE event_id = :id")
-                db.session.execute(del_tt_sql, {"id": event_id})
-                
-                # Delete the event
-                del_evt_sql = text("DELETE FROM Event WHERE event_id = :id")
-                db.session.execute(del_evt_sql, {"id": event_id})
+                # Soft delete: Set status to 'DELETED' instead of actual deletion
+                update_sql = text("UPDATE Event SET status = 'DELETED', updated_at = :now WHERE event_id = :id")
+                db.session.execute(update_sql, {"id": event_id, "now": datetime.utcnow()})
                 
                 results['success_count'] += 1
                 results['deleted_event_ids'].append(event_id)

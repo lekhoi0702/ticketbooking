@@ -46,8 +46,7 @@ const EventTable = ({
             'PUBLISHED': { color: 'success', label: 'Công khai', icon: <CloudUploadOutlined /> },
             'DRAFT': { color: 'default', label: 'Nháp', icon: <ClockCircleOutlined /> },
             'ONGOING': { color: 'processing', label: 'Đang diễn ra', icon: <PlayCircleOutlined /> },
-            'COMPLETED': { color: 'default', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
-            'PENDING_DELETION': { color: 'error', label: 'Chờ xóa', icon: <StopOutlined /> }
+            'COMPLETED': { color: 'default', label: 'Hoàn thành', icon: <CheckCircleOutlined /> }
         };
         return configs[status] || { color: 'default', label: status, icon: null };
     };

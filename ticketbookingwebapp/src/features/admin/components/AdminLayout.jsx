@@ -70,12 +70,6 @@ const AdminLayout = () => {
             label: 'Quản lý Banner',
             onClick: () => navigate('/admin/banners'),
         },
-        {
-            key: '/admin/event-deletion-requests',
-            icon: <ExclamationCircleOutlined />,
-            label: 'Yêu cầu xóa sự kiện',
-            onClick: () => navigate('/admin/event-deletion-requests'),
-        },
     ];
 
 
@@ -97,7 +91,6 @@ const AdminLayout = () => {
             'orders': 'Quản lý đơn hàng',
             'statistics': 'Thống kê hệ thống',
             'banners': 'Quản lý Banner',
-            'event-deletion-requests': 'Yêu cầu xóa sự kiện',
             'profile': 'Trang cá nhân admin'
         };
 

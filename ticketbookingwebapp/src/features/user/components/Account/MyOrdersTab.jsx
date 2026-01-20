@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Typography, Empty, Button, Space, message } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
+import { EyeOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
 import { formatCurrency, parseLocalDateTime } from '@shared/utils/eventUtils';
@@ -97,22 +97,42 @@ const MyOrdersTab = () => {
             title: 'Thao tác',
             key: 'action',
             render: (_, record) => (
-                <Space>
+                <Space size="small">
                     <Button
-                        type="link"
+                        type="primary"
+                        ghost
                         icon={<EyeOutlined />}
                         onClick={() => navigate(`/order-success/${record.order_code}`)}
-                        style={{ color: '#2DC275' }}
+                        style={{ 
+                            borderColor: '#2DC275', 
+                            color: '#2DC275',
+                            fontWeight: 500
+                        }}
                     >
                         Chi tiết
                     </Button>
                     {canRequestRefund(record) && (
                         <Button
-                            type="link"
+                            type="primary"
                             danger
                             onClick={() => handleRefundRequest(record)}
+                            style={{ fontWeight: 500 }}
                         >
                             Yêu cầu hoàn tiền
+                        </Button>
+                    )}
+                    {record.order_status === 'CANCELLATION_PENDING' && (
+                        <Button
+                            type="default"
+                            icon={<CloseCircleOutlined />}
+                            onClick={() => handleCancelRefundRequest(record)}
+                            style={{ 
+                                borderColor: '#faad14', 
+                                color: '#faad14',
+                                fontWeight: 500
+                            }}
+                        >
+                            Hủy yêu cầu
                         </Button>
                     )}
                 </Space>
@@ -144,6 +164,31 @@ const MyOrdersTab = () => {
                 } catch (error) {
                     console.error('Error requesting refund:', error);
                     message.error('Có lỗi xảy ra khi gửi yêu cầu hoàn tiền');
+                }
+            }
+        });
+    };
+
+    const handleCancelRefundRequest = async (order) => {
+        const { Modal } = await import('antd');
+        Modal.confirm({
+            title: 'Hủy yêu cầu hoàn tiền',
+            content: `Bạn có chắc chắn muốn hủy yêu cầu hoàn tiền cho đơn hàng ${order.order_code}?`,
+            okText: 'Xác nhận hủy',
+            cancelText: 'Đóng',
+            okButtonProps: { style: { backgroundColor: '#faad14', borderColor: '#faad14' } },
+            onOk: async () => {
+                try {
+                    const res = await api.cancelRefundRequest(order.order_id);
+                    if (res.success) {
+                        message.success(res.message || 'Đã hủy yêu cầu hoàn tiền thành công!');
+                        fetchOrders();
+                    } else {
+                        message.error(res.message || 'Không thể hủy yêu cầu hoàn tiền');
+                    }
+                } catch (error) {
+                    console.error('Error canceling refund request:', error);
+                    message.error('Có lỗi xảy ra khi hủy yêu cầu hoàn tiền');
                 }
             }
         });

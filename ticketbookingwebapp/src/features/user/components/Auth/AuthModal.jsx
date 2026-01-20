@@ -18,7 +18,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
     const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
-    const { login } = useAuth();
+    const { login, redirectIntent } = useAuth();
 
     const validateEmailOrPhone = (input) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -79,10 +79,22 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
             if (activeTab === 'register') {
                 const res = await api.register(formData);
                 if (res.success) {
-                    setActiveTab('login');
-                    setError({ type: 'success', msg: 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.' });
-                    setFormData({ ...formData, full_name: '', phone: '', email: '', password: '' });
-                    setFieldErrors({});
+                    // Auto-login after successful registration
+                    const loginRes = await api.login({
+                        email: formData.email,
+                        password: formData.password
+                    });
+                    if (loginRes.success) {
+                        login(loginRes.user, loginRes.token);
+                        onHide();
+                        if (onSuccess) onSuccess();
+                    } else {
+                        // If auto-login fails, switch to login tab
+                        setActiveTab('login');
+                        setError({ type: 'success', msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
+                        setFormData({ ...formData, full_name: '', phone: '' });
+                        setFieldErrors({});
+                    }
                 }
             } else {
                 const res = await api.login({

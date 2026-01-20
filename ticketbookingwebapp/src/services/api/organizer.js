@@ -166,6 +166,12 @@ export const organizerApi = {
         return await response.json();
     },
 
+    async getRefundRequests(managerId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/refund-requests?manager_id=${managerId}`);
+        if (!response.ok) throw new Error('Failed to fetch refund requests');
+        return await response.json();
+    },
+
     // Venue Management
     async getOrganizerVenues(managerId = 1) {
         const response = await fetch(`${API_BASE_URL}/organizer/venues?manager_id=${managerId}`);

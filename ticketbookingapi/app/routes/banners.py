@@ -1,36 +1,9 @@
 from flask import Blueprint, jsonify, request
 from app.extensions import db
 from app.models.banner import Banner
-import os
-import uuid
-from werkzeug.utils import secure_filename
-from datetime import datetime
+from app.utils.upload_helper import save_banner_image, allowed_file
 
 banners_bp = Blueprint("banners", __name__)
-
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def save_file(file):
-    if not file:
-        return None
-        
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    uploads_dir = os.path.join(project_root, 'uploads', 'banners')
-    
-    if not os.path.exists(uploads_dir):
-        os.makedirs(uploads_dir)
-        
-    filename = secure_filename(file.filename)
-    unique_filename = f"{uuid.uuid4().hex}_{filename}"
-    file_path = os.path.join(uploads_dir, unique_filename)
-    
-    file.save(file_path)
-    
-    return f"/uploads/banners/{unique_filename}"
 
 # Public Routes
 @banners_bp.route("/banners", methods=["GET"])
@@ -77,7 +50,7 @@ def create_banner():
         if not allowed_file(file.filename):
             return jsonify({'success': False, 'message': 'Invalid file type'}), 400
             
-        image_url = save_file(file)
+        image_url = save_banner_image(file)
         
         banner = Banner(
             title=title,
@@ -121,9 +94,9 @@ def update_banner(banner_id):
             
         file = request.files.get('image')
         if file and allowed_file(file.filename):
-            # TODO: Delete old image if exists?
-            image_url = save_file(file)
-            banner.image_url = image_url
+            image_url = save_banner_image(file)
+            if image_url:
+                banner.image_url = image_url
             
         db.session.commit()
         
