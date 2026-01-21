@@ -71,4 +71,82 @@ export const paymentApi = {
         if (!response.ok) throw new Error('Network response was not ok');
         return await response.json();
     },
+
+    async createPayPalOrder(orderId) {
+        const response = await fetch(`${API_BASE_URL}/payments/paypal/create-order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId }),
+        });
+        if (!response.ok) {
+            let errorMessage = 'Failed to create PayPal payment order';
+            try {
+                const error = await response.json();
+                errorMessage = error.message || errorMessage;
+            } catch {
+                if (response.status === 404) {
+                    errorMessage = 'Không thể kết nối đến server thanh toán. Vui lòng kiểm tra backend server.';
+                }
+            }
+            throw new Error(errorMessage);
+        }
+        return await response.json();
+    },
+
+    async verifyPayPalReturn(queryParams) {
+        const queryString = new URLSearchParams(queryParams).toString();
+        const response = await fetch(`${API_BASE_URL}/payments/paypal/return?${queryString}`);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Payment verification failed');
+        }
+        return await response.json();
+    },
+
+    async createVietQR(orderId) {
+        const response = await fetch(`${API_BASE_URL}/payments/vietqr/create-qr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId }),
+        });
+        if (!response.ok) {
+            let errorMessage = 'Failed to create VietQR payment';
+            try {
+                const error = await response.json();
+                errorMessage = error.message || errorMessage;
+            } catch {
+                if (response.status === 404) {
+                    errorMessage = 'Không thể kết nối đến server thanh toán. Vui lòng kiểm tra backend server.';
+                }
+            }
+            throw new Error(errorMessage);
+        }
+        return await response.json();
+    },
+
+    async checkVietQRStatus(paymentCode) {
+        const response = await fetch(`${API_BASE_URL}/payments/vietqr/check-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_code: paymentCode }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to check payment status');
+        }
+        return await response.json();
+    },
+
+    async verifyVietQRPayment(paymentCode) {
+        const response = await fetch(`${API_BASE_URL}/payments/vietqr/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_code: paymentCode }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Payment verification failed');
+        }
+        return await response.json();
+    },
 };

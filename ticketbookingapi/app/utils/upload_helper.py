@@ -130,6 +130,32 @@ def save_organizer_logo(file, organizer_id: int) -> str:
     return f"/uploads/organizers/{organizer_id}/logo/{filename}"
 
 
+def save_vietqr_image(file, organizer_id: int, event_id: int = None) -> str:
+    """
+    Save VietQR QR code image
+    
+    Args:
+        file: File object from request.files
+        organizer_id: The organizer's user ID
+        event_id: Optional event ID for naming
+    
+    Returns:
+        URL path to access the file
+    """
+    if not file or not allowed_file(file.filename):
+        return None
+    
+    upload_path = get_organizer_upload_path(organizer_id, 'events')
+    
+    prefix = f"vietqr_{event_id}" if event_id else "vietqr"
+    filename = generate_unique_filename(file.filename, prefix)
+    
+    filepath = os.path.join(upload_path, filename)
+    file.save(filepath)
+    
+    return f"/uploads/organizers/{organizer_id}/events/{filename}"
+
+
 def save_banner_image(file) -> str:
     """
     Save banner image

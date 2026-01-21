@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { Container, Row, Col, Form, Alert, Spinner, ProgressBar, Badge } from 'react-bootstrap';
-import { FaClock, FaExclamationTriangle } from 'react-icons/fa';
+import { Container, Row, Col, Form, Alert, Spinner, Badge } from 'react-bootstrap';
 
 // Hooks
 import { useCheckout } from '@shared/hooks/useCheckout';
@@ -11,9 +10,6 @@ import PaymentMethodSelector from '@features/user/components/Checkout/PaymentMet
 import OrderSummary from '@features/user/components/Checkout/OrderSummary';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
-// Constants
-const SEAT_HOLD_TIMEOUT_SECONDS = 30 * 60; // 30 minutes
-const WARNING_THRESHOLD_SECONDS = 5 * 60; // 5 minutes
 
 /**
  * Checkout Page Component
@@ -41,13 +37,7 @@ const Checkout = () => {
         applyDiscount,
         discountAmount,
         isValidDiscount,
-        discountMsg,
-        // Seat timer states
-        seatTimers,
-        showTimeWarning,
-        seatsExpired,
-        getMinRemainingTime,
-        formatTime
+        discountMsg
     } = useCheckout();
 
     // Scroll to top when component mounts
@@ -84,54 +74,6 @@ const Checkout = () => {
 
             {error && <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>}
 
-            {/* Seat Hold Timer Warning */}
-            {Object.keys(seatTimers).length > 0 && getMinRemainingTime() > 0 && (
-                <Alert 
-                    variant={showTimeWarning ? 'danger' : 'info'} 
-                    className="d-flex align-items-center justify-content-between"
-                >
-                    <div className="d-flex align-items-center">
-                        {showTimeWarning ? (
-                            <FaExclamationTriangle className="me-2" size={20} />
-                        ) : (
-                            <FaClock className="me-2" size={20} />
-                        )}
-                        <div>
-                            <strong>Thời gian giữ ghế: {formatTime(getMinRemainingTime())}</strong>
-                            {showTimeWarning && (
-                                <div className="small mt-1">
-                                    Sắp hết thời gian! Vui lòng hoàn tất thanh toán ngay.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <ProgressBar 
-                        now={(getMinRemainingTime() / SEAT_HOLD_TIMEOUT_SECONDS) * 100}
-                        variant={showTimeWarning ? 'danger' : getMinRemainingTime() <= WARNING_THRESHOLD_SECONDS * 2 ? 'warning' : 'success'}
-                        style={{ width: '150px', height: '8px' }}
-                        className="ms-3"
-                    />
-                </Alert>
-            )}
-
-            {/* Seats Expired Warning */}
-            {seatsExpired && (
-                <Alert variant="warning" className="d-flex align-items-center justify-content-between">
-                    <div>
-                        <FaExclamationTriangle className="me-2" />
-                        <strong>Một số ghế đã hết thời gian giữ!</strong>
-                        <div className="small mt-1">Vui lòng quay lại trang sự kiện để chọn ghế mới.</div>
-                    </div>
-                    <button 
-                        type="button"
-                        className="btn btn-warning btn-sm"
-                        onClick={() => navigate(`/event/${event?.event_id}`)}
-                    >
-                        Chọn lại ghế
-                    </button>
-                </Alert>
-            )}
-
             <Form onSubmit={handleSubmit}>
                 <Row>
                     <Col lg={8}>
@@ -142,7 +84,10 @@ const Checkout = () => {
                         />
 
                         {/* Payment Method */}
-                        <PaymentMethodSelector />
+                        <PaymentMethodSelector 
+                            paymentMethod={paymentMethod}
+                            setPaymentMethod={setPaymentMethod}
+                        />
                     </Col>
 
                     <Col lg={4}>

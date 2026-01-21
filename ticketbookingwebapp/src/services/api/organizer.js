@@ -310,5 +310,43 @@ export const organizerApi = {
     async deleteDiscount(id) {
         const response = await fetch(`${API_BASE_URL}/organizer/discounts/${id}`, { method: 'DELETE' });
         return await response.json();
+    },
+
+    // Organizer Profile Management
+    async getOrganizerProfile(userId) {
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/organizer/profile/${userId}`, {
+            method: 'GET',
+            headers: headers
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to fetch organizer profile');
+        }
+        return await response.json();
+    },
+
+    async updateOrganizerProfile(userId, formData) {
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/organizer/profile/${userId}`, {
+            method: 'PUT',
+            headers: headers,
+            body: formData
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update organizer profile');
+        }
+        return await response.json();
     }
 };

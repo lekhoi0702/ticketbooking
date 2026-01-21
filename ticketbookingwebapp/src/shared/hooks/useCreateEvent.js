@@ -50,6 +50,9 @@ export const useCreateEvent = () => {
 
     const [bannerImage, setBannerImage] = useState(null);
     const [bannerPreview, setBannerPreview] = useState(null);
+    const [vietqrImage, setVietqrImage] = useState(null);
+    const [vietqrPreview, setVietqrPreview] = useState(null);
+    const [vietqrImageUrl, setVietqrImageUrl] = useState(null);
     const [ticketTypes, setTicketTypes] = useState([
         { type_name: '', price: '', quantity: '0', description: '', selectedSeats: [] }
     ]);
@@ -143,6 +146,27 @@ export const useCreateEvent = () => {
                 setBannerPreview(reader.result);
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    const handleVietQRImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setVietqrImage(file);
+            setVietqrImageUrl(null); // Clear URL if file is selected
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setVietqrPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleVietQRURLChange = (url) => {
+        if (url && url.trim()) {
+            setVietqrImageUrl(url.trim());
+            setVietqrImage(null); // Clear file if URL is selected
+            setVietqrPreview(url.trim());
         }
     };
 
@@ -478,6 +502,13 @@ export const useCreateEvent = () => {
                 formDataToSend.append('banner_image', bannerImage);
             }
 
+            // Add VietQR QR image if a new one was selected (file or URL)
+            if (vietqrImage) {
+                formDataToSend.append('vietqr_image', vietqrImage);
+            } else if (vietqrImageUrl) {
+                formDataToSend.append('vietqr_image_url', vietqrImageUrl);
+            }
+
             let response;
             if (isEdit) {
                 // Also add ticket types for update mode if you want to support bulk update
@@ -563,6 +594,7 @@ export const useCreateEvent = () => {
         allOccupiedSeats,
         formData,
         bannerPreview,
+        vietqrPreview,
         ticketTypes,
         activeTicketTypeIndex,
         currentStep,
@@ -572,6 +604,7 @@ export const useCreateEvent = () => {
         setFormData,
         setTicketTypes,
         setBannerPreview,
+        setVietqrPreview,
         setIsLoadingData: setLoadingData,
 
         // Handlers
@@ -581,9 +614,16 @@ export const useCreateEvent = () => {
         setActiveTicketTypeIndex,
         handleInputChange,
         handleImageChange,
+        handleVietQRImageChange,
+        handleVietQRURLChange,
         removeBanner: () => {
             setBannerImage(null);
             setBannerPreview(null);
+        },
+        removeVietQR: () => {
+            setVietqrImage(null);
+            setVietqrImageUrl(null);
+            setVietqrPreview(null);
         },
         handleTicketTypeChange,
         toggleSeatSelection,

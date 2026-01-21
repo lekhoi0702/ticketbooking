@@ -35,6 +35,7 @@ import { useCreateEvent } from '@shared/hooks/useCreateEvent';
 import EventBasicInfo from '@features/organizer/components/EventBasicInfo';
 import EventDateTime from '@features/organizer/components/EventDateTime';
 import EventBannerUpload from '@features/organizer/components/EventBannerUpload';
+import VietQRImageUpload from '@features/organizer/components/VietQRImageUpload';
 import TicketConfig from '@features/organizer/components/TicketConfig';
 import ExtraShowtimesConfig from '@features/organizer/components/ExtraShowtimesConfig';
 
@@ -53,11 +54,15 @@ const CreateEvent = () => {
         venueTemplate,
         formData,
         bannerPreview,
+        vietqrPreview,
         ticketTypes,
         currentStep,
         setError,
         handleInputChange,
         handleImageChange,
+        handleVietQRImageChange,
+        handleVietQRURLChange,
+        removeVietQR,
         removeBanner,
         handleTicketTypeChange,
         toggleSeatSelection,
@@ -182,6 +187,21 @@ const CreateEvent = () => {
                                         venues={venues}
                                         fieldErrors={fieldErrors}
                                         disabled={loading}
+                                    />
+                                </Card>
+
+                                <Card title="5. Ảnh QR Code VietQR (Tùy chọn)" headStyle={{ background: '#fafafa' }}>
+                                    <div style={{ marginBottom: 16 }}>
+                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                            Upload ảnh QR code VietQR của bạn để khách hàng có thể thanh toán qua VietQR. 
+                                            Nếu không upload, hệ thống sẽ tự động tạo QR code.
+                                        </Text>
+                                    </div>
+                                    <VietQRImageUpload
+                                        qrPreview={vietqrPreview}
+                                        handleImageChange={handleVietQRImageChange}
+                                        handleURLChange={handleVietQRURLChange}
+                                        removeQR={removeVietQR}
                                     />
                                 </Card>
                             </Space>

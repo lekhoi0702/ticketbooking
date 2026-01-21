@@ -25,12 +25,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': 'http://127.0.0.1:5000',
-      '/uploads': 'http://127.0.0.1:5000',
-      '/socket.io': {
-        target: 'http://127.0.0.1:5000',
-        ws: true,
-        changeOrigin: true
-      }
+      '/uploads': 'http://127.0.0.1:5000'
     }
   }
 })

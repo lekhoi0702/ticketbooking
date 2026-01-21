@@ -25,7 +25,13 @@ const OrganizerProfileEdit = () => {
 
     const fetchProfile = async () => {
         try {
-            const res = await api.get(`/organizer/profile/${user.user_id}`);
+            // Ensure the method exists
+            if (!api.getOrganizerProfile) {
+                console.error('api.getOrganizerProfile is not available');
+                message.error('API method not available. Please refresh the page.');
+                return;
+            }
+            const res = await api.getOrganizerProfile(user.user_id);
             if (res.success) {
                 form.setFieldsValue(res.data);
                 setCurrentLogo(res.data.logo_url);
@@ -53,7 +59,13 @@ const OrganizerProfileEdit = () => {
                 formData.append('logo', logoFileList[0].originFileObj);
             }
 
-            const res = await api.put(`/organizer/profile/${user.user_id}`, formData);
+            // Ensure the method exists
+            if (!api.updateOrganizerProfile) {
+                console.error('api.updateOrganizerProfile is not available');
+                message.error('API method not available. Please refresh the page.');
+                return;
+            }
+            const res = await api.updateOrganizerProfile(user.user_id, formData);
 
             if (res.success) {
                 message.success('Cập nhật thông tin thành công');

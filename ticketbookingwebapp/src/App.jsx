@@ -14,6 +14,9 @@ import EventDetail from '@features/user/pages/EventDetail';
 import Checkout from '@features/user/pages/Checkout';
 import OrderSuccess from '@features/user/pages/OrderSuccess';
 import VNPayReturn from '@features/user/pages/VNPayReturn';
+import PayPalReturn from '@features/user/pages/PayPalReturn';
+import VietQRPayment from '@features/user/pages/VietQRPayment';
+import VietQRReturn from '@features/user/pages/VietQRReturn';
 // MyOrders and MyTickets are now integrated into Profile
 import SearchResults from '@features/user/pages/SearchResults';
 import CategoryEvents from '@features/user/pages/CategoryEvents';
@@ -109,6 +112,10 @@ function App() {
                   />
                   <Route path="/order-success/:orderCode" element={<OrderSuccess />} />
                   <Route path="/payment/vnpay-return" element={<VNPayReturn />} />
+                  <Route path="/payment/paypal-return" element={<PayPalReturn />} />
+                  <Route path="/payment/paypal-cancel" element={<PayPalReturn />} />
+                  <Route path="/payment/vietqr/:paymentCode" element={<VietQRPayment />} />
+                  <Route path="/payment/vietqr-return" element={<VietQRReturn />} />
                   <Route
                     path="/my-orders"
                     element={<Navigate to="/profile?tab=orders" replace />}

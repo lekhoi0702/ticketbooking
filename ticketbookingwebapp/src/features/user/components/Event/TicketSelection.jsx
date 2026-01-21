@@ -11,8 +11,7 @@ const TicketSelection = ({
     handleTicketQuantityChange,
     handleSeatSelection,
     hasSeatMap,
-    setHasSeatMap,
-    onSeatTimerUpdate
+    setHasSeatMap
 }) => {
     // Debug logging
     console.log('TicketSelection - event:', event);
@@ -71,7 +70,6 @@ const TicketSelection = ({
                                         onSeatsLoaded={(exists) => {
                                             setHasSeatMap(prev => ({ ...prev, [tt.ticket_type_id]: exists }));
                                         }}
-                                        onTimerUpdate={onSeatTimerUpdate}
                                     />
 
                                     {!hasSeatMap[tt.ticket_type_id] && (

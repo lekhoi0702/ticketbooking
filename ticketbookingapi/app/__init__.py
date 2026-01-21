@@ -1,6 +1,6 @@
 from flask import Flask, send_from_directory
 from flask_cors import CORS
-from app.extensions import db, migrate, socketio
+from app.extensions import db, migrate
 import os
 
 def create_app():
@@ -12,7 +12,6 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(app)
 
     # Import models to ensure they are registered
     from app.models import (
@@ -85,8 +84,5 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix="/api")
     app.register_blueprint(organizer_discount_bp, url_prefix="/api")
     app.register_blueprint(banners_bp, url_prefix="/api")
-    
-    # Import socket handlers to register them
-    from app.sockets import seat_socket
 
     return app

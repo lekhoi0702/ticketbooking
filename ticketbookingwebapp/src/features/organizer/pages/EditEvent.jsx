@@ -35,6 +35,7 @@ import { api } from '@services/api';
 import EventBasicInfo from '@features/organizer/components/EventBasicInfo';
 import EventDateTime from '@features/organizer/components/EventDateTime';
 import EventBannerUpload from '@features/organizer/components/EventBannerUpload';
+import VietQRImageUpload from '@features/organizer/components/VietQRImageUpload';
 import TicketConfig from '@features/organizer/components/TicketConfig';
 import ExtraShowtimesConfig from '@features/organizer/components/ExtraShowtimesConfig';
 
@@ -54,13 +55,17 @@ const EditEvent = () => {
         venueTemplate,
         formData,
         bannerPreview,
+        vietqrPreview,
         ticketTypes,
         fieldErrors,
         setError,
         setSuccess,
         handleInputChange,
         handleImageChange,
+        handleVietQRImageChange,
+        handleVietQRURLChange,
         removeBanner,
+        removeVietQR,
         handleTicketTypeChange,
         toggleSeatSelection,
         addTicketType,
@@ -73,6 +78,7 @@ const EditEvent = () => {
         setFormData,
         setTicketTypes,
         setBannerPreview,
+        setVietqrPreview,
         setIsLoadingData
     } = useCreateEvent();
 
@@ -123,6 +129,12 @@ const EditEvent = () => {
                     setBannerPreview(event.banner_image_url.startsWith('http')
                         ? event.banner_image_url
                         : `http://127.0.0.1:5000${event.banner_image_url}`);
+                }
+
+                if (event.vietqr_image_url) {
+                    setVietqrPreview(event.vietqr_image_url.startsWith('http')
+                        ? event.vietqr_image_url
+                        : `http://127.0.0.1:5000${event.vietqr_image_url}`);
                 }
 
                 // Optimized: Fetch ALL seats for the event in one go
@@ -292,6 +304,23 @@ const EditEvent = () => {
                                         handleImageChange={handleImageChange}
                                         removeBanner={removeBanner}
                                         disabled={isReadOnly || loading}
+                                    />
+
+                                    <Divider style={{ margin: '24px 0' }} />
+
+                                    <div style={{ marginBottom: 16 }}>
+                                        <Text strong style={{ fontSize: 13, marginBottom: 8, display: 'block' }}>
+                                            Ảnh QR Code VietQR
+                                        </Text>
+                                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+                                            Upload ảnh QR code VietQR của bạn để khách hàng có thể thanh toán qua VietQR.
+                                        </Text>
+                                    </div>
+                                    <VietQRImageUpload
+                                        qrPreview={vietqrPreview}
+                                        handleImageChange={handleVietQRImageChange}
+                                        handleURLChange={handleVietQRURLChange}
+                                        removeQR={removeVietQR}
                                     />
 
                                     <Divider style={{ margin: '24px 0' }} />

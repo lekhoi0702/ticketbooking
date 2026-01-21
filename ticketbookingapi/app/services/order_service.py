@@ -211,10 +211,11 @@ class OrderService:
                 
                 created_tickets.append(ticket)
                 
-                # Mark seat as BOOKED
+                # Mark seat as RESERVED (will be BOOKED when payment succeeds)
                 if seat_id:
                     seat = Seat.query.get(seat_id)
-                    seat.status = 'BOOKED'
+                    if seat.status == 'AVAILABLE':
+                        seat.status = 'RESERVED'
             
             # Update sold quantity
             ticket_type.sold_quantity += quantity
@@ -408,7 +409,55 @@ class OrderService:
         
         # Update order status
         order.order_status = 'CANCELLED'
+
+    @staticmethod
+    def mark_seats_as_booked(order_id):
+        """Mark seats as BOOKED when payment succeeds"""
+        order = Order.query.get(order_id)
+        if not order:
+            return
         
+        tickets = Ticket.query.filter_by(order_id=order_id).all()
+        
+        for ticket in tickets:
+            # Mark seat as BOOKED if exists
+            if ticket.seat_id:
+                seat = Seat.query.get(ticket.seat_id)
+                if seat and seat.status in ['RESERVED', 'AVAILABLE']:
+                    seat.status = 'BOOKED'
+
+    @staticmethod
+    def release_seats_for_failed_order(order_id):
+        """Release seats and update quantities when payment fails"""
+        order = Order.query.get(order_id)
+        if not order:
+            return
+        
+        tickets = Ticket.query.filter_by(order_id=order_id).all()
+        
+        for ticket in tickets:
+            # Release seat if exists (RESERVED or BOOKED)
+            if ticket.seat_id:
+                seat = Seat.query.get(ticket.seat_id)
+                if seat and seat.status in ['RESERVED', 'BOOKED']:
+                    seat.status = 'AVAILABLE'
+            
+            # Update sold quantity
+            ticket_type = TicketType.query.get(ticket.ticket_type_id)
+            if ticket_type:
+                ticket_type.sold_quantity = max(0, ticket_type.sold_quantity - 1)
+                
+                # Update event sold tickets
+                event = Event.query.get(ticket_type.event_id)
+                if event:
+                    event.sold_tickets = max(0, event.sold_tickets - 1)
+        
+        # Cancel tickets
+        for ticket in tickets:
+            ticket.ticket_status = 'CANCELLED'
+        
+        # Update order status
+        order.order_status = 'CANCELLED'
 
     @staticmethod
     def get_user_tickets_details(user_id):

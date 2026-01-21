@@ -1,12 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
-import { io } from 'socket.io-client';
-
-// Configuration: Must match backend
-const SEAT_HOLD_TIMEOUT_SECONDS = 30 * 60; // 30 minutes
-const WARNING_THRESHOLD_SECONDS = 5 * 60; // 5 minutes
+import { paymentApi } from '@services/api/payment';
 
 /**
  * Custom hook for checkout page logic
@@ -22,7 +18,6 @@ export const useCheckout = () => {
     const initialTickets = location.state?.selectedTickets || {};
     const initialSeats = location.state?.selectedSeats || {};
     const initialHasSeatMap = location.state?.hasSeatMap || {};
-    const initialSeatTimers = location.state?.seatTimers || {};
 
     // Redirect to login if not authenticated
     useEffect(() => {
@@ -54,13 +49,6 @@ export const useCheckout = () => {
     const [selectedSeats, setSelectedSeats] = useState(initialSeats);
     const [hasSeatMap, setHasSeatMap] = useState(initialHasSeatMap);
 
-    // Seat timer states
-    const [seatTimers, setSeatTimers] = useState(initialSeatTimers);
-    const [showTimeWarning, setShowTimeWarning] = useState(false);
-    const [seatsExpired, setSeatsExpired] = useState(false);
-    const timerIntervalRef = useRef(null);
-    const socketRef = useRef(null);
-
     // Discount states
     const [discountCode, setDiscountCode] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
@@ -77,20 +65,6 @@ export const useCheckout = () => {
     // Payment method
     const [paymentMethod, setPaymentMethod] = useState('VNPAY');
 
-    // Format seconds to mm:ss
-    const formatTime = (seconds) => {
-        if (seconds <= 0) return '00:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    // Get minimum remaining time
-    const getMinRemainingTime = useCallback(() => {
-        const times = Object.values(seatTimers).filter(t => t > 0);
-        return times.length > 0 ? Math.min(...times) : 0;
-    }, [seatTimers]);
-
     // Update customer info when user changes
     useEffect(() => {
         if (user) {
@@ -102,114 +76,6 @@ export const useCheckout = () => {
         }
     }, [user]);
 
-    // Socket connection to maintain seat locks during checkout
-    useEffect(() => {
-        if (!eventId) return;
-
-        // Check if we have any seats to maintain
-        const allSeats = Object.values(selectedSeats).flat();
-        if (allSeats.length === 0) return;
-
-        const newSocket = io(window.location.origin, {
-            path: '/socket.io',
-            transports: ['polling'],
-            timeout: 20000,
-            forceNew: false,
-            reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
-            upgrade: true
-        });
-        socketRef.current = newSocket;
-
-        newSocket.on('connect', () => {
-            console.log('Checkout socket connected:', newSocket.id);
-            newSocket.emit('join_event', { event_id: parseInt(eventId) });
-            // Request current timers for our seats
-            newSocket.emit('get_seat_timer', { event_id: parseInt(eventId) });
-        });
-
-        // Handle seat expiration
-        newSocket.on('seat_expired', (data) => {
-            console.log('Seat expired during checkout:', data);
-            // Remove expired seat from selection
-            setSelectedSeats(prev => {
-                const updated = {};
-                for (const [ttId, seats] of Object.entries(prev)) {
-                    updated[ttId] = seats.filter(s => s.seat_id !== data.seat_id);
-                }
-                return updated;
-            });
-            setSeatTimers(prev => {
-                const updated = { ...prev };
-                delete updated[data.seat_id];
-                return updated;
-            });
-            setSeatsExpired(true);
-            setError('Một số ghế đã hết thời gian giữ (30 phút). Vui lòng quay lại chọn ghế.');
-        });
-
-        // Receive timer sync
-        newSocket.on('seat_timers', (data) => {
-            console.log('Received seat timers:', data);
-            const timers = {};
-            data.seats.forEach(seat => {
-                timers[seat.seat_id] = seat.remaining_seconds;
-            });
-            setSeatTimers(timers);
-        });
-
-        return () => {
-            if (newSocket && newSocket.connected) {
-                newSocket.emit('leave_event', { event_id: parseInt(eventId) });
-                newSocket.disconnect();
-            }
-        };
-    }, [eventId, selectedSeats]);
-
-    // Countdown timer for seat holds
-    useEffect(() => {
-        if (Object.keys(seatTimers).length === 0) {
-            setShowTimeWarning(false);
-            return;
-        }
-
-        timerIntervalRef.current = setInterval(() => {
-            setSeatTimers(prev => {
-                const updated = {};
-                let hasExpired = false;
-
-                for (const [seatId, remaining] of Object.entries(prev)) {
-                    const newRemaining = remaining - 1;
-                    if (newRemaining <= 0) {
-                        hasExpired = true;
-                    } else {
-                        updated[seatId] = newRemaining;
-                    }
-                }
-
-                // Check warning threshold
-                const minTime = Object.values(updated).filter(t => t > 0);
-                if (minTime.length > 0 && Math.min(...minTime) <= WARNING_THRESHOLD_SECONDS) {
-                    setShowTimeWarning(true);
-                } else {
-                    setShowTimeWarning(false);
-                }
-
-                if (hasExpired) {
-                    setSeatsExpired(true);
-                }
-
-                return updated;
-            });
-        }, 1000);
-
-        return () => {
-            if (timerIntervalRef.current) {
-                clearInterval(timerIntervalRef.current);
-            }
-        };
-    }, [Object.keys(seatTimers).length]);
 
     // Define fetchEventData as a useCallback to prevent unnecessary re-creation
     const fetchEventData = useCallback(async () => {
@@ -346,12 +212,35 @@ export const useCheckout = () => {
 
             const orderId = orderResponse.data.order.order_id;
 
-            // Handle payment (Always VNPAY)
-            const paymentResponse = await api.createVNPayPaymentUrl(orderId);
-            if (paymentResponse.success) {
-                window.location.href = paymentResponse.data.payment_url;
+            // Handle payment based on selected method
+            if (paymentMethod === 'PAYPAL') {
+                const paymentResponse = await paymentApi.createPayPalOrder(orderId);
+                if (paymentResponse.success) {
+                    window.location.href = paymentResponse.data.payment_url;
+                } else {
+                    throw new Error('Không thể tạo link thanh toán PayPal');
+                }
+            } else if (paymentMethod === 'VIETQR') {
+                const paymentResponse = await paymentApi.createVietQR(orderId);
+                if (paymentResponse.success) {
+                    // Navigate to VietQR payment page
+                    navigate(`/payment/vietqr/${paymentResponse.data.payment_code}`, {
+                        state: {
+                            qrData: paymentResponse.data,
+                            orderId: orderId
+                        }
+                    });
+                } else {
+                    throw new Error('Không thể tạo mã QR thanh toán VietQR');
+                }
             } else {
-                throw new Error('Không thể tạo link thanh toán VNPay');
+                // Default to VNPay
+                const paymentResponse = await api.createVNPayPaymentUrl(orderId);
+                if (paymentResponse.success) {
+                    window.location.href = paymentResponse.data.payment_url;
+                } else {
+                    throw new Error('Không thể tạo link thanh toán VNPay');
+                }
             }
 
         } catch (err) {
@@ -377,13 +266,6 @@ export const useCheckout = () => {
         discountAmount,
         isValidDiscount,
         discountMsg,
-        
-        // Seat timer related
-        seatTimers,
-        showTimeWarning,
-        seatsExpired,
-        getMinRemainingTime,
-        formatTime,
 
         setError,
         setCustomerInfo,

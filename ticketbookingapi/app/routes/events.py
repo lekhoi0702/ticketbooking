@@ -154,7 +154,39 @@ def get_event(event_id):
                 'message': 'Event not found'
             }), 404
         
-        event_data = event.to_dict(include_details=True)
+        try:
+            event_data = event.to_dict(include_details=True)
+        except AttributeError as e:
+            # Handle case where vietqr_image_url column doesn't exist yet
+            import traceback
+            print(f"Error in to_dict: {e}")
+            print(traceback.format_exc())
+            # Try to get data manually
+            event_data = {
+                'event_id': event.event_id,
+                'category_id': event.category_id,
+                'venue_id': event.venue_id,
+                'manager_id': event.manager_id,
+                'event_name': event.event_name,
+                'description': event.description,
+                'start_datetime': event.start_datetime.isoformat() if event.start_datetime else None,
+                'end_datetime': event.end_datetime.isoformat() if event.end_datetime else None,
+                'sale_start_datetime': event.sale_start_datetime.isoformat() if event.sale_start_datetime else None,
+                'sale_end_datetime': event.sale_end_datetime.isoformat() if event.sale_end_datetime else None,
+                'banner_image_url': event.banner_image_url,
+                'vietqr_image_url': None,  # Default to None if column doesn't exist
+                'total_capacity': event.total_capacity,
+                'sold_tickets': event.sold_tickets,
+                'status': event.status,
+                'is_featured': event.is_featured,
+                'group_id': event.group_id
+            }
+            if hasattr(event, 'category') and event.category:
+                event_data['category'] = event.category.to_dict() if hasattr(event.category, 'to_dict') else None
+            if hasattr(event, 'venue') and event.venue:
+                event_data['venue'] = event.venue.to_dict() if hasattr(event.venue, 'to_dict') else None
+            if hasattr(event, 'ticket_types') and event.ticket_types:
+                event_data['ticket_types'] = [tt.to_dict() for tt in event.ticket_types] if hasattr(event.ticket_types[0], 'to_dict') else []
         
         # If part of a group, fetch siblings for schedule
         if event.group_id:
@@ -181,6 +213,9 @@ def get_event(event_id):
         }), 200
         
     except Exception as e:
+        import traceback
+        print(f"Error in get_event: {e}")
+        print(traceback.format_exc())
         return jsonify({
             'success': False,
             'message': str(e)
@@ -286,7 +321,17 @@ def get_event_ticket_types(event_id):
         from app.models.ticket_type import TicketType
         
         # Verify event exists and is published
-        event = Event.query.get(event_id)
+        try:
+            event = Event.query.get(event_id)
+        except Exception as e:
+            import traceback
+            print(f"Error querying event: {e}")
+            print(traceback.format_exc())
+            return jsonify({
+                'success': False,
+                'message': f'Error fetching event: {str(e)}'
+            }), 500
+        
         if not event:
             return jsonify({
                 'success': False,
@@ -294,10 +339,19 @@ def get_event_ticket_types(event_id):
             }), 404
         
         # Get all active ticket types for this event
-        ticket_types = TicketType.query.filter_by(
-            event_id=event_id,
-            is_active=True
-        ).order_by(TicketType.price.asc()).all()
+        try:
+            ticket_types = TicketType.query.filter_by(
+                event_id=event_id,
+                is_active=True
+            ).order_by(TicketType.price.asc()).all()
+        except Exception as e:
+            import traceback
+            print(f"Error querying ticket types: {e}")
+            print(traceback.format_exc())
+            return jsonify({
+                'success': False,
+                'message': f'Error fetching ticket types: {str(e)}'
+            }), 500
         
         return jsonify({
             'success': True,
@@ -305,7 +359,9 @@ def get_event_ticket_types(event_id):
         }), 200
         
     except Exception as e:
+        import traceback
         print(f"Error in get_event_ticket_types: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({
             'success': False,
             'message': str(e)

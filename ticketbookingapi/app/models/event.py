@@ -15,6 +15,7 @@ class Event(db.Model):
     sale_start_datetime = db.Column(db.DateTime)
     sale_end_datetime = db.Column(db.DateTime)
     banner_image_url = db.Column(db.String(500))
+    vietqr_image_url = db.Column(db.String(500), nullable=True)  # QR code image URL for VietQR payment
     total_capacity = db.Column(db.Integer, nullable=False)
     sold_tickets = db.Column(db.Integer, default=0)
     status = db.Column(db.Enum('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION', 'DELETED'), default='PENDING_APPROVAL', index=True)
@@ -39,6 +40,7 @@ class Event(db.Model):
             'sale_start_datetime': self.sale_start_datetime.isoformat() if self.sale_start_datetime else None,
             'sale_end_datetime': self.sale_end_datetime.isoformat() if self.sale_end_datetime else None,
             'banner_image_url': self.banner_image_url,
+            'vietqr_image_url': getattr(self, 'vietqr_image_url', None),  # Handle case where column doesn't exist yet
             'total_capacity': self.total_capacity,
             'sold_tickets': self.sold_tickets,
             'status': self.status,
