@@ -156,3 +156,56 @@ def check_discount():
         
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@orders_bp.route("/orders/<int:order_id>/release-seats", methods=["POST"])
+def release_seats_for_order(order_id):
+    """Release reserved seats for a pending order (called when user leaves checkout page)"""
+    from app.models.order import Order
+    try:
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+        
+        # Only allow releasing seats for PENDING orders
+        if order.order_status != 'PENDING':
+            return jsonify({
+                'success': False, 
+                'message': f'Cannot release seats for order with status: {order.order_status}'
+            }), 400
+        
+        # Release seats using the existing method
+        OrderService.release_seats_for_failed_order(order_id)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Seats released successfully'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@orders_bp.route("/orders/cleanup-expired", methods=["POST"])
+def cleanup_expired_orders():
+    """Cleanup expired pending orders and release reserved seats (system/admin endpoint)"""
+    try:
+        data = request.get_json() or {}
+        older_than_minutes = data.get('older_than_minutes', 15)
+        
+        cancelled_count, released_seats_count = OrderService.cleanup_expired_pending_orders(
+            older_than_minutes=older_than_minutes
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'Cleaned up {cancelled_count} expired orders and released {released_seats_count} seats',
+            'data': {
+                'cancelled_orders': cancelled_count,
+                'released_seats': released_seats_count
+            }
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500

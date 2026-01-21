@@ -235,7 +235,11 @@ class OrganizerStatsService:
             # If so, we only show Ticket relevant to this manager.
             
             t_sql = text("""
-                SELECT t.*, tt.type_name, e.event_name, e.end_datetime
+                SELECT 
+                    t.ticket_id, t.order_id, t.ticket_type_id, t.ticket_code, t.ticket_status,
+                    t.seat_id, t.price, t.qr_code_url, t.holder_name, t.holder_email,
+                    t.checked_in_at, t.created_at, t.deleted_at,
+                    tt.type_name, e.event_name, e.end_datetime
                 FROM Ticket t
                 JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
                 JOIN Event e ON tt.event_id = e.event_id

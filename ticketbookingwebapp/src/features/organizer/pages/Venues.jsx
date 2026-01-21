@@ -58,7 +58,8 @@ const OrganizerVenues = () => {
     const fetchVenues = async () => {
         try {
             setLoading(true);
-            const res = await api.getOrganizerVenues(user.user_id);
+            // excludeMaintenance = false to show ALL venues including maintenance ones
+            const res = await api.getOrganizerVenues(user.user_id, false);
             if (res.success) setVenues(res.data);
         } catch (error) {
             console.error("Error fetching venues:", error);

@@ -26,9 +26,13 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
                 >
                     <div className="bg-white p-2 rounded-3 me-3 shadow-sm" style={{ width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <img
-                            src={`${UPLOADS_BASE_URL}/logo/vnpay-logo-inkythuatso-01.jpg`}
+                            src={`${UPLOADS_BASE_URL}/logo/vnpay-logo-inkythuatso.svg`}
                             alt="VNPay"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                            onError={(e) => {
+                                // Fallback to JPG if SVG fails
+                                e.target.src = `${UPLOADS_BASE_URL}/logo/vnpay-logo-inkythuatso-01.jpg`;
+                            }}
                         />
                     </div>
                     <div className="flex-grow-1">
@@ -56,12 +60,11 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
                     style={{ cursor: 'pointer', transition: 'all 0.3s' }}
                 >
                     <div className="bg-white p-2 rounded-3 me-3 shadow-sm" style={{ width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="60" height="60" fill="#003087"/>
-                            <path d="M22.5 18L17.5 42H12L15 18H22.5Z" fill="#009CDE"/>
-                            <path d="M45 18C47.5 18 49 19 49.5 21C50 23 49.5 25 48 26C46.5 27 44.5 27.5 42.5 27.5C40.5 27.5 39 27 38 26C37 25 36.5 23.5 36.5 22C36.5 20.5 37 19 38.5 18H45ZM42 24C42.5 24 43 24 43.5 24C44 24 44.5 23.5 44.5 23C44.5 22.5 44 22 43.5 22C43 22 42.5 22 42 22C41.5 22 41 22.5 41 23C41 23.5 41.5 24 42 24Z" fill="#009CDE"/>
-                            <path d="M30 18L25 42H20L23 18H30Z" fill="#009CDE"/>
-                        </svg>
+                        <img
+                            src={`${UPLOADS_BASE_URL}/logo/paypal.webp`}
+                            alt="PayPal"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
                     </div>
                     <div className="flex-grow-1">
                         <strong className="d-block fs-5" style={{ color: paymentMethod === 'PAYPAL' ? '#007bff' : 'inherit' }}>
@@ -87,14 +90,12 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
                     onClick={() => handleMethodChange('VIETQR')}
                     style={{ cursor: 'pointer', transition: 'all 0.3s' }}
                 >
-                    <div className="bg-white p-2 rounded-3 me-3 shadow-sm" style={{ width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="60" height="60" rx="8" fill="#1A73E8"/>
-                            <path d="M15 20H45V40H15V20Z" fill="white"/>
-                            <rect x="20" y="25" width="20" height="20" fill="#1A73E8"/>
-                            <circle cx="30" cy="35" r="3" fill="white"/>
-                            <circle cx="30" cy="35" r="1.5" fill="#1A73E8"/>
-                        </svg>
+                    <div className="bg-white p-2 rounded-3 me-3 shadow-sm" style={{ width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <img
+                            src={`${UPLOADS_BASE_URL}/logo/vietqr.png`}
+                            alt="VietQR"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(2)' }}
+                        />
                     </div>
                     <div className="flex-grow-1">
                         <strong className="d-block fs-5" style={{ color: paymentMethod === 'VIETQR' ? '#007bff' : 'inherit' }}>

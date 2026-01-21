@@ -41,6 +41,7 @@ import OrganizerProfileEdit from '@features/organizer/pages/OrganizerProfileEdit
 import ManageOrders from '@features/organizer/pages/ManageOrders';
 import RefundRequests from '@features/organizer/pages/RefundRequests';
 import DiscountManagement from '@features/organizer/pages/DiscountManagement';
+import QRCodeManagement from '@features/organizer/pages/QRCodeManagement';
 
 // Admin Imports
 import AdminLayout from '@features/admin/components/AdminLayout';
@@ -172,6 +173,7 @@ function App() {
                   <Route path="orders" element={<ManageOrders />} />
                   <Route path="refund-requests" element={<RefundRequests />} />
                   <Route path="discounts" element={<DiscountManagement />} />
+                  <Route path="qr-codes" element={<QRCodeManagement />} />
                 </Route>
               </Routes>
             </Router>

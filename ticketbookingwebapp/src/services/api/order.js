@@ -72,5 +72,16 @@ export const orderApi = {
         console.log("Validate Response:", res);
         if (!response.ok) throw new Error(res.message || 'Lỗi kiểm tra mã');
         return res;
+    },
+
+    async releaseSeats(orderId) {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}/release-seats`, {
+            method: 'POST',
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to release seats');
+        }
+        return await response.json();
     }
 };

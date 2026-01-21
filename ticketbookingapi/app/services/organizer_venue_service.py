@@ -5,11 +5,27 @@ import json
 
 class OrganizerVenueService:
     @staticmethod
-    def get_venues(manager_id):
-        query = text("""
-            SELECT * FROM Venue 
-            WHERE manager_id = :manager_id
-        """)
+    def get_venues(manager_id, exclude_maintenance=True):
+        """
+        Get venues managed by organizer
+        
+        Args:
+            manager_id: The organizer's user ID
+            exclude_maintenance: If True, exclude venues with MAINTENANCE status (default: True)
+        """
+        if exclude_maintenance:
+            query = text("""
+                SELECT * FROM Venue 
+                WHERE manager_id = :manager_id 
+                AND status != 'MAINTENANCE' 
+                AND is_active = TRUE
+                AND status != 'INACTIVE'
+            """)
+        else:
+            query = text("""
+                SELECT * FROM Venue 
+                WHERE manager_id = :manager_id
+            """)
         result = db.session.execute(query, {"manager_id": manager_id})
         
         class VenueWrapper:

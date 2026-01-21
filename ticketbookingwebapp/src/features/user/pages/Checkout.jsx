@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Container, Row, Col, Form, Alert, Spinner, Badge } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 // Hooks
 import { useCheckout } from '@shared/hooks/useCheckout';
@@ -16,6 +17,7 @@ import LoadingSpinner from '@shared/components/LoadingSpinner';
  * Refactored to be cleaner and more maintainable
  */
 const Checkout = () => {
+    const navigate = useNavigate();
     const {
         loading,
         processing,
@@ -27,17 +29,19 @@ const Checkout = () => {
         hasSeatMap,
         customerInfo,
         paymentMethod,
+        qrData,
+        orderCreated,
         setError,
         setCustomerInfo,
         setPaymentMethod,
         calculateTotal,
         getTotalTickets,
         handleSubmit,
-        navigate,
         applyDiscount,
         discountAmount,
         isValidDiscount,
-        discountMsg
+        discountMsg,
+        handlePaymentSuccess
     } = useCheckout();
 
     // Scroll to top when component mounts
@@ -59,10 +63,28 @@ const Checkout = () => {
                     margin: 0
                 }}>
                     <li className="breadcrumb-item">
-                        <a href="/" className="text-decoration-none" style={{ color: '#2DC275' }}>Trang chủ</a>
+                        <a 
+                            href="/" 
+                            className="text-decoration-none" 
+                            style={{ color: '#2DC275' }}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                navigate('/');
+                            }}
+                        >
+                            Trang chủ
+                        </a>
                     </li>
                     <li className="breadcrumb-item">
-                        <a href={`/event/${event?.event_id}`} className="text-decoration-none" style={{ color: '#2DC275' }}>
+                        <a 
+                            href={`/event/${event?.event_id}`} 
+                            className="text-decoration-none" 
+                            style={{ color: '#2DC275' }}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                navigate(`/event/${event?.event_id}`);
+                            }}
+                        >
                             {event?.event_name || 'Sự kiện'}
                         </a>
                     </li>
@@ -105,6 +127,9 @@ const Checkout = () => {
                             discountAmount={discountAmount}
                             isValidDiscount={isValidDiscount}
                             discountMsg={discountMsg}
+                            readonly={orderCreated && paymentMethod === 'VIETQR'}
+                            qrData={orderCreated && paymentMethod === 'VIETQR' ? qrData : null}
+                            onPaymentSuccess={handlePaymentSuccess}
                         />
                     </Col>
                 </Row>

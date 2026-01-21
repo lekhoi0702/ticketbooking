@@ -65,6 +65,7 @@ const TicketSelection = ({
 
                                     <SeatMap
                                         ticketType={tt}
+                                        eventId={event?.event_id}
                                         onSelectionChange={(seats) => handleSeatSelection(tt.ticket_type_id, seats)}
                                         maxSelection={tt.max_per_order}
                                         onSeatsLoaded={(exists) => {

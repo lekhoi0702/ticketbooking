@@ -86,14 +86,30 @@ export const useCreateEvent = () => {
                 }
             }
             if (venuesRes.success) {
-                setVenues(venuesRes.data);
-                if (venuesRes.data.length > 0) {
-                    const firstVenueId = venuesRes.data[0].venue_id;
+                // Filter out venues that are in maintenance or inactive
+                const availableVenues = venuesRes.data.filter(venue => 
+                    venue.status !== 'MAINTENANCE' && 
+                    venue.is_active !== false &&
+                    venue.status !== 'INACTIVE'
+                );
+                setVenues(availableVenues);
+                
+                // Only auto-select venue if no venue_id is currently set (new event)
+                if (availableVenues.length > 0 && !formData.venue_id) {
+                    const firstVenueId = availableVenues[0].venue_id;
                     setFormData(prev => ({
                         ...prev,
-                        venue_id: prev.venue_id || firstVenueId
+                        venue_id: firstVenueId
+                    }));
+                } else if (availableVenues.length === 0 && !formData.venue_id) {
+                    // No available venues and no current venue_id, clear it
+                    setFormData(prev => ({
+                        ...prev,
+                        venue_id: null
                     }));
                 }
+                // If formData.venue_id exists (editing event), keep it even if venue is in maintenance
+                // This allows editing events with venues that later went into maintenance
             }
         } catch (err) {
             console.error('Error fetching initial data:', err);

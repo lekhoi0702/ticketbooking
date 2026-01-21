@@ -115,6 +115,12 @@ const OrganizerLayout = () => {
             icon: <TagsOutlined />,
             label: 'Mã giảm giá',
             onClick: () => navigate('/organizer/discounts'),
+        },
+        {
+            key: '/organizer/qr-codes',
+            icon: <QrcodeOutlined />,
+            label: 'Quản lý QR Code',
+            onClick: () => navigate('/organizer/qr-codes'),
         }
     ];
 
@@ -142,7 +148,8 @@ const OrganizerLayout = () => {
             'edit': 'Chỉnh sửa cá nhân',
             'orders': 'Quản lý đơn hàng',
             'refund-requests': 'Yêu cầu hoàn tiền',
-            'discounts': 'Mã giảm giá'
+            'discounts': 'Mã giảm giá',
+            'qr-codes': 'Quản lý QR Code'
         };
 
         let currentPath = '/organizer';

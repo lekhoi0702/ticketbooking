@@ -1,8 +1,10 @@
 from flask import Blueprint, jsonify, request
 from app.extensions import db
 from app.models.seat import Seat
+from app.models.seat_reservation import SeatReservation
 from app.models.ticket_type import TicketType
 from app.models.event import Event
+from datetime import datetime, timedelta
 
 seats_bp = Blueprint("seats", __name__)
 
@@ -178,6 +180,192 @@ def assign_seats_from_template():
             'count': final_seat_count,
             'seats_with_tickets': len(seats_with_tickets)
         }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@seats_bp.route("/seats/lock", methods=["POST"])
+def lock_seat():
+    """Lock a seat for reservation (5 minutes)"""
+    try:
+        data = request.get_json()
+        seat_id = data.get('seat_id')
+        user_id = data.get('user_id')
+        event_id = data.get('event_id')
+        
+        if not all([seat_id, user_id, event_id]):
+            return jsonify({'success': False, 'message': 'Missing required parameters'}), 400
+        
+        seat = Seat.query.get(seat_id)
+        if not seat:
+            return jsonify({'success': False, 'message': 'Seat not found'}), 404
+        
+        # Check if seat is available
+        if seat.status != 'AVAILABLE':
+            # Check for expired reservation
+            existing_reservation = SeatReservation.query.filter_by(
+                seat_id=seat_id,
+                is_active=True
+            ).first()
+            
+            if existing_reservation and existing_reservation.is_expired():
+                # Clean up expired reservation
+                seat.status = 'AVAILABLE'
+                existing_reservation.is_active = False
+                db.session.commit()
+            elif seat.status == 'RESERVED':
+                # Check if it's reserved by this user
+                user_reservation = SeatReservation.query.filter_by(
+                    seat_id=seat_id,
+                    user_id=user_id,
+                    is_active=True
+                ).first()
+                
+                if user_reservation and not user_reservation.is_expired():
+                    # User already has this seat reserved
+                    return jsonify({
+                        'success': True,
+                        'message': 'Seat already reserved by you',
+                        'data': {
+                            'seat_id': seat_id,
+                            'expires_at': user_reservation.expires_at.isoformat()
+                        }
+                    }), 200
+                else:
+                    return jsonify({'success': False, 'message': 'Seat is already reserved'}), 409
+        
+        # Create reservation
+        reservation = SeatReservation(
+            seat_id=seat_id,
+            user_id=user_id,
+            event_id=event_id,
+            reservation_duration_minutes=5
+        )
+        
+        seat.status = 'RESERVED'
+        db.session.add(reservation)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Seat reserved successfully',
+            'data': {
+                'seat_id': seat_id,
+                'expires_at': reservation.expires_at.isoformat()
+            }
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@seats_bp.route("/seats/unlock", methods=["POST"])
+def unlock_seat():
+    """Unlock a seat reservation"""
+    try:
+        data = request.get_json()
+        seat_id = data.get('seat_id')
+        user_id = data.get('user_id')
+        event_id = data.get('event_id')
+        
+        if not all([seat_id, user_id, event_id]):
+            return jsonify({'success': False, 'message': 'Missing required parameters'}), 400
+        
+        seat = Seat.query.get(seat_id)
+        if not seat:
+            return jsonify({'success': False, 'message': 'Seat not found'}), 404
+        
+        # Find active reservation for this user
+        reservation = SeatReservation.query.filter_by(
+            seat_id=seat_id,
+            user_id=user_id,
+            is_active=True
+        ).first()
+        
+        if reservation:
+            reservation.is_active = False
+            seat.status = 'AVAILABLE'
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Seat unlocked successfully'
+            }), 200
+        else:
+            return jsonify({'success': False, 'message': 'No active reservation found'}), 404
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@seats_bp.route("/seats/my-reservations/<int:event_id>/<int:user_id>", methods=["GET"])
+def get_my_reservations(event_id, user_id):
+    """Get active reservations for a user in an event"""
+    try:
+        reservations = SeatReservation.query.filter_by(
+            event_id=event_id,
+            user_id=user_id,
+            is_active=True
+        ).all()
+        
+        # Filter out expired reservations
+        active_reservations = []
+        for reservation in reservations:
+            if not reservation.is_expired():
+                active_reservations.append(reservation)
+            else:
+                # Clean up expired reservation
+                seat = Seat.query.get(reservation.seat_id)
+                if seat:
+                    seat.status = 'AVAILABLE'
+                reservation.is_active = False
+        
+        if active_reservations:
+            db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': [r.to_dict() for r in active_reservations]
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@seats_bp.route("/seats/unlock-all", methods=["POST"])
+def unlock_all_seats():
+    """Unlock all seats for a user in an event (used when leaving checkout)"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        event_id = data.get('event_id')
+        
+        if not all([user_id, event_id]):
+            return jsonify({'success': False, 'message': 'Missing required parameters'}), 400
+        
+        # Find all active reservations for this user in this event
+        reservations = SeatReservation.query.filter_by(
+            event_id=event_id,
+            user_id=user_id,
+            is_active=True
+        ).all()
+        
+        unlocked_count = 0
+        for reservation in reservations:
+            seat = Seat.query.get(reservation.seat_id)
+            if seat:
+                seat.status = 'AVAILABLE'
+                reservation.is_active = False
+                unlocked_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Unlocked {unlocked_count} seats',
+            'unlocked_count': unlocked_count
+        }), 200
+        
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500

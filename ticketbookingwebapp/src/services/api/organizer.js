@@ -173,8 +173,9 @@ export const organizerApi = {
     },
 
     // Venue Management
-    async getOrganizerVenues(managerId = 1) {
-        const response = await fetch(`${API_BASE_URL}/organizer/venues?manager_id=${managerId}`);
+    async getOrganizerVenues(managerId = 1, excludeMaintenance = true) {
+        const excludeParam = excludeMaintenance ? 'true' : 'false';
+        const response = await fetch(`${API_BASE_URL}/organizer/venues?manager_id=${managerId}&exclude_maintenance=${excludeParam}`);
         if (!response.ok) throw new Error('Failed to fetch venues');
         return await response.json();
     },
@@ -346,6 +347,66 @@ export const organizerApi = {
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to update organizer profile');
+        }
+        return await response.json();
+    },
+
+    // QR Code Management
+    async getQRCodes(managerId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/qr-codes?manager_id=${managerId}`);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to fetch QR codes');
+        }
+        return await response.json();
+    },
+
+    async createQRCode(managerId, formData) {
+        formData.append('manager_id', managerId);
+        const response = await fetch(`${API_BASE_URL}/organizer/qr-codes`, {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create QR code');
+        }
+        return await response.json();
+    },
+
+    async updateQRCode(qrCodeId, managerId, formData) {
+        formData.append('manager_id', managerId);
+        const response = await fetch(`${API_BASE_URL}/organizer/qr-codes/${qrCodeId}`, {
+            method: 'PUT',
+            body: formData
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update QR code');
+        }
+        return await response.json();
+    },
+
+    async deleteQRCode(qrCodeId, managerId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/qr-codes/${qrCodeId}?manager_id=${managerId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to delete QR code');
+        }
+        return await response.json();
+    },
+
+    async toggleQRCodeActive(qrCodeId, managerId) {
+        const response = await fetch(`${API_BASE_URL}/organizer/qr-codes/${qrCodeId}/toggle-active`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ manager_id: managerId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to toggle QR code status');
         }
         return await response.json();
     }

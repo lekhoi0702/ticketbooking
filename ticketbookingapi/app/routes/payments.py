@@ -844,17 +844,52 @@ def create_vietqr_qr():
         
         # If organizer uploaded QR image, use it; otherwise generate mock QR code data
         if vietqr_image_url:
-            # Use organizer's uploaded QR image
-            return jsonify({
-                'success': True,
-                'data': {
-                    'payment_code': payment.payment_code,
-                    'vietqr_image_url': vietqr_image_url,
-                    'amount': float(order.final_amount),
-                    'order_code': order.order_code,
-                    'expires_in': 900  # 15 minutes
-                }
-            }), 200
+            # Check if URL is from Sepay.vn - if so, add amount and description dynamically
+            if 'qr.sepay.vn' in vietqr_image_url:
+                # Parse Sepay URL and add amount and description
+                from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+                parsed = urlparse(vietqr_image_url)
+                params = parse_qs(parsed.query)
+                
+                # Add or update amount and description (only if not already set)
+                if 'amount' not in params or not params['amount']:
+                    params['amount'] = [str(int(order.final_amount))]
+                if 'des' not in params or not params['des']:
+                    params['des'] = [f'Thanh toan don hang {order.order_code}']
+                
+                # Rebuild URL
+                new_query = urlencode(params, doseq=True)
+                dynamic_qr_url = urlunparse((
+                    parsed.scheme,
+                    parsed.netloc,
+                    parsed.path,
+                    parsed.params,
+                    new_query,
+                    parsed.fragment
+                ))
+                
+                return jsonify({
+                    'success': True,
+                    'data': {
+                        'payment_code': payment.payment_code,
+                        'vietqr_image_url': dynamic_qr_url,
+                        'amount': float(order.final_amount),
+                        'order_code': order.order_code,
+                        'expires_in': 900  # 15 minutes
+                    }
+                }), 200
+            else:
+                # Use organizer's uploaded QR image as-is (static QR)
+                return jsonify({
+                    'success': True,
+                    'data': {
+                        'payment_code': payment.payment_code,
+                        'vietqr_image_url': vietqr_image_url,
+                        'amount': float(order.final_amount),
+                        'order_code': order.order_code,
+                        'expires_in': 900  # 15 minutes
+                    }
+                }), 200
         else:
             # Generate mock QR code data (fallback)
             qr_data = {

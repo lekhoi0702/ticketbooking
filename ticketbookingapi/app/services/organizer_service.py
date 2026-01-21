@@ -35,7 +35,12 @@ class OrganizerService:
             raise ValueError('Order is not pending cancellation')
             
         # Get Ticket
-        t_res = db.session.execute(text("SELECT * FROM Ticket WHERE order_id = :id"), {"id": order_id})
+        t_res = db.session.execute(text("""
+            SELECT ticket_id, order_id, ticket_type_id, ticket_code, ticket_status,
+                   seat_id, price, qr_code_url, holder_name, holder_email,
+                   checked_in_at, created_at, deleted_at
+            FROM Ticket WHERE order_id = :id
+        """), {"id": order_id})
         tickets = t_res.fetchall()
         
         # Update order status
@@ -198,7 +203,11 @@ class OrganizerService:
         for order in orders_rows:
             # Get Ticket for this order AND this event
             t_sql = text("""
-                SELECT t.*, tt.type_name, tt.price
+                SELECT 
+                    t.ticket_id, t.order_id, t.ticket_type_id, t.ticket_code, t.ticket_status,
+                    t.seat_id, t.price, t.qr_code_url, t.holder_name, t.holder_email,
+                    t.checked_in_at, t.created_at, t.deleted_at,
+                    tt.type_name, tt.price as ticket_type_price
                 FROM Ticket t
                 JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
                 WHERE t.order_id = :oid AND tt.event_id = :eid
@@ -237,7 +246,11 @@ class OrganizerService:
         params = {}
         
         sql = """
-            SELECT t.*, tt.type_name, e.event_name
+            SELECT 
+                t.ticket_id, t.order_id, t.ticket_type_id, t.ticket_code, t.ticket_status,
+                t.seat_id, t.price, t.qr_code_url, t.holder_name, t.holder_email,
+                t.checked_in_at, t.created_at, t.deleted_at,
+                tt.type_name, e.event_name
             FROM Ticket t
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
@@ -288,7 +301,11 @@ class OrganizerService:
         
         # Find ticket with event info
         sql = text("""
-            SELECT t.*, tt.event_id, e.manager_id, e.event_name
+            SELECT 
+                t.ticket_id, t.order_id, t.ticket_type_id, t.ticket_code, t.ticket_status,
+                t.seat_id, t.price, t.qr_code_url, t.holder_name, t.holder_email,
+                t.checked_in_at, t.created_at, t.deleted_at,
+                tt.event_id, e.manager_id, e.event_name
             FROM Ticket t
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id

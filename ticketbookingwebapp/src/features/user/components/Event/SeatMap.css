@@ -241,6 +241,15 @@
     animation: pulse-locked 2s ease-in-out infinite !important;
 }
 
+.seat-item.seat-reserved {
+    background: rgba(251, 191, 36, 0.15) !important;
+    border-color: rgba(251, 191, 36, 0.4) !important;
+    color: rgba(251, 191, 36, 0.8) !important;
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+    animation: pulse-reserved 2s ease-in-out infinite !important;
+}
+
 .seat-item.seat-booked {
     background: rgba(107, 114, 128, 0.2) !important;
     border-color: rgba(107, 114, 128, 0.3) !important;
@@ -274,6 +283,10 @@
 
 .seat-item.seat-locked .seat-number {
     color: #fbbf24 !important;
+}
+
+.seat-item.seat-reserved .seat-number {
+    color: rgba(251, 191, 36, 0.8) !important;
 }
 
 .seat-item.seat-booked .seat-number {
@@ -325,6 +338,11 @@
     border-color: rgba(251, 191, 36, 0.5) !important;
 }
 
+.seat-map-legend-indicator.reserved {
+    background: rgba(251, 191, 36, 0.15) !important;
+    border-color: rgba(251, 191, 36, 0.4) !important;
+}
+
 .seat-map-legend-indicator.booked {
     background: rgba(107, 114, 128, 0.2) !important;
     border-color: rgba(107, 114, 128, 0.3) !important;
@@ -367,12 +385,23 @@
 }
 
 @keyframes pulse-locked {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.7;
-    }
+   0%, 100% {
+     opacity: 1;
+   }
+   50% {
+     opacity: 0.7;
+   }
+}
+
+@keyframes pulse-reserved {
+   0%, 100% {
+     opacity: 0.7;
+     box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+   }
+   50% {
+     opacity: 0.9;
+     box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.1);
+   }
 }
 
 /* Responsive */

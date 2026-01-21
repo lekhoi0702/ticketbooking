@@ -1,6 +1,6 @@
 from flask import Flask, send_from_directory
 from flask_cors import CORS
-from app.extensions import db, migrate
+from app.extensions import db, migrate, socketio
 import os
 
 def create_app():
@@ -12,12 +12,13 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
 
     # Import models to ensure they are registered
     from app.models import (
         Role, User, EventCategory, Venue, Event, 
         TicketType, Order, Payment, Ticket, Discount, Banner, OrganizerInfo,
-        FavoriteEvent, AuditLog
+        FavoriteEvent, AuditLog, SeatReservation, OrganizerQRCode
     )
     from app.models.event_deletion_request import EventDeletionRequest
 
@@ -55,6 +56,12 @@ def create_app():
         # MIME type fixes
         if filename.lower().endswith('.svg'):
             response.headers['Content-Type'] = 'image/svg+xml'
+        elif filename.lower().endswith(('.jpg', '.jpeg')):
+            response.headers['Content-Type'] = 'image/jpeg'
+        elif filename.lower().endswith('.png'):
+            response.headers['Content-Type'] = 'image/png'
+        elif filename.lower().endswith('.webp'):
+            response.headers['Content-Type'] = 'image/webp'
             
         return response
 
@@ -84,5 +91,12 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix="/api")
     app.register_blueprint(organizer_discount_bp, url_prefix="/api")
     app.register_blueprint(banners_bp, url_prefix="/api")
+
+    # Import socket handlers after app is fully initialized
+    # This must be done after socketio.init_app() and after all models are imported
+    with app.app_context():
+        from app import socket_handlers  # noqa: F401
+        # Start cleanup task after app context is available
+        socket_handlers.start_cleanup_task(app_instance=app)
 
     return app

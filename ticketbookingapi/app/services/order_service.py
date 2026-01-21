@@ -129,6 +129,30 @@ class OrderService:
                     seat = Seat.query.get(seat_id)
                     if not seat or seat.ticket_type_id != ticket_type_id:
                         raise ValueError(f'Ghế {seat_id} không hợp lệ')
+                    
+                    # If seat is RESERVED by an old pending order from the same user, release it
+                    if seat.status == 'RESERVED':
+                        # Find the ticket that reserved this seat
+                        from datetime import timedelta
+                        threshold = datetime.utcnow() - timedelta(minutes=15)
+                        reserving_ticket = Ticket.query.filter(
+                            Ticket.seat_id == seat_id,
+                            Ticket.ticket_status == 'ACTIVE'
+                        ).join(Order).filter(
+                            Order.user_id == data.get('user_id'),
+                            Order.order_status == 'PENDING',
+                            Order.created_at < threshold
+                        ).first()
+                        
+                        if reserving_ticket:
+                            # Release the seat by cancelling the old order
+                            try:
+                                cls.cancel_order(reserving_ticket.order_id)
+                                db.session.flush()  # Refresh seat status
+                                seat = Seat.query.get(seat_id)  # Reload seat
+                            except Exception as e:
+                                print(f"Error releasing seat from old order: {e}")
+                    
                     if seat.status != 'AVAILABLE':
                         raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được đặt')
             
@@ -217,13 +241,8 @@ class OrderService:
                     if seat.status == 'AVAILABLE':
                         seat.status = 'RESERVED'
             
-            # Update sold quantity
-            ticket_type.sold_quantity += quantity
-            
-            # Update event sold tickets
-            event = Event.query.get(ticket_type.event_id)
-            if event:
-                event.sold_tickets += quantity
+            # NOTE: sold_quantity and sold_tickets will be updated when payment succeeds
+            # Do NOT update them here to prevent counting unpaid orders as sold
         
         return order, created_tickets, (final_amount > 0)
 
@@ -392,32 +411,29 @@ class OrderService:
         for ticket in tickets:
             ticket.ticket_status = 'CANCELLED'
             
-            # Release seat if exists
+            # Release seat if exists (from RESERVED to AVAILABLE)
             if ticket.seat_id:
                 seat = Seat.query.get(ticket.seat_id)
-                if seat:
+                if seat and seat.status == 'RESERVED':
                     seat.status = 'AVAILABLE'
             
-            ticket_type = TicketType.query.get(ticket.ticket_type_id)
-            if ticket_type:
-                ticket_type.sold_quantity -= 1
-                
-                # Update event sold Ticket
-                event = Event.query.get(ticket_type.event_id)
-                if event:
-                    event.sold_tickets -= 1
+            # NOTE: sold_quantity and sold_tickets are NOT decremented here
+            # because they were never incremented (order was never paid)
         
         # Update order status
         order.order_status = 'CANCELLED'
 
     @staticmethod
     def mark_seats_as_booked(order_id):
-        """Mark seats as BOOKED when payment succeeds"""
+        """Mark seats as BOOKED and update sold quantities when payment succeeds"""
         order = Order.query.get(order_id)
         if not order:
             return
         
         tickets = Ticket.query.filter_by(order_id=order_id).all()
+        
+        # Track ticket types to update sold quantities
+        ticket_type_counts = {}
         
         for ticket in tickets:
             # Mark seat as BOOKED if exists
@@ -425,10 +441,27 @@ class OrderService:
                 seat = Seat.query.get(ticket.seat_id)
                 if seat and seat.status in ['RESERVED', 'AVAILABLE']:
                     seat.status = 'BOOKED'
+            
+            # Count tickets by ticket type for sold quantity update
+            ticket_type_id = ticket.ticket_type_id
+            if ticket_type_id not in ticket_type_counts:
+                ticket_type_counts[ticket_type_id] = 0
+            ticket_type_counts[ticket_type_id] += 1
+        
+        # Update sold quantities for each ticket type
+        for ticket_type_id, quantity in ticket_type_counts.items():
+            ticket_type = TicketType.query.get(ticket_type_id)
+            if ticket_type:
+                ticket_type.sold_quantity += quantity
+                
+                # Update event sold tickets
+                event = Event.query.get(ticket_type.event_id)
+                if event:
+                    event.sold_tickets += quantity
 
     @staticmethod
     def release_seats_for_failed_order(order_id):
-        """Release seats and update quantities when payment fails"""
+        """Release seats when payment fails (sold quantities not updated since order was never paid)"""
         order = Order.query.get(order_id)
         if not order:
             return
@@ -436,21 +469,11 @@ class OrderService:
         tickets = Ticket.query.filter_by(order_id=order_id).all()
         
         for ticket in tickets:
-            # Release seat if exists (RESERVED or BOOKED)
+            # Release seat if exists (RESERVED only, since BOOKED means payment succeeded)
             if ticket.seat_id:
                 seat = Seat.query.get(ticket.seat_id)
-                if seat and seat.status in ['RESERVED', 'BOOKED']:
+                if seat and seat.status == 'RESERVED':
                     seat.status = 'AVAILABLE'
-            
-            # Update sold quantity
-            ticket_type = TicketType.query.get(ticket.ticket_type_id)
-            if ticket_type:
-                ticket_type.sold_quantity = max(0, ticket_type.sold_quantity - 1)
-                
-                # Update event sold tickets
-                event = Event.query.get(ticket_type.event_id)
-                if event:
-                    event.sold_tickets = max(0, event.sold_tickets - 1)
         
         # Cancel tickets
         for ticket in tickets:
@@ -458,6 +481,61 @@ class OrderService:
         
         # Update order status
         order.order_status = 'CANCELLED'
+        
+        # NOTE: sold_quantity and sold_tickets are NOT decremented here
+        # because they were never incremented (order was never paid)
+
+    @staticmethod
+    def cleanup_expired_pending_orders(older_than_minutes=15):
+        """
+        Cleanup expired pending orders and release reserved seats
+        This should be called periodically (e.g., via cron job or scheduled task)
+        
+        Args:
+            older_than_minutes: Orders older than this will be cancelled (default: 15 minutes)
+            
+        Returns:
+            Tuple of (cancelled_count, released_seats_count)
+        """
+        from datetime import timedelta
+        from app.repositories.order_repository import OrderRepository
+        
+        threshold = datetime.utcnow() - timedelta(minutes=older_than_minutes)
+        
+        # Get expired pending orders
+        expired_orders = Order.query.filter(
+            Order.order_status == 'PENDING',
+            Order.created_at < threshold
+        ).all()
+        
+        cancelled_count = 0
+        released_seats_count = 0
+        
+        for order in expired_orders:
+            try:
+                tickets = Ticket.query.filter_by(order_id=order.order_id).all()
+                
+                # Release seats
+                for ticket in tickets:
+                    if ticket.seat_id:
+                        seat = Seat.query.get(ticket.seat_id)
+                        if seat and seat.status == 'RESERVED':
+                            seat.status = 'AVAILABLE'
+                            released_seats_count += 1
+                    
+                    # Cancel ticket
+                    ticket.ticket_status = 'CANCELLED'
+                
+                # Cancel order
+                order.order_status = 'CANCELLED'
+                cancelled_count += 1
+                
+            except Exception as e:
+                print(f"Error cleaning up order {order.order_id}: {e}")
+                continue
+        
+        db.session.commit()
+        return cancelled_count, released_seats_count
 
     @staticmethod
     def get_user_tickets_details(user_id):

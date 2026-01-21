@@ -63,12 +63,22 @@ function EventDetail() {
             // Handle checkout action
             if (redirectIntent.action === 'checkout' && redirectIntent.eventId === parseInt(id)) {
                 clearRedirectIntent();
+                
+                // Generate unique navigation ID for this checkout session
+                const navigationId = `checkout_${event.event_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                
+                // Store navigation ID in sessionStorage
+                sessionStorage.setItem(`checkout_nav_id_${event.event_id}`, navigationId);
+                
                 navigate(`/checkout/${event.event_id}`, {
                     state: {
                         selectedTickets,
                         selectedSeats,
-                        hasSeatMap
-                    }
+                        hasSeatMap,
+                        fromEventDetail: true, // Add flag for valid navigation
+                        navigationId: navigationId // Unique ID to distinguish fresh navigation from forward
+                    },
+                    replace: false // Push normally so back button works
                 });
             }
         };
@@ -122,12 +132,21 @@ function EventDetail() {
     };
 
     const proceedToCheckout = () => {
+        // Generate unique navigation ID for this checkout session
+        const navigationId = `checkout_${event.event_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Store navigation ID in sessionStorage
+        sessionStorage.setItem(`checkout_nav_id_${event.event_id}`, navigationId);
+        
         navigate(`/checkout/${event.event_id}`, {
             state: {
                 selectedTickets,
                 selectedSeats,
-                hasSeatMap
-            }
+                hasSeatMap,
+                fromEventDetail: true, // Flag to indicate valid navigation
+                navigationId: navigationId // Unique ID to distinguish fresh navigation from forward
+            },
+            replace: false // Push normally so back button works
         });
     };
 

@@ -12,6 +12,8 @@ from app.models.banner import Banner
 from app.models.organizer_info import OrganizerInfo
 from app.models.favorite_event import FavoriteEvent
 from app.models.audit_log import AuditLog
+from app.models.seat_reservation import SeatReservation
+from app.models.organizer_qr_code import OrganizerQRCode
 
 __all__ = [
     'Role',
@@ -27,5 +29,7 @@ __all__ = [
     'Banner',
     'OrganizerInfo',
     'FavoriteEvent',
-    'AuditLog'
+    'AuditLog',
+    'SeatReservation',
+    'OrganizerQRCode'
 ]

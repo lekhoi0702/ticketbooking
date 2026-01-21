@@ -149,4 +149,28 @@ export const paymentApi = {
         }
         return await response.json();
     },
+
+    async getVietQRBanks() {
+        try {
+            const response = await fetch('https://api.vietqr.io/v2/banks', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch banks');
+            }
+            const data = await response.json();
+            // Filter only banks that support transfer
+            if (data.code === '00' && data.data) {
+                return {
+                    success: true,
+                    banks: data.data.filter(bank => bank.transferSupported === 1 || bank.isTransfer === 1)
+                };
+            }
+            return { success: false, banks: [] };
+        } catch (error) {
+            console.error('Error fetching VietQR banks:', error);
+            return { success: false, banks: [], error: error.message };
+        }
+    },
 };

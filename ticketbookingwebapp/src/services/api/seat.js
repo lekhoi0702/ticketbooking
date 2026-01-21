@@ -44,4 +44,52 @@ export const seatApi = {
         }
         return await response.json();
     },
+
+    async lockSeat(seatId, userId, eventId) {
+        const response = await fetch(`${API_BASE_URL}/seats/lock`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ seat_id: seatId, user_id: userId, event_id: eventId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to lock seat');
+        }
+        return await response.json();
+    },
+
+    async unlockSeat(seatId, userId, eventId) {
+        const response = await fetch(`${API_BASE_URL}/seats/unlock`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ seat_id: seatId, user_id: userId, event_id: eventId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to unlock seat');
+        }
+        return await response.json();
+    },
+
+    async getMyReservations(eventId, userId) {
+        const response = await fetch(`${API_BASE_URL}/seats/my-reservations/${eventId}/${userId}`);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to get reservations');
+        }
+        return await response.json();
+    },
+
+    async unlockAllSeats(userId, eventId) {
+        const response = await fetch(`${API_BASE_URL}/seats/unlock-all`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, event_id: eventId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to unlock all seats');
+        }
+        return await response.json();
+    },
 };

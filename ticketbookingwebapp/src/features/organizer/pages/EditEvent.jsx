@@ -318,7 +318,6 @@ const EditEvent = () => {
                                     </div>
                                     <VietQRImageUpload
                                         qrPreview={vietqrPreview}
-                                        handleImageChange={handleVietQRImageChange}
                                         handleURLChange={handleVietQRURLChange}
                                         removeQR={removeVietQR}
                                     />
