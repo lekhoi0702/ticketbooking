@@ -31,6 +31,7 @@ class Event(db.Model):
             'event_id': self.event_id,
             'category_id': self.category_id,
             'venue_id': self.venue_id,
+            'manager_id': self.manager_id,  # Include manager_id for audit logging
             'event_name': self.event_name,
             'description': self.description,
             'start_datetime': self.start_datetime.isoformat() if self.start_datetime else None,

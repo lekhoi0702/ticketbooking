@@ -25,6 +25,7 @@ import {
     SaveOutlined
 } from '@ant-design/icons';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
+import { useAuth } from '@context/AuthContext';
 
 // Hooks
 import { useCreateEvent } from '@shared/hooks/useCreateEvent';
@@ -42,6 +43,7 @@ const { Title, Text } = Typography;
 const EditEvent = () => {
     const { eventId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const {
         loading,
         loadingData,
@@ -113,7 +115,8 @@ const EditEvent = () => {
                     total_capacity: event.total_capacity || 0,
                     status: event.status,
                     is_featured: event.is_featured,
-                    schedule: event.schedule || []
+                    schedule: event.schedule || [],
+                    manager_id: event.manager_id || user?.user_id || 1  // Ensure manager_id is set
                 });
 
                 if (event.banner_image_url) {
@@ -220,24 +223,6 @@ const EditEvent = () => {
                         style={{ marginBottom: 24 }}
                     />
                 )}
-
-                {/* Technical Alert - Moved here to be permanently visible above the form content */}
-                <div style={{ position: 'sticky', top: 0, zIndex: 1000, margin: '0 -24px 24px -24px', padding: '0 24px 16px 24px', backgroundColor: '#f0f2f5' }}>
-                    <Alert
-                        message="HỆ THỐNG DEBUG (Quan trọng)"
-                        description={
-                            <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                                ID Sự kiện: {eventId} |
-                                {eventRaw ? ` Loại vé gốc: ${eventRaw.ticket_types?.length || 0}` : ' Đang tải TT...'} |
-                                Ghế hệ thống: {allSeatsRaw.length} |
-                                Loại vé đã xử lý: {ticketTypes.length} |
-                                Ghế đã khớp: {ticketTypes.reduce((acc, tt) => acc + (tt.selectedSeats?.length || 0), 0)}
-                            </div>
-                        }
-                        type={allSeatsRaw.length > 0 ? "success" : "warning"}
-                        showIcon
-                    />
-                </div>
 
                 <form onSubmit={handleUpdate}>
                     <Row gutter={24}>

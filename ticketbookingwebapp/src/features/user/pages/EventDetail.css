@@ -928,28 +928,6 @@
     margin: 0;
 }
 
-/* Ticket Selection Tabs */
-.custom-tabs .nav-link {
-    color: #ffffff !important;
-    border: none !important;
-    font-weight: 600;
-    padding: 10px 20px !important;
-}
+/* Ticket Selection Tabs - Styles moved to TicketSelection.css */
 
-.custom-tabs .nav-link.active {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    /* Chữ đen trên nền trắng */
-    border-radius: 8px 8px 0 0 !important;
-    font-weight: 700;
-}
-
-.custom-tabs .nav-link.active span {
-    color: #000000 !important;
-    /* Đảm bảo text bên trong cũng đen */
-}
-
-.custom-tabs .nav-link:hover:not(.active) {
-    color: #2dc275 !important;
-    background: rgba(255, 255, 255, 0.05);
-}
+/* Ticket Selection Section - Styles moved to TicketSelection.css */

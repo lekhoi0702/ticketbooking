@@ -10,21 +10,31 @@
 .loading-spinner-wrapper.fullscreen {
     position: fixed !important;
     top: 120px !important;
-    /* Starts below the header and navbar */
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
     width: 100vw !important;
     height: calc(100vh - 120px) !important;
+    min-height: calc(100vh - 120px) !important;
     background: rgb(39, 39, 42) !important;
     z-index: 999 !important;
-    /* Below header's z-index: 1000 */
+    /* Below header's z-index: 1000, but above all content */
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
+    pointer-events: auto !important;
+    /* Ensure it covers everything */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3) !important;
+    /* Prevent any content from showing through */
+    backdrop-filter: blur(0px) !important;
+    /* Ensure it extends to cover all content */
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+    /* Force full coverage */
+    inset: 120px 0 0 0 !important;
 }
 
 

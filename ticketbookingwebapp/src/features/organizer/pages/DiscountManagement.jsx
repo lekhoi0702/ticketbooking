@@ -146,13 +146,13 @@ const DiscountManagement = () => {
     const handleBulkDelete = async () => {
         try {
             setLoading(true);
-            // In this specific implementation, we'll delete them one by one or 
-            // if the API supports bulk delete, we'd use that. 
-            // Assuming individual calls for now as per current api.deleteDiscount structure
-            await Promise.all(selectedRowKeys.map(id => api.deleteDiscount(id)));
-            message.success(`Đã xóa ${selectedRowKeys.length} mã giảm giá`);
-            setSelectedRowKeys([]);
-            fetchData();
+            // Chỉ xóa 1 mã được chọn
+            if (selectedRowKeys.length > 0) {
+                await api.deleteDiscount(selectedRowKeys[0]);
+                message.success('Đã xóa mã giảm giá');
+                setSelectedRowKeys([]);
+                fetchData();
+            }
         } catch (error) {
             message.error('Lỗi khi xóa mã giảm giá');
         } finally {
@@ -163,10 +163,13 @@ const DiscountManagement = () => {
     const handleStatusUpdate = async (newStatus) => {
         try {
             setLoading(true);
-            await Promise.all(selectedRowKeys.map(id => api.updateDiscount(id, { status: newStatus })));
-            message.success(`Đã cập nhật trạng thái cho ${selectedRowKeys.length} mã`);
-            setSelectedRowKeys([]);
-            fetchData();
+            // Chỉ cập nhật 1 mã được chọn
+            if (selectedRowKeys.length > 0) {
+                await api.updateDiscount(selectedRowKeys[0], { status: newStatus });
+                message.success('Đã cập nhật trạng thái mã giảm giá');
+                setSelectedRowKeys([]);
+                fetchData();
+            }
         } catch (error) {
             message.error('Lỗi khi cập nhật trạng thái');
         } finally {
@@ -194,21 +197,19 @@ const DiscountManagement = () => {
                 <Space>
                     {selectedRowKeys.length > 0 && (
                         <>
-                            {selectedRowKeys.length === 1 && (
-                                <Button
-                                    icon={<EditOutlined />}
-                                    onClick={handleEditClick}
-                                >
-                                    Chỉnh sửa
-                                </Button>
-                            )}
+                            <Button
+                                icon={<EditOutlined />}
+                                onClick={handleEditClick}
+                            >
+                                Chỉnh sửa
+                            </Button>
                             <Button
                                 onClick={() => handleStatusUpdate('ACTIVE')}
                                 type="default"
                                 style={{ color: '#2DC275', borderColor: '#2DC275' }}
                                 loading={loading}
                             >
-                                Kích hoạt ({selectedRowKeys.length})
+                                Kích hoạt
                             </Button>
                             <Button
                                 onClick={() => handleStatusUpdate('INACTIVE')}
@@ -216,17 +217,17 @@ const DiscountManagement = () => {
                                 danger
                                 loading={loading}
                             >
-                                Tạm dừng ({selectedRowKeys.length})
+                                Tạm dừng
                             </Button>
                             <Popconfirm
-                                title={`Xác nhận xóa ${selectedRowKeys.length} mã đã chọn?`}
+                                title={`Xác nhận xóa mã "${discounts.find(d => d.id === selectedRowKeys[0])?.code}"?`}
                                 onConfirm={handleBulkDelete}
                                 okText="Xóa"
                                 cancelText="Hủy"
                                 okButtonProps={{ danger: true }}
                             >
                                 <Button danger icon={<DeleteOutlined />} type="primary">
-                                    Xóa ({selectedRowKeys.length})
+                                    Xóa
                                 </Button>
                             </Popconfirm>
                         </>
@@ -248,6 +249,7 @@ const DiscountManagement = () => {
                         dataSource={discounts}
                         rowKey="id"
                         rowSelection={{
+                            type: 'radio', // Chỉ cho phép chọn 1 mã giảm giá
                             selectedRowKeys,
                             onChange: setSelectedRowKeys
                         }}

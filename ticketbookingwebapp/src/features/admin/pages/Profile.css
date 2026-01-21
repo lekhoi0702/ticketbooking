@@ -1,7 +1,28 @@
 .profile-page {
     min-height: 100vh;
-    background: #ffffff;
+    background: transparent !important;
     padding: 0;
+}
+
+/* Override dark theme for admin profile page */
+.profile-page {
+    background-color: transparent !important;
+}
+
+.profile-page .ant-card {
+    background-color: #ffffff !important;
+}
+
+.profile-page .ant-card-body {
+    background-color: #ffffff !important;
+}
+
+.profile-page .ant-tabs-content {
+    background-color: #ffffff !important;
+}
+
+.profile-page .ant-tabs-tabpane {
+    background-color: #ffffff !important;
 }
 
 .profile-container {
@@ -66,8 +87,26 @@
 .profile-page p,
 .profile-page span,
 .profile-page label,
-.profile-page .ant-form-item-label>label {
+.profile-page .ant-form-item-label>label,
+.profile-page .ant-form-item,
+.profile-page .ant-input,
+.profile-page .ant-input-password,
+.profile-page .ant-input-password input {
     color: #000000 !important;
+}
+
+.profile-page .ant-input,
+.profile-page .ant-input-password,
+.profile-page .ant-input-password input {
+    background-color: #ffffff !important;
+    border-color: #d9d9d9 !important;
+}
+
+.profile-page .ant-input:focus,
+.profile-page .ant-input-password:focus,
+.profile-page .ant-input-password input:focus {
+    border-color: #40a9ff !important;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
 }
 
 .profile-page .ant-typography-secondary {
@@ -76,6 +115,40 @@
 
 .profile-page .ant-typography-success {
     color: #2DC275 !important;
+}
+
+/* Ensure all form elements have light theme */
+.profile-page .ant-form-item-control-input,
+.profile-page .ant-form-item-control-input-content,
+.profile-page .ant-form-item-explain,
+.profile-page .ant-form-item-explain-error {
+    color: #000000 !important;
+    background-color: transparent !important;
+}
+
+.profile-page .ant-form-item-explain-error {
+    color: #ff4d4f !important;
+}
+
+/* Override for tabs */
+.profile-page .ant-tabs-nav {
+    background-color: #ffffff !important;
+}
+
+.profile-page .ant-tabs-nav::before {
+    border-bottom-color: #f0f0f0 !important;
+}
+
+.profile-page .ant-tabs-tab {
+    color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.profile-page .ant-tabs-tab:hover {
+    color: #40a9ff !important;
+}
+
+.profile-page .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #1890ff !important;
 }
 
 @media (max-width: 768px) {

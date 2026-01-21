@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '@services/api';
 
 /**
@@ -11,6 +11,7 @@ export const useEventDetail = (eventId) => {
     const [selectedSeats, setSelectedSeats] = useState({}); // { ticketTypeId: [seatObj, ...] }
     const [hasSeatMap, setHasSeatMap] = useState({}); // { ticketTypeId: boolean }
     const [activeTicketType, setActiveTicketType] = useState(null);
+    const [seatTimers, setSeatTimers] = useState({}); // { seatId: remainingSeconds }
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -97,6 +98,11 @@ export const useEventDetail = (eventId) => {
         return { valid: true };
     };
 
+    // Handle seat timer updates from SeatMap component
+    const handleSeatTimerUpdate = useCallback((timers) => {
+        setSeatTimers(timers);
+    }, []);
+
     return {
         event,
         loading,
@@ -105,10 +111,12 @@ export const useEventDetail = (eventId) => {
         hasSeatMap,
         activeTicketType,
         totalTickets,
+        seatTimers,
         setActiveTicketType,
         setHasSeatMap,
         handleTicketQuantityChange,
         handleSeatSelection,
+        handleSeatTimerUpdate,
         calculateTotal,
         validateSelection
     };

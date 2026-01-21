@@ -3,8 +3,32 @@ from app.services.organizer_service import OrganizerService
 from app.services.organizer_event_service import OrganizerEventService
 from app.services.organizer_venue_service import OrganizerVenueService
 from app.services.organizer_stats_service import OrganizerStatsService
+from app.services.audit_service import AuditService
+from app.models.user import User
+from app.extensions import db
 
 organizer_bp = Blueprint("organizer", __name__)
+
+def safe_int(value, default=None):
+    """Safely convert value to int, handling None, 'undefined', and invalid values"""
+    if value is None or value == 'undefined' or value == '':
+        return default
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+def get_user_from_request():
+    """Helper to get user from manager_id in request"""
+    manager_id = request.args.get('manager_id') or request.form.get('manager_id')
+    if not manager_id:
+        data = request.get_json(silent=True) or {}
+        manager_id = data.get('manager_id')
+    if manager_id:
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            return User.query.get(manager_id_int)
+    return None
 
 @organizer_bp.route("/organizer/dashboard", methods=["GET"])
 def get_dashboard_stats():
@@ -32,7 +56,30 @@ def add_showtime(event_id):
     """Duplicate an event to create a new showtime (recurrence)"""
     try:
         data = request.get_json()
+        manager_id = data.get('manager_id')
         new_event = OrganizerEventService.add_showtime(event_id, data)
+        
+        # Audit log
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            try:
+                AuditService.log_insert(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_EVENT,
+                    record_id=new_event.event_id,
+                    new_values={
+                        'event_name': new_event.event_name,
+                        'duplicated_from': event_id,
+                        'venue_id': new_event.venue_id,
+                        'category_id': new_event.category_id,
+                        'status': new_event.status
+                    }
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log event duplicate: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Thêm suất diễn thành công',
@@ -50,6 +97,30 @@ def create_event():
         data = request.form
         files = request.files
         new_event = OrganizerEventService.create_event(data, files)
+        
+        # Audit log
+        manager_id = data.get('manager_id')
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            try:
+                AuditService.log_insert(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_EVENT,
+                    record_id=new_event.event_id,
+                    new_values={
+                        'event_name': new_event.event_name,
+                        'venue_id': new_event.venue_id,
+                        'category_id': new_event.category_id,
+                        'status': new_event.status,
+                        'start_date': new_event.start_date.isoformat() if new_event.start_date else None,
+                        'end_date': new_event.end_date.isoformat() if new_event.end_date else None
+                    }
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log event creation: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Event created successfully',
@@ -64,13 +135,59 @@ def create_event():
 def update_event(event_id):
     """Update an existing event"""
     try:
+        from app.models.event import Event
         data = request.form
         files = request.files
+        
+        # Get old values before update for audit log
+        old_event = Event.query.get(event_id)
+        old_values = {}
+        if old_event:
+            old_values = {
+                'event_name': old_event.event_name,
+                'status': old_event.status,
+                'venue_id': old_event.venue_id,
+                'category_id': old_event.category_id
+            }
+        
         event = OrganizerEventService.update_event(event_id, data, files)
+        event_dict = event.to_dict(include_details=True)
+        
+        # Audit log
+        manager_id = data.get('manager_id')
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            try:
+                new_values = {}
+                if data.get('event_name'):
+                    new_values['event_name'] = data.get('event_name')
+                if data.get('status'):
+                    new_values['status'] = data.get('status')
+                venue_id_val = safe_int(data.get('venue_id'))
+                if venue_id_val:
+                    new_values['venue_id'] = venue_id_val
+                category_id_val = safe_int(data.get('category_id'))
+                if category_id_val:
+                    new_values['category_id'] = category_id_val
+                if 'banner_image' in files:
+                    new_values['banner_image_url'] = event_dict.get('banner_image_url')
+                
+                AuditService.log_update(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_EVENT,
+                    record_id=event.event_id,
+                    old_values=old_values if old_values else None,
+                    new_values=new_values if new_values else None
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log event update: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Event updated successfully',
-            'data': event.to_dict(include_details=True)
+            'data': event_dict
         }), 200
     except ValueError as e:
         return jsonify({'success': False, 'message': str(e)}), 400
@@ -81,8 +198,30 @@ def update_event(event_id):
 def delete_event(event_id):
     """Delete event (soft delete - sets status to DELETED)"""
     try:
+        from app.models.event import Event
         data = request.get_json() or {}
+        
+        # Get event info before delete for logging
+        event = Event.query.get(event_id)
+        event_name = event.event_name if event else f"Event #{event_id}"
+        manager_id = data.get('manager_id') or (event.manager_id if event else None)
+        
         OrganizerEventService.delete_event(event_id, data)
+        
+        # Audit log
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            try:
+                AuditService.log_delete(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_EVENT,
+                    record_id=event_id,
+                    old_values={'event_name': event_name}
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log event deletion: {e}")
+                db.session.rollback()
         
         return jsonify({
             'success': True,
@@ -105,6 +244,23 @@ def bulk_delete_events():
             return jsonify({'success': False, 'message': 'Không có sự kiện nào được chọn'}), 400
         
         results = OrganizerEventService.delete_events_bulk(event_ids, manager_id)
+        
+        # Audit log for each deleted event
+        manager_id_int = safe_int(manager_id)
+        if results['success_count'] > 0 and manager_id_int:
+            try:
+                deleted_ids = results.get('deleted_ids', event_ids[:results['success_count']])
+                for eid in deleted_ids:
+                    AuditService.log_delete(
+                        user_id=manager_id_int,
+                        table_name=AuditService.TABLE_EVENT,
+                        record_id=eid,
+                        old_values={'bulk_delete': True}
+                    )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log bulk event deletion: {e}")
+                db.session.rollback()
         
         # Build response message
         if results['success_count'] == 0:
@@ -149,6 +305,29 @@ def create_ticket_type(event_id):
     try:
         data = request.get_json()
         ticket_type = OrganizerEventService.create_ticket_type(event_id, data)
+        
+        # Audit log
+        manager_id = data.get('manager_id')
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            try:
+                AuditService.log_insert(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_TICKET_TYPE,
+                    record_id=ticket_type.ticket_type_id,
+                    new_values={
+                        'type_name': ticket_type.type_name,
+                        'event_id': event_id,
+                        'price': float(ticket_type.price) if ticket_type.price else 0,
+                        'quantity': ticket_type.quantity,
+                        'available_quantity': ticket_type.available_quantity
+                    }
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log ticket type creation: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Ticket type created successfully',
@@ -163,6 +342,45 @@ def update_ticket_type(ticket_type_id):
     try:
         data = request.get_json()
         ticket_type = OrganizerEventService.update_ticket_type(ticket_type_id, data)
+        
+        # Audit log
+        from app.models.ticket_type import TicketType
+        old_ticket_type = TicketType.query.get(ticket_type_id)
+        old_values = {}
+        if old_ticket_type:
+            old_values = {
+                'type_name': old_ticket_type.type_name,
+                'price': float(old_ticket_type.price) if old_ticket_type.price else 0,
+                'quantity': old_ticket_type.quantity,
+                'available_quantity': old_ticket_type.available_quantity
+            }
+        
+        manager_id = data.get('manager_id')
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            try:
+                new_values = {}
+                if 'type_name' in data:
+                    new_values['type_name'] = data.get('type_name')
+                if 'price' in data:
+                    new_values['price'] = float(data.get('price')) if data.get('price') else 0
+                if 'quantity' in data:
+                    new_values['quantity'] = data.get('quantity')
+                if 'available_quantity' in data:
+                    new_values['available_quantity'] = data.get('available_quantity')
+                
+                AuditService.log_update(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_TICKET_TYPE,
+                    record_id=ticket_type.ticket_type_id,
+                    old_values=old_values if old_values else None,
+                    new_values=new_values if new_values else None
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log ticket type update: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Ticket type updated successfully',
@@ -177,7 +395,31 @@ def update_ticket_type(ticket_type_id):
 def delete_ticket_type(ticket_type_id):
     """Delete a ticket type"""
     try:
+        from app.models.ticket_type import TicketType
+        # Get info before delete
+        tt = TicketType.query.get(ticket_type_id)
+        tt_name = tt.type_name if tt else f"TicketType #{ticket_type_id}"
+        
+        data = request.get_json() or {}
+        manager_id = data.get('manager_id')
+        
         OrganizerEventService.delete_ticket_type(ticket_type_id)
+        
+        # Audit log
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            try:
+                AuditService.log_delete(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_TICKET_TYPE,
+                    record_id=ticket_type_id,
+                    old_values={'type_name': tt_name}
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log ticket type deletion: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Ticket type deleted successfully'
@@ -202,7 +444,34 @@ def get_event_orders(event_id):
 def approve_refund(order_id):
     """Approve refund request"""
     try:
+        from app.models.order import Order
+        order = Order.query.get(order_id)
+        
+        data = request.get_json() or {}
+        manager_id = data.get('manager_id')
+        
         OrganizerService.approve_refund(order_id)
+        
+        # Audit log
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int and order:
+            try:
+                old_values = {
+                    'order_status': order.order_status,
+                    'order_id': order.order_id
+                }
+                AuditService.log_update(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_ORDER,
+                    record_id=order_id,
+                    old_values=old_values,
+                    new_values={'order_status': 'REFUNDED', 'action': 'refund_approved'}
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log refund approval: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Refund approved successfully. Tickets have been deleted.'
@@ -216,7 +485,34 @@ def approve_refund(order_id):
 def reject_refund(order_id):
     """Reject refund request"""
     try:
+        from app.models.order import Order
+        order = Order.query.get(order_id)
+        
+        data = request.get_json() or {}
+        manager_id = data.get('manager_id')
+        
         OrganizerService.reject_refund(order_id)
+        
+        # Audit log
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int and order:
+            try:
+                old_values = {
+                    'order_status': order.order_status,
+                    'order_id': order.order_id
+                }
+                AuditService.log_update(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_ORDER,
+                    record_id=order_id,
+                    old_values=old_values,
+                    new_values={'order_status': 'PAID', 'action': 'refund_rejected'}
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log refund rejection: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Refund request rejected'
@@ -261,12 +557,47 @@ def create_organizer_venue():
     try:
         data = request.get_json()
         new_venue = OrganizerVenueService.create_venue(data)
+        venue_dict = new_venue.to_dict()
+        
+        # Audit log
+        manager_id = data.get('manager_id')
+        venue_id = venue_dict.get('venue_id')
+        
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int and venue_id:
+            try:
+                AuditService.log_insert(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_VENUE,
+                    record_id=venue_id,
+                    new_values={
+                        'venue_name': venue_dict.get('venue_name'),
+                        'address': venue_dict.get('address'),
+                        'city': venue_dict.get('city'),
+                        'capacity': venue_dict.get('capacity'),
+                        'contact_phone': venue_dict.get('contact_phone')
+                    }
+                )
+                db.session.commit()
+            except Exception as audit_error:
+                # Log audit error but don't fail the request
+                import traceback
+                print(f"[AUDIT ERROR] Failed to log venue creation: {audit_error}")
+                print(traceback.format_exc())
+                db.session.rollback()
+        else:
+            print(f"[AUDIT WARNING] Missing manager_id={manager_id} or venue_id={venue_id} for audit log")
+        
         return jsonify({
             'success': True,
             'message': 'Venue created successfully',
-            'data': new_venue.to_dict()
+            'data': venue_dict
         }), 201
     except Exception as e:
+        import traceback
+        print(f"[ERROR] create_organizer_venue: {e}")
+        print(traceback.format_exc())
+        db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @organizer_bp.route("/organizer/venues/<int:venue_id>", methods=["GET"])
@@ -287,12 +618,62 @@ def get_organizer_venue(venue_id):
 def update_organizer_venue(venue_id):
     """Update venue details"""
     try:
+        from app.models.venue import Venue
         data = request.get_json()
+        
+        # Get old values before update for audit log
+        old_venue = Venue.query.get(venue_id)
+        old_values = {}
+        if old_venue:
+            old_values = {
+                'venue_name': old_venue.venue_name,
+                'address': old_venue.address,
+                'city': old_venue.city,
+                'contact_phone': old_venue.contact_phone,
+                'capacity': old_venue.capacity
+            }
+        
         venue = OrganizerVenueService.update_venue(venue_id, data)
+        venue_dict = venue.to_dict()
+        
+        # Audit log
+        manager_id = data.get('manager_id')
+        if manager_id:
+            new_values = {}
+            if 'venue_name' in data:
+                new_values['venue_name'] = data['venue_name']
+            if 'address' in data:
+                new_values['address'] = data['address']
+            if 'city' in data:
+                new_values['city'] = data['city']
+            if 'contact_phone' in data:
+                new_values['contact_phone'] = data['contact_phone']
+            if 'capacity' in data:
+                capacity_val = safe_int(data['capacity'])
+                if capacity_val is not None:
+                    new_values['capacity'] = capacity_val
+            if 'status' in data:
+                new_values['status'] = data['status']
+            
+            manager_id_int = safe_int(manager_id)
+            if manager_id_int:
+                try:
+                    AuditService.log_update(
+                        user_id=manager_id_int,
+                        table_name=AuditService.TABLE_VENUE,
+                        record_id=venue_id,
+                        old_values=old_values if old_values else None,
+                        new_values=new_values if new_values else None
+                    )
+                    db.session.commit()
+                except Exception as e:
+                    print(f"[AUDIT WARNING] Failed to log venue update: {e}")
+                    db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Venue updated successfully',
-            'data': venue.to_dict()
+            'data': venue_dict
         }), 200
     except ValueError as e:
         return jsonify({'success': False, 'message': str(e)}), 404
@@ -303,7 +684,31 @@ def update_organizer_venue(venue_id):
 def delete_organizer_venue(venue_id):
     """Delete a venue"""
     try:
+        from app.models.venue import Venue
+        # Get info before delete
+        venue = Venue.query.get(venue_id)
+        venue_name = venue.venue_name if venue else f"Venue #{venue_id}"
+        
+        data = request.get_json() or {}
+        manager_id = data.get('manager_id')
+        
         OrganizerVenueService.delete_venue(venue_id)
+        
+        # Audit log
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            try:
+                AuditService.log_delete(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_VENUE,
+                    record_id=venue_id,
+                    old_values={'venue_name': venue_name}
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log venue deletion: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Venue deleted successfully'
@@ -317,12 +722,49 @@ def delete_organizer_venue(venue_id):
 def update_venue_seats(venue_id):
     """Update seat map for venue"""
     try:
+        from app.models.venue import Venue
         data = request.get_json()
+        
+        # Get old values before update for audit log
+        old_venue = Venue.query.get(venue_id)
+        old_values = {}
+        if old_venue:
+            old_values = {
+                'venue_name': old_venue.venue_name,
+                'seat_map_template': old_venue.seat_map_template
+            }
+        
         venue = OrganizerVenueService.update_venue(venue_id, data)
+        venue_dict = venue.to_dict()
+        
+        # Audit log
+        manager_id = data.get('manager_id')
+        if manager_id:
+            new_values = {}
+            if 'seat_map_template' in data:
+                new_values['seat_map_template'] = data.get('seat_map_template')
+            if 'venue_name' in data:
+                new_values['venue_name'] = data.get('venue_name')
+            
+            manager_id_int = safe_int(manager_id)
+            if manager_id_int:
+                try:
+                    AuditService.log_update(
+                        user_id=manager_id_int,
+                        table_name=AuditService.TABLE_VENUE,
+                        record_id=venue_id,
+                        old_values=old_values if old_values else None,
+                        new_values=new_values if new_values else None
+                    )
+                    db.session.commit()
+                except Exception as e:
+                    print(f"[AUDIT WARNING] Failed to log venue seats update: {e}")
+                    db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Seat map updated successfully',
-            'data': venue.to_dict()
+            'data': venue_dict
         }), 200
     except ValueError as e:
         return jsonify({'success': False, 'message': str(e)}), 404
@@ -349,6 +791,34 @@ def check_in_ticket():
     try:
         data = request.get_json()
         result = OrganizerService.check_in_ticket(data)
+        
+        # Audit log
+        manager_id = data.get('manager_id')
+        manager_id_int = safe_int(manager_id)
+        ticket_id = result.get('ticket_id')
+        if manager_id_int and ticket_id:
+            try:
+                from app.models.ticket import Ticket
+                old_ticket = Ticket.query.get(ticket_id)
+                old_values = {}
+                if old_ticket:
+                    old_values = {
+                        'ticket_status': old_ticket.ticket_status,
+                        'ticket_id': old_ticket.ticket_id
+                    }
+                
+                AuditService.log_update(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_TICKET,
+                    record_id=ticket_id,
+                    old_values=old_values if old_values else None,
+                    new_values={'ticket_status': 'USED', 'checked_in': True, 'action': 'check_in'}
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log ticket check-in: {e}")
+                db.session.rollback()
+        
         return jsonify({
             'success': True,
             'message': 'Check-in thành công',
@@ -411,15 +881,54 @@ def get_organizer_profile(user_id):
 def update_organizer_profile(user_id):
     """Update organizer profile information"""
     try:
+        from app.models.organizer_info import OrganizerInfo
         data = request.form
         files = request.files
         
+        # Get old values before update for audit log
+        old_organizer_info = OrganizerInfo.query.filter_by(user_id=user_id).first()
+        old_values = {}
+        if old_organizer_info:
+            old_values = {
+                'organization_name': old_organizer_info.organization_name,
+                'contact_phone': old_organizer_info.contact_phone,
+                'description': old_organizer_info.description
+            }
+        
         organizer_info = OrganizerService.update_organizer_profile(user_id, data, files)
+        organizer_dict = organizer_info.to_dict()
+        
+        # Audit log
+        manager_id = data.get('manager_id') or user_id
+        manager_id_int = safe_int(manager_id)
+        if manager_id_int:
+            try:
+                new_values = {}
+                if data.get('organization_name'):
+                    new_values['organization_name'] = data.get('organization_name')
+                if data.get('contact_phone'):
+                    new_values['contact_phone'] = data.get('contact_phone')
+                if data.get('description'):
+                    new_values['description'] = data.get('description')
+                if 'logo' in files:
+                    new_values['logo_url'] = organizer_dict.get('logo_url')
+                
+                AuditService.log_update(
+                    user_id=manager_id_int,
+                    table_name=AuditService.TABLE_ORGANIZER_INFO,
+                    record_id=organizer_dict.get('organizer_info_id') or user_id,
+                    old_values=old_values if old_values else None,
+                    new_values=new_values if new_values else None
+                )
+                db.session.commit()
+            except Exception as e:
+                print(f"[AUDIT WARNING] Failed to log organizer profile update: {e}")
+                db.session.rollback()
         
         return jsonify({
             'success': True,
             'message': 'Cập nhật thông tin thành công',
-            'data': organizer_info.to_dict()
+            'data': organizer_dict
         }), 200
     except ValueError as e:
         return jsonify({'success': False, 'message': str(e)}), 404

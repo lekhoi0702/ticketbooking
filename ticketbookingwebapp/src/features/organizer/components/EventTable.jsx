@@ -100,6 +100,7 @@ const EventTable = ({
     ];
 
     const rowSelection = {
+        type: 'radio', // Chỉ cho phép chọn 1 hàng
         selectedRowKeys,
         onChange: (keys) => {
             onSelectionChange(keys);
@@ -126,11 +127,12 @@ const EventTable = ({
             locale={{ emptyText: 'Không tìm thấy dữ liệu' }}
             onRow={(record) => ({
                 onClick: () => {
+                    // Chỉ cho phép chọn 1, nếu đã chọn thì bỏ chọn
                     const isSelected = selectedRowKeys.includes(record.event_id);
                     if (isSelected) {
-                        onSelectionChange(selectedRowKeys.filter(key => key !== record.event_id));
+                        onSelectionChange([]);
                     } else {
-                        onSelectionChange([...selectedRowKeys, record.event_id]);
+                        onSelectionChange([record.event_id]);
                     }
                 },
                 style: { cursor: 'pointer' }

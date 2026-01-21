@@ -9,7 +9,8 @@ import {
     PhoneOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
-    DeleteOutlined
+    DeleteOutlined,
+    ThunderboltOutlined
 } from '@ant-design/icons';
 import {
     Table,
@@ -164,7 +165,7 @@ const OrganizerVenues = () => {
 
     const handleDeleteVenue = async (venueId) => {
         try {
-            const res = await api.deleteVenue(venueId);
+            const res = await api.deleteVenue(venueId, user?.user_id);
             if (res.success) {
                 message.success('Xóa địa điểm thành công');
                 fetchVenues();
@@ -190,8 +191,9 @@ const OrganizerVenues = () => {
         }
     };
 
-    // Row selection configuration
+    // Row selection configuration - chỉ cho phép chọn 1 địa điểm
     const rowSelection = {
+        type: 'radio', // Chỉ cho phép chọn 1 hàng
         selectedRowKeys,
         onChange: (selectedKeys) => {
             setSelectedRowKeys(selectedKeys);
@@ -342,14 +344,13 @@ const OrganizerVenues = () => {
                     >
                         <Space>
                             <span style={{ fontWeight: 600 }}>
-                                Đã chọn {selectedRowKeys.length} địa điểm
+                                Đã chọn địa điểm: {venues.find(v => v.venue_id === selectedRowKeys[0])?.venue_name || ''}
                             </span>
                             <Button
                                 type="primary"
                                 size="small"
                                 icon={<EditOutlined />}
                                 onClick={handleEditSelected}
-                                disabled={selectedRowKeys.length !== 1}
                             >
                                 Sửa
                             </Button>
@@ -358,21 +359,41 @@ const OrganizerVenues = () => {
                                 size="small"
                                 icon={<AppstoreOutlined />}
                                 onClick={handleEditLayoutSelected}
-                                disabled={selectedRowKeys.length !== 1}
                             >
                                 Sơ đồ
                             </Button>
-                            <Button
-                                type="default"
-                                size="small"
-                                icon={<ToolOutlined />}
-                                onClick={handleToggleMaintenanceSelected}
-                            >
-                                Bảo trì
-                            </Button>
+                            {(() => {
+                                const selectedVenue = venues.find(v => v.venue_id === selectedRowKeys[0]);
+                                if (selectedVenue?.status === 'MAINTENANCE') {
+                                    return (
+                                        <Button
+                                            type="primary"
+                                            size="small"
+                                            icon={<ThunderboltOutlined />}
+                                            onClick={() => handleToggleMaintenance(selectedVenue)}
+                                            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                                        >
+                                            Sẵn sàng
+                                        </Button>
+                                    );
+                                }
+                                if (selectedVenue?.status === 'ACTIVE' || (selectedVenue?.is_active && !selectedVenue?.status)) {
+                                    return (
+                                        <Button
+                                            type="default"
+                                            size="small"
+                                            icon={<ToolOutlined />}
+                                            onClick={() => handleToggleMaintenance(selectedVenue)}
+                                        >
+                                            Bảo trì
+                                        </Button>
+                                    );
+                                }
+                                return null;
+                            })()}
                             <Popconfirm
-                                title={`Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} địa điểm đã chọn?`}
-                                onConfirm={handleDeleteSelected}
+                                title={`Bạn có chắc chắn muốn xóa địa điểm "${venues.find(v => v.venue_id === selectedRowKeys[0])?.venue_name}"?`}
+                                onConfirm={() => handleDeleteVenue(selectedRowKeys[0])}
                                 okText="Có"
                                 cancelText="Không"
                             >

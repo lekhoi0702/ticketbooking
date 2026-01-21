@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Tabs, Tab, Badge } from 'react-bootstrap';
 import SeatMap from './SeatMap';
+import './TicketSelection.css';
 
 const TicketSelection = ({
     event,
@@ -10,7 +11,8 @@ const TicketSelection = ({
     handleTicketQuantityChange,
     handleSeatSelection,
     hasSeatMap,
-    setHasSeatMap
+    setHasSeatMap,
+    onSeatTimerUpdate
 }) => {
     // Debug logging
     console.log('TicketSelection - event:', event);
@@ -38,7 +40,7 @@ const TicketSelection = ({
                     <Tabs
                         activeKey={activeTicketType?.ticket_type_id}
                         onSelect={(k) => setActiveTicketType(event.ticket_types.find(t => t.ticket_type_id === parseInt(k)))}
-                        className="custom-tabs px-3 pt-3"
+                        className="custom-tabs"
                     >
                         {event.ticket_types?.map(tt => (
                             <Tab
@@ -53,8 +55,8 @@ const TicketSelection = ({
                                     </span>
                                 }
                             >
-                                <div className="p-4">
-                                    <div className="mb-4">
+                                <div className="tab-pane">
+                                    <div className="ticket-info-section">
                                         <h5 className="fw-bold">{tt.type_name}</h5>
                                         <p className="text-muted small">{tt.description || 'Loại vé tiêu chuẩn cho sự kiện'}</p>
                                         <div className="h4 text-primary fw-bold">
@@ -69,22 +71,23 @@ const TicketSelection = ({
                                         onSeatsLoaded={(exists) => {
                                             setHasSeatMap(prev => ({ ...prev, [tt.ticket_type_id]: exists }));
                                         }}
+                                        onTimerUpdate={onSeatTimerUpdate}
                                     />
 
                                     {!hasSeatMap[tt.ticket_type_id] && (
-                                        <div className="mt-4 border-top pt-4">
+                                        <div className="quantity-selector-wrapper">
                                             <div className="d-flex align-items-center justify-content-between">
-                                                <div>
-                                                    <h6 className="mb-0 fw-bold text-dark">Số lượng vé</h6>
+                                                <div className="quantity-selector-label">
+                                                    <h6 className="mb-0 fw-bold">Số lượng vé</h6>
                                                     <small className="text-muted">Tối đa {tt.max_per_order} vé mỗi đơn hàng</small>
                                                 </div>
-                                                <div className="quantity-selector border rounded-pill p-1 d-flex align-items-center bg-light">
+                                                <div className="quantity-selector">
                                                     <button
                                                         className="qty-btn"
                                                         onClick={() => handleTicketQuantityChange(tt.ticket_type_id, (selectedTickets[tt.ticket_type_id] || 0) - 1)}
                                                         disabled={!(selectedTickets[tt.ticket_type_id] > 0)}
                                                     >-</button>
-                                                    <span className="qty-val px-3 fw-bold">{selectedTickets[tt.ticket_type_id] || 0}</span>
+                                                    <span className="qty-val">{selectedTickets[tt.ticket_type_id] || 0}</span>
                                                     <button
                                                         className="qty-btn"
                                                         onClick={() => handleTicketQuantityChange(tt.ticket_type_id, (selectedTickets[tt.ticket_type_id] || 0) + 1)}

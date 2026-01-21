@@ -46,10 +46,10 @@ import AdminEventsManagement from '@features/admin/pages/Events';
 import AdminOrdersManagement from '@features/admin/pages/Orders';
 
 import AdminLogin from '@features/admin/pages/Login';
-import AdminProfile from '@features/admin/pages/Profile';
 import AdminStatistics from '@features/admin/pages/Statistics';
 import AdminCategories from '@features/admin/pages/Categories';
 import AdminBanners from '@features/admin/pages/Banners';
+import AdminAuditLogs from '@features/admin/pages/AuditLogs';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -137,7 +137,7 @@ function App() {
                   <Route path="events" element={<AdminEventsManagement />} />
                   <Route path="orders" element={<AdminOrdersManagement />} />
                   <Route path="statistics" element={<AdminStatistics />} />
-                  <Route path="profile" element={<AdminProfile />} />
+                  <Route path="audit-logs" element={<AdminAuditLogs />} />
                 </Route>
 
                 {/* Organizer Routes */}

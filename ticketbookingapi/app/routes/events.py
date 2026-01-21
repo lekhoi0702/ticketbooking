@@ -20,8 +20,16 @@ def get_events():
         offset = request.args.get('offset', 0, type=int)
         sort = request.args.get('sort')
         
+        # New filter parameters
+        venue_id = request.args.get('venue_id', type=int)
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        min_price = request.args.get('min_price', type=float)
+        max_price = request.args.get('max_price', type=float)
+        
         # Build query
         # We join with Venue to ensure we only show events at ACTIVE venues
+        # Also join with TicketType to filter by price
         query = db.session.query(Event).join(Venue, Event.venue_id == Venue.venue_id).filter(
             Venue.status == 'ACTIVE',
             Venue.is_active == True
@@ -35,6 +43,62 @@ def get_events():
         
         if is_featured is not None:
             query = query.filter(Event.is_featured == is_featured)
+        
+        if venue_id:
+            query = query.filter(Event.venue_id == venue_id)
+        
+        # Date filters
+        if date_from:
+            try:
+                date_from_obj = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                query = query.filter(Event.start_datetime >= date_from_obj)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                date_to_obj = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                query = query.filter(Event.start_datetime <= date_to_obj)
+            except ValueError:
+                pass
+        
+        # Price filters - use subquery in WHERE clause
+        if min_price is not None or max_price is not None:
+            from app.models.ticket_type import TicketType
+            # Subquery to get min price per event
+            price_subq = db.session.query(
+                TicketType.event_id,
+                func.min(TicketType.price).label('min_price')
+            ).filter(
+                TicketType.is_active == True
+            ).group_by(TicketType.event_id).subquery()
+            
+            # Use EXISTS or IN to filter events by price range
+            if min_price is not None and max_price is not None:
+                query = query.filter(
+                    Event.event_id.in_(
+                        db.session.query(price_subq.c.event_id).filter(
+                            price_subq.c.min_price >= min_price,
+                            price_subq.c.min_price <= max_price
+                        )
+                    )
+                )
+            elif min_price is not None:
+                query = query.filter(
+                    Event.event_id.in_(
+                        db.session.query(price_subq.c.event_id).filter(
+                            price_subq.c.min_price >= min_price
+                        )
+                    )
+                )
+            elif max_price is not None:
+                query = query.filter(
+                    Event.event_id.in_(
+                        db.session.query(price_subq.c.event_id).filter(
+                            price_subq.c.min_price <= max_price
+                        )
+                    )
+                )
         
         # Add basic filters (e.g. upcoming) if needed before grouping
         if sort == 'upcoming':

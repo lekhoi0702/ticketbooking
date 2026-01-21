@@ -211,9 +211,14 @@ export const organizerApi = {
         return await response.json();
     },
 
-    async deleteVenue(venueId) {
+    async deleteVenue(venueId, managerId = null) {
+        const headers = { 'Content-Type': 'application/json' };
+        const body = managerId ? JSON.stringify({ manager_id: managerId }) : JSON.stringify({});
+        
         const response = await fetch(`${API_BASE_URL}/organizer/venues/${venueId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: headers,
+            body: body
         });
         if (!response.ok) {
             const error = await response.json();

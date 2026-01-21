@@ -8,7 +8,7 @@ class OrganizerVenueService:
     def get_venues(manager_id):
         query = text("""
             SELECT * FROM Venue 
-            WHERE manager_id = :manager_id AND status != 'MAINTENANCE'
+            WHERE manager_id = :manager_id
         """)
         result = db.session.execute(query, {"manager_id": manager_id})
         
@@ -136,8 +136,23 @@ class OrganizerVenueService:
              update_fields.append("economy_seats = :economy_seats")
              params['economy_seats'] = int(data['economy_seats'])
         if 'status' in data:
+             new_status = data['status']
+             # Check if trying to set status to MAINTENANCE
+             if new_status == 'MAINTENANCE':
+                 # Check for published events using this venue
+                 published_event_check = text("""
+                     SELECT COUNT(*) as event_count 
+                     FROM Event 
+                     WHERE venue_id = :venue_id AND status = 'PUBLISHED'
+                 """)
+                 event_result = db.session.execute(published_event_check, {"venue_id": venue_id})
+                 published_event_count = event_result.fetchone()[0]
+                 
+                 if published_event_count > 0:
+                     raise ValueError(f'Không thể chuyển địa điểm sang chế độ bảo trì vì đã có {published_event_count} sự kiện đang được công bố (PUBLISHED) sử dụng địa điểm này. Vui lòng hủy công bố hoặc chuyển các sự kiện sang địa điểm khác trước.')
+             
              update_fields.append("status = :status")
-             params['status'] = data['status']
+             params['status'] = new_status
         if 'seat_map_template' in data:
              update_fields.append("seat_map_template = :seat_map_template")
              params['seat_map_template'] = json.dumps(data['seat_map_template']) if isinstance(data['seat_map_template'], dict) else data['seat_map_template']

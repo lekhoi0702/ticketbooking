@@ -11,6 +11,7 @@ from app.models.discount import Discount
 from app.models.banner import Banner
 from app.models.organizer_info import OrganizerInfo
 from app.models.favorite_event import FavoriteEvent
+from app.models.audit_log import AuditLog
 
 __all__ = [
     'Role',
@@ -25,5 +26,6 @@ __all__ = [
     'Discount',
     'Banner',
     'OrganizerInfo',
-    'FavoriteEvent'
+    'FavoriteEvent',
+    'AuditLog'
 ]

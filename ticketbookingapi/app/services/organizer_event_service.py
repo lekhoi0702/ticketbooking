@@ -354,10 +354,29 @@ class OrganizerEventService:
                     print(f"Warning: Failed to parse date {df}: {val}. Error: {e}")
                     # Skip this field instead of failing the whole update
                 
-        if data.get('status'):
-            new_status = data.get('status')
-            if new_status == 'PUBLISHED' and event_row.status not in ['APPROVED', 'PUBLISHED']:
-                 raise ValueError('Sự kiện cần được Admin phê duyệt trước khi đăng')
+        # Handle status changes with new workflow rules
+        current_status = event_row.status
+        requested_status = data.get('status')
+        
+        # Rule 1: If event is PUBLISHED and organizer wants to edit, auto-change to APPROVED
+        # Organizer cannot keep PUBLISHED status when editing - must go through approval again
+        if current_status == 'PUBLISHED':
+            if requested_status == 'PUBLISHED':
+                # Organizer trying to keep PUBLISHED status - not allowed, change to APPROVED
+                update_fields.append("status = :status")
+                params['status'] = 'APPROVED'
+            else:
+                # Auto-change to APPROVED when editing published event
+                update_fields.append("status = :status")
+                params['status'] = 'APPROVED'
+        elif requested_status:
+            new_status = requested_status
+            # Rule 2: Cannot change from APPROVED back to DRAFT
+            if current_status == 'APPROVED' and new_status == 'DRAFT':
+                raise ValueError('Không thể chuyển sự kiện đã được duyệt về trạng thái nháp. Chỉ có thể sửa, xóa hoặc hủy.')
+            # Rule 3: Cannot publish without admin approval
+            if new_status == 'PUBLISHED' and current_status not in ['APPROVED', 'PUBLISHED']:
+                raise ValueError('Sự kiện cần được Admin phê duyệt trước khi đăng')
             update_fields.append("status = :status")
             params['status'] = new_status
             
@@ -367,6 +386,11 @@ class OrganizerEventService:
             
         update_fields.append("updated_at = :now")
         params['now'] = datetime.utcnow()
+        
+        # Track if status was changed to APPROVED (for auto-change to PENDING_APPROVAL later)
+        status_changed_to_approved = False
+        if params.get('status') == 'APPROVED':
+            status_changed_to_approved = True
         
         if update_fields:
             sql = f"UPDATE Event SET {', '.join(update_fields)} WHERE event_id = :event_id"
@@ -428,6 +452,16 @@ class OrganizerEventService:
                 st_data = json.loads(st_json)
                 if 'start_datetime' in st_data and 'end_datetime' in st_data:
                     OrganizerEventService.add_showtime(event_id, st_data)
+        
+        # Rule 4: After updating event in APPROVED status, auto-change to PENDING_APPROVAL
+        # Check if event was updated and is now in APPROVED status
+        if status_changed_to_approved or update_fields or ticket_types_data or extra_showtimes:
+            # Re-fetch current status
+            current_event = db.session.execute(text("SELECT status FROM Event WHERE event_id = :id"), {"id": event_id}).fetchone()
+            if current_event and current_event.status == 'APPROVED':
+                # Change to PENDING_APPROVAL for admin re-approval after any update
+                db.session.execute(text("UPDATE Event SET status = 'PENDING_APPROVAL' WHERE event_id = :id"), {"id": event_id})
+                db.session.commit()
 
         return OrganizerEventService._fetch_event(event_id)
 

@@ -249,5 +249,62 @@ export const adminApi = {
         const response = await fetch(`${API_BASE_URL}/admin/events/${eventId}/discounts`);
         if (!response.ok) throw new Error('Failed to fetch event discounts');
         return await response.json();
+    },
+
+    // Audit Logs Management
+    async getAuditLogs(params = {}) {
+        const queryParams = new URLSearchParams();
+        if (params.user_id) queryParams.append('user_id', params.user_id);
+        if (params.action) queryParams.append('action', params.action);
+        if (params.entity_type) queryParams.append('entity_type', params.entity_type);
+        if (params.start_date) queryParams.append('start_date', params.start_date);
+        if (params.end_date) queryParams.append('end_date', params.end_date);
+        if (params.search) queryParams.append('search', params.search);
+        if (params.page) queryParams.append('page', params.page);
+        if (params.per_page) queryParams.append('per_page', params.per_page);
+        
+        const response = await fetch(`${API_BASE_URL}/admin/audit-logs?${queryParams.toString()}`);
+        if (!response.ok) throw new Error('Failed to fetch audit logs');
+        return await response.json();
+    },
+
+    async getOrganizerAuditLogs(params = {}) {
+        const queryParams = new URLSearchParams();
+        if (params.page) queryParams.append('page', params.page);
+        if (params.per_page) queryParams.append('per_page', params.per_page);
+        if (params.table_name) queryParams.append('table_name', params.table_name);
+        if (params.action) queryParams.append('action', params.action);
+        
+        const response = await fetch(`${API_BASE_URL}/admin/audit-logs/organizers?${queryParams.toString()}`);
+        if (!response.ok) throw new Error('Failed to fetch organizer audit logs');
+        return await response.json();
+    },
+
+    async getAuditLogsStats() {
+        const response = await fetch(`${API_BASE_URL}/admin/audit-logs/stats`);
+        if (!response.ok) throw new Error('Failed to fetch audit logs stats');
+        return await response.json();
+    },
+
+    async getAuditLogActionTypes() {
+        const response = await fetch(`${API_BASE_URL}/admin/audit-logs/actions`);
+        if (!response.ok) throw new Error('Failed to fetch audit log action types');
+        return await response.json();
+    },
+
+    async getUserAuditLogs(userId, params = {}) {
+        const queryParams = new URLSearchParams();
+        if (params.page) queryParams.append('page', params.page);
+        if (params.per_page) queryParams.append('per_page', params.per_page);
+        
+        const response = await fetch(`${API_BASE_URL}/admin/audit-logs/user/${userId}?${queryParams.toString()}`);
+        if (!response.ok) throw new Error('Failed to fetch user audit logs');
+        return await response.json();
+    },
+
+    async getEntityAuditLogs(entityType, entityId) {
+        const response = await fetch(`${API_BASE_URL}/admin/audit-logs/entity/${entityType}/${entityId}`);
+        if (!response.ok) throw new Error('Failed to fetch entity audit logs');
+        return await response.json();
     }
 };

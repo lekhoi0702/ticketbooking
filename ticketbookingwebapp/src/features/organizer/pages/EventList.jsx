@@ -77,7 +77,7 @@ const EventList = () => {
             </div>
 
             {/* Selection Toolbar */}
-            {selectedRowKeys.length > 0 && (
+            {selectedRowKeys.length > 0 && firstSelected && (
                 <Card
                     style={{
                         marginBottom: 16,
@@ -89,88 +89,61 @@ const EventList = () => {
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Space size={16}>
-                            <Text strong>Đã chọn {selectedRowKeys.length} sự kiện</Text>
+                            <Text strong>Đã chọn sự kiện: {firstSelected.event_name}</Text>
                             <Divider type="vertical" />
                             <Space size={8}>
-                                {selectedRowKeys.length === 1 && firstSelected && (
-                                    <>
-                                        {firstSelected.status === 'DRAFT' ? (
-                                            <Tooltip title="Chỉnh sửa thông tin sự kiện">
-                                                <Button
-                                                    type="primary"
-                                                    icon={<EditOutlined />}
-                                                    onClick={() => navigate(`/organizer/edit-event/${firstSelected.event_id}`)}
-                                                >Sửa sự kiện</Button>
-                                            </Tooltip>
-                                        ) : (
-                                            ['PENDING_APPROVAL', 'PUBLISHED'].includes(firstSelected.status) && (
-                                                <Tooltip title="Chuyển về bản nháp để có thể chỉnh sửa">
-                                                    <Button
-                                                        icon={<ReloadOutlined />}
-                                                        onClick={() => handleCancelApproval(firstSelected.event_id)}
-                                                        loading={loading}
-                                                    >Lấy về sửa</Button>
-                                                </Tooltip>
-                                            )
-                                        )}
-                                        <Tooltip title="Xem chi tiết">
+                                {firstSelected.status === 'DRAFT' ? (
+                                    <Tooltip title="Chỉnh sửa thông tin sự kiện">
+                                        <Button
+                                            type="primary"
+                                            icon={<EditOutlined />}
+                                            onClick={() => navigate(`/organizer/edit-event/${firstSelected.event_id}`)}
+                                        >Sửa sự kiện</Button>
+                                    </Tooltip>
+                                ) : (
+                                    ['PENDING_APPROVAL', 'PUBLISHED'].includes(firstSelected.status) && (
+                                        <Tooltip title="Chuyển về bản nháp để có thể chỉnh sửa">
                                             <Button
-                                                icon={<EyeOutlined />}
-                                                onClick={() => navigate(`/organizer/event/${firstSelected.event_id}`)}
-                                            >Xem</Button>
+                                                icon={<ReloadOutlined />}
+                                                onClick={() => handleCancelApproval(firstSelected.event_id)}
+                                                loading={loading}
+                                            >Lấy về sửa</Button>
                                         </Tooltip>
-                                        <Tooltip title="Đơn hàng">
-                                            <Button
-                                                icon={<ShoppingOutlined />}
-                                                onClick={() => navigate(`/organizer/event/${firstSelected.event_id}/orders`)}
-                                            >Đơn hàng</Button>
-                                        </Tooltip>
-                                        <Tooltip title="Thêm suất diễn">
-                                            <Button
-                                                icon={<ClockCircleOutlined />}
-                                                onClick={() => setIsAddShowtimeModalOpen(firstSelected)}
-                                            >Suất diễn</Button>
-                                        </Tooltip>
-                                        {firstSelected.status === 'APPROVED' && (
-                                            <Button
-                                                type="primary"
-                                                icon={<CloudUploadOutlined />}
-                                                onClick={() => handlePublishEvent(firstSelected.event_id)}
-                                                style={{ background: '#2DC275', borderColor: '#2DC275' }}
-                                            >Đăng sự kiện</Button>
-                                        )}
-                                    </>
+                                    )
                                 )}
-
-                                {/* Bulk delete button - only show if all selected events are DRAFT */}
-                                {selectedEvents.every(e => e.status === 'DRAFT') && (
+                                <Tooltip title="Xem chi tiết">
+                                    <Button
+                                        icon={<EyeOutlined />}
+                                        onClick={() => navigate(`/organizer/event/${firstSelected.event_id}`)}
+                                    >Xem</Button>
+                                </Tooltip>
+                                <Tooltip title="Đơn hàng">
+                                    <Button
+                                        icon={<ShoppingOutlined />}
+                                        onClick={() => navigate(`/organizer/event/${firstSelected.event_id}/orders`)}
+                                    >Đơn hàng</Button>
+                                </Tooltip>
+                                <Tooltip title="Thêm suất diễn">
+                                    <Button
+                                        icon={<ClockCircleOutlined />}
+                                        onClick={() => setIsAddShowtimeModalOpen(firstSelected)}
+                                    >Suất diễn</Button>
+                                </Tooltip>
+                                {firstSelected.status === 'APPROVED' && (
+                                    <Button
+                                        type="primary"
+                                        icon={<CloudUploadOutlined />}
+                                        onClick={() => handlePublishEvent(firstSelected.event_id)}
+                                        style={{ background: '#2DC275', borderColor: '#2DC275' }}
+                                    >Đăng sự kiện</Button>
+                                )}
+                                {firstSelected.status === 'DRAFT' && (
                                     <Button
                                         danger
                                         icon={<DeleteOutlined />}
-                                        onClick={async () => {
-                                            if (selectedRowKeys.length === 1) {
-                                                // Single delete - use existing modal
-                                                handleDeleteClick(firstSelected);
-                                            } else {
-                                                // Bulk delete
-                                                const { Modal } = await import('antd');
-                                                Modal.confirm({
-                                                    title: 'Xác nhận xóa hàng loạt',
-                                                    content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} sự kiện đã chọn? Hành động này không thể hoàn tác.`,
-                                                    okText: 'Xóa',
-                                                    okType: 'danger',
-                                                    cancelText: 'Hủy',
-                                                    onOk: async () => {
-                                                        const result = await handleBulkDelete(selectedRowKeys);
-                                                        if (result.success) {
-                                                            setSelectedRowKeys([]);
-                                                        }
-                                                    }
-                                                });
-                                            }
-                                        }}
+                                        onClick={() => handleDeleteClick(firstSelected)}
                                         loading={deleting}
-                                    >Xóa{selectedRowKeys.length > 1 ? ' hàng loạt' : ''}</Button>
+                                    >Xóa</Button>
                                 )}
                             </Space>
                         </Space>

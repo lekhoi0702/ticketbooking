@@ -43,3 +43,91 @@
 .category-events-wrapper hr {
     border-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Filter Section Styles */
+.category-events-wrapper .ant-card {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.category-events-wrapper .ant-card-body {
+    padding: 20px;
+}
+
+.category-events-wrapper .ant-picker,
+.category-events-wrapper .ant-select-selector,
+.category-events-wrapper .ant-input-number {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+}
+
+.category-events-wrapper .ant-picker-input > input,
+.category-events-wrapper .ant-select-selection-item,
+.category-events-wrapper .ant-select-selection-placeholder {
+    color: #fff !important;
+}
+
+.category-events-wrapper .ant-picker:hover,
+.category-events-wrapper .ant-select:hover .ant-select-selector,
+.category-events-wrapper .ant-input-number:hover {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.category-events-wrapper .ant-picker-focused,
+.category-events-wrapper .ant-select-focused .ant-select-selector,
+.category-events-wrapper .ant-input-number-focused {
+    border-color: #1890ff !important;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+.category-events-wrapper .ant-btn-primary {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+
+.category-events-wrapper .ant-btn-primary:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+}
+
+.category-events-wrapper .ant-btn-default {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.category-events-wrapper .ant-btn-default:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+/* Loading Overlay Styles */
+.category-events-loading-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+}
+
+.category-events-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(39, 39, 42);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100%;
+    width: 100%;
+    padding: 80px 20px 40px 20px;
+}
+
+.category-events-loading-wrapper .events-row-loading {
+    opacity: 0.3;
+    pointer-events: none;
+    min-height: 500px;
+}

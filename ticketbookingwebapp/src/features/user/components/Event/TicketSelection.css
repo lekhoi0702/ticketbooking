@@ -1,0 +1,289 @@
+/* TicketSelection.css - Dark Theme Design System */
+
+#ticket-selection.detail-section {
+    background: #27272a !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+    padding: 40px !important;
+    margin-bottom: 32px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+#ticket-selection .section-title {
+    color: #ffffff !important;
+    border-left: 5px solid #2dc275 !important;
+    padding-left: 20px !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    margin-bottom: 30px !important;
+}
+
+/* Card Container */
+#ticket-selection .card {
+    background: #1f1f23 !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+#ticket-selection .card-body {
+    background: transparent !important;
+    padding: 0 !important;
+}
+
+/* Tabs Styling - Enhanced Dark Theme */
+#ticket-selection .custom-tabs.nav-tabs {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    padding: 0 24px !important;
+    padding-top: 24px !important;
+    background: transparent !important;
+    gap: 8px !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-item {
+    margin-right: 0 !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-link:not(.active),
+#ticket-selection .custom-tabs .nav-link:not(.active) {
+    color: rgba(255, 255, 255, 0.65) !important;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    font-weight: 600 !important;
+    padding: 14px 28px !important;
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    margin-right: 0 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 12px 12px 0 0 !important;
+    position: relative !important;
+    font-size: 15px !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-link:not(.active):hover,
+#ticket-selection .custom-tabs .nav-link:not(.active):hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-bottom-color: rgba(45, 194, 117, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-link:not(.active) span,
+#ticket-selection .custom-tabs .nav-link:not(.active) span {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-link.active,
+#ticket-selection .custom-tabs .nav-link.active {
+    background: linear-gradient(180deg, rgba(45, 194, 117, 0.2) 0%, rgba(45, 194, 117, 0.1) 100%) !important;
+    color: #2dc275 !important;
+    border-bottom: 3px solid #2dc275 !important;
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 -4px 12px rgba(45, 194, 117, 0.25), 0 2px 8px rgba(45, 194, 117, 0.15) !important;
+    position: relative !important;
+    font-size: 15px !important;
+    padding: 14px 28px !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-link.active::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, transparent, #2dc275, transparent) !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-link.active span,
+#ticket-selection .custom-tabs .nav-link.active span {
+    color: #2dc275 !important;
+    font-weight: 700 !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-link.active .badge,
+#ticket-selection .custom-tabs .nav-link.active .badge {
+    background: #2dc275 !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(45, 194, 117, 0.4) !important;
+    font-weight: 700 !important;
+    margin-left: 8px !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-link:not(.active) .badge {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    margin-left: 8px !important;
+}
+
+/* Tab Content */
+#ticket-selection .tab-content {
+    background: transparent !important;
+}
+
+#ticket-selection .tab-pane {
+    background: transparent !important;
+    padding: 24px !important;
+}
+
+/* Ticket Info Section */
+#ticket-selection .ticket-info-section {
+    margin-bottom: 32px !important;
+    padding-bottom: 24px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+#ticket-selection h5.fw-bold,
+#ticket-selection .h5.fw-bold {
+    color: #ffffff !important;
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    margin-bottom: 8px !important;
+}
+
+#ticket-selection .text-muted {
+    color: rgba(255, 255, 255, 0.65) !important;
+    font-size: 14px !important;
+}
+
+#ticket-selection .h4.text-primary,
+#ticket-selection .h4.fw-bold {
+    color: #2dc275 !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    margin-top: 12px !important;
+    margin-bottom: 0 !important;
+}
+
+/* Quantity Selector (when no seat map) */
+#ticket-selection .quantity-selector-wrapper {
+    margin-top: 24px !important;
+    padding-top: 24px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+#ticket-selection .quantity-selector-label h6 {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+}
+
+#ticket-selection .quantity-selector-label small {
+    color: rgba(255, 255, 255, 0.65) !important;
+    font-size: 13px !important;
+}
+
+#ticket-selection .quantity-selector {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 50px !important;
+    padding: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+}
+
+#ticket-selection .qty-btn {
+    color: #2dc275 !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    border: none !important;
+    background: transparent !important;
+    font-size: 20px !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    transition: all 0.2s ease !important;
+}
+
+#ticket-selection .qty-btn:hover:not(:disabled) {
+    background: rgba(45, 194, 117, 0.15) !important;
+    transform: scale(1.1) !important;
+}
+
+#ticket-selection .qty-btn:disabled {
+    color: rgba(255, 255, 255, 0.3) !important;
+    cursor: not-allowed !important;
+}
+
+#ticket-selection .qty-val {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    min-width: 40px !important;
+    text-align: center !important;
+}
+
+/* Empty State */
+#ticket-selection .card-body .text-center {
+    padding: 40px 24px !important;
+}
+
+#ticket-selection .card-body .text-muted {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Badge in Tabs */
+#ticket-selection .badge {
+    font-weight: 700 !important;
+    padding: 4px 10px !important;
+    border-radius: 50px !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    min-width: 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+}
+
+#ticket-selection .custom-tabs.nav-tabs .nav-link.active .badge {
+    animation: badge-pulse 2s ease-in-out infinite !important;
+}
+
+@keyframes badge-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(45, 194, 117, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(45, 194, 117, 0.6);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #ticket-selection.detail-section {
+        padding: 24px !important;
+    }
+
+    #ticket-selection .custom-tabs.nav-tabs {
+        padding: 0 16px !important;
+        padding-top: 16px !important;
+        flex-wrap: wrap !important;
+    }
+
+    #ticket-selection .custom-tabs.nav-tabs .nav-link:not(.active),
+    #ticket-selection .custom-tabs .nav-link:not(.active) {
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+    }
+
+    #ticket-selection .tab-pane {
+        padding: 20px 16px !important;
+    }
+
+    #ticket-selection .h4.text-primary,
+    #ticket-selection .h4.fw-bold {
+        font-size: 24px !important;
+    }
+}

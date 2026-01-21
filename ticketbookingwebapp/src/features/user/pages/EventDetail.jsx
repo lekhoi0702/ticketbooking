@@ -38,10 +38,12 @@ function EventDetail() {
         hasSeatMap,
         activeTicketType,
         totalTickets,
+        seatTimers,
         setActiveTicketType,
         setHasSeatMap,
         handleTicketQuantityChange,
         handleSeatSelection,
+        handleSeatTimerUpdate,
         calculateTotal,
         validateSelection
     } = useEventDetail(id);
@@ -63,19 +65,20 @@ function EventDetail() {
             // Handle checkout action
             if (redirectIntent.action === 'checkout' && redirectIntent.eventId === parseInt(id)) {
                 clearRedirectIntent();
-                // Navigate to checkout
+                // Navigate to checkout with seat timers
                 navigate(`/checkout/${event.event_id}`, {
                     state: {
                         selectedTickets,
                         selectedSeats,
-                        hasSeatMap
+                        hasSeatMap,
+                        seatTimers
                     }
                 });
             }
         };
         
         handlePendingAction();
-    }, [isAuthenticated, redirectIntent, id, event, clearRedirectIntent, toggleFavorite, navigate, selectedTickets, selectedSeats, hasSeatMap]);
+    }, [isAuthenticated, redirectIntent, id, event, clearRedirectIntent, toggleFavorite, navigate, selectedTickets, selectedSeats, hasSeatMap, seatTimers]);
 
     if (loading) {
         return <LoadingSpinner fullScreen tip="Đang tải thông tin sự kiện..." />;
@@ -127,7 +130,8 @@ function EventDetail() {
             state: {
                 selectedTickets,
                 selectedSeats,
-                hasSeatMap
+                hasSeatMap,
+                seatTimers
             }
         });
     };
@@ -178,6 +182,7 @@ function EventDetail() {
                                             handleSeatSelection={handleSeatSelection}
                                             hasSeatMap={hasSeatMap}
                                             setHasSeatMap={setHasSeatMap}
+                                            onSeatTimerUpdate={handleSeatTimerUpdate}
                                         />
                                     </div>
                                 </Tab>

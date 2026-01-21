@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@context/AuthContext';
 import AdminLogin from '../pages/Login';
@@ -10,7 +10,11 @@ import {
     Button,
     Space,
     Breadcrumb,
-    theme as antdTheme
+    Dropdown,
+    Modal,
+    Form,
+    Input,
+    message
 } from 'antd';
 import {
     UserOutlined,
@@ -21,16 +25,24 @@ import {
     ExclamationCircleOutlined,
     BarChartOutlined,
     TagsOutlined,
-    HomeOutlined
+    HomeOutlined,
+    HistoryOutlined,
+    LockOutlined,
+    LogoutOutlined,
+    DownOutlined
 } from '@ant-design/icons';
+import { api } from '@services/api';
 
 const { Header, Sider, Content } = Layout;
 const { Text, Title } = Typography;
 
 const AdminLayout = () => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+    const [passwordForm] = Form.useForm();
+    const [changingPassword, setChangingPassword] = useState(false);
 
     const menuItems = [
         {
@@ -70,6 +82,12 @@ const AdminLayout = () => {
             label: 'Quản lý Banner',
             onClick: () => navigate('/admin/banners'),
         },
+        {
+            key: '/admin/audit-logs',
+            icon: <HistoryOutlined />,
+            label: 'Nhật ký hoạt động',
+            onClick: () => navigate('/admin/audit-logs'),
+        },
     ];
 
 
@@ -91,7 +109,7 @@ const AdminLayout = () => {
             'orders': 'Quản lý đơn hàng',
             'statistics': 'Thống kê hệ thống',
             'banners': 'Quản lý Banner',
-            'profile': 'Trang cá nhân admin'
+            'audit-logs': 'Nhật ký hoạt động'
         };
 
         let currentPath = '/admin';
@@ -112,6 +130,57 @@ const AdminLayout = () => {
 
         return breadcrumbs;
     };
+
+    const handleChangePassword = async (values) => {
+        try {
+            setChangingPassword(true);
+            const res = await api.changePassword({
+                old_password: values.oldPassword,
+                new_password: values.newPassword
+            });
+
+            if (res.success) {
+                message.success('Đổi mật khẩu thành công');
+                setPasswordModalVisible(false);
+                passwordForm.resetFields();
+            } else {
+                message.error(res.message || 'Có lỗi xảy ra khi đổi mật khẩu');
+            }
+        } catch (error) {
+            console.error('Change password error:', error);
+            message.error(error.message || 'Lỗi server, vui lòng thử lại sau');
+        } finally {
+            setChangingPassword(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate('/admin/login');
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    };
+
+    const dropdownMenuItems = [
+        {
+            key: 'change-password',
+            icon: <LockOutlined />,
+            label: 'Đổi mật khẩu',
+            onClick: () => setPasswordModalVisible(true),
+        },
+        {
+            type: 'divider',
+        },
+        {
+            key: 'logout',
+            icon: <LogoutOutlined />,
+            label: 'Đăng xuất',
+            danger: true,
+            onClick: handleLogout,
+        },
+    ];
 
     if (!isAuthenticated || user?.role !== 'ADMIN') {
         return <AdminLogin />;
@@ -175,18 +244,24 @@ const AdminLayout = () => {
                     <Breadcrumb items={getBreadcrumbs()} />
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <Space
-                            style={{ cursor: 'pointer', padding: '0 8px', borderLeft: '1px solid #f0f0f0', marginLeft: 8 }}
-                            onClick={() => navigate('/admin/profile')}
+                        <Dropdown
+                            menu={{ items: dropdownMenuItems }}
+                            placement="bottomRight"
+                            trigger={['click']}
                         >
-                            <Avatar
-                                style={{ backgroundColor: '#1890ff' }}
-                                icon={<UserOutlined />}
-                            />
-                            <Text strong>
-                                Chào, {user?.full_name || user?.email?.split('@')[0] || 'Admin'}
-                            </Text>
-                        </Space>
+                            <Space
+                                style={{ cursor: 'pointer', padding: '0 8px', borderLeft: '1px solid #f0f0f0', marginLeft: 8 }}
+                            >
+                                <Avatar
+                                    style={{ backgroundColor: '#1890ff' }}
+                                    icon={<UserOutlined />}
+                                />
+                                <Text strong>
+                                    {user?.full_name || user?.email?.split('@')[0] || 'Admin'}
+                                </Text>
+                                <DownOutlined style={{ fontSize: 12, color: '#8c8c8c' }} />
+                            </Space>
+                        </Dropdown>
                     </div>
                 </Header>
                 <Content style={{ margin: '24px 24px 0', minHeight: 280 }}>
@@ -199,6 +274,77 @@ const AdminLayout = () => {
                     </div>
                 </Content>
             </Layout>
+
+            {/* Change Password Modal */}
+            <Modal
+                title="Đổi mật khẩu"
+                open={passwordModalVisible}
+                onCancel={() => {
+                    setPasswordModalVisible(false);
+                    passwordForm.resetFields();
+                }}
+                footer={null}
+                width={500}
+            >
+                <Form
+                    form={passwordForm}
+                    layout="vertical"
+                    onFinish={handleChangePassword}
+                    style={{ marginTop: 24 }}
+                >
+                    <Form.Item
+                        name="oldPassword"
+                        label="Mật khẩu hiện tại"
+                        rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
+                    >
+                        <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="newPassword"
+                        label="Mật khẩu mới"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập mật khẩu mới' },
+                            { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
+                        ]}
+                    >
+                        <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="confirmPassword"
+                        label="Xác nhận mật khẩu mới"
+                        dependencies={['newPassword']}
+                        rules={[
+                            { required: true, message: 'Vui lòng xác nhận mật khẩu mới' },
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (!value || getFieldValue('newPassword') === value) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error('Mật khẩu xác nhận không khớp'));
+                                },
+                            }),
+                        ]}
+                    >
+                        <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
+                    </Form.Item>
+
+                    <Form.Item style={{ marginTop: 32, marginBottom: 0 }}>
+                        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                            <Button onClick={() => {
+                                setPasswordModalVisible(false);
+                                passwordForm.resetFields();
+                            }}>
+                                Hủy
+                            </Button>
+                            <Button type="primary" htmlType="submit" loading={changingPassword}>
+                                Cập nhật mật khẩu
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
         </Layout >
     );
 };

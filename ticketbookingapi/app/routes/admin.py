@@ -7,8 +7,10 @@ from app.models.payment import Payment
 from app.models.venue import Venue
 from app.models.event_category import EventCategory
 from app.models.discount import Discount
+from app.models.audit_log import AuditLog
+from app.services.audit_service import AuditService
 from sqlalchemy import func
-from datetime import datetime
+from datetime import datetime, timedelta
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -326,6 +328,7 @@ def admin_update_venue_seats(venue_id):
 def admin_update_venue_status(venue_id):
     """Cập nhật trạng thái địa điểm (ACTIVE, MAINTENANCE, INACTIVE)"""
     try:
+        from sqlalchemy import text
         data = request.get_json()
         venue = Venue.query.get(venue_id)
         if not venue:
@@ -335,6 +338,24 @@ def admin_update_venue_status(venue_id):
             new_status = data['status']
             if new_status not in ['ACTIVE', 'MAINTENANCE', 'INACTIVE']:
                 return jsonify({'success': False, 'message': 'Trạng thái không hợp lệ'}), 400
+            
+            # Check if trying to set status to MAINTENANCE
+            if new_status == 'MAINTENANCE':
+                # Check for published events using this venue
+                published_event_check = text("""
+                    SELECT COUNT(*) as event_count 
+                    FROM Event 
+                    WHERE venue_id = :venue_id AND status = 'PUBLISHED'
+                """)
+                event_result = db.session.execute(published_event_check, {"venue_id": venue_id})
+                published_event_count = event_result.fetchone()[0]
+                
+                if published_event_count > 0:
+                    return jsonify({
+                        'success': False, 
+                        'message': f'Không thể chuyển địa điểm sang chế độ bảo trì vì đã có {published_event_count} sự kiện đang được công bố (PUBLISHED) sử dụng địa điểm này. Vui lòng hủy công bố hoặc chuyển các sự kiện sang địa điểm khác trước.'
+                    }), 400
+            
             venue.status = new_status
             
         db.session.commit()
@@ -620,3 +641,312 @@ def admin_get_event_discounts(event_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
+# ============== AUDIT LOG ENDPOINTS ==============
+
+@admin_bp.route("/admin/audit-logs", methods=["GET"])
+def get_audit_logs():
+    """
+    Lấy danh sách audit logs với các filter
+    Query params:
+        - user_id: Filter theo user (changed_by)
+        - action: Filter theo loại action (INSERT, UPDATE, DELETE)
+        - table_name: Filter theo tên bảng (Event, Venue, Discount, etc.)
+        - start_date: Lọc từ ngày (ISO format)
+        - end_date: Lọc đến ngày (ISO format)
+        - page: Trang hiện tại (default 1)
+        - per_page: Số record mỗi trang (default 50)
+    """
+    try:
+        # Get query params
+        user_id = request.args.get('user_id', type=int)
+        action = request.args.get('action')
+        table_name = request.args.get('table_name') or request.args.get('entity_type')
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        
+        # Build query
+        query = AuditLog.query
+        
+        if user_id:
+            query = query.filter(AuditLog.changed_by == user_id)
+        if action:
+            query = query.filter(AuditLog.action == action)
+        if table_name:
+            query = query.filter(AuditLog.table_name == table_name)
+        
+        # Date filters
+        if start_date_str:
+            try:
+                start_date = datetime.fromisoformat(start_date_str.replace('Z', ''))
+                query = query.filter(AuditLog.changed_at >= start_date)
+            except ValueError:
+                pass
+        
+        if end_date_str:
+            try:
+                end_date = datetime.fromisoformat(end_date_str.replace('Z', ''))
+                # Add 1 day to include the end date
+                end_date = end_date + timedelta(days=1)
+                query = query.filter(AuditLog.changed_at < end_date)
+            except ValueError:
+                pass
+        
+        # Order by newest first
+        query = query.order_by(AuditLog.changed_at.desc())
+        
+        # Paginate
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        logs_data = [log.to_dict() for log in pagination.items]
+        
+        return jsonify({
+            'success': True,
+            'data': logs_data,
+            'pagination': {
+                'total': pagination.total,
+                'pages': pagination.pages,
+                'page': page,
+                'per_page': per_page,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
+        }), 200
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@admin_bp.route("/admin/audit-logs/stats", methods=["GET"])
+def get_audit_logs_stats():
+    """Lấy thống kê tổng quan về audit logs"""
+    try:
+        # Count by action type
+        action_counts = db.session.query(
+            AuditLog.action,
+            func.count(AuditLog.audit_id)
+        ).group_by(AuditLog.action).all()
+        
+        # Count by table name
+        table_counts = db.session.query(
+            AuditLog.table_name,
+            func.count(AuditLog.audit_id)
+        ).group_by(AuditLog.table_name).all()
+        
+        # Recent activity (last 7 days)
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        recent_count = AuditLog.query.filter(AuditLog.changed_at >= week_ago).count()
+        
+        # Today's activity
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_count = AuditLog.query.filter(AuditLog.changed_at >= today_start).count()
+        
+        # Top active users (join with User table)
+        top_users = db.session.query(
+            AuditLog.changed_by,
+            func.count(AuditLog.audit_id).label('action_count')
+        ).filter(
+            AuditLog.changed_at >= week_ago
+        ).group_by(
+            AuditLog.changed_by
+        ).order_by(
+            func.count(AuditLog.audit_id).desc()
+        ).limit(10).all()
+        
+        # Get user info for top users
+        top_users_data = []
+        for user_id, action_count in top_users:
+            if user_id:
+                user = User.query.get(user_id)
+                top_users_data.append({
+                    'user_id': user_id,
+                    'user_name': user.full_name if user else 'Unknown',
+                    'user_email': user.email if user else 'Unknown',
+                    'action_count': action_count
+                })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'action_counts': {action: count for action, count in action_counts},
+                'entity_counts': {table: count for table, count in table_counts},
+                'recent_count': recent_count,
+                'today_count': today_count,
+                'top_users': top_users_data
+            }
+        }), 200
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@admin_bp.route("/admin/audit-logs/user/<int:user_id>", methods=["GET"])
+def get_user_audit_logs(user_id):
+    """Lấy audit logs của một user cụ thể"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        
+        # Get user info
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Get logs
+        pagination = AuditLog.query.filter_by(changed_by=user_id)\
+            .order_by(AuditLog.changed_at.desc())\
+            .paginate(page=page, per_page=per_page, error_out=False)
+        
+        return jsonify({
+            'success': True,
+            'user': {
+                'user_id': user.user_id,
+                'email': user.email,
+                'full_name': user.full_name
+            },
+            'data': [log.to_dict() for log in pagination.items],
+            'pagination': {
+                'total': pagination.total,
+                'pages': pagination.pages,
+                'page': page,
+                'per_page': per_page
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@admin_bp.route("/admin/audit-logs/entity/<string:table_name>/<int:record_id>", methods=["GET"])
+def get_entity_audit_logs(table_name, record_id):
+    """Lấy lịch sử thay đổi của một entity cụ thể"""
+    try:
+        logs = AuditLog.query.filter_by(
+            table_name=table_name,
+            record_id=record_id
+        ).order_by(AuditLog.changed_at.desc()).all()
+        
+        return jsonify({
+            'success': True,
+            'table_name': table_name,
+            'record_id': record_id,
+            'data': [log.to_dict() for log in logs]
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@admin_bp.route("/admin/audit-logs/actions", methods=["GET"])
+def get_audit_log_action_types():
+    """Lấy danh sách các loại action để hiển thị trong filter dropdown"""
+    try:
+        actions = db.session.query(AuditLog.action).distinct().all()
+        table_names = db.session.query(AuditLog.table_name).distinct().all()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'actions': [a[0] for a in actions if a[0]],
+                'entity_types': [t[0] for t in table_names if t[0]]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@admin_bp.route("/admin/audit-logs/organizers", methods=["GET"])
+def get_organizer_audit_logs():
+    """
+    Lấy audit logs của tất cả organizers
+    Query params:
+        - table_name: Filter theo tên bảng (Event, Venue, TicketType, etc.) - optional
+        - action: Filter theo loại action (INSERT, UPDATE, DELETE) - optional
+        - page: Trang hiện tại (default 1)
+        - per_page: Số record mỗi trang (default 50)
+    """
+    # #region agent log
+    import json
+    try:
+        with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
+            f.write(json.dumps({'location':'admin.py:841','message':'get_organizer_audit_logs entry','data':{'page':request.args.get('page',1,type=int),'per_page':request.args.get('per_page',50,type=int),'table_name':request.args.get('table_name')},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'A'})+'\n')
+    except: pass
+    # #endregion
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        table_name = request.args.get('table_name')  # Optional filter by table name
+        action = request.args.get('action')  # Optional filter by action
+        
+        # Get all organizer user IDs (role_id = 2)
+        organizer_ids = [u.user_id for u in User.query.filter_by(role_id=2).all()]
+        # #region agent log
+        try:
+            with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                f.write(json.dumps({'location':'admin.py:849','message':'Organizer IDs found','data':{'organizerCount':len(organizer_ids),'organizerIds':organizer_ids[:5],'table_name':table_name,'action':action},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'B'})+'\n')
+        except: pass
+        # #endregion
+        
+        if not organizer_ids:
+            # #region agent log
+            try:
+                with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    f.write(json.dumps({'location':'admin.py:851','message':'No organizers found','data':{},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'C'})+'\n')
+            except: pass
+            # #endregion
+            return jsonify({
+                'success': True,
+                'data': [],
+                'pagination': {'total': 0, 'pages': 0, 'page': page, 'per_page': per_page}
+            }), 200
+        
+        # Build query with filters
+        query = AuditLog.query.filter(
+            AuditLog.changed_by.in_(organizer_ids)
+        )
+        
+        # Add table_name filter if provided
+        if table_name:
+            query = query.filter(AuditLog.table_name == table_name)
+        
+        # Add action filter if provided
+        if action:
+            query = query.filter(AuditLog.action == action)
+        
+        # Get logs with pagination
+        pagination = query.order_by(
+            AuditLog.changed_at.desc()
+        ).paginate(page=page, per_page=per_page, error_out=False)
+        
+        # #region agent log
+        try:
+            logs_dicts = [log.to_dict() for log in pagination.items]
+            with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                f.write(json.dumps({'location':'admin.py:863','message':'Before return','data':{'total':pagination.total,'itemsCount':len(pagination.items),'firstLogKeys':list(logs_dicts[0].keys()) if logs_dicts else None},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'D'})+'\n')
+        except: pass
+        # #endregion
+        
+        return jsonify({
+            'success': True,
+            'data': [log.to_dict() for log in pagination.items],
+            'pagination': {
+                'total': pagination.total,
+                'pages': pagination.pages,
+                'page': page,
+                'per_page': per_page,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
+        }), 200
+    except Exception as e:
+        # #region agent log
+        try:
+            import traceback
+            with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                f.write(json.dumps({'location':'admin.py:876','message':'Exception caught','data':{'error':str(e),'traceback':traceback.format_exc()[:500]},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'E'})+'\n')
+        except: pass
+        # #endregion
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'success': False, 'message': str(e)}), 500
