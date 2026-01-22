@@ -84,8 +84,8 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                         email: formData.email,
                         password: formData.password
                     });
-                    if (loginRes.success) {
-                        login(loginRes.user, loginRes.token);
+                    if (loginRes.success && loginRes.data) {
+                        login(loginRes.data.user, loginRes.data.access_token);
                         onHide();
                         if (onSuccess) onSuccess();
                     } else {
@@ -101,10 +101,12 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                     email: formData.email,
                     password: formData.password
                 });
-                if (res.success) {
-                    login(res.user, res.token);
+                if (res.success && res.data) {
+                    login(res.data.user, res.data.access_token);
                     onHide();
                     if (onSuccess) onSuccess();
+                } else {
+                    setError({ type: 'danger', msg: res.message || 'Đăng nhập không thành công' });
                 }
             }
         } catch (err) {

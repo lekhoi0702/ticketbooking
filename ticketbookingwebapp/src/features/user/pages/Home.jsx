@@ -26,52 +26,105 @@ function Home() {
         try {
             setLoading(true);
 
-            // Load Banners
-            const bannerResponse = await api.getPublicBanners();
-            console.log('Banner Response:', bannerResponse);
-            if (bannerResponse.success) {
-                console.log('Banners loaded:', bannerResponse.data);
-                setBanners(bannerResponse.data);
-            } else {
-                console.error('Failed to load banners:', bannerResponse);
-            }
+            // Load all data in parallel for better performance
+            const loadPromises = [
+                // Load Banners
+                api.getPublicBanners()
+                    .then(response => {
+                        if (response.success && response.data) {
+                            setBanners(response.data);
+                        } else {
+                            console.warn('Failed to load banners:', response);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading banners:', error);
+                    }),
 
-            // Load featured events
-            const featuredResponse = await api.getFeaturedEvents(4);
-            if (featuredResponse.success) {
-                setFeaturedEvents(featuredResponse.data);
-            }
+                // Load featured events
+                api.getFeaturedEvents(4)
+                    .then(response => {
+                        if (response.success && response.data) {
+                            setFeaturedEvents(response.data);
+                        } else {
+                            console.warn('Failed to load featured events:', response);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading featured events:', error);
+                    }),
 
-            // Load popular events (most sold)
-            const popularResponse = await api.getEvents({ sort: 'popular', limit: 3 });
-            if (popularResponse.success) {
-                setPopularEvents(popularResponse.data);
-            }
+                // Load popular events (most sold)
+                api.getEvents({ sort: 'popular', limit: 3 })
+                    .then(response => {
+                        if (response.success && response.data) {
+                            setPopularEvents(response.data);
+                        } else {
+                            console.warn('Failed to load popular events:', response);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading popular events:', error);
+                    }),
 
-            // Load upcoming events (sorted by nearest date)
-            const upcomingResponse = await api.getEvents({ sort: 'upcoming', limit: 3 });
-            if (upcomingResponse.success) {
-                setUpcomingEvents(upcomingResponse.data);
-            }
+                // Load upcoming events (sorted by nearest date)
+                api.getEvents({ sort: 'upcoming', limit: 3 })
+                    .then(response => {
+                        if (response.success && response.data) {
+                            setUpcomingEvents(response.data);
+                        } else {
+                            console.warn('Failed to load upcoming events:', response);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading upcoming events:', error);
+                    }),
 
-            // Load events by category
-            const musicResponse = await api.getEventsByCategory(1, 4); // Nhạc sống
-            if (musicResponse.success) {
-                setMusicEvents(musicResponse.data);
-            }
+                // Load events by category - Nhạc sống
+                api.getEventsByCategory(1, 4)
+                    .then(response => {
+                        if (response.success && response.data) {
+                            setMusicEvents(response.data);
+                        } else {
+                            console.warn('Failed to load music events:', response);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading music events:', error);
+                    }),
 
-            const theaterResponse = await api.getEventsByCategory(2, 4); // Sân khấu
-            if (theaterResponse.success) {
-                setTheaterEvents(theaterResponse.data);
-            }
+                // Load events by category - Sân khấu
+                api.getEventsByCategory(2, 4)
+                    .then(response => {
+                        if (response.success && response.data) {
+                            setTheaterEvents(response.data);
+                        } else {
+                            console.warn('Failed to load theater events:', response);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading theater events:', error);
+                    }),
 
-            const sportsResponse = await api.getEventsByCategory(3, 4); // Thể thao
-            if (sportsResponse.success) {
-                setSportsEvents(sportsResponse.data);
-            }
+                // Load events by category - Thể thao
+                api.getEventsByCategory(3, 4)
+                    .then(response => {
+                        if (response.success && response.data) {
+                            setSportsEvents(response.data);
+                        } else {
+                            console.warn('Failed to load sports events:', response);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading sports events:', error);
+                    })
+            ];
+
+            // Wait for all requests to complete (or fail)
+            await Promise.allSettled(loadPromises);
 
         } catch (error) {
-            console.error('Error loading events:', error);
+            console.error('Unexpected error loading events:', error);
         } finally {
             setLoading(false);
         }
@@ -88,7 +141,7 @@ function Home() {
             {featuredEvents.length > 0 && (
                 <EventSection
                     title="Sự kiện đặc biệt"
-                    events={featuredEvents.map(transformEvent)}
+                    events={featuredEvents.map(transformEvent).filter(e => e !== null)}
                     viewMoreLink="/events"
                 />
             )}
@@ -96,7 +149,7 @@ function Home() {
             {popularEvents.length > 0 && (
                 <TrendingSection
                     title="Sự kiện bán chạy nhất"
-                    events={popularEvents.map(transformEvent)}
+                    events={popularEvents.map(transformEvent).filter(e => e !== null)}
                 />
             )}
 
@@ -116,7 +169,7 @@ function Home() {
                         onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
                         <img
-                            src={`${UPLOADS_BASE_URL}/quangcao.webp`}
+                            src={`${UPLOADS_BASE_URL}/misc/quangcao.webp`}
                             alt="Quảng cáo"
                             style={{
                                 width: '100%',
@@ -132,14 +185,14 @@ function Home() {
             {upcomingEvents.length > 0 && (
                 <TrendingSection
                     title="Sự kiện sắp diễn ra"
-                    events={upcomingEvents.map(transformEvent)}
+                    events={upcomingEvents.map(transformEvent).filter(e => e !== null)}
                 />
             )}
 
             {musicEvents.length > 0 && (
                 <EventSection
                     title="Nhạc sống"
-                    events={musicEvents.map(transformEvent)}
+                    events={musicEvents.map(transformEvent).filter(e => e !== null)}
                     viewMoreLink="/category/1"
                 />
             )}
@@ -147,7 +200,7 @@ function Home() {
             {theaterEvents.length > 0 && (
                 <EventSection
                     title="Sân khấu & Nghệ thuật"
-                    events={theaterEvents.map(transformEvent)}
+                    events={theaterEvents.map(transformEvent).filter(e => e !== null)}
                     viewMoreLink="/category/2"
                 />
             )}
@@ -155,7 +208,7 @@ function Home() {
             {sportsEvents.length > 0 && (
                 <EventSection
                     title="Thể Thao"
-                    events={sportsEvents.map(transformEvent)}
+                    events={sportsEvents.map(transformEvent).filter(e => e !== null)}
                     viewMoreLink="/category/3"
                 />
             )}

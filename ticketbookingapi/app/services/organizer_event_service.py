@@ -107,27 +107,21 @@ class OrganizerEventService:
         result = db.session.execute(text(sql), params)
         rows = result.fetchall()
         
+        # Optimize: Fetch all venues in one query to avoid N+1
+        venue_ids = [row.venue_id for row in rows if row.venue_id]
+        venues_dict = {}
+        if venue_ids:
+            venues_query = text("SELECT * FROM Venue WHERE venue_id IN :venue_ids")
+            venues_result = db.session.execute(venues_query, {"venue_ids": tuple(set(venue_ids))})
+            for venue_row in venues_result:
+                venues_dict[venue_row.venue_id] = venue_row
+        
         events_list = []
         for row in rows:
-            # We need simple to_dict-like behavior.
-            # The original code did: sold / total * 100
-            # and included details.
-            # We can just return the dict + calculation.
-            # For simplicity, we bypass 'include_details=True' complexity for list unless needed.
-            # Original code: **event.to_dict(include_details=True)
-            # So we SHOULD fetch details? That's expensive for N+1 queries.
-            # BUT original code with ORM uses lazy loading or joinedload.
-            # Let's simple fetch current row and venue?
-            # 'include_details=True' usually means venue and TicketType.
-            # Doing N+1 SQL queries is rough but safest for straightforward refactor.
-            
             evt = EventWrapper(row)
             
-            # Fetch venue
-            v_query = text("SELECT * FROM Venue WHERE venue_id = :venue_id")
-            v_res = db.session.execute(v_query, {"venue_id": evt.venue_id})
-            venue_row = v_res.fetchone()
-            evt.venue = venue_row # Wrapper handles None check implicitly if property access
+            # Get venue from pre-fetched dict
+            evt.venue = venues_dict.get(evt.venue_id)
             
             sold = evt.sold_tickets or 0
             total = evt.total_capacity or 0

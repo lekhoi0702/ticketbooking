@@ -123,6 +123,23 @@ class OrganizerVenueService:
         if not venue:
             raise ValueError('Venue not found')
 
+        # Check if venue is being used by any PUBLISHED events
+        # Only check if we're updating fields that would affect published events
+        fields_that_affect_events = ['venue_name', 'address', 'city', 'capacity', 'vip_seats', 'standard_seats', 'economy_seats', 'seat_map_template', 'map_embed_code']
+        is_updating_critical_fields = any(field in data for field in fields_that_affect_events)
+        
+        if is_updating_critical_fields:
+            published_event_check = text("""
+                SELECT COUNT(*) as event_count 
+                FROM Event 
+                WHERE venue_id = :venue_id AND status = 'PUBLISHED'
+            """)
+            event_result = db.session.execute(published_event_check, {"venue_id": venue_id})
+            published_event_count = event_result.fetchone()[0]
+            
+            if published_event_count > 0:
+                raise ValueError(f'Không thể sửa địa điểm này vì đã có {published_event_count} sự kiện đang được công bố (PUBLISHED) sử dụng địa điểm này. Vui lòng hủy công bố hoặc chuyển các sự kiện sang địa điểm khác trước.')
+
         # Build update query dynamically
         update_fields = []
         params = {"venue_id": venue_id}
@@ -209,9 +226,19 @@ class OrganizerVenueService:
         
         if not venue: return None
         
+        # Check if venue is being used by PUBLISHED events
+        published_event_check = text("""
+            SELECT COUNT(*) as event_count 
+            FROM Event 
+            WHERE venue_id = :venue_id AND status = 'PUBLISHED'
+        """)
+        event_result = db.session.execute(published_event_check, {"venue_id": venue_id})
+        published_event_count = event_result.fetchone()[0]
+        
         class VenueWrapper:
-            def __init__(self, row):
+            def __init__(self, row, has_published_events):
                 self.row = row
+                self.has_published_events = has_published_events
             def to_dict(self):
                 if not self.row: return {}
                 d = dict(self.row._mapping)
@@ -227,8 +254,12 @@ class OrganizerVenueService:
                             d['seat_map_template'] = json.loads(d['seat_map_template'])
                         except Exception as e:
                             print(f"Error parsing seat_map_template: {e}")
+                
+                # Add published events info
+                d['has_published_events'] = self.has_published_events > 0
+                d['published_event_count'] = self.has_published_events
                 return d
-        return VenueWrapper(venue)
+        return VenueWrapper(venue, published_event_count)
 
 
     @staticmethod

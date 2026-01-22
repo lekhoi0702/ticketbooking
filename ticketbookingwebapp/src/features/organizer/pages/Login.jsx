@@ -38,8 +38,8 @@ const OrganizerLogin = () => {
 
         try {
             const res = await api.login({ ...values, required_role: 'ORGANIZER' });
-            if (res.success) {
-                login(res.user, res.token);
+            if (res.success && res.data) {
+                login(res.data.user, res.data.access_token);
                 message.success('Đăng nhập thành công!');
                 setTimeout(() => {
                     navigate('/organizer/events');

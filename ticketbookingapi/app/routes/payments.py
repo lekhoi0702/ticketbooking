@@ -1033,6 +1033,11 @@ def verify_vietqr_payment():
                 }
             }), 200
         else:
+            # Payment failed - release seats for other users to select
+            payment.payment_status = 'FAILED'
+            OrderService.release_seats_for_failed_order(order.order_id)
+            db.session.commit()
+            
             return jsonify({
                 'success': False,
                 'message': f'Payment status: {payment.payment_status}'

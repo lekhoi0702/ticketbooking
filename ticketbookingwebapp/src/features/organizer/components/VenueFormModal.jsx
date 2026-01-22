@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
-import { Modal, Form, Input, Space, Button, message, AutoComplete } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Modal, Form, Input, Space, Button, message, AutoComplete, Alert } from 'antd';
 import VenueLocationSearch from './VenueLocationSearch';
 import { api } from '@services/api';
+import { organizerApi } from '@services/api/organizer';
 
 // Danh sách tỉnh/thành phố Việt Nam
 const vietnameseCities = [
@@ -80,24 +81,69 @@ const VenueFormModal = ({
     const [form] = Form.useForm();
     const [saving, setSaving] = React.useState(false);
     const [mapPreviewUrl, setMapPreviewUrl] = React.useState(null);
+    const [hasPublishedEvents, setHasPublishedEvents] = useState(false);
+    const [publishedEventCount, setPublishedEventCount] = useState(0);
+    const [loadingVenueDetails, setLoadingVenueDetails] = useState(false);
 
     useEffect(() => {
         if (visible) {
             if (editingVenue) {
-                form.setFieldsValue({
-                    venue_name: editingVenue.venue_name,
-                    address: editingVenue.address,
-                    city: editingVenue.city,
-                    capacity: editingVenue.capacity,
-                    vip_seats: editingVenue.vip_seats,
-                    standard_seats: editingVenue.standard_seats,
-                    economy_seats: editingVenue.economy_seats,
-                    map_embed_code: editingVenue.map_embed_code,
-                });
-                setMapPreviewUrl(editingVenue.map_embed_code);
+                // Fetch venue details to check for published events
+                setLoadingVenueDetails(true);
+                organizerApi.getVenue(editingVenue.venue_id)
+                    .then(res => {
+                        if (res.success && res.data) {
+                            setHasPublishedEvents(res.data.has_published_events || false);
+                            setPublishedEventCount(res.data.published_event_count || 0);
+                            form.setFieldsValue({
+                                venue_name: res.data.venue_name || editingVenue.venue_name,
+                                address: res.data.address || editingVenue.address,
+                                city: res.data.city || editingVenue.city,
+                                capacity: res.data.capacity || editingVenue.capacity,
+                                vip_seats: res.data.vip_seats || editingVenue.vip_seats,
+                                standard_seats: res.data.standard_seats || editingVenue.standard_seats,
+                                economy_seats: res.data.economy_seats || editingVenue.economy_seats,
+                                map_embed_code: res.data.map_embed_code || editingVenue.map_embed_code,
+                            });
+                            setMapPreviewUrl(res.data.map_embed_code || editingVenue.map_embed_code);
+                        } else {
+                            // Fallback to editingVenue data
+                            form.setFieldsValue({
+                                venue_name: editingVenue.venue_name,
+                                address: editingVenue.address,
+                                city: editingVenue.city,
+                                capacity: editingVenue.capacity,
+                                vip_seats: editingVenue.vip_seats,
+                                standard_seats: editingVenue.standard_seats,
+                                economy_seats: editingVenue.economy_seats,
+                                map_embed_code: editingVenue.map_embed_code,
+                            });
+                            setMapPreviewUrl(editingVenue.map_embed_code);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error fetching venue details:', err);
+                        // Fallback to editingVenue data
+                        form.setFieldsValue({
+                            venue_name: editingVenue.venue_name,
+                            address: editingVenue.address,
+                            city: editingVenue.city,
+                            capacity: editingVenue.capacity,
+                            vip_seats: editingVenue.vip_seats,
+                            standard_seats: editingVenue.standard_seats,
+                            economy_seats: editingVenue.economy_seats,
+                            map_embed_code: editingVenue.map_embed_code,
+                        });
+                        setMapPreviewUrl(editingVenue.map_embed_code);
+                    })
+                    .finally(() => {
+                        setLoadingVenueDetails(false);
+                    });
             } else {
                 form.resetFields();
                 setMapPreviewUrl(null);
+                setHasPublishedEvents(false);
+                setPublishedEventCount(0);
             }
         }
     }, [visible, editingVenue, form]);
@@ -160,10 +206,21 @@ const VenueFormModal = ({
             onCancel={onCancel}
             confirmLoading={saving}
             width={700}
+            okButtonProps={{ disabled: hasPublishedEvents }}
         >
+            {hasPublishedEvents && (
+                <Alert
+                    message="Không thể sửa địa điểm này"
+                    description={`Địa điểm này đang được sử dụng bởi ${publishedEventCount} sự kiện đang được công bố (PUBLISHED). Vui lòng hủy công bố hoặc chuyển các sự kiện sang địa điểm khác trước khi sửa.`}
+                    type="warning"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                />
+            )}
             <Form
                 form={form}
                 layout="vertical"
+                disabled={hasPublishedEvents || loadingVenueDetails}
             >
                 <Form.Item
                     name="venue_name"

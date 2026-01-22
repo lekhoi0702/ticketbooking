@@ -36,9 +36,9 @@ const OrganizerAuthModal = ({ show, onHide }) => {
                 password: values.password
             });
 
-            if (res.success) {
-                if (res.user.role === 'ORGANIZER' || res.user.role === 'ADMIN') {
-                    login(res.user, res.token);
+            if (res.success && res.data) {
+                if (res.data.user && (res.data.user.role === 'ORGANIZER' || res.data.user.role === 'ADMIN')) {
+                    login(res.data.user, res.data.access_token);
                     message.success('Đăng nhập thành công!');
                     onHide();
                     setTimeout(() => {

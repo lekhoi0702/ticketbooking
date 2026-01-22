@@ -14,6 +14,7 @@ from app.models.favorite_event import FavoriteEvent
 from app.models.audit_log import AuditLog
 from app.models.seat_reservation import SeatReservation
 from app.models.organizer_qr_code import OrganizerQRCode
+# Note: RefreshToken model removed - using Redis instead
 
 __all__ = [
     'Role',

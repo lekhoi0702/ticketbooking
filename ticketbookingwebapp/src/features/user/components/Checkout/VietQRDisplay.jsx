@@ -3,6 +3,7 @@ import { Card } from 'react-bootstrap';
 import { FaQrcode, FaCheckCircle } from 'react-icons/fa';
 import { paymentApi } from '@services/api/payment';
 import { QRCodeSVG } from 'qrcode.react';
+import { getImageUrl } from '@shared/utils/eventUtils';
 
 const VietQRDisplay = ({ qrData, onPaymentSuccess }) => {
     const [checking, setChecking] = useState(false);
@@ -142,9 +143,7 @@ const VietQRDisplay = ({ qrData, onPaymentSuccess }) => {
                 }}>
                     {qrData.vietqr_image_url ? (
                         <img
-                            src={qrData.vietqr_image_url.startsWith('http') 
-                                ? qrData.vietqr_image_url 
-                                : `http://127.0.0.1:5000${qrData.vietqr_image_url}`}
+                            src={getImageUrl(qrData.vietqr_image_url)}
                             alt="VietQR Code"
                             style={{
                                 width: '280px',

@@ -148,14 +148,14 @@
 /* Company Info Bar (Dark Footer) */
 .footer-company-info-bar {
     background-color: #1A1A1A;
-    color: #9ca3af;
+    color: #ffffff !important;
     padding: 40px 0;
     font-size: 13px;
     line-height: 1.6;
 }
 
 .footer-company-info-bar .company-logo {
-    color: #fff;
+    color: #fff !important;
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 8px;
@@ -163,25 +163,25 @@
 }
 
 .footer-company-info-bar .company-details strong {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 .footer-company-info-bar .company-tagline {
     display: block;
     margin-bottom: 8px;
-    color: #9ca3af;
+    color: #ffffff !important;
 }
 
 .footer-company-info-bar .copyright {
     display: block;
     margin-top: 4px;
-    color: #6b7280;
+    color: #ffffff !important;
     font-size: 12px;
 }
 
 .footer-company-info-bar .company-details p {
     margin-bottom: 6px;
-    color: #d1d5db;
+    color: #ffffff !important;
 }
 
 .footer-company-info-bar .bocongthuong-icon {

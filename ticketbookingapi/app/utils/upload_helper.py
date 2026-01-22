@@ -4,16 +4,19 @@ Centralized file upload management with organized folder structure
 
 Structure:
     uploads/
-    ├── organizers/
+    ├── banners/          # Banner images
+    ├── events/          # Event images (organized by category)
+    │   ├── music/       # Music events
+    │   ├── theater/     # Theater events
+    │   ├── sports/      # Sports events
+    │   └── other/       # Other events
+    ├── organizers/      # Organizer-specific files
     │   └── {organizer_id}/
-    │       ├── events/
-    │       │   └── {event_id}_{timestamp}_{filename}
-    │       └── logo/
-    │           └── logo_{timestamp}_{filename}
-    ├── banners/
-    │   └── {timestamp}_{filename}
-    └── qrcodes/
-        └── {ticket_code}.png
+    │       ├── events/  # Event images uploaded by organizer
+    │       └── logo/    # Organizer logos
+    ├── logos/           # Payment logos and general logos
+    ├── qrcodes/         # QR codes
+    └── misc/            # Miscellaneous files (ads, samples, etc.)
 """
 
 import os
@@ -78,6 +81,18 @@ def get_banner_upload_path() -> str:
 def get_qrcode_upload_path() -> str:
     """Get upload path for QR code files"""
     path = os.path.join(UPLOAD_FOLDER, 'qrcodes')
+    return ensure_directory(path)
+
+
+def get_logo_upload_path() -> str:
+    """Get upload path for logo files"""
+    path = os.path.join(UPLOAD_FOLDER, 'logos')
+    return ensure_directory(path)
+
+
+def get_misc_upload_path() -> str:
+    """Get upload path for miscellaneous files"""
+    path = os.path.join(UPLOAD_FOLDER, 'misc')
     return ensure_directory(path)
 
 

@@ -117,18 +117,27 @@ def update_user_status(user_id):
 
 @admin_bp.route("/admin/users/<int:user_id>/reset-password", methods=["POST"])
 def reset_user_password(user_id):
-    """Reset mật khẩu người dùng về mặc định 123456"""
+    """Reset mật khẩu người dùng - generate random password"""
     try:
+        from app.utils.password_utils import generate_temporary_password
+        
         user = User.query.get(user_id)
         if not user:
             return jsonify({'success': False, 'message': 'Không tìm thấy người dùng'}), 404
         
-        user.set_password('123456')
+        # Generate secure random password
+        new_password = generate_temporary_password()
+        user.set_password(new_password)
         db.session.commit()
         
         return jsonify({
             'success': True,
-            'message': 'Đã reset mật khẩu thành công về 123456'
+            'message': 'Đã reset mật khẩu thành công',
+            'data': {
+                'new_password': new_password,
+                'user_id': user_id,
+                'email': user.email
+            }
         }), 200
     except Exception as e:
         db.session.rollback()
@@ -223,8 +232,11 @@ def get_all_orders():
         from sqlalchemy.orm import joinedload
         
         # Use eager loading to prevent N+1 queries
+        from sqlalchemy.orm import selectinload
+        
         orders = Order.query.options(
-            joinedload(Order.payment)
+            joinedload(Order.payment),
+            selectinload(Order.tickets).selectinload(Ticket.ticket_type).selectinload(TicketType.event)
         ).order_by(Order.created_at.desc()).limit(500).all()  # Limit to last 500 orders
         
         orders_data = []
@@ -234,12 +246,11 @@ def get_all_orders():
             # Payment method from relationship
             odata['payment_method'] = order.payment.payment_method if order.payment else "N/A"
             
-            # Get event name from first ticket (optimized single query)
-            ticket = Ticket.query.filter_by(order_id=order.order_id).first()
-            if ticket:
-                tt = TicketType.query.get(ticket.ticket_type_id)
-                if tt and tt.event:
-                    odata['event_name'] = tt.event.event_name
+            # Get event name from first ticket (already loaded via eager loading)
+            if order.tickets:
+                ticket = order.tickets[0]
+                if ticket.ticket_type and ticket.ticket_type.event:
+                    odata['event_name'] = ticket.ticket_type.event.event_name
                 else:
                     odata['event_name'] = "N/A"
             else:

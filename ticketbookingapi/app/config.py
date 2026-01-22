@@ -52,6 +52,20 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600))
     JWT_REFRESH_TOKEN_EXPIRES = int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES', 2592000))
     
+    # Redis Configuration
+    REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+    REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
+    REDIS_DB = int(os.getenv('REDIS_DB', 0))
+    REDIS_DECODE_RESPONSES = True
+    REDIS_SOCKET_TIMEOUT = int(os.getenv('REDIS_SOCKET_TIMEOUT', 5))
+    REDIS_SOCKET_CONNECT_TIMEOUT = int(os.getenv('REDIS_SOCKET_CONNECT_TIMEOUT', 5))
+    
+    # Redis Key Prefixes
+    REDIS_KEY_PREFIX = os.getenv('REDIS_KEY_PREFIX', 'ticketbooking:')
+    REDIS_REFRESH_TOKEN_PREFIX = f"{REDIS_KEY_PREFIX}refresh_token:"
+    REDIS_BLACKLIST_PREFIX = f"{REDIS_KEY_PREFIX}blacklist:"
+    
     # File Upload Configuration
     UPLOAD_FOLDER = os.path.join(basedir, os.getenv('UPLOAD_FOLDER', 'uploads'))
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB

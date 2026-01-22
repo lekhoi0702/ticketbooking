@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, ListGroup, Badge, Button, Form, InputGroup } from 'react-bootstrap';
 import { FaTicketAlt, FaTag } from 'react-icons/fa';
 import { LoadingOutlined } from '@ant-design/icons';
-import { formatCurrency } from '@shared/utils/eventUtils';
+import { formatCurrency, getImageUrl } from '@shared/utils/eventUtils';
 import { QRCodeSVG } from 'qrcode.react';
 import { paymentApi } from '@services/api/payment';
 
@@ -94,11 +94,12 @@ const OrderSummary = ({
     const subTotal = finalTotal + (discountAmount || 0);
 
     return (
-        <Card className="border-0 shadow-sm rounded-4 overflow-hidden order-summary-sidebar">
-            <Card.Header className="py-3" style={{ background: '#2DC275', color: 'white', border: 'none' }}>
+        <Card className={`h-100 w-100 d-flex flex-column border-0 shadow-sm rounded-4 order-summary-sidebar ${readonly && qrData && paymentMethod === 'VIETQR' ? 'overflow-visible' : 'overflow-hidden'}`}>
+            <Card.Header className="py-3 flex-shrink-0" style={{ background: '#2DC275', color: 'white', border: 'none' }}>
                 <h5 className="mb-0 fw-bold text-center">Tóm tắt đơn hàng</h5>
             </Card.Header>
-            <Card.Body className="p-4">
+            <Card.Body className="p-4 d-flex flex-column flex-grow-1">
+                <div className="flex-grow-1">
                 <div className="mb-4">
                     <h6 className="text-uppercase small fw-bold text-muted mb-2 letter-spacing-1">Sự kiện</h6>
                     <h6 className="fw-bold fs-5 color-primary">{event.event_name}</h6>
@@ -193,26 +194,33 @@ const OrderSummary = ({
                 {/* VietQR Display - Show QR code above total calculation */}
                 {/* Show QR only if payment method is VIETQR and qrData exists */}
                 {readonly && qrData && paymentMethod === 'VIETQR' && paymentStatus !== 'SUCCESS' && (
-                    <div className="mb-4 text-center" id="vietqr-display">
+                    <div
+                        className="mb-4 text-center"
+                        id="vietqr-display"
+                        style={{ scrollMarginTop: '130px' }}
+                    >
+                        <p className="small fw-bold text-muted mb-2" style={{ letterSpacing: '0.5px' }}>
+                            Quét mã QR để thanh toán
+                        </p>
                         <div style={{
                             display: 'inline-block',
-                            padding: '16px',
+                            padding: '20px',
                             backgroundColor: '#ffffff',
                             border: '2px solid #E0E0E0',
-                            borderRadius: '8px',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                            borderRadius: '12px',
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                            overflow: 'visible'
                         }}>
                             {qrData.vietqr_image_url ? (
                                 <img
-                                    src={qrData.vietqr_image_url.startsWith('http') 
-                                        ? qrData.vietqr_image_url 
-                                        : `http://127.0.0.1:5000${qrData.vietqr_image_url}`}
+                                    src={getImageUrl(qrData.vietqr_image_url)}
                                     alt="VietQR Code"
                                     style={{
                                         width: '220px',
                                         height: '220px',
                                         objectFit: 'contain',
-                                        display: 'block'
+                                        display: 'block',
+                                        maxWidth: '100%'
                                     }}
                                 />
                             ) : (
@@ -238,6 +246,9 @@ const OrderSummary = ({
                     </div>
                 )}
 
+                </div>
+
+                <div className="mt-auto flex-shrink-0">
                 <div className="bg-light p-3 rounded-4 mb-4 mt-2">
                     <div className="d-flex justify-content-between align-items-center mb-1">
                         <span className="text-muted small">Tạm tính:</span>
@@ -279,6 +290,7 @@ const OrderSummary = ({
                         </div>
                     </>
                 )}
+                </div>
             </Card.Body>
             <style>{`
                 .order-summary-sidebar h6,

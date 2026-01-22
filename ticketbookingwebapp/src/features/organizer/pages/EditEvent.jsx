@@ -26,6 +26,7 @@ import {
 } from '@ant-design/icons';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { useAuth } from '@context/AuthContext';
+import { getImageUrl } from '@shared/utils/eventUtils';
 
 // Hooks
 import { useCreateEvent } from '@shared/hooks/useCreateEvent';
@@ -126,15 +127,11 @@ const EditEvent = () => {
                 });
 
                 if (event.banner_image_url) {
-                    setBannerPreview(event.banner_image_url.startsWith('http')
-                        ? event.banner_image_url
-                        : `http://127.0.0.1:5000${event.banner_image_url}`);
+                    setBannerPreview(getImageUrl(event.banner_image_url));
                 }
 
                 if (event.vietqr_image_url) {
-                    setVietqrPreview(event.vietqr_image_url.startsWith('http')
-                        ? event.vietqr_image_url
-                        : `http://127.0.0.1:5000${event.vietqr_image_url}`);
+                    setVietqrPreview(getImageUrl(event.vietqr_image_url));
                 }
 
                 // Optimized: Fetch ALL seats for the event in one go

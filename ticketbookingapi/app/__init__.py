@@ -1,18 +1,61 @@
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from app.extensions import db, migrate, socketio
+from app.exceptions import register_error_handlers
+from app.utils.logger import setup_logging
+from app.config import Config
 import os
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object("app.config.Config")
+    
+    # Validate configuration
+    Config.validate()
 
-    CORS(app)
+    # Setup logging
+    log_file = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        Config.LOG_FILE
+    )
+    setup_logging(
+        app_name='ticketbooking',
+        log_level=Config.LOG_LEVEL,
+        log_file=log_file,
+        max_bytes=Config.LOG_MAX_BYTES,
+        backup_count=Config.LOG_BACKUP_COUNT,
+        use_json=(Config.FLASK_ENV == 'production')
+    )
+    
+    # Register error handlers
+    register_error_handlers(app)
+
+    # CORS configuration - restrict to specific origins in production
+    if Config.FLASK_ENV == 'production':
+        allowed_origins = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+        if allowed_origins and allowed_origins[0]:
+            CORS(app, origins=allowed_origins)
+        else:
+            CORS(app)  # Fallback if not configured
+    else:
+        CORS(app)  # Allow all in development
 
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
     socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
+    
+    # Initialize Redis
+    from app.extensions import init_redis
+    redis_client = init_redis(app)
+    
+    # Initialize Redis token manager if Redis is available
+    if redis_client:
+        from app.utils.redis_token_manager import init_redis_token_manager
+        init_redis_token_manager(redis_client)
+        app.logger.info("Redis token manager initialized")
+    else:
+        app.logger.warning("Redis not available - token management will use fallback")
 
     # Import models to ensure they are registered
     from app.models import (
@@ -21,37 +64,40 @@ def create_app():
         FavoriteEvent, AuditLog, SeatReservation, OrganizerQRCode
     )
     from app.models.event_deletion_request import EventDeletionRequest
+    # Note: RefreshToken model no longer needed with Redis implementation
 
     # Serve uploaded files
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
-        from flask import make_response, abort
+        from flask import make_response
+        from app.utils.logger import get_logger
+        from app.exceptions import NotFoundException
+        
+        upload_logger = get_logger('ticketbooking.uploads')
         
         # Dynamic path resolution relative to this file
         # __file__ is .../ticketbookingapi/app/__init__.py
-        # We want .../ticketbooking/uploads
-        current_app_dir = os.path.dirname(os.path.abspath(__file__)) # .../app
-        api_root = os.path.dirname(current_app_dir) # .../ticketbookingapi
-        project_root = os.path.dirname(api_root) # .../ticketbooking
-        uploads_dir = os.path.join(project_root, 'uploads')
+        # We want .../ticketbookingapi/uploads
+        current_app_dir = os.path.dirname(os.path.abspath(__file__))  # .../app
+        api_root = os.path.dirname(current_app_dir)  # .../ticketbookingapi
+        uploads_dir = os.path.join(api_root, 'uploads')
         
         full_path = os.path.join(uploads_dir, filename)
         
-        # Debug logging
-        print(f"-------- UPLOAD DEBUG --------")
-        print(f"Request: {filename}")
-        print(f"Looking in: {full_path}")
-        print(f"Exists: {os.path.exists(full_path)}")
-        
         if not os.path.exists(full_path):
-             print(f"ERROR: File not found!")
-             return f"File not found: {full_path}", 404
+            upload_logger.warning(f"File not found: {filename}", extra={'file_path': filename})
+            raise NotFoundException(message=f"File not found: {filename}")
 
         # Send file
         response = make_response(send_from_directory(uploads_dir, filename))
         
         # CORS headers for static files
-        response.headers['Access-Control-Allow-Origin'] = '*'
+        if Config.FLASK_ENV == 'production':
+            allowed_origins = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+            if allowed_origins and allowed_origins[0]:
+                response.headers['Access-Control-Allow-Origin'] = allowed_origins[0]
+        else:
+            response.headers['Access-Control-Allow-Origin'] = '*'
         
         # MIME type fixes
         if filename.lower().endswith('.svg'):

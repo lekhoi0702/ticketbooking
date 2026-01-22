@@ -26,12 +26,12 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
                 >
                     <div className="bg-white p-2 rounded-3 me-3 shadow-sm" style={{ width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <img
-                            src={`${UPLOADS_BASE_URL}/logo/vnpay-logo-inkythuatso.svg`}
+                            src={`${UPLOADS_BASE_URL}/logos/vnpay-logo-inkythuatso.svg`}
                             alt="VNPay"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                             onError={(e) => {
                                 // Fallback to JPG if SVG fails
-                                e.target.src = `${UPLOADS_BASE_URL}/logo/vnpay-logo-inkythuatso-01.jpg`;
+                                e.target.src = `${UPLOADS_BASE_URL}/logos/vnpay-logo-inkythuatso-01.jpg`;
                             }}
                         />
                     </div>
@@ -61,7 +61,7 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
                 >
                     <div className="bg-white p-2 rounded-3 me-3 shadow-sm" style={{ width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <img
-                            src={`${UPLOADS_BASE_URL}/logo/paypal.webp`}
+                            src={`${UPLOADS_BASE_URL}/logos/paypal.webp`}
                             alt="PayPal"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         />
@@ -92,7 +92,7 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
                 >
                     <div className="bg-white p-2 rounded-3 me-3 shadow-sm" style={{ width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                         <img
-                            src={`${UPLOADS_BASE_URL}/logo/vietqr.png`}
+                            src={`${UPLOADS_BASE_URL}/logos/vietqr.png`}
                             alt="VietQR"
                             style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(2)' }}
                         />

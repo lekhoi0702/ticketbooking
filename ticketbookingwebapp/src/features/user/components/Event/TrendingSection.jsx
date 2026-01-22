@@ -4,7 +4,14 @@ import { motion } from 'framer-motion';
 import EventCard from './EventCard';
 import './TrendingSection.css';
 
-const TrendingSection = ({ events, title = "Sự kiện sắp diễn ra" }) => {
+const TrendingSection = ({ events = [], title = "Sự kiện sắp diễn ra" }) => {
+    // Safety check: ensure events is an array
+    const safeEvents = Array.isArray(events) ? events.filter(e => e !== null && e !== undefined) : [];
+    
+    if (safeEvents.length === 0) {
+        return null; // Don't render if no events
+    }
+
     // Container animation với stagger effect
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -67,8 +74,8 @@ const TrendingSection = ({ events, title = "Sự kiện sắp diễn ra" }) => {
                     variants={containerVariants}
                 >
                     <Row className="g-4">
-                        {events.map((event, index) => (
-                            <Col key={event.id} xs={12} sm={6} md={4}>
+                        {safeEvents.map((event, index) => (
+                            <Col key={event.id || `event-${Math.random()}`} xs={12} sm={6} md={4}>
                                 <motion.div 
                                     variants={cardVariants}
                                     whileHover={{ 

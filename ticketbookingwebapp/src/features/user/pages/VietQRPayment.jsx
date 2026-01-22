@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Card, Button, Alert, Spinner } from 'react-bootstrap';
 import { FaQrcode, FaCheckCircle, FaTimesCircle, FaClock, FaCopy, FaChevronLeft } from 'react-icons/fa';
 import { paymentApi } from '@services/api/payment';
-import { formatCurrency } from '@shared/utils/eventUtils';
+import { formatCurrency, getImageUrl } from '@shared/utils/eventUtils';
 import { QRCodeSVG } from 'qrcode.react';
 
 const VietQRPayment = () => {
@@ -300,9 +300,7 @@ const VietQRPayment = () => {
                                         }}>
                                             {qrData.vietqr_image_url ? (
                                                 <img
-                                                    src={qrData.vietqr_image_url.startsWith('http') 
-                                                        ? qrData.vietqr_image_url 
-                                                        : `http://127.0.0.1:5000${qrData.vietqr_image_url}`}
+                                                    src={getImageUrl(qrData.vietqr_image_url)}
                                                     alt="VietQR Code"
                                                     style={{
                                                         width: '220px',

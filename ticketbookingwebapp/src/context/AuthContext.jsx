@@ -38,7 +38,11 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = (userData, userToken) => {
-        const prefix = getScopePrefix(userData.role);
+        if (!userData || !userToken) {
+            console.error('Login failed: userData or userToken is missing');
+            return;
+        }
+        const prefix = getScopePrefix(userData?.role);
         setUser(userData);
         setToken(userToken);
         localStorage.setItem(`${prefix}token`, userToken);

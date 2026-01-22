@@ -9,7 +9,7 @@ import { useAuth } from '@context/AuthContext';
 import './SeatMap.css';
 
 const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = 10, onSeatsLoaded }) => {
-    const { user } = useAuth();
+    const { user, triggerLogin, isAuthenticated, redirectIntent, clearRedirectIntent } = useAuth();
     const [loading, setLoading] = useState(true);
     const [seats, setSeats] = useState([]);
     const [selectedSeats, setSelectedSeats] = useState([]);
@@ -18,6 +18,7 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = 10, on
     const [rowsData, setRowsData] = useState({});
     const socketRef = useRef(null);
     const reservationTimersRef = useRef({});
+    const seatSelectionProcessedRef = useRef(false);
 
     // Initialize Socket.IO connection
     useEffect(() => {
@@ -71,6 +72,73 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = 10, on
         };
     }, [eventId, user]);
 
+    // Handle seat selection after login
+    useEffect(() => {
+        if (!isAuthenticated || !redirectIntent || !seats.length || loading || !user) return;
+        
+        // Check if this is a seat selection intent for this ticket type
+        if (redirectIntent.action === 'selectSeat' && 
+            redirectIntent.eventId === eventId && 
+            redirectIntent.ticketTypeId === ticketType.ticket_type_id &&
+            redirectIntent.seatId) {
+            
+            // Prevent duplicate processing
+            if (seatSelectionProcessedRef.current) return;
+            
+            const seatToSelect = seats.find(s => s.seat_id === redirectIntent.seatId);
+            
+            if (seatToSelect && !selectedSeats.some(s => s.seat_id === seatToSelect.seat_id)) {
+                // Mark as processed to prevent duplicate selections
+                seatSelectionProcessedRef.current = true;
+                
+                // Automatically select the seat after login
+                const selectSeatAfterLogin = async () => {
+                    try {
+                        if (seatToSelect.status === 'AVAILABLE' || seatToSelect.status === 'RESERVED') {
+                            const res = await seatApi.lockSeat(seatToSelect.seat_id, user.user_id, eventId);
+                            if (res.success) {
+                                const newSelection = [...selectedSeats, seatToSelect];
+                                setSelectedSeats(newSelection);
+                                onSelectionChange(newSelection);
+                                
+                                // Save to storage
+                                const expiresAt = res.data.expires_at;
+                                saveReservationsToStorage(newSelection.map(s => s.seat_id), expiresAt);
+                                
+                                // Update seat status
+                                setSeats(prevSeats => 
+                                    prevSeats.map(s => 
+                                        s.seat_id === seatToSelect.seat_id 
+                                            ? { ...s, status: 'RESERVED' }
+                                            : s
+                                    )
+                                );
+                                updateRowsData();
+                                
+                                // Clear the redirect intent
+                                clearRedirectIntent();
+                            }
+                        } else {
+                            // Seat is booked or unavailable
+                            clearRedirectIntent();
+                        }
+                    } catch (err) {
+                        console.error('Error selecting seat after login:', err);
+                        clearRedirectIntent();
+                    } finally {
+                        seatSelectionProcessedRef.current = false;
+                    }
+                };
+                
+                selectSeatAfterLogin();
+            } else {
+                // Seat not found or already selected, clear intent
+                clearRedirectIntent();
+                seatSelectionProcessedRef.current = false;
+            }
+        }
+    }, [isAuthenticated, redirectIntent, eventId, ticketType?.ticket_type_id, seats, loading, user, selectedSeats, onSelectionChange, clearRedirectIntent]);
+
     // Restore reservations from server after seats are loaded
     useEffect(() => {
         if (!eventId || !user || !ticketType || seats.length === 0 || loading) return;
@@ -113,6 +181,8 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = 10, on
     useEffect(() => {
         if (ticketType) {
             fetchSeats();
+            // Reset processed flag when ticket type changes
+            seatSelectionProcessedRef.current = false;
         }
     }, [ticketType]);
 
@@ -185,7 +255,19 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = 10, on
     };
 
     const toggleSeat = async (seat) => {
-        if (!user || !eventId) {
+        if (!isAuthenticated || !eventId) {
+            // Trigger login modal and store seat selection intent
+            triggerLogin({
+                action: 'selectSeat',
+                eventId: eventId,
+                ticketTypeId: ticketType.ticket_type_id,
+                seatId: seat.seat_id,
+                seat: seat
+            });
+            return;
+        }
+
+        if (!user) {
             setError('Vui lòng đăng nhập để chọn ghế');
             setTimeout(() => setError(null), 4000);
             return;

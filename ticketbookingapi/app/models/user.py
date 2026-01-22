@@ -1,6 +1,7 @@
 from app.extensions import db
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from typing import Dict, Any
 
 class User(db.Model):
     __tablename__ = "User"
@@ -20,13 +21,15 @@ class User(db.Model):
     events = db.relationship('Event', backref='manager', lazy=True)
     orders = db.relationship('Order', backref='user', lazy=True)
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> None:
+        """Set user password with hashing"""
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password: str) -> bool:
+        """Check if provided password matches hash"""
         return check_password_hash(self.password_hash, password)
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         role_map = {1: 'ADMIN', 2: 'ORGANIZER', 3: 'USER'}
         return {
             'user_id': self.user_id,

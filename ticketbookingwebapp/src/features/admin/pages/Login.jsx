@@ -74,9 +74,9 @@ const AdminLogin = () => {
 
             const res = await api.login({ ...values, required_role: 'ADMIN' });
 
-            if (res.success) {
+            if (res.success && res.data) {
 
-                login(res.user, res.token);
+                login(res.data.user, res.data.access_token);
 
                 message.success('Đăng nhập quản trị viên thành công!');
 

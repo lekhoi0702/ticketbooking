@@ -9,6 +9,7 @@ import { useCheckout } from '@shared/hooks/useCheckout';
 import CustomerInfoForm from '@features/user/components/Checkout/CustomerInfoForm';
 import PaymentMethodSelector from '@features/user/components/Checkout/PaymentMethodSelector';
 import OrderSummary from '@features/user/components/Checkout/OrderSummary';
+import CountdownTimer from '@features/user/components/Checkout/CountdownTimer';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 
@@ -96,9 +97,23 @@ const Checkout = () => {
 
             {error && <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>}
 
+            {/* Countdown Timer - Show when user has selected seats */}
+            {(() => {
+                const hasSelectedSeats = Object.values(selectedSeats).some(seats => seats && seats.length > 0);
+                return (
+                    <CountdownTimer 
+                        hasSelectedSeats={hasSelectedSeats}
+                        eventId={event?.event_id}
+                        onExpired={() => {
+                            setError('Thời gian giữ ghế đã hết. Vui lòng quay lại trang sự kiện để chọn lại ghế.');
+                        }}
+                    />
+                );
+            })()}
+
             <Form onSubmit={handleSubmit}>
-                <Row>
-                    <Col lg={8}>
+                <Row className="align-items-stretch">
+                    <Col lg={8} className="d-flex flex-column">
                         {/* Customer Information */}
                         <CustomerInfoForm
                             customerInfo={customerInfo}
@@ -112,7 +127,7 @@ const Checkout = () => {
                         />
                     </Col>
 
-                    <Col lg={4}>
+                    <Col lg={4} className="d-flex">
                         {/* Order Summary Sidebar */}
                         <OrderSummary
                             event={event}

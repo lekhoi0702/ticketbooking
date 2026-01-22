@@ -17,6 +17,7 @@ import ScheduleCalendar from '@features/user/components/Event/ScheduleCalendar';
 import EventVenueInfo from '@features/user/components/Event/EventVenueInfo';
 import EventOrganizerCard from '@features/user/components/Event/EventOrganizerCard';
 import RecommendedEvents from '@features/user/components/Event/RecommendedEvents';
+import CountdownTimer from '@features/user/components/Checkout/CountdownTimer';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 // Utils & Styles
@@ -167,6 +168,20 @@ function EventDetail() {
             </div>
 
             <Container className="event-main-content">
+                {/* Countdown Timer - Show when user has selected seats */}
+                {(() => {
+                    const hasSelectedSeats = Object.values(selectedSeats).some(seats => seats && seats.length > 0);
+                    return (
+                        <CountdownTimer 
+                            hasSelectedSeats={hasSelectedSeats}
+                            eventId={event?.event_id}
+                            onExpired={() => {
+                                message.warning('Thời gian giữ ghế đã hết. Vui lòng chọn lại ghế.');
+                            }}
+                        />
+                    );
+                })()}
+
                 <Row>
                     <Col lg={8}>
                         <section className="detail-section" id="description">

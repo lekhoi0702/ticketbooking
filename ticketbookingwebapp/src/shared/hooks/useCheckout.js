@@ -502,13 +502,13 @@ export const useCheckout = () => {
                     sessionStorage.setItem(`vietqr_order_id_${eventId}`, orderId.toString());
                     
                     setProcessing(false);
-                    // Scroll to QR section
+                    // Scroll to QR section (center in viewport so sticky header does not overlap)
                     setTimeout(() => {
                         const qrElement = document.getElementById('vietqr-display');
                         if (qrElement) {
-                            qrElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            qrElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
-                    }, 100);
+                    }, 150);
                 } else {
                     throw new Error('Không thể tạo mã QR thanh toán VietQR');
                 }

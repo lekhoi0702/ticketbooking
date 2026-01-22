@@ -62,8 +62,8 @@ const Login = () => {
                         password: formData.password,
                         required_role: 'USER'
                     });
-                    if (loginRes.success) {
-                        login(loginRes.user, loginRes.token);
+                    if (loginRes.success && loginRes.data) {
+                        login(loginRes.data.user, loginRes.data.access_token);
                         const from = location.state?.from?.pathname || "/";
                         const fromState = location.state?.from?.state || {};
                         navigate(from, { state: fromState, replace: true });
@@ -80,11 +80,13 @@ const Login = () => {
                     password: formData.password,
                     required_role: 'USER'
                 });
-                if (res.success) {
-                    login(res.user, res.token);
+                if (res.success && res.data) {
+                    login(res.data.user, res.data.access_token);
                     const from = location.state?.from?.pathname || "/";
                     const fromState = location.state?.from?.state || {};
                     navigate(from, { state: fromState, replace: true });
+                } else {
+                    setError({ type: 'danger', msg: res.message || 'Đăng nhập không thành công' });
                 }
             }
         } catch (err) {

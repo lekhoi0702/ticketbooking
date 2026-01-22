@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Button } from 'react-bootstrap';
+import { getImageUrl } from '@shared/utils/eventUtils';
 
 const EventOrganizerCard = ({ organizerInfo, eventName }) => {
     return (
@@ -11,7 +12,7 @@ const EventOrganizerCard = ({ organizerInfo, eventName }) => {
                 <div className="organizer-info">
                     <div className="organizer-avatar">
                         {organizerInfo?.logo_url ? (
-                            <img src={organizerInfo.logo_url} alt={organizerInfo.organization_name} />
+                            <img src={getImageUrl(organizerInfo.logo_url)} alt={organizerInfo.organization_name} />
                         ) : (
                             (organizerInfo?.organization_name || eventName || 'O').charAt(0).toString().toUpperCase()
                         )}

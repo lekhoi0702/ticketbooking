@@ -14,6 +14,7 @@ import {
     Typography,
     Empty
 } from 'antd';
+import { getImageUrl } from '@shared/utils/eventUtils';
 import {
     PlusOutlined,
     EditOutlined,
@@ -70,9 +71,7 @@ const QRCodeManagement = () => {
 
     const handleEdit = (record) => {
         setEditingQR(record);
-        const qrUrl = record.qr_image_url?.startsWith('http') 
-            ? record.qr_image_url 
-            : `http://127.0.0.1:5000${record.qr_image_url}`;
+        const qrUrl = getImageUrl(record.qr_image_url);
         setQrPreview(qrUrl);
         form.setFieldsValue({
             qr_name: record.qr_name,
@@ -196,7 +195,7 @@ const QRCodeManagement = () => {
             render: (url) => (
                 url ? (
                     <Image
-                        src={url.startsWith('http') ? url : `http://127.0.0.1:5000${url}`}
+                        src={getImageUrl(url)}
                         alt="QR Code"
                         width={80}
                         height={80}

@@ -13,23 +13,28 @@ from app.models.seat import Seat
 from app.models.venue import Venue
 from app.utils import generate_ticket_qr
 
+from typing import Dict, List, Any, Tuple, Optional
+
 class OrderService:
     @staticmethod
-    def generate_order_code():
+    def generate_order_code() -> str:
         """Generate unique order code"""
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
         return f"ORD-{timestamp}-{random_str}"
 
     @staticmethod
-    def generate_ticket_code():
+    def generate_ticket_code() -> str:
         """Generate unique ticket code"""
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         return f"TKT-{timestamp}-{random_str}"
 
     @staticmethod
-    def validate_and_calculate_discount(discount_code, items):
+    def validate_and_calculate_discount(
+        discount_code: str,
+        items: List[Dict[str, Any]]
+    ) -> Tuple[bool, float, str, Optional[Discount]]:
         """
         items: list of dict {'ticket_type': obj, 'quantity': int, 'price': float}
         Returns: (is_valid, amount, message, discount_obj)
@@ -130,31 +135,40 @@ class OrderService:
                     if not seat or seat.ticket_type_id != ticket_type_id:
                         raise ValueError(f'Ghế {seat_id} không hợp lệ')
                     
-                    # If seat is RESERVED by an old pending order from the same user, release it
+                    # If seat is BOOKED, it's already sold
+                    if seat.status == 'BOOKED':
+                        raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được đặt')
+                    
+                    # If seat is RESERVED, check if it's reserved by this user
                     if seat.status == 'RESERVED':
-                        # Find the ticket that reserved this seat
-                        from datetime import timedelta
-                        threshold = datetime.utcnow() - timedelta(minutes=15)
-                        reserving_ticket = Ticket.query.filter(
-                            Ticket.seat_id == seat_id,
-                            Ticket.ticket_status == 'ACTIVE'
-                        ).join(Order).filter(
-                            Order.user_id == data.get('user_id'),
-                            Order.order_status == 'PENDING',
-                            Order.created_at < threshold
+                        from app.models.seat_reservation import SeatReservation
+                        # Check if there's an active reservation by this user
+                        user_reservation = SeatReservation.query.filter_by(
+                            seat_id=seat_id,
+                            user_id=data.get('user_id'),
+                            is_active=True
                         ).first()
                         
-                        if reserving_ticket:
-                            # Release the seat by cancelling the old order
-                            try:
-                                cls.cancel_order(reserving_ticket.order_id)
-                                db.session.flush()  # Refresh seat status
-                                seat = Seat.query.get(seat_id)  # Reload seat
-                            except Exception as e:
-                                print(f"Error releasing seat from old order: {e}")
+                        if user_reservation and not user_reservation.is_expired():
+                            # User has valid reservation for this seat, allow it
+                            pass
+                        else:
+                            # Seat is reserved by someone else or reservation expired
+                            raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được người khác chọn')
                     
-                    if seat.status != 'AVAILABLE':
-                        raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được đặt')
+                    # If seat is LOCKED, check if it's locked by this user
+                    if seat.status == 'LOCKED':
+                        from app.models.seat_reservation import SeatReservation
+                        user_reservation = SeatReservation.query.filter_by(
+                            seat_id=seat_id,
+                            user_id=data.get('user_id'),
+                            is_active=True
+                        ).first()
+                        
+                        if not user_reservation or user_reservation.is_expired():
+                            raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được người khác chọn')
+                    
+                    # If seat is AVAILABLE, it's fine to proceed
             
             # Check availability (for non-seat Ticket)
             available = ticket_type.quantity - ticket_type.sold_quantity

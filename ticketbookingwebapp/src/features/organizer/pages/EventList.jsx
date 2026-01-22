@@ -19,14 +19,12 @@ import {
     EditOutlined,
     EyeOutlined,
     ShoppingOutlined,
-    ClockCircleOutlined,
     CloudUploadOutlined,
     DeleteOutlined,
     CloseCircleOutlined
 } from '@ant-design/icons';
 import EventTable from '@features/organizer/components/EventTable';
 import DeleteEventModal from '@features/organizer/components/DeleteEventModal';
-import AddShowtimeForm from '@features/organizer/components/AddShowtimeForm';
 import { useEventList } from '@shared/hooks/useEventList';
 
 const { Text, Title } = Typography;
@@ -52,7 +50,6 @@ const EventList = () => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-    const [isAddShowtimeModalOpen, setIsAddShowtimeModalOpen] = useState(null);
 
     const filteredEvents = events.filter(event =>
         event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -107,7 +104,7 @@ const EventList = () => {
                                                 icon={<ReloadOutlined />}
                                                 onClick={() => handleCancelApproval(firstSelected.event_id)}
                                                 loading={loading}
-                                            >Lấy về sửa</Button>
+                                            >Lấy về</Button>
                                         </Tooltip>
                                     )
                                 )}
@@ -122,12 +119,6 @@ const EventList = () => {
                                         icon={<ShoppingOutlined />}
                                         onClick={() => navigate(`/organizer/event/${firstSelected.event_id}/orders`)}
                                     >Đơn hàng</Button>
-                                </Tooltip>
-                                <Tooltip title="Thêm suất diễn">
-                                    <Button
-                                        icon={<ClockCircleOutlined />}
-                                        onClick={() => setIsAddShowtimeModalOpen(firstSelected)}
-                                    >Suất diễn</Button>
                                 </Tooltip>
                                 {firstSelected.status === 'APPROVED' && (
                                     <Button
@@ -203,24 +194,6 @@ const EventList = () => {
                 setEvent={setEventToDelete}
             />
 
-            {/* Add Showtime Modal */}
-            <Modal
-                title="Thêm suất diễn mới"
-                open={!!isAddShowtimeModalOpen}
-                onCancel={() => setIsAddShowtimeModalOpen(null)}
-                footer={null}
-            >
-                {isAddShowtimeModalOpen && (
-                    <AddShowtimeForm
-                        sourceEvent={isAddShowtimeModalOpen}
-                        onSuccess={() => {
-                            setIsAddShowtimeModalOpen(null);
-                            fetchEvents();
-                            setSelectedRowKeys([]);
-                        }}
-                    />
-                )}
-            </Modal>
         </div>
     );
 };

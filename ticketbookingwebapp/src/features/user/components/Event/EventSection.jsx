@@ -5,7 +5,14 @@ import { motion } from 'framer-motion';
 import EventCard from './EventCard';
 import './EventSection.css';
 
-const EventSection = ({ title, events, showViewMore = true, viewMoreLink = "/events" }) => {
+const EventSection = ({ title, events = [], showViewMore = true, viewMoreLink = "/events" }) => {
+    // Safety check: ensure events is an array
+    const safeEvents = Array.isArray(events) ? events.filter(e => e !== null && e !== undefined) : [];
+    
+    if (safeEvents.length === 0) {
+        return null; // Don't render if no events
+    }
+
     // Container animation
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -73,8 +80,8 @@ const EventSection = ({ title, events, showViewMore = true, viewMoreLink = "/eve
                     variants={containerVariants}
                 >
                     <Row className="g-4">
-                        {events.map((event) => (
-                            <Col key={event.id} xs={12} sm={6} md={4} lg={3}>
+                        {safeEvents.map((event) => (
+                            <Col key={event.id || `event-${Math.random()}`} xs={12} sm={6} md={4} lg={3}>
                                 <motion.div variants={itemVariants}>
                                     <EventCard event={event} />
                                 </motion.div>
