@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Empty, Spin, message } from 'antd';
+import { Row, Col } from 'react-bootstrap';
+import { Empty, Spin, message } from 'antd';
 import { useAuth } from '@context/AuthContext';
 import EventCard from '@features/user/components/Event/EventCard';
 import { useFavorites } from '@context/FavoriteContext';
@@ -50,9 +51,9 @@ const MyFavoritesTab = () => {
     return (
         <div className="favorites-tab-content" style={{ padding: '20px 0' }}>
             {events.length > 0 ? (
-                <Row gutter={[24, 24]}>
+                <Row className="g-4">
                     {events.map(event => (
-                        <Col xs={24} sm={12} md={8} key={event.id}>
+                        <Col xs={12} sm={6} md={4} lg={3} key={event.id}>
                             <EventCard event={event} />
                         </Col>
                     ))}

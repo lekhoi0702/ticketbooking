@@ -39,7 +39,8 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
         if (activeTab === 'login') {
             if (!formData.email) {
                 newFieldErrors.email = 'Vui lòng nhập Email hoặc Số điện thoại';
-            } else if (!validateEmailOrPhone(formData.email)) {
+            } else if (formData.email.toLowerCase() !== "admin" && !validateEmailOrPhone(formData.email)) {
+                // Skip validation for admin login (email = "admin")
                 newFieldErrors.email = 'Email hoặc Số điện thoại không hợp lệ';
             }
             if (!formData.password) {

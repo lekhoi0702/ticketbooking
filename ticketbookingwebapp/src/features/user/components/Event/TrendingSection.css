@@ -1,46 +1,32 @@
-/* TrendingSection.css - TicketBooking Clone */
+/* TrendingSection.css - Đồng bộ với EventSection */
 
 .trending-section {
     padding: 30px 0;
     background-color: rgb(39, 39, 42);
 }
 
-.trending-header {
+/* Sử dụng chung class với EventSection */
+.trending-section .section-header {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
 }
 
-.awards-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    background: linear-gradient(90deg, #f59e0b, #d97706);
-    color: white;
-    padding: 8px 24px;
-    border-radius: 4px;
-    font-weight: 800;
-    font-size: 13px;
-    margin-bottom: 16px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-.trending-title {
-    font-size: 36px;
+.trending-section .section-title {
+    font-size: 28px;
     font-weight: 800;
     color: #ffffff;
     margin: 0;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
 }
 
 @media (max-width: 768px) {
     .trending-section {
-        padding: 60px 0;
+        padding: 40px 0;
     }
 
-    .trending-title {
-        font-size: 28px;
+    .trending-section .section-title {
+        font-size: 22px;
     }
 }

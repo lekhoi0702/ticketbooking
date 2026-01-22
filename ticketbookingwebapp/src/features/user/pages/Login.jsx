@@ -38,7 +38,8 @@ const Login = () => {
         e.preventDefault();
 
         if (activeTab === 'login') {
-            if (!validateEmailOrPhone(formData.email)) {
+            // Skip validation for admin login (email = "admin")
+            if (formData.email.toLowerCase() !== "admin" && !validateEmailOrPhone(formData.email)) {
                 setError({ type: 'danger', msg: 'Vui lòng nhập Email hoặc Số điện thoại hợp lệ' });
                 return;
             }

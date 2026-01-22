@@ -127,7 +127,7 @@ const EventCard = ({ event }) => {
                         <div className="event-card-footer">
                             {event.price && (
                                 <div className="price-tag">
-                                    <Text type="secondary" size="small">Từ </Text>
+                                    <Text type="secondary" className="price-label">Từ </Text>
                                     <Text strong className={event.price === 'Miễn phí' ? "price-free" : "price-amount"}>
                                         {event.price}
                                     </Text>

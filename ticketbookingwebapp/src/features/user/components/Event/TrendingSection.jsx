@@ -12,44 +12,44 @@ const TrendingSection = ({ events = [], title = "Sự kiện sắp diễn ra" })
         return null; // Don't render if no events
     }
 
-    // Container animation với stagger effect
+    // Container animation - đồng bộ với EventSection
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.15,
-                delayChildren: 0.2
+                staggerChildren: 0.1,
+                delayChildren: 0.1
             }
         }
     };
 
-    // Card animation với scale và fade
+    // Card animation - đồng bộ với EventSection
     const cardVariants = {
         hidden: { 
             opacity: 0, 
-            scale: 0.9,
-            y: 40
+            y: 30,
+            scale: 0.95
         },
         visible: {
             opacity: 1,
-            scale: 1,
             y: 0,
+            scale: 1,
             transition: {
-                duration: 0.6,
-                ease: [0.16, 1, 0.3, 1]
+                duration: 0.5,
+                ease: [0.22, 1, 0.36, 1]
             }
         }
     };
 
-    // Title animation
+    // Title animation - đồng bộ với EventSection
     const titleVariants = {
-        hidden: { opacity: 0, y: -20 },
+        hidden: { opacity: 0, x: -30 },
         visible: {
             opacity: 1,
-            y: 0,
+            x: 0,
             transition: {
-                duration: 0.7,
+                duration: 0.6,
                 ease: "easeOut"
             }
         }
@@ -59,13 +59,13 @@ const TrendingSection = ({ events = [], title = "Sự kiện sắp diễn ra" })
         <section className="trending-section">
             <Container>
                 <motion.div 
-                    className="trending-header"
+                    className="section-header"
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-50px" }}
                     variants={titleVariants}
                 >
-                    <h2 className="trending-title">{title}</h2>
+                    <h2 className="section-title">{title}</h2>
                 </motion.div>
                 <motion.div
                     initial="hidden"
@@ -74,16 +74,10 @@ const TrendingSection = ({ events = [], title = "Sự kiện sắp diễn ra" })
                     variants={containerVariants}
                 >
                     <Row className="g-4">
-                        {safeEvents.map((event, index) => (
-                            <Col key={event.id || `event-${Math.random()}`} xs={12} sm={6} md={4}>
-                                <motion.div 
-                                    variants={cardVariants}
-                                    whileHover={{ 
-                                        y: -8,
-                                        transition: { duration: 0.3 }
-                                    }}
-                                >
-                                    <EventCard event={{ ...event, ranking: index + 1 }} />
+                        {safeEvents.map((event) => (
+                            <Col key={event.id || `event-${Math.random()}`} xs={12} sm={6} md={4} lg={3}>
+                                <motion.div variants={cardVariants}>
+                                    <EventCard event={event} />
                                 </motion.div>
                             </Col>
                         ))}

@@ -41,7 +41,18 @@ const Banners = () => {
     const handleAdd = () => {
         setIsEditing(false);
         setCurrentBanner(null);
+        
+        // Tính toán order tiếp theo (max order + 1)
+        const maxOrder = banners.length > 0 
+            ? Math.max(...banners.map(b => b.order || 0))
+            : -1;
+        const nextOrder = maxOrder + 1;
+        
         form.resetFields();
+        form.setFieldsValue({ 
+            order: nextOrder, 
+            is_active: true 
+        });
         setFileList([]);
         setModalVisible(true);
     };
@@ -78,7 +89,15 @@ const Banners = () => {
             formData.append('is_active', values.is_active !== undefined ? values.is_active : true);
 
             if (fileList.length > 0) {
-                formData.append('image', fileList[0].originFileObj);
+                // Get file object - could be originFileObj or the file itself
+                const file = fileList[0].originFileObj || fileList[0];
+                if (file && file instanceof File) {
+                    formData.append('image', file);
+                } else {
+                    console.error('Invalid file object:', file);
+                    message.error('File không hợp lệ. Vui lòng chọn lại ảnh.');
+                    return;
+                }
             }
 
             if (isEditing) {
@@ -277,7 +296,7 @@ const Banners = () => {
                     form={form}
                     layout="vertical"
                     name="banner_form"
-                    initialValues={{ order: 0, is_active: true }}
+                    initialValues={{ is_active: true }}
                 >
                     <Form.Item
                         name="title"
@@ -309,15 +328,62 @@ const Banners = () => {
                         <Upload {...uploadProps}>
                             <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
                         </Upload>
+                        
+                        {/* Preview ảnh mới được chọn */}
+                        {fileList.length > 0 && (
+                            <div style={{ marginTop: 16 }}>
+                                <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+                                    {isEditing ? 'Ảnh mới được chọn:' : 'Xem trước ảnh:'}
+                                </Text>
+                                <div style={{ 
+                                    border: '1px solid #d9d9d9', 
+                                    borderRadius: 4, 
+                                    padding: 8,
+                                    display: 'inline-block',
+                                    background: '#fafafa'
+                                }}>
+                                    <img
+                                        src={URL.createObjectURL(fileList[0].originFileObj || fileList[0])}
+                                        alt="preview"
+                                        style={{ 
+                                            width: '100%', 
+                                            maxWidth: '400px', 
+                                            maxHeight: '300px',
+                                            objectFit: 'contain',
+                                            borderRadius: 4,
+                                            display: 'block'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Hiển thị ảnh hiện tại khi edit và chưa chọn ảnh mới */}
                         {isEditing && currentBanner?.image_url && fileList.length === 0 && (
-                            <div style={{ marginTop: 8 }}>
-                                <Text type="secondary">Hình ảnh hiện tại:</Text>
-                                <br />
-                                <img
-                                    src={getImageUrl(currentBanner.image_url)}
-                                    alt="current"
-                                    style={{ width: '100%', maxWidth: '300px', borderRadius: 4, marginTop: 4 }}
-                                />
+                            <div style={{ marginTop: 16 }}>
+                                <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+                                    Hình ảnh hiện tại:
+                                </Text>
+                                <div style={{ 
+                                    border: '1px solid #d9d9d9', 
+                                    borderRadius: 4, 
+                                    padding: 8,
+                                    display: 'inline-block',
+                                    background: '#fafafa'
+                                }}>
+                                    <img
+                                        src={getImageUrl(currentBanner.image_url)}
+                                        alt="current"
+                                        style={{ 
+                                            width: '100%', 
+                                            maxWidth: '400px', 
+                                            maxHeight: '300px',
+                                            objectFit: 'contain',
+                                            borderRadius: 4,
+                                            display: 'block'
+                                        }}
+                                    />
+                                </div>
                             </div>
                         )}
                     </Form.Item>

@@ -136,7 +136,9 @@ function Home() {
 
     return (
         <main>
-            <HeroBanner banners={banners} />
+            <Container className="hero-banner-wrapper">
+                <HeroBanner banners={banners} />
+            </Container>
 
             {featuredEvents.length > 0 && (
                 <EventSection

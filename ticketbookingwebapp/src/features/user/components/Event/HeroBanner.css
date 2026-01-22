@@ -1,105 +1,198 @@
-/* HeroBanner.css */
+/* HeroBanner.css - Redesigned to match design sample */
 
+/* Main container với dark grey background */
 .hero-banner-container {
     width: 100%;
-    overflow: hidden;
     position: relative;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background-color: rgb(39, 39, 42);
+    padding: 24px 0 60px 0;
+    overflow: hidden;
 }
 
+/* Carousel wrapper */
+.hero-banner-container .ant-carousel {
+    position: relative;
+}
+
+/* Banner item wrapper với gap */
+.banner-item-wrapper {
+    padding: 0 12px;
+}
+
+/* Banner slide với rounded corners */
 .banner-slide {
     position: relative;
     width: 100%;
+    height: 400px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
 }
 
-.banner-overlay {
+.banner-slide:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Banner image */
+.banner-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Button wrapper - bottom left */
+.banner-button-wrapper {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.1) 100%);
-    display: flex;
-    align-items: center;
-    padding-left: 80px;
-}
-
-.banner-content {
-    max-width: 600px;
-    text-align: left;
-    animation: fadeUp 0.8s ease-out;
-}
-
-.banner-title {
-    color: #fff !important;
-    font-size: 48px !important;
-    font-weight: 800 !important;
-    margin-bottom: 24px !important;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    line-height: 1.2 !important;
-}
-
-.banner-button {
-    height: 48px !important;
-    padding: 0 32px !important;
-    font-weight: 600 !important;
-    font-size: 16px !important;
-    border-radius: 8px !important;
-    background-color: #2DC275;
-    border-color: #2DC275;
-    box-shadow: 0 4px 12px rgba(45, 194, 117, 0.3);
-}
-
-.banner-button:hover {
-    background-color: #73d13d !important;
-    border-color: #73d13d !important;
-    transform: translateY(-2px);
-}
-
-/* Ant Carousel Customization */
-.hero-banner-container .ant-carousel .slick-dots {
-    bottom: 24px !important;
+    bottom: 16px;
+    left: 16px;
     z-index: 10;
 }
 
+/* Button "Xem chi tiết" - white background, black text */
+.banner-button {
+    height: 40px !important;
+    padding: 0 24px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    border-radius: 6px !important;
+    background-color: #ffffff !important;
+    border: none !important;
+    color: #000000 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease !important;
+    cursor: pointer;
+}
+
+.banner-button:hover {
+    background-color: #f0f0f0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+.banner-button,
+.banner-button span,
+.banner-button > span {
+    color: #000000 !important;
+}
+
+.banner-button.ant-btn,
+.banner-button.ant-btn > span {
+    color: #000000 !important;
+}
+
+/* Navigation Arrows - Ẩn hoàn toàn */
+.hero-banner-container .ant-carousel .slick-prev,
+.hero-banner-container .ant-carousel .slick-next,
+.hero-banner-container .ant-carousel .custom-prev-arrow,
+.hero-banner-container .ant-carousel .custom-next-arrow {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Pagination Dots - White dots, green active */
+.hero-banner-container .ant-carousel .slick-dots,
+.hero-banner-container .ant-carousel .slick-dots-bottom {
+    bottom: -48px !important;
+    z-index: 15 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+    position: absolute !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+.hero-banner-container .ant-carousel .slick-dots li {
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 .hero-banner-container .ant-carousel .slick-dots li button {
-    height: 4px !important;
-    background: rgba(255, 255, 255, 0.4) !important;
-    border-radius: 2px !important;
-    transition: all 0.3s;
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    background-color: #ffffff !important;
+    border: none !important;
+    transition: all 0.3s ease !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    opacity: 1 !important;
 }
 
+.hero-banner-container .ant-carousel .slick-dots li button:hover {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    transform: scale(1.2);
+}
+
+/* Active dot - green color (trùng màu xanh header) */
 .hero-banner-container .ant-carousel .slick-dots li.slick-active button {
-    width: 32px !important;
-    background: #2DC275 !important;
+    width: 10px !important;
+    height: 10px !important;
+    background-color: rgb(45, 194, 117) !important;
+    border: none !important;
+    box-shadow: 0 0 8px rgba(45, 194, 117, 0.6) !important;
 }
 
-@keyframes fadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
+/* Responsive Design - Mobile */
 @media (max-width: 768px) {
-    .banner-overlay {
-        padding-left: 24px;
-        background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
-        align-items: flex-end;
-        padding-bottom: 48px;
+    .hero-banner-container {
+        padding: 16px 0 50px 0;
     }
 
-    .banner-content {
-        width: 100%;
+    .banner-item-wrapper {
+        padding: 0 8px;
     }
 
-    .banner-title {
-        font-size: 32px !important;
-        margin-bottom: 16px !important;
+    .banner-slide {
+        height: 280px;
+        border-radius: 8px;
+    }
+
+    .banner-button-wrapper {
+        bottom: 12px;
+        left: 12px;
+    }
+
+    .banner-button {
+        height: 36px !important;
+        padding: 0 20px !important;
+        font-size: 13px !important;
+    }
+
+
+    /* Dots on mobile */
+    .hero-banner-container .ant-carousel .slick-dots {
+        bottom: -42px !important;
+    }
+
+    .hero-banner-container .ant-carousel .slick-dots li button {
+        width: 8px !important;
+        height: 8px !important;
+    }
+
+    .hero-banner-container .ant-carousel .slick-dots li.slick-active button {
+        width: 8px !important;
+        height: 8px !important;
+    }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .banner-slide {
+        height: 360px;
     }
 }

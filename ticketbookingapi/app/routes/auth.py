@@ -48,12 +48,14 @@ def login() -> Tuple[Dict[str, Any], int]:
                 message='Vui lòng nhập đầy đủ thông tin'
             )
         
-        is_valid, error_msg = validate_email_or_phone(identifier)
-        if not is_valid:
-            raise ValidationException(
-                errors={'identifier': error_msg},
-                message=error_msg
-            )
+        # Skip email/phone validation for admin login (email = "admin")
+        if identifier.lower() != "admin":
+            is_valid, error_msg = validate_email_or_phone(identifier)
+            if not is_valid:
+                raise ValidationException(
+                    errors={'identifier': error_msg},
+                    message=error_msg
+                )
         
         # Try to find user by email or phone
         user = User.query.filter((User.email == identifier) | (User.phone == identifier)).first()

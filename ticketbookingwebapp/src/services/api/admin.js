@@ -202,8 +202,16 @@ export const adminApi = {
 
     async createBanner(data) {
         // data should be FormData
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        // Don't set Content-Type for FormData - browser will set it with boundary
+        
         const response = await fetch(`${API_BASE_URL}/admin/banners`, {
             method: 'POST',
+            headers: headers,
             body: data
         });
         if (!response.ok) {
@@ -215,8 +223,16 @@ export const adminApi = {
 
     async updateBanner(bannerId, data) {
         // data should be FormData
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        // Don't set Content-Type for FormData - browser will set it with boundary
+        
         const response = await fetch(`${API_BASE_URL}/admin/banners/${bannerId}`, {
             method: 'PUT',
+            headers: headers,
             body: data
         });
         if (!response.ok) {

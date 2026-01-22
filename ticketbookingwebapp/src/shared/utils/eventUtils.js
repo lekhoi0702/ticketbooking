@@ -105,7 +105,7 @@ export const transformEvent = (event) => {
                 hour: '2-digit',
                 minute: '2-digit'
             }) : 'TBA',
-            location: event.venue ? `${event.venue.venue_name || ''}, ${event.venue.city || ''}`.replace(/^,\s*|,\s*$/g, '') : 'TBA',
+            location: event.venue ? (event.venue.city || 'TBA') : 'TBA',
             image: getImageUrl(event.banner_image_url),
             price: (() => {
                 if (!event.ticket_types || event.ticket_types.length === 0) return 'TBA';
