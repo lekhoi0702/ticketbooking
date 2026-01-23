@@ -13,21 +13,21 @@
 
 .header-top-wrapper {
     background: rgb(45, 194, 117);
-    padding: 0 40px;
+    padding: 0 15px;
     height: 72px;
     border-bottom: none;
 }
 
 .header-bottom-nav {
     background: #000000;
-    padding: 0 40px;
+    padding: 0 15px;
     min-height: 48px;
     display: flex;
     align-items: center;
 }
 
 .header-container {
-    max-width: 1400px;
+    max-width: 1320px; /* Bootstrap xxl breakpoint */
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -83,6 +83,21 @@
     box-shadow: 0 0 0 2px rgba(45, 194, 117, 0.1);
 }
 
+/* Input.Search specific styling */
+.header-search .ant-input-search {
+    border-radius: 8px;
+    overflow: hidden;
+    height: 40px !important;
+}
+
+.header-search .ant-input-search .ant-input-group {
+    border-radius: 8px;
+    overflow: hidden;
+    height: 40px !important;
+    display: flex !important;
+    align-items: stretch !important;
+}
+
 .header-search .ant-input {
     background: #ffffff !important;
     color: #1f2937 !important;
@@ -122,21 +137,124 @@
 .custom-search-input {
     background-color: #ffffff !important;
     border-radius: 8px !important;
-    padding-left: 12px !important;
+    overflow: hidden;
+    border: 1px solid #dcdfe6 !important;
+    display: flex !important;
+    align-items: stretch !important;
+}
+
+.custom-search-input-field {
     border: none !important;
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+    background-color: #ffffff !important;
+}
+
+.custom-search-button {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: none !important;
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+    color: #909399 !important;
+    box-shadow: none !important;
+}
+
+/* Custom search button - Override all Ant Design variables and styles - No hover effect */
+.custom-search-button,
+.custom-search-button.ant-btn,
+.custom-search-button.ant-btn-default,
+.custom-search-button.ant-btn-variant-solid {
+    --ant-btn-solid-bg-color: #ffffff !important;
+    --ant-btn-bg-color: #ffffff !important;
+    --ant-btn-bg-color-hover: #ffffff !important;
+    --ant-btn-bg-color-active: #ffffff !important;
+    --ant-btn-text-color: #909399 !important;
+    --ant-btn-border-color: transparent !important;
+    --ant-btn-shadow: none !important;
+    --ant-color-primary: #909399 !important;
+    --ant-color-primary-hover: #909399 !important;
+    --ant-color-primary-active: #909399 !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border-color: transparent !important;
+    border: none !important;
+    color: #909399 !important;
+    box-shadow: none !important;
+}
+
+.custom-search-button:hover,
+.custom-search-button:focus,
+.custom-search-button:active,
+.custom-search-button.ant-btn:hover,
+.custom-search-button.ant-btn-default:hover,
+.custom-search-button.ant-btn-variant-solid:hover,
+.custom-search-button.ant-btn:active,
+.custom-search-button.ant-btn:focus {
+    --ant-btn-bg-color-hover: #ffffff !important;
+    --ant-btn-solid-bg-color-hover: #ffffff !important;
+    --ant-btn-bg-color-active: #ffffff !important;
+    --ant-btn-solid-bg-color-active: #ffffff !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border-color: transparent !important;
+    border: none !important;
+    color: #909399 !important;
+    box-shadow: none !important;
+}
+
+/* Input.Group styling */
+.custom-search-input.ant-input-group {
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex !important;
+    align-items: stretch !important;
     height: 40px !important;
+}
+
+.custom-search-input .ant-input-affix-wrapper {
+    height: 40px !important;
+    border: none !important;
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+    background-color: #ffffff !important;
+}
+
+.custom-search-input .ant-input {
+    background-color: #ffffff !important;
+    border: none !important;
+    padding-left: 0 !important;
+    padding-right: 12px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    text-align: left !important;
+}
+
+.custom-search-input .ant-input::placeholder {
+    text-align: left !important;
+}
+
+/* Căn giữa theo chiều dọc khi có prefix icon */
+.custom-search-input .ant-input-affix-wrapper {
     display: flex !important;
     align-items: center !important;
 }
 
-.custom-search-input .ant-input {
-    background-color: transparent !important;
-    border: none !important;
+.custom-search-input .ant-input-affix-wrapper input.ant-input {
+    padding-left: 0 !important;
+    padding-right: 12px !important;
+    line-height: 40px !important;
+    text-align: left !important;
+}
+
+.custom-search-input .ant-input-affix-wrapper input.ant-input::placeholder {
+    text-align: left !important;
 }
 
 .custom-search-input:hover,
 .custom-search-input:focus-within {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
+    border-color: #2DC275 !important;
+    box-shadow: 0 0 0 2px rgba(45, 194, 117, 0.1) !important;
 }
 
 /* Search Suggestions Dropdown */
@@ -261,12 +379,27 @@
     font-size: 14px;
 }
 
-/* Responsive */
-@media (max-width: 992px) {
+/* Responsive - Match Bootstrap Container breakpoints */
+@media (max-width: 1399.98px) {
+    .header-container {
+        max-width: 1140px; /* Bootstrap xl breakpoint */
+    }
+}
+
+@media (max-width: 1199.98px) {
+    .header-container {
+        max-width: 960px; /* Bootstrap lg breakpoint */
+    }
+}
+
+@media (max-width: 991.98px) {
+    .header-container {
+        max-width: 720px; /* Bootstrap md breakpoint */
+    }
 
     .header-top-wrapper,
     .header-bottom-nav {
-        padding: 0 20px;
+        padding: 0 12px;
     }
 
     .header-search {
@@ -276,5 +409,17 @@
 
     .user-name {
         display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .header-container {
+        max-width: 540px; /* Bootstrap sm breakpoint */
+    }
+}
+
+@media (max-width: 575.98px) {
+    .header-container {
+        max-width: 100%; /* Bootstrap xs - full width */
     }
 }

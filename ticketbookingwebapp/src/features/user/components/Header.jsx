@@ -110,17 +110,35 @@ const Header = () => {
                         </Link>
 
                         <div className="header-search">
-                            <Input
-                                placeholder="Tìm kiếm sự kiện, nghệ sĩ..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onPressEnter={(e) => handleSearch(e.target.value)}
-                                prefix={<SearchOutlined style={{ color: '#909399', fontSize: '18px', marginRight: '8px' }} />}
-                                size="large"
-                                allowClear
-                                className="custom-search-input"
-                                style={{ width: '100%', borderRadius: '8px', border: 'none' }}
-                            />
+                            <Input.Group compact className="custom-search-input">
+                                <Input
+                                    placeholder="Tìm kiếm sự kiện, nghệ sĩ..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onPressEnter={(e) => handleSearch(e.target.value)}
+                                    prefix={<SearchOutlined style={{ color: '#909399', fontSize: '18px', marginRight: '8px' }} />}
+                                    size="large"
+                                    allowClear
+                                    className="custom-search-input-field"
+                                    style={{ width: 'calc(100% - 100px)' }}
+                                />
+                                <Button
+                                    type="default"
+                                    size="large"
+                                    onClick={() => handleSearch(searchQuery)}
+                                    className="custom-search-button"
+                                    style={{
+                                        width: '100px',
+                                        background: '#ffffff',
+                                        border: 'none',
+                                        color: '#909399',
+                                        fontWeight: 600,
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    Tìm kiếm
+                                </Button>
+                            </Input.Group>
                             {showSuggestions && (
                                 <div className="search-suggestions" ref={suggestionRef}>
                                     <List
