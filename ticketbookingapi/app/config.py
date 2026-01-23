@@ -81,6 +81,13 @@ class Config:
     APP_NAME = os.getenv('APP_NAME', 'TicketBooking API')
     APP_VERSION = os.getenv('APP_VERSION', '2.0.0')
     
+    # Gemini Chatbot Configuration
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+    # Default to gemini-2.5-flash (latest stable model)
+    # Alternative models: gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp
+    GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+    CHATBOT_ENABLED = os.getenv('CHATBOT_ENABLED', 'true').lower() == 'true'
+    
     @staticmethod
     def validate():
         """Validate required environment variables"""

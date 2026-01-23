@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import Chatbot from './Chatbot/Chatbot';
 import { Layout, ConfigProvider } from 'antd';
 import { AntdThemeConfig } from '../../../theme/AntdThemeConfig';
 
@@ -26,6 +27,7 @@ const UserLayout = () => {
             <ConfigProvider theme={AntdThemeConfig}>
                 <Footer />
             </ConfigProvider>
+            <Chatbot />
         </Layout>
     );
 };

@@ -1,17 +1,17 @@
 /*
- Navicat Premium Dump SQL
+ Navicat Premium Data Transfer
 
- Source Server         : ticketdb_2
+ Source Server         : ticketbooking_2
  Source Server Type    : MySQL
- Source Server Version : 80011 (8.0.11-TiDB-v7.5.2-serverless)
+ Source Server Version : 80011
  Source Host           : gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000
  Source Schema         : ticketbookingdb
 
  Target Server Type    : MySQL
- Target Server Version : 80011 (8.0.11-TiDB-v7.5.2-serverless)
+ Target Server Version : 80011
  File Encoding         : 65001
 
- Date: 21/01/2026 21:37:13
+ Date: 23/01/2026 10:53:30
 */
 
 SET NAMES utf8mb4;
@@ -37,7 +37,11 @@ CREATE TABLE `AuditLog`  (
   INDEX `idx_changed_at`(`changed_at` ASC) USING BTREE,
   INDEX `idx_changed_by`(`changed_by` ASC) USING BTREE,
   CONSTRAINT `fk_1` FOREIGN KEY (`changed_by`) REFERENCES `User` (`user_id`) ON DELETE SET NULL ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 60001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Audit trail for critical operations' ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Audit trail for critical operations' ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of AuditLog
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for Banner
@@ -52,7 +56,11 @@ CREATE TABLE `Banner`  (
   `order` int(11) NULL DEFAULT NULL,
   `created_at` datetime NULL DEFAULT NULL,
   PRIMARY KEY (`banner_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 30011 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of Banner
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for Discount
@@ -81,7 +89,11 @@ CREATE TABLE `Discount`  (
   INDEX `idx_dates`(`start_date` ASC, `end_date` ASC, `is_active` ASC) USING BTREE COMMENT 'For active discount lookup',
   INDEX `idx_manager`(`manager_id` ASC, `is_active` ASC) USING BTREE COMMENT 'For organizer discount management',
   INDEX `idx_event`(`event_id` ASC, `is_active` ASC) USING BTREE COMMENT 'For event-specific discounts'
-) ENGINE = InnoDB AUTO_INCREMENT = 30001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of Discount
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for Event
@@ -128,6 +140,52 @@ CREATE TABLE `Event`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 150053 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
+-- Records of Event
+-- ----------------------------
+INSERT INTO `Event` VALUES (1, 1, 17, 88, 'Music Festival Mùa Đông', 'Lễ hội âm nhạc Mùa Đông - Quy tụ các nghệ sĩ hàng đầu', '2026-05-27 10:18:35', '2026-05-27 14:18:35', '2026-04-19 10:18:35', '2026-05-26 10:18:35', '/uploads/organizers/88/events/event_1_âm_nhạc.jpg', NULL, 1000, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (2, 2, 10, 89, 'Giải Bóng đá Miền Trung', 'Giải đấu Bóng đá chuyên nghiệp khu vực Miền Trung', '2026-07-02 10:18:35', '2026-07-02 15:18:35', '2026-05-13 10:18:35', '2026-07-01 10:18:35', '/uploads/organizers/89/events/event_2_thể_thao.jpg', NULL, 2237, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (3, 3, 21, 87, 'Digital Marketing Workshop', 'Workshop Marketing số cho doanh nghiệp', '2026-04-15 10:18:35', '2026-04-15 15:18:35', '2026-03-04 10:18:35', '2026-04-14 10:18:35', '/uploads/organizers/87/events/event_3_hội_thảo.jpg', NULL, 123, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (4, 4, 5, 87, 'Triển lãm nghệ thuật Đương Đại', 'Triển lãm nghệ thuật đương đại với chủ đề Đương Đại', '2026-02-27 10:18:35', '2026-02-27 15:18:35', '2026-01-24 10:18:35', '2026-02-26 10:18:35', '/uploads/organizers/87/events/event_4_triển_lãm.jpg', NULL, 644, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (5, 5, 8, 87, 'Kịch: Số Đỏ', 'Vở kịch kinh điển Số Đỏ', '2026-07-09 10:18:35', '2026-07-09 16:18:35', '2026-05-20 10:18:35', '2026-07-08 10:18:35', '/uploads/organizers/87/events/event_5_sân_khấu.jpg', NULL, 491, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (6, 6, 11, 88, 'Street Food Night', 'Đêm hội ẩm thực đường phố', '2026-03-07 10:18:35', '2026-03-07 12:18:35', '2026-01-06 10:18:35', '2026-03-06 10:18:35', '/uploads/organizers/88/events/event_6_ẩm_thực.jpg', NULL, 766, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (7, 7, 17, 87, 'Khóa học Lập trình Python', 'Khóa học thực hành Lập trình Python từ cơ bản đến nâng cao', '2026-01-31 10:18:35', '2026-01-31 17:18:35', '2025-12-02 10:18:35', '2026-01-30 10:18:35', '/uploads/organizers/87/events/event_7_workshop.jpg', NULL, 57, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (8, 8, 16, 86, 'Stand-up Show', 'Chương trình stand-up comedy đặc sắc', '2026-02-23 10:18:35', '2026-02-23 16:18:35', '2026-01-15 10:18:35', '2026-02-22 10:18:35', '/uploads/organizers/86/events/event_8_hài_kịch.jpg', NULL, 469, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (9, 9, 14, 86, 'Fashion Show Mùa Hè', 'Tuần lễ thời trang Mùa Hè - Bộ sưu tập mới nhất', '2026-06-18 10:18:35', '2026-06-18 16:18:35', '2026-05-15 10:18:35', '2026-06-17 10:18:35', '/uploads/organizers/86/events/event_9_thời_trang.jpg', NULL, 624, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (10, 10, 22, 85, 'Marathon Vũng Tàu 2026', 'Giải marathon quốc tế Vũng Tàu 2026', '2026-02-07 10:18:35', '2026-02-07 18:18:35', '2025-12-30 10:18:35', '2026-02-06 10:18:35', '/uploads/organizers/85/events/event_10_marathon.jpg', NULL, 2942, 0, 'PUBLISHED', 1, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (11, 1, 17, 86, 'Acoustic Night', 'Đêm nhạc acoustic ấm cúng và gần gũi', '2026-03-27 10:18:35', '2026-03-27 17:18:35', '2026-02-11 10:18:35', '2026-03-26 10:18:35', '/uploads/organizers/86/events/event_11_âm_nhạc.jpg', NULL, 380, 0, 'PUBLISHED', 0, '2026-01-23 03:30:23', '2026-01-23 03:30:23', NULL, NULL);
+INSERT INTO `Event` VALUES (12, 2, 16, 88, 'Trận cầu đỉnh cao: Hà Nội FC vs Thanh Hóa', 'Trận đấu kịch tính giữa Hà Nội FC và Thanh Hóa', '2026-07-16 10:18:35', '2026-07-16 18:18:35', '2026-05-20 10:18:35', '2026-07-15 10:18:35', '/uploads/organizers/88/events/event_12_thể_thao.jpg', NULL, 5000, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (13, 3, 2, 87, 'Digital Marketing Workshop', 'Workshop Marketing số cho doanh nghiệp', '2026-07-18 10:18:35', '2026-07-18 12:18:35', '2026-06-09 10:18:35', '2026-07-17 10:18:35', '/uploads/organizers/87/events/event_13_hội_thảo.jpg', NULL, 175, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (14, 4, 20, 87, 'Art Exhibition: Mỹ Tâm', 'Triển lãm tranh của họa sĩ Mỹ Tâm', '2026-03-22 10:18:35', '2026-03-22 16:18:35', '2026-02-09 10:18:35', '2026-03-21 10:18:35', '/uploads/organizers/87/events/event_14_triển_lãm.jpg', NULL, 539, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (15, 5, 5, 89, 'Musical Show', 'Chương trình ca nhạc kịch đặc sắc', '2026-04-02 10:18:35', '2026-04-02 17:18:35', '2026-03-03 10:18:35', '2026-04-01 10:18:35', '/uploads/organizers/89/events/event_15_sân_khấu.jpg', NULL, 991, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (16, 6, 16, 87, 'Food Festival Mùa Hè', 'Lễ hội ẩm thực Mùa Hè - Hơn 100 gian hàng', '2026-04-02 10:18:35', '2026-04-02 16:18:35', '2026-02-19 10:18:35', '2026-04-01 10:18:35', '/uploads/organizers/87/events/event_16_ẩm_thực.jpg', NULL, 4127, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (17, 7, 14, 89, 'Khóa học Thiết kế đồ họa', 'Khóa học thực hành Thiết kế đồ họa từ cơ bản đến nâng cao', '2026-05-26 10:18:35', '2026-05-26 12:18:35', '2026-04-19 10:18:35', '2026-05-25 10:18:35', '/uploads/organizers/89/events/event_17_workshop.jpg', NULL, 59, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (18, 8, 17, 85, 'Comedy Night with Trấn Thành', 'Đêm hài kịch cùng danh hài Trấn Thành', '2026-03-20 10:18:35', '2026-03-20 12:18:35', '2026-02-12 10:18:35', '2026-03-19 10:18:35', '/uploads/organizers/85/events/event_18_hài_kịch.jpg', NULL, 621, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (19, 9, 2, 85, 'Fashion Show Mùa Hè', 'Tuần lễ thời trang Mùa Hè - Bộ sưu tập mới nhất', '2026-03-26 10:18:35', '2026-03-26 12:18:35', '2026-02-05 10:18:35', '2026-03-25 10:18:35', '/uploads/organizers/85/events/event_19_thời_trang.jpg', NULL, 352, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (20, 10, 1, 87, 'Marathon Hải Phòng 2026', 'Giải marathon quốc tế Hải Phòng 2026', '2026-02-01 10:18:35', '2026-02-01 15:18:35', '2025-12-03 10:18:35', '2026-01-31 10:18:35', '/uploads/organizers/87/events/event_20_marathon.jpg', NULL, 2647, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (21, 1, 19, 89, 'Live Concert: Noo Phước Thịnh', 'Đêm nhạc sống với Noo Phước Thịnh - Trải nghiệm âm nhạc đỉnh cao', '2026-06-18 10:18:35', '2026-06-18 13:18:35', '2026-04-24 10:18:35', '2026-06-17 10:18:35', '/uploads/organizers/89/events/event_21_âm_nhạc.jpg', NULL, 1261, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (22, 2, 19, 89, 'Trận cầu đỉnh cao: Viettel FC vs TP.HCM FC', 'Trận đấu kịch tính giữa Viettel FC và TP.HCM FC', '2026-07-08 10:18:35', '2026-07-08 18:18:35', '2026-06-07 10:18:35', '2026-07-07 10:18:35', '/uploads/organizers/89/events/event_22_thể_thao.jpg', NULL, 5000, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (23, 3, 9, 86, 'Business Conference', 'Hội nghị kinh doanh và khởi nghiệp', '2026-03-19 10:18:35', '2026-03-19 17:18:35', '2026-01-31 10:18:35', '2026-03-18 10:18:35', '/uploads/organizers/86/events/event_23_hội_thảo.jpg', NULL, 200, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (24, 4, 1, 87, 'Art Exhibition: Sơn Tùng MTP', 'Triển lãm tranh của họa sĩ Sơn Tùng MTP', '2026-05-27 10:18:35', '2026-05-27 16:18:35', '2026-04-02 10:18:35', '2026-05-26 10:18:35', '/uploads/organizers/87/events/event_24_triển_lãm.jpg', NULL, 493, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (25, 5, 2, 86, 'Musical Show', 'Chương trình ca nhạc kịch đặc sắc', '2026-04-19 10:18:35', '2026-04-19 16:18:35', '2026-03-03 10:18:35', '2026-04-18 10:18:35', '/uploads/organizers/86/events/event_25_sân_khấu.jpg', NULL, 598, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (26, 6, 22, 89, 'Food Festival Mùa Thu', 'Lễ hội ẩm thực Mùa Thu - Hơn 100 gian hàng', '2026-03-26 10:18:35', '2026-03-26 17:18:35', '2026-02-10 10:18:35', '2026-03-25 10:18:35', '/uploads/organizers/89/events/event_26_ẩm_thực.jpg', NULL, 2697, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (27, 7, 13, 88, 'Workshop Photography', 'Workshop chuyên sâu về Photography', '2026-03-17 10:18:35', '2026-03-17 14:18:35', '2026-01-30 10:18:35', '2026-03-16 10:18:35', '/uploads/organizers/88/events/event_27_workshop.jpg', NULL, 53, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (28, 8, 8, 85, 'Stand-up Show', 'Chương trình stand-up comedy đặc sắc', '2026-05-29 10:18:35', '2026-05-29 14:18:35', '2026-04-26 10:18:35', '2026-05-28 10:18:35', '/uploads/organizers/85/events/event_28_hài_kịch.jpg', NULL, 395, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (29, 9, 24, 89, 'Runway Show: Công Trí', 'Show diễn thời trang của nhà thiết kế Công Trí', '2026-02-04 10:18:35', '2026-02-04 15:18:35', '2025-12-25 10:18:35', '2026-02-03 10:18:35', '/uploads/organizers/89/events/event_29_thời_trang.jpg', NULL, 200, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (30, 10, 4, 87, 'Marathon Hồ Chí Minh 2026', 'Giải marathon quốc tế Hồ Chí Minh 2026', '2026-05-13 10:18:35', '2026-05-13 14:18:35', '2026-03-23 10:18:35', '2026-05-12 10:18:35', '/uploads/organizers/87/events/event_30_marathon.jpg', NULL, 3235, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (31, 1, 17, 86, 'Acoustic Night', 'Đêm nhạc acoustic ấm cúng và gần gũi', '2026-07-06 10:18:35', '2026-07-06 14:18:35', '2026-05-31 10:18:35', '2026-07-05 10:18:35', '/uploads/organizers/86/events/event_31_âm_nhạc.jpg', NULL, 211, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (32, 2, 13, 86, 'Trận cầu đỉnh cao: Viettel FC vs TP.HCM FC', 'Trận đấu kịch tính giữa Viettel FC và TP.HCM FC', '2026-01-30 10:18:35', '2026-01-30 14:18:35', '2025-12-13 10:18:35', '2026-01-29 10:18:35', '/uploads/organizers/86/events/event_32_thể_thao.jpg', NULL, 5000, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (33, 3, 22, 87, 'Tech Summit 2026', 'Hội thảo công nghệ lớn nhất năm 2026', '2026-05-12 10:18:35', '2026-05-12 14:18:35', '2026-04-10 10:18:35', '2026-05-11 10:18:35', '/uploads/organizers/87/events/event_33_hội_thảo.jpg', NULL, 817, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (34, 4, 14, 87, 'Triển lãm nghệ thuật Đương Đại', 'Triển lãm nghệ thuật đương đại với chủ đề Đương Đại', '2026-07-09 10:18:35', '2026-07-09 12:18:35', '2026-05-25 10:18:35', '2026-07-08 10:18:35', '/uploads/organizers/87/events/event_34_triển_lãm.jpg', NULL, 812, 0, 'PUBLISHED', 0, '2026-01-23 03:30:24', '2026-01-23 03:30:24', NULL, NULL);
+INSERT INTO `Event` VALUES (35, 5, 16, 85, 'Musical Show', 'Chương trình ca nhạc kịch đặc sắc', '2026-03-08 10:18:35', '2026-03-08 13:18:35', '2026-01-08 10:18:35', '2026-03-07 10:18:35', '/uploads/organizers/85/events/event_35_sân_khấu.jpg', NULL, 1480, 0, 'PUBLISHED', 0, '2026-01-23 03:30:25', '2026-01-23 03:30:25', NULL, NULL);
+INSERT INTO `Event` VALUES (36, 6, 11, 87, 'Food Festival Mùa Thu', 'Lễ hội ẩm thực Mùa Thu - Hơn 100 gian hàng', '2026-06-08 10:18:35', '2026-06-08 16:18:35', '2026-04-30 10:18:35', '2026-06-07 10:18:35', '/uploads/organizers/87/events/event_36_ẩm_thực.jpg', NULL, 1000, 0, 'PUBLISHED', 0, '2026-01-23 03:30:25', '2026-01-23 03:30:25', NULL, NULL);
+INSERT INTO `Event` VALUES (37, 7, 13, 86, 'Khóa học Nhiếp ảnh', 'Khóa học thực hành Nhiếp ảnh từ cơ bản đến nâng cao', '2026-03-20 10:18:35', '2026-03-20 12:18:35', '2026-01-19 10:18:35', '2026-03-19 10:18:35', '/uploads/organizers/86/events/event_37_workshop.jpg', NULL, 61, 0, 'PUBLISHED', 0, '2026-01-23 03:30:25', '2026-01-23 03:30:25', NULL, NULL);
+INSERT INTO `Event` VALUES (38, 8, 22, 87, 'Comedy Night with Trấn Thành', 'Đêm hài kịch cùng danh hài Trấn Thành', '2026-05-08 10:18:35', '2026-05-08 15:18:35', '2026-03-27 10:18:35', '2026-05-07 10:18:35', '/uploads/organizers/87/events/event_38_hài_kịch.jpg', NULL, 716, 0, 'PUBLISHED', 0, '2026-01-23 03:30:25', '2026-01-23 03:30:25', NULL, NULL);
+INSERT INTO `Event` VALUES (39, 9, 18, 85, 'Runway Show: Lê Thanh Hòa', 'Show diễn thời trang của nhà thiết kế Lê Thanh Hòa', '2026-04-20 10:18:35', '2026-04-20 17:18:35', '2026-03-13 10:18:35', '2026-04-19 10:18:35', '/uploads/organizers/85/events/event_39_thời_trang.jpg', NULL, 200, 0, 'PUBLISHED', 0, '2026-01-23 03:30:25', '2026-01-23 03:30:25', NULL, NULL);
+INSERT INTO `Event` VALUES (40, 10, 11, 89, 'Fun Run 21km', 'Chạy bộ vui vẻ cự ly 21km', '2026-02-28 10:18:35', '2026-02-28 13:18:35', '2026-01-02 10:18:35', '2026-02-27 10:18:35', '/uploads/organizers/89/events/event_40_marathon.jpg', NULL, 931, 0, 'PUBLISHED', 0, '2026-01-23 03:30:25', '2026-01-23 03:30:25', NULL, NULL);
+INSERT INTO `Event` VALUES (41, 1, 16, 87, 'Music Festival Mùa Xuân', 'Lễ hội âm nhạc Mùa Xuân - Quy tụ các nghệ sĩ hàng đầu', '2026-06-13 10:18:35', '2026-06-13 14:18:35', '2026-05-09 10:18:35', '2026-06-12 10:18:35', '/uploads/organizers/87/events/event_41_âm_nhạc.jpg', NULL, 4099, 0, 'PUBLISHED', 0, '2026-01-23 03:30:25', '2026-01-23 03:30:25', NULL, NULL);
+INSERT INTO `Event` VALUES (42, 2, 22, 89, 'Trận cầu đỉnh cao: HAGL vs Thanh Hóa', 'Trận đấu kịch tính giữa HAGL và Thanh Hóa', '2026-06-09 10:18:35', '2026-06-09 12:18:35', '2026-04-21 10:18:35', '2026-06-08 10:18:35', '/uploads/organizers/89/events/event_42_thể_thao.jpg', NULL, 5000, 0, 'PUBLISHED', 0, '2026-01-23 03:30:25', '2026-01-23 03:30:25', NULL, NULL);
+
+-- ----------------------------
 -- Table structure for EventCategory
 -- ----------------------------
 DROP TABLE IF EXISTS `EventCategory`;
@@ -140,6 +198,20 @@ CREATE TABLE `EventCategory`  (
   UNIQUE INDEX `category_name`(`category_name` ASC) USING BTREE,
   INDEX `idx_active`(`is_active` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 60006 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of EventCategory
+-- ----------------------------
+INSERT INTO `EventCategory` VALUES (1, 'Âm nhạc', 1, '2026-01-23 03:30:22');
+INSERT INTO `EventCategory` VALUES (2, 'Thể thao', 1, '2026-01-23 03:30:22');
+INSERT INTO `EventCategory` VALUES (3, 'Hội thảo', 1, '2026-01-23 03:30:22');
+INSERT INTO `EventCategory` VALUES (4, 'Triển lãm', 1, '2026-01-23 03:30:22');
+INSERT INTO `EventCategory` VALUES (5, 'Sân khấu', 1, '2026-01-23 03:30:22');
+INSERT INTO `EventCategory` VALUES (6, 'Ẩm thực', 1, '2026-01-23 03:30:22');
+INSERT INTO `EventCategory` VALUES (7, 'Workshop', 1, '2026-01-23 03:30:22');
+INSERT INTO `EventCategory` VALUES (8, 'Hài kịch', 1, '2026-01-23 03:30:22');
+INSERT INTO `EventCategory` VALUES (9, 'Thời trang', 1, '2026-01-23 03:30:22');
+INSERT INTO `EventCategory` VALUES (10, 'Marathon', 1, '2026-01-23 03:30:22');
 
 -- ----------------------------
 -- Table structure for FavoriteEvent
@@ -155,6 +227,10 @@ CREATE TABLE `FavoriteEvent`  (
   CONSTRAINT `fk_1` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_2` FOREIGN KEY (`event_id`) REFERENCES `Event` (`event_id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of FavoriteEvent
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for Order
@@ -185,7 +261,11 @@ CREATE TABLE `Order`  (
   INDEX `idx_user_status_created`(`user_id` ASC, `order_status` ASC, `created_at` ASC) USING BTREE COMMENT 'For user order history with sorting',
   INDEX `idx_status_created`(`order_status` ASC, `created_at` ASC) USING BTREE COMMENT 'For admin order management',
   CONSTRAINT `Order_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 180051 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of Order
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for OrganizerInfo
@@ -203,7 +283,15 @@ CREATE TABLE `OrganizerInfo`  (
   PRIMARY KEY (`organizer_id`) USING BTREE,
   UNIQUE INDEX `user_id`(`user_id` ASC) USING BTREE,
   CONSTRAINT `OrganizerInfo_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 60006 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 60010 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of OrganizerInfo
+-- ----------------------------
+INSERT INTO `OrganizerInfo` VALUES (60006, 86, 'Công ty Tổ chức Sự kiện Sao Việt', 'Chuyên tổ chức các sự kiện âm nhạc, giải trí quy mô lớn tại Việt Nam', NULL, '2026-01-23 03:30:21', '2026-01-23 03:30:21', NULL);
+INSERT INTO `OrganizerInfo` VALUES (60007, 87, 'Trung tâm Hội nghị và Triển lãm Quốc tế', 'Đơn vị hàng đầu về tổ chức hội thảo, triển lãm và sự kiện doanh nghiệp', NULL, '2026-01-23 03:30:22', '2026-01-23 03:30:22', NULL);
+INSERT INTO `OrganizerInfo` VALUES (60008, 88, 'Công ty Sự kiện Thể thao Việt Nam', 'Chuyên tổ chức các giải đấu thể thao chuyên nghiệp và phong trào', NULL, '2026-01-23 03:30:22', '2026-01-23 03:30:22', NULL);
+INSERT INTO `OrganizerInfo` VALUES (60009, 89, 'Trung tâm Văn hóa Nghệ thuật', 'Tổ chức các sự kiện văn hóa, nghệ thuật, triển lãm và biểu diễn', NULL, '2026-01-23 03:30:22', '2026-01-23 03:30:22', NULL);
 
 -- ----------------------------
 -- Table structure for OrganizerQRCode
@@ -224,6 +312,10 @@ CREATE TABLE `OrganizerQRCode`  (
   INDEX `idx_is_active`(`is_active` ASC) USING BTREE,
   CONSTRAINT `fk_qr_code_manager` FOREIGN KEY (`manager_id`) REFERENCES `User` (`user_id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of OrganizerQRCode
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for Payment
@@ -249,7 +341,11 @@ CREATE TABLE `Payment`  (
   INDEX `idx_payment_status_date`(`payment_status` ASC, `paid_at` ASC) USING BTREE COMMENT 'For payment reports and analytics',
   INDEX `idx_method_status`(`payment_method` ASC, `payment_status` ASC) USING BTREE COMMENT 'For payment method statistics',
   CONSTRAINT `Payment_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `Order` (`order_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 120051 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of Payment
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for RefundRequest
@@ -279,6 +375,10 @@ CREATE TABLE `RefundRequest`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Stores customer refund requests for orders' ROW_FORMAT = Compact;
 
 -- ----------------------------
+-- Records of RefundRequest
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for Role
 -- ----------------------------
 DROP TABLE IF EXISTS `Role`;
@@ -288,7 +388,14 @@ CREATE TABLE `Role`  (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`role_id`) USING BTREE,
   UNIQUE INDEX `role_name`(`role_name` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 30004 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of Role
+-- ----------------------------
+INSERT INTO `Role` VALUES (1, 'admin', '2026-01-17 06:29:10');
+INSERT INTO `Role` VALUES (2, 'organizer', '2026-01-17 06:30:06');
+INSERT INTO `Role` VALUES (3, 'user', '2026-01-17 06:30:19');
 
 -- ----------------------------
 -- Table structure for Seat
@@ -309,7 +416,11 @@ CREATE TABLE `Seat`  (
   INDEX `status`(`status` ASC) USING BTREE,
   INDEX `idx_type_status_area`(`ticket_type_id` ASC, `status` ASC, `area_name` ASC) USING BTREE COMMENT 'For seat map display',
   CONSTRAINT `Seat_ibfk_1` FOREIGN KEY (`ticket_type_id`) REFERENCES `TicketType` (`ticket_type_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 122001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of Seat
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for SeatReservation
@@ -334,7 +445,11 @@ CREATE TABLE `SeatReservation`  (
   CONSTRAINT `fk_seat_reservation_seat` FOREIGN KEY (`seat_id`) REFERENCES `Seat` (`seat_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_seat_reservation_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_seat_reservation_event` FOREIGN KEY (`event_id`) REFERENCES `Event` (`event_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 30001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of SeatReservation
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for Ticket
@@ -369,7 +484,11 @@ CREATE TABLE `Ticket`  (
   CONSTRAINT `fk_ticket_seat` FOREIGN KEY (`seat_id`) REFERENCES `Seat` (`seat_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `Ticket_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `Order` (`order_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `Ticket_ibfk_2` FOREIGN KEY (`ticket_type_id`) REFERENCES `TicketType` (`ticket_type_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 180111 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of Ticket
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for TicketType
@@ -394,7 +513,11 @@ CREATE TABLE `TicketType`  (
   INDEX `idx_event_active`(`event_id` ASC, `is_active` ASC) USING BTREE COMMENT 'For active ticket types per event',
   INDEX `idx_event_price`(`event_id` ASC, `price` ASC) USING BTREE COMMENT 'For price range queries',
   CONSTRAINT `TicketType_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `Event` (`event_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 150101 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of TicketType
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for User
@@ -417,6 +540,16 @@ CREATE TABLE `User`  (
   INDEX `idx_active`(`is_active` ASC) USING BTREE,
   CONSTRAINT `User_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `Role` (`role_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 120105 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of User
+-- ----------------------------
+INSERT INTO `User` VALUES (1, 1, 'admin', 'scrypt:32768:8:1$HKXKeeedAYqrtvX5$3c7b7ceeec68ba168c61c389405b495e7321a513311f7c492532231a3626ef987f192ec737ed0dd766ebb2b38e6176499cab0d3b1bc193b406872b15882ccd92', 'admin', '0901234567', '2026-01-12 16:37:37', '2026-01-16 01:30:34', 1);
+INSERT INTO `User` VALUES (85, 2, 'organizer@gmail.com', 'scrypt:32768:8:1$BrKFbo5bbGR9tLgG$9be73a7a979c059177cfab2b05cbf880fc850873d206655dc9f181345e0da28ac096759a4fa17d08cba5e11931057e3a4e9a8d82dcab217a58a23d24695a4a69', 'Organizer 1', '0987654321', '2026-01-17 06:39:29', '2026-01-23 02:56:33', 1);
+INSERT INTO `User` VALUES (86, 2, 'organizer2@gmail.com', 'scrypt:32768:8:1$BrKFbo5bbGR9tLgG$9be73a7a979c059177cfab2b05cbf880fc850873d206655dc9f181345e0da28ac096759a4fa17d08cba5e11931057e3a4e9a8d82dcab217a58a23d24695a4a69', 'Organizer 2', '0987654322', '2026-01-23 03:29:04', '2026-01-23 03:29:04', 1);
+INSERT INTO `User` VALUES (87, 2, 'organizer3@gmail.com', 'scrypt:32768:8:1$BrKFbo5bbGR9tLgG$9be73a7a979c059177cfab2b05cbf880fc850873d206655dc9f181345e0da28ac096759a4fa17d08cba5e11931057e3a4e9a8d82dcab217a58a23d24695a4a69', 'Organizer 3', '0987654323', '2026-01-23 03:29:04', '2026-01-23 03:29:04', 1);
+INSERT INTO `User` VALUES (88, 3, 'user@gmail.com', 'scrypt:32768:8:1$MYjySHjBI1Hhr5CL$f4f3274a6f28cb0a78ef6d328e58fb8c059afc30fe1f7ba1ebb29a3a98fd48969cc9d3638b78408236096cf1715e8a233bdd1cd2fd683c67f08312bf2b7e43f7', 'Customer 1', '0123456789', '2026-01-17 06:39:30', '2026-01-23 02:56:27', 1);
+INSERT INTO `User` VALUES (89, 2, 'organizer5@gmail.com', 'scrypt:32768:8:1$BrKFbo5bbGR9tLgG$9be73a7a979c059177cfab2b05cbf880fc850873d206655dc9f181345e0da28ac096759a4fa17d08cba5e11931057e3a4e9a8d82dcab217a58a23d24695a4a69', 'Organizer 5', '0987654325', '2026-01-23 03:30:21', '2026-01-23 03:30:21', 1);
 
 -- ----------------------------
 -- Table structure for Venue
@@ -446,6 +579,34 @@ CREATE TABLE `Venue`  (
   INDEX `idx_city_active`(`city` ASC, `is_active` ASC, `status` ASC) USING BTREE COMMENT 'For venue search by city',
   CONSTRAINT `fk_venue_user` FOREIGN KEY (`manager_id`) REFERENCES `User` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 120018 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of Venue
+-- ----------------------------
+INSERT INTO `Venue` VALUES (1, 'Trung tâm Hội nghị Hồ Chí Minh', '123 Đường Lê Lợi, Quận 1, Hồ Chí Minh', 'Hồ Chí Minh', 5000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 85, NULL);
+INSERT INTO `Venue` VALUES (2, 'Nhà hát Hồ Chí Minh', '456 Đường Trần Hưng Đạo, Quận 1, Hồ Chí Minh', 'Hồ Chí Minh', 1000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 89, NULL);
+INSERT INTO `Venue` VALUES (3, 'Cafe & Event Space Hồ Chí Minh', '789 Đường Nguyễn Huệ, Quận 1, Hồ Chí Minh', 'Hồ Chí Minh', 200, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 88, NULL);
+INSERT INTO `Venue` VALUES (4, 'Trung tâm Hội nghị Hà Nội', '123 Đường Lê Lợi, Quận 1, Hà Nội', 'Hà Nội', 5000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 88, NULL);
+INSERT INTO `Venue` VALUES (5, 'Nhà hát Hà Nội', '456 Đường Trần Hưng Đạo, Quận 1, Hà Nội', 'Hà Nội', 1000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 89, NULL);
+INSERT INTO `Venue` VALUES (6, 'Cafe & Event Space Hà Nội', '789 Đường Nguyễn Huệ, Quận 1, Hà Nội', 'Hà Nội', 200, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 85, NULL);
+INSERT INTO `Venue` VALUES (7, 'Trung tâm Hội nghị Đà Nẵng', '123 Đường Lê Lợi, Quận 1, Đà Nẵng', 'Đà Nẵng', 5000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 89, NULL);
+INSERT INTO `Venue` VALUES (8, 'Nhà hát Đà Nẵng', '456 Đường Trần Hưng Đạo, Quận 1, Đà Nẵng', 'Đà Nẵng', 1000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 89, NULL);
+INSERT INTO `Venue` VALUES (9, 'Cafe & Event Space Đà Nẵng', '789 Đường Nguyễn Huệ, Quận 1, Đà Nẵng', 'Đà Nẵng', 200, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 87, NULL);
+INSERT INTO `Venue` VALUES (10, 'Trung tâm Hội nghị Cần Thơ', '123 Đường Lê Lợi, Quận 1, Cần Thơ', 'Cần Thơ', 5000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 88, NULL);
+INSERT INTO `Venue` VALUES (11, 'Nhà hát Cần Thơ', '456 Đường Trần Hưng Đạo, Quận 1, Cần Thơ', 'Cần Thơ', 1000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:22', 0, 0, 0, 88, NULL);
+INSERT INTO `Venue` VALUES (12, 'Cafe & Event Space Cần Thơ', '789 Đường Nguyễn Huệ, Quận 1, Cần Thơ', 'Cần Thơ', 200, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 88, NULL);
+INSERT INTO `Venue` VALUES (13, 'Trung tâm Hội nghị Nha Trang', '123 Đường Lê Lợi, Quận 1, Nha Trang', 'Nha Trang', 5000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 86, NULL);
+INSERT INTO `Venue` VALUES (14, 'Nhà hát Nha Trang', '456 Đường Trần Hưng Đạo, Quận 1, Nha Trang', 'Nha Trang', 1000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 86, NULL);
+INSERT INTO `Venue` VALUES (15, 'Cafe & Event Space Nha Trang', '789 Đường Nguyễn Huệ, Quận 1, Nha Trang', 'Nha Trang', 200, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 86, NULL);
+INSERT INTO `Venue` VALUES (16, 'Trung tâm Hội nghị Vũng Tàu', '123 Đường Lê Lợi, Quận 1, Vũng Tàu', 'Vũng Tàu', 5000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 89, NULL);
+INSERT INTO `Venue` VALUES (17, 'Nhà hát Vũng Tàu', '456 Đường Trần Hưng Đạo, Quận 1, Vũng Tàu', 'Vũng Tàu', 1000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 87, NULL);
+INSERT INTO `Venue` VALUES (18, 'Cafe & Event Space Vũng Tàu', '789 Đường Nguyễn Huệ, Quận 1, Vũng Tàu', 'Vũng Tàu', 200, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 88, NULL);
+INSERT INTO `Venue` VALUES (19, 'Trung tâm Hội nghị Huế', '123 Đường Lê Lợi, Quận 1, Huế', 'Huế', 5000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 89, NULL);
+INSERT INTO `Venue` VALUES (20, 'Nhà hát Huế', '456 Đường Trần Hưng Đạo, Quận 1, Huế', 'Huế', 1000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 85, NULL);
+INSERT INTO `Venue` VALUES (21, 'Cafe & Event Space Huế', '789 Đường Nguyễn Huệ, Quận 1, Huế', 'Huế', 200, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 85, NULL);
+INSERT INTO `Venue` VALUES (22, 'Trung tâm Hội nghị Hải Phòng', '123 Đường Lê Lợi, Quận 1, Hải Phòng', 'Hải Phòng', 5000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 89, NULL);
+INSERT INTO `Venue` VALUES (23, 'Nhà hát Hải Phòng', '456 Đường Trần Hưng Đạo, Quận 1, Hải Phòng', 'Hải Phòng', 1000, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 87, NULL);
+INSERT INTO `Venue` VALUES (24, 'Cafe & Event Space Hải Phòng', '789 Đường Nguyễn Huệ, Quận 1, Hải Phòng', 'Hải Phòng', 200, NULL, NULL, 1, 'ACTIVE', '2026-01-23 03:30:23', 0, 0, 0, 86, NULL);
 
 -- ----------------------------
 -- View structure for v_active_events

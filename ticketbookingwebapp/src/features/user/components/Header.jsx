@@ -7,6 +7,7 @@ import {
     LogoutOutlined,
     TagOutlined
 } from '@ant-design/icons';
+import { FaTicketAlt } from 'react-icons/fa';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
@@ -185,7 +186,7 @@ const Header = () => {
                                 <Space size="middle">
                                     <Button
                                         type="text"
-                                        icon={<TagOutlined />}
+                                        icon={<FaTicketAlt />}
                                         onClick={() => navigate('/profile?tab=tickets')}
                                         className="nav-btn"
                                     >
@@ -227,7 +228,7 @@ const Header = () => {
                                     </Button>
                                     <Button
                                         type="text"
-                                        icon={<TagOutlined />}
+                                        icon={<FaTicketAlt />}
                                         onClick={handleMyTickets}
                                         className="nav-btn"
                                     >

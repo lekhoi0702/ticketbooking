@@ -39,3 +39,6 @@ redis>=5.0.0
 # Swagger/OpenAPI documentation
 flasgger>=0.9.7.1
 PyYAML>=6.0
+
+# Google Gemini API for chatbot
+google-genai>=1.0.0

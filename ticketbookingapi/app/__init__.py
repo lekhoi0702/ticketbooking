@@ -147,6 +147,7 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.organizer_discount import organizer_discount_bp
     from app.routes.banners import banners_bp
+    from app.routes.chatbot import chatbot_bp
 
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(events_bp, url_prefix="/api")
@@ -160,6 +161,7 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix="/api")
     app.register_blueprint(organizer_discount_bp, url_prefix="/api")
     app.register_blueprint(banners_bp, url_prefix="/api")
+    app.register_blueprint(chatbot_bp, url_prefix="/api")
 
     # Import socket handlers after app is fully initialized
     # This must be done after socketio.init_app() and after all models are imported

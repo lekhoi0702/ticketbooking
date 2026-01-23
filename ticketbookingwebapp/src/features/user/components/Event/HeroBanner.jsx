@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Carousel, Button } from 'antd';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { getImageUrl } from '@shared/utils/eventUtils';
 import './HeroBanner.css';
@@ -28,9 +29,22 @@ const HeroBanner = ({ banners = [] }) => {
         return null;
     }
 
+    const handlePrev = () => {
+        if (carouselRef.current) {
+            carouselRef.current.prev();
+        }
+    };
+
+    const handleNext = () => {
+        if (carouselRef.current) {
+            carouselRef.current.next();
+        }
+    };
+
     return (
-        <div className="hero-banner-container" ref={carouselRef}>
+        <div className="hero-banner-container">
             <Carousel 
+                ref={carouselRef}
                 autoplay 
                 effect="scrollx" 
                 autoplaySpeed={4000} 
@@ -70,6 +84,27 @@ const HeroBanner = ({ banners = [] }) => {
                     );
                 })}
             </Carousel>
+            {/* Custom Navigation Arrows - đặt bên ngoài carousel */}
+            {displayBanners.length > slidesToShow && (
+                <>
+                    <button
+                        className="hero-carousel-arrow hero-carousel-prev"
+                        onClick={handlePrev}
+                        aria-label="Previous slide"
+                        type="button"
+                    >
+                        <LeftOutlined />
+                    </button>
+                    <button
+                        className="hero-carousel-arrow hero-carousel-next"
+                        onClick={handleNext}
+                        aria-label="Next slide"
+                        type="button"
+                    >
+                        <RightOutlined />
+                    </button>
+                </>
+            )}
         </div>
     );
 };
