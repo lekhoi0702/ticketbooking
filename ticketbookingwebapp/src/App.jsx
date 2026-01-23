@@ -11,6 +11,7 @@ import Header from '@features/user/components/Header';
 import Footer from '@features/user/components/Footer';
 import Home from '@features/user/pages/Home';
 import EventDetail from '@features/user/pages/EventDetail';
+import SeatSelection from '@features/user/pages/SeatSelection';
 import Checkout from '@features/user/pages/Checkout';
 import OrderSuccess from '@features/user/pages/OrderSuccess';
 import VNPayReturn from '@features/user/pages/VNPayReturn';
@@ -101,6 +102,7 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/events" element={<AllEvents />} />
                   <Route path="/event/:id" element={<EventDetail />} />
+                  <Route path="/event/:eventId/seats" element={<SeatSelection />} />
                   <Route path="/search" element={<SearchResults />} />
                   <Route path="/category/:id" element={<CategoryEvents />} />
                   <Route

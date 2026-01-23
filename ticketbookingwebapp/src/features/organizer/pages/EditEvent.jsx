@@ -329,10 +329,10 @@ const EditEvent = () => {
                                             size="large"
                                             loading={loading}
                                             disabled={isReadOnly}
-                                            icon={<SaveOutlined />}
+                                            icon={<CheckCircleOutlined />}
                                             style={{ height: 48, fontWeight: 600 }}
                                         >
-                                            Lưu thay đổi
+                                            Xác nhận
                                         </Button>
                                         <Button
                                             block

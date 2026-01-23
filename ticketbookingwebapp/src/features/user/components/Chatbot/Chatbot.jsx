@@ -42,6 +42,49 @@ const Chatbot = () => {
         }
     };
 
+    // Escape HTML to prevent XSS
+    const escapeHtml = (text) => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    };
+
+    // Format message text with proper line breaks for better readability
+    const formatMessage = (text) => {
+        if (!text) return '';
+        
+        // Escape HTML first for security
+        let formatted = escapeHtml(text);
+        
+        // Preserve existing line breaks
+        formatted = formatted.replace(/\n/g, '<br />');
+        
+        // Add line breaks after major punctuation (., !, ?) followed by space
+        // This creates natural paragraph breaks
+        formatted = formatted.replace(/([.!?])\s+/g, '$1<br />');
+        
+        // For segments longer than 80 characters, add breaks after commas
+        // Process text in chunks separated by existing breaks
+        const chunks = formatted.split(/(<br \/>)/);
+        const processedChunks = chunks.map(chunk => {
+            // Skip break tags
+            if (chunk === '<br />') return chunk;
+            
+            // If chunk is longer than 80 chars, add breaks after commas
+            if (chunk.length > 80) {
+                return chunk.replace(/(,)\s+/g, ',<br />');
+            }
+            return chunk;
+        });
+        
+        formatted = processedChunks.join('');
+        
+        // Clean up excessive breaks (max 2 consecutive)
+        formatted = formatted.replace(/(<br \/>\s*){3,}/g, '<br /><br />');
+        
+        return formatted.trim();
+    };
+
     return (
         <>
             {/* Chat Button */}
@@ -89,9 +132,14 @@ const Chatbot = () => {
                                 key={message.id}
                                 className={`chatbot-message ${message.sender === 'user' ? 'user-message' : 'bot-message'} ${message.isError ? 'error-message' : ''}`}
                             >
-                                <div className="message-content">
-                                    {message.text}
-                                </div>
+                                <div 
+                                    className="message-content"
+                                    dangerouslySetInnerHTML={{ 
+                                        __html: message.sender === 'bot' 
+                                            ? formatMessage(message.text) 
+                                            : escapeHtml(message.text).replace(/\n/g, '<br />')
+                                    }}
+                                />
                                 <div className="message-time">
                                     {new Date(message.timestamp).toLocaleTimeString('vi-VN', {
                                         hour: '2-digit',

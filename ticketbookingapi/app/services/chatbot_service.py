@@ -13,6 +13,10 @@ from sqlalchemy import or_, func
 from datetime import datetime
 from typing import Optional, Dict, Any
 import json
+import re
+from app.utils.logger import get_logger
+
+logger = get_logger('ticketbooking.chatbot')
 
 
 class ChatbotService:
@@ -56,6 +60,12 @@ Nhiệm vụ của bạn:
 3. Giải thích về quy trình và chính sách
 4. Khi được cung cấp thông tin events/orders cụ thể, sử dụng để trả lời chính xác
 
+QUAN TRỌNG - Quy tắc về thông tin:
+- KHÔNG BAO GIỜ đề cập đến các ID kỹ thuật như event_id, category_id, venue_id, order_id, ticket_id, user_id, v.v.
+- CHỈ sử dụng thông tin hữu ích cho khách hàng: tên sự kiện, thời gian, địa điểm, giá vé, mã đơn hàng (order_code), trạng thái
+- Mã đơn hàng (order_code) là thông tin công khai và có thể đề cập, nhưng các ID nội bộ khác thì KHÔNG
+- Khi mô tả sự kiện, chỉ nêu: tên, thời gian, địa điểm, giá, mô tả - KHÔNG nêu ID
+
 Luôn trả lời bằng tiếng Việt, thân thiện và chuyên nghiệp. Nếu không biết câu trả lời, hãy thành thật và hướng dẫn người dùng liên hệ hỗ trợ."""
 
     def _get_system_context(self, user_id: Optional[int] = None) -> str:
@@ -71,9 +81,12 @@ Luôn trả lời bằng tiếng Việt, thân thiện và chuyên nghiệp. N�
             if recent_events:
                 context_parts.append("\n\nCác sự kiện sắp tới:")
                 for event in recent_events:
+                    # Format event info without exposing technical IDs
+                    venue_name = event.venue.venue_name if event.venue else "Chưa cập nhật"
                     context_parts.append(
-                        f"- {event.event_name} (ID: {event.event_id}): "
+                        f"- {event.event_name}: "
                         f"{event.start_datetime.strftime('%d/%m/%Y %H:%M') if event.start_datetime else 'N/A'}, "
+                        f"Tại {venue_name}, "
                         f"Đã bán {event.sold_tickets}/{event.total_capacity} vé"
                     )
         except Exception as e:
@@ -122,6 +135,28 @@ Luôn trả lời bằng tiếng Việt, thân thiện và chuyên nghiệp. N�
             return [event.to_dict() for event in events]
         except Exception as e:
             return []
+
+    def _sanitize_response(self, text: str) -> str:
+        """
+        Remove technical IDs and internal information from response text
+        """
+        import re
+        
+        # Remove patterns like "ID: 123", "event_id: 456", "ID sự kiện: 789"
+        text = re.sub(r'(?i)(ID|event_id|category_id|venue_id|order_id|ticket_id|user_id|manager_id)[\s:]*\d+', '', text)
+        text = re.sub(r'(?i)ID\s+sự\s+kiện[\s:]*\d+', '', text)
+        text = re.sub(r'(?i)ID\s+đơn\s+hàng[\s:]*\d+', '', text)
+        
+        # Remove standalone numeric IDs that might be technical (but keep order_code format)
+        # Pattern: numbers at start of line or after colon, but not order codes (usually alphanumeric)
+        text = re.sub(r'(?i)(?:^|\s)(?:ID|Mã\s+ID)[\s:]*(\d+)(?=\s|$|\.|,|;|:)', '', text)
+        
+        # Clean up extra spaces
+        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r'\s*,\s*,', ',', text)  # Remove double commas
+        text = re.sub(r'\s*\.\s*\.', '.', text)  # Remove double periods
+        
+        return text.strip()
 
     def _get_order_by_code(self, order_code: str, user_id: Optional[int] = None) -> Optional[Dict]:
         """Get order information by order code"""
@@ -184,14 +219,20 @@ Luôn trả lời bằng tiếng Việt, thân thiện và chuyên nghiệp. N�
                 )
                 
                 # Extract text from response
+                response_text = None
                 if hasattr(response, 'text'):
-                    return response.text
+                    response_text = response.text
                 elif hasattr(response, 'candidates') and response.candidates:
                     candidate = response.candidates[0]
                     if hasattr(candidate, 'content') and candidate.content:
                         if hasattr(candidate.content, 'parts') and candidate.content.parts:
-                            return candidate.content.parts[0].text
-                    return str(candidate)
+                            response_text = candidate.content.parts[0].text
+                    if not response_text:
+                        response_text = str(candidate)
+                
+                if response_text:
+                    # Sanitize response to remove technical IDs
+                    return self._sanitize_response(response_text)
                 else:
                     return "Xin lỗi, tôi không thể tạo phản hồi lúc này. Vui lòng thử lại sau."
             except Exception as api_error:
@@ -207,7 +248,7 @@ Luôn trả lời bằng tiếng Việt, thân thiện và chuyên nghiệp. N�
                             contents=full_prompt
                         )
                         if hasattr(response, 'text'):
-                            return response.text
+                            return self._sanitize_response(response.text)
                     except Exception:
                         pass
                 # Re-raise to be caught by outer exception handler
@@ -215,8 +256,6 @@ Luôn trả lời bằng tiếng Việt, thân thiện và chuyên nghiệp. N�
                 
         except Exception as e:
             # Log error with details
-            from app.utils.logger import get_logger
-            logger = get_logger('ticketbooking.chatbot')
             error_str = str(e)
             logger.error(f"Error processing chatbot message: {error_str}")
             

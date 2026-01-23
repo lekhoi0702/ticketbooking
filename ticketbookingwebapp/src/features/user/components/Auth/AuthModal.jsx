@@ -81,21 +81,34 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                 const res = await api.register(formData);
                 if (res.success) {
                     // Auto-login after successful registration
-                    const loginRes = await api.login({
-                        email: formData.email,
-                        password: formData.password
-                    });
-                    if (loginRes.success && loginRes.data) {
-                        login(loginRes.data.user, loginRes.data.access_token);
-                        onHide();
-                        if (onSuccess) onSuccess();
-                    } else {
-                        // If auto-login fails, switch to login tab
+                    try {
+                        const loginRes = await api.login({
+                            email: formData.email,
+                            password: formData.password
+                        });
+                        if (loginRes.success && loginRes.data) {
+                            login(loginRes.data.user, loginRes.data.access_token);
+                            onHide();
+                            if (onSuccess) onSuccess();
+                        } else {
+                            // If auto-login fails, switch to login tab
+                            setActiveTab('login');
+                            setError({ type: 'success', msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
+                            setFormData({ ...formData, full_name: '', phone: '' });
+                            setFieldErrors({});
+                        }
+                    } catch (loginErr) {
+                        // If auto-login fails with error, switch to login tab and show message
                         setActiveTab('login');
-                        setError({ type: 'success', msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
+                        const loginErrorMsg = loginErr.message || 'Đăng ký thành công nhưng đăng nhập tự động thất bại. Vui lòng đăng nhập thủ công.';
+                        setError({ type: 'warning', msg: loginErrorMsg });
                         setFormData({ ...formData, full_name: '', phone: '' });
                         setFieldErrors({});
                     }
+                } else {
+                    // Registration response indicates failure
+                    const errorMsg = res.message || 'Đăng ký không thành công';
+                    setError({ type: 'danger', msg: errorMsg });
                 }
             } else {
                 const res = await api.login({
@@ -107,21 +120,32 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                     onHide();
                     if (onSuccess) onSuccess();
                 } else {
-                    setError({ type: 'danger', msg: res.message || 'Đăng nhập không thành công' });
+                    // Always show error message
+                    const errorMsg = res.message || 'Đăng nhập không thành công';
+                    setError({ type: 'danger', msg: errorMsg });
                 }
             }
         } catch (err) {
             const msg = err.message || 'Có lỗi xảy ra';
             const newFieldErrors = {};
 
-            if (msg.toLowerCase().includes('email')) {
+            // Always show error message to user
+            if (msg.toLowerCase().includes('email') && activeTab === 'login') {
+                // For login, show email error in field
                 newFieldErrors.email = msg;
-            } else if (msg.toLowerCase().includes('số điện thoại') || msg.toLowerCase().includes('phone')) {
+                // Also show general error message
+                setError({ type: 'danger', msg: msg });
+            } else if ((msg.toLowerCase().includes('số điện thoại') || msg.toLowerCase().includes('phone')) && activeTab === 'register') {
+                // For register, show phone error in field
                 newFieldErrors.phone = msg;
+                // Also show general error message
+                setError({ type: 'danger', msg: msg });
             } else {
+                // Always show error message
                 setError({ type: 'danger', msg: msg });
             }
 
+            // Set field-specific errors if any
             if (Object.keys(newFieldErrors).length > 0) {
                 setFieldErrors(newFieldErrors);
             }

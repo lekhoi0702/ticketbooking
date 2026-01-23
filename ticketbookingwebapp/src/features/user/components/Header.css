@@ -275,7 +275,7 @@
     cursor: pointer;
     padding: 10px 16px;
     transition: background 0.2s;
-    color: #1f2937;
+    color: #1f2937 !important;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -288,6 +288,17 @@
 .suggestion-item .item-cat {
     font-size: 12px;
     color: #9ca3af;
+}
+
+/* Ensure text in dropdown is black */
+.suggestion-item .ant-list-item-meta-title,
+.suggestion-item .ant-list-item-meta-title > * {
+    color: #000000 !important;
+}
+
+.suggestion-item .ant-list-item-meta-description,
+.suggestion-item .ant-list-item-meta-description > * {
+    color: #333333 !important;
 }
 
 .suggestion-item:hover {

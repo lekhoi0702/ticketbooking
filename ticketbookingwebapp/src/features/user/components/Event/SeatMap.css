@@ -7,6 +7,7 @@
     padding: 32px !important;
     color: #ffffff !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+    overflow: auto !important;
 }
 
 /* Error Alert */
@@ -156,9 +157,10 @@
 
 /* Seats Grid */
 .seats-grid {
-    overflow-x: auto !important;
+    overflow: auto !important;
     padding: 24px 0 !important;
     margin-bottom: 32px !important;
+    max-height: 600px !important;
 }
 
 .seats-row {

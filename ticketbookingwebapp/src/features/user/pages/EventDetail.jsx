@@ -10,17 +10,15 @@ import { useFavorites } from '@context/FavoriteContext';
 
 // Sub-components
 import EventHero from '@features/user/components/Event/EventHero';
-import TicketSelection from '@features/user/components/Event/TicketSelection';
-import StickyBookingBar from '@features/user/components/Event/StickyBookingBar';
 import AuthModal from '@features/user/components/Auth/AuthModal';
 import ScheduleCalendar from '@features/user/components/Event/ScheduleCalendar';
 import EventVenueInfo from '@features/user/components/Event/EventVenueInfo';
 import EventOrganizerCard from '@features/user/components/Event/EventOrganizerCard';
 import RecommendedEvents from '@features/user/components/Event/RecommendedEvents';
-import CountdownTimer from '@features/user/components/Checkout/CountdownTimer';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 // Utils & Styles
+import { getImageUrl } from '@shared/utils/eventUtils';
 import './EventDetail.css';
 
 function EventDetail() {
@@ -160,28 +158,14 @@ function EventDetail() {
                 <Container>
                     <Nav className="nav-pills">
                         <Nav.Link href="#description" className="nav-item">Giới thiệu</Nav.Link>
-                        <Nav.Link href="#booking-section" className="nav-item">Mua vé</Nav.Link>
+                        <Nav.Link href="#booking-section" className="nav-item">Lịch diễn</Nav.Link>
                         <Nav.Link href="#venue" className="nav-item">Địa điểm</Nav.Link>
-                        <Nav.Link href="#organizer" className="nav-item d-lg-none">Ban tổ chức</Nav.Link>
+                        <Nav.Link href="#organizer" className="nav-item">Ban tổ chức</Nav.Link>
                     </Nav>
                 </Container>
             </div>
 
             <Container className="event-main-content">
-                {/* Countdown Timer - Show when user has selected seats */}
-                {(() => {
-                    const hasSelectedSeats = Object.values(selectedSeats).some(seats => seats && seats.length > 0);
-                    return (
-                        <CountdownTimer 
-                            hasSelectedSeats={hasSelectedSeats}
-                            eventId={event?.event_id}
-                            onExpired={() => {
-                                message.warning('Thời gian giữ ghế đã hết. Vui lòng chọn lại ghế.');
-                            }}
-                        />
-                    );
-                })()}
-
                 <Row>
                     <Col lg={8}>
                         <section className="detail-section" id="description">
@@ -191,53 +175,79 @@ function EventDetail() {
                             </div>
                         </section>
 
-                        <div id="booking-section" className="event-tabs-wrapper">
-                            <Tabs
-                                activeKey={activeTab}
-                                onSelect={(k) => setActiveTab(k)}
-                                id="event-booking-tabs"
-                                className="custom-event-tabs mb-4"
-                                variant="pills"
-                                justify
-                            >
-                                <Tab eventKey="tickets" title="Chọn vé - Chỗ ngồi">
-                                    <div className="tab-content-wrapper" id="tickets">
-                                        <TicketSelection
-                                            event={event}
-                                            activeTicketType={activeTicketType}
-                                            setActiveTicketType={setActiveTicketType}
-                                            selectedTickets={selectedTickets}
-                                            handleTicketQuantityChange={handleTicketQuantityChange}
-                                            handleSeatSelection={handleSeatSelection}
-                                            hasSeatMap={hasSeatMap}
-                                            setHasSeatMap={setHasSeatMap}
-                                        />
-                                    </div>
-                                </Tab>
-
-                                <Tab eventKey="schedule" title="Lịch diễn">
-                                    <div className="tab-content-wrapper">
-                                        <ScheduleCalendar
-                                            currentEvent={event}
-                                            schedules={event.schedule || []}
-                                            onSelectSchedule={(eventId) => navigate(`/event/${eventId}`)}
-                                            selectedScheduleId={event.event_id}
-                                        />
-                                    </div>
-                                </Tab>
-                            </Tabs>
+                        <div id="booking-section" className="event-schedule-section">
+                            <section className="detail-section">
+                                <h3 className="section-title">Lịch diễn</h3>
+                                <div className="tab-content-wrapper">
+                                    <ScheduleCalendar
+                                        currentEvent={event}
+                                        schedules={event.schedule || []}
+                                        onSelectSchedule={(eventId) => {
+                                            // Navigate to seat selection page
+                                            navigate(`/event/${eventId}/seats`, {
+                                                state: {
+                                                    fromSchedule: true
+                                                }
+                                            });
+                                        }}
+                                        selectedScheduleId={event.event_id}
+                                    />
+                                </div>
+                            </section>
                         </div>
 
                         <EventVenueInfo venue={event.venue} />
-                    </Col>
 
+                        {/* Organizer Information Section */}
+                        {event.organizer_info && (
+                            <section className="detail-section d-lg-none" id="organizer">
+                                <h3 className="section-title">Ban tổ chức</h3>
+                                <div className="organizer-section-content">
+                                    <div className="organizer-info">
+                                        <div className="organizer-avatar">
+                                            {event.organizer_info?.logo_url ? (
+                                                <img src={getImageUrl(event.organizer_info.logo_url)} alt={event.organizer_info.organization_name} />
+                                            ) : (
+                                                (event.organizer_info?.organization_name || event.event_name || 'O').charAt(0).toString().toUpperCase()
+                                            )}
+                                        </div>
+                                        <div className="organizer-details">
+                                            <h6>{event.organizer_info?.organization_name || 'Ban tổ chức sự kiện'}</h6>
+                                            <p className="text-muted small mb-0">
+                                                {event.organizer_info?.description || 'Chuyên tổ chức các sự kiện giải trí hàng đầu'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+                    </Col>
                     <Col lg={4}>
-                        {/* Sidebar Info */}
-                        <div id="organizer">
-                            <EventOrganizerCard
+                        {event.organizer_info && (
+                            <EventOrganizerCard 
                                 organizerInfo={event.organizer_info}
                                 eventName={event.event_name}
                             />
+                        )}
+                        
+                        {/* Advertisement Banner */}
+                        <div className="sidebar-advertisement mt-4">
+                            <a 
+                                href="https://shopee.vn" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="ad-link"
+                            >
+                                <img 
+                                    src="/quangcaoshopee.webp" 
+                                    alt="Quảng cáo Shopee" 
+                                    className="ad-image"
+                                    onError={(e) => {
+                                        // Fallback nếu ảnh không tìm thấy
+                                        e.target.style.display = 'none';
+                                    }}
+                                />
+                            </a>
                         </div>
                     </Col>
                 </Row>
@@ -245,13 +255,6 @@ function EventDetail() {
 
             {/* Recommended Events - Full Width */}
             <RecommendedEvents eventId={event.event_id} />
-
-            {/* Sticky Bottom Bar */}
-            <StickyBookingBar
-                totalTickets={totalTickets}
-                calculateTotal={calculateTotal}
-                onCheckout={handleCheckout}
-            />
 
         </div>
     );

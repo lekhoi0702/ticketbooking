@@ -143,6 +143,12 @@ const CategoryEvents = () => {
         }
     };
 
+    // Breadcrumb: use filtered category when user has applied category filter
+    const breadcrumbCategoryId = filters.categoryId ?? (id ? parseInt(id) : undefined);
+    const breadcrumbCategoryName = breadcrumbCategoryId != null
+        ? (categories.find((c) => c.category_id === breadcrumbCategoryId)?.category_name ?? categoryName)
+        : categoryName;
+
     // Show fullscreen loading only on initial load (when no events yet)
     if (loading && events.length === 0) {
         return <LoadingSpinner fullScreen tip={`Đang tải sự kiện ${categoryName || ''}...`} />;
@@ -154,7 +160,10 @@ const CategoryEvents = () => {
                 <AntBreadcrumb
                     items={[
                         { label: 'Trang chủ', path: '/', icon: <FaHome /> },
-                        { label: categoryName || 'Đang tải...', path: `/category/${id}` }
+                        {
+                            label: breadcrumbCategoryName || 'Đang tải...',
+                            path: breadcrumbCategoryId != null ? `/category/${breadcrumbCategoryId}` : '/events'
+                        }
                     ]}
                 />
 

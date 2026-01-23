@@ -7,9 +7,31 @@ export const authApi = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials)
         });
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Login failed');
+            let errorMessage = 'Đăng nhập không thành công';
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const error = await response.json();
+                    errorMessage = error.message || error.error || errorMessage;
+                } else {
+                    const text = await response.text();
+                    errorMessage = text || errorMessage;
+                }
+            } catch (e) {
+                // If parsing fails, use status-based messages
+                if (response.status === 401) {
+                    errorMessage = 'Email/Số điện thoại hoặc mật khẩu không đúng';
+                } else if (response.status === 403) {
+                    errorMessage = 'Bạn không có quyền truy cập';
+                } else if (response.status >= 500) {
+                    errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau';
+                }
+            }
+            const error = new Error(errorMessage);
+            error.status = response.status;
+            throw error;
         }
         return await response.json();
     },
@@ -20,9 +42,31 @@ export const authApi = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData)
         });
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Registration failed');
+            let errorMessage = 'Đăng ký không thành công';
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const error = await response.json();
+                    errorMessage = error.message || error.error || errorMessage;
+                } else {
+                    const text = await response.text();
+                    errorMessage = text || errorMessage;
+                }
+            } catch (e) {
+                // If parsing fails, use status-based messages
+                if (response.status === 409) {
+                    errorMessage = 'Email hoặc số điện thoại đã được sử dụng';
+                } else if (response.status === 400) {
+                    errorMessage = 'Thông tin đăng ký không hợp lệ';
+                } else if (response.status >= 500) {
+                    errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau';
+                }
+            }
+            const error = new Error(errorMessage);
+            error.status = response.status;
+            throw error;
         }
         return await response.json();
     },
@@ -41,9 +85,31 @@ export const authApi = {
             headers: headers,
             body: JSON.stringify(data)
         });
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Change password failed');
+            let errorMessage = 'Đổi mật khẩu không thành công';
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const error = await response.json();
+                    errorMessage = error.message || error.error || errorMessage;
+                } else {
+                    const text = await response.text();
+                    errorMessage = text || errorMessage;
+                }
+            } catch (e) {
+                // If parsing fails, use status-based messages
+                if (response.status === 401) {
+                    errorMessage = 'Mật khẩu hiện tại không đúng';
+                } else if (response.status === 400) {
+                    errorMessage = 'Thông tin không hợp lệ';
+                } else if (response.status >= 500) {
+                    errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau';
+                }
+            }
+            const error = new Error(errorMessage);
+            error.status = response.status;
+            throw error;
         }
         return await response.json();
     },

@@ -91,7 +91,9 @@ const Login = () => {
                 }
             }
         } catch (err) {
-            setError({ type: 'danger', msg: err.message || 'Có lỗi xảy ra' });
+            // Always show error message to user
+            const errorMsg = err.message || 'Có lỗi xảy ra';
+            setError({ type: 'danger', msg: errorMsg });
         } finally {
             setLoading(false);
         }

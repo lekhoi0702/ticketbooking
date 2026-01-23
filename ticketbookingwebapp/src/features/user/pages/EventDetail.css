@@ -385,6 +385,34 @@
     line-height: 1.4;
 }
 
+/* Sidebar Advertisement */
+.sidebar-advertisement {
+    width: 100%;
+    margin-top: 24px;
+}
+
+.sidebar-advertisement .ad-link {
+    display: block;
+    width: 100%;
+    text-decoration: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.sidebar-advertisement .ad-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-advertisement .ad-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
 /* Venue Map Embed */
 .venue-map-embed {
     margin-top: 16px;
@@ -404,6 +432,62 @@
     width: 100% !important;
     height: 100% !important;
     border: none;
+}
+
+/* Organizer Section Content */
+.organizer-section-content {
+    padding: 0;
+}
+
+.organizer-section-content .organizer-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.organizer-section-content .organizer-info:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.organizer-section-content .organizer-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: rgba(45, 194, 117, 0.1);
+    color: #2dc275;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 800;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid rgba(45, 194, 117, 0.2);
+}
+
+.organizer-section-content .organizer-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.organizer-section-content .organizer-details h6 {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.organizer-section-content .organizer-details p {
+    color: #9ca3af !important;
+    line-height: 1.4;
+    margin-bottom: 0;
 }
 
 /* Schedule Selector */
@@ -701,7 +785,8 @@
 
 /* Button */
 .ticket-buy-btn {
-    width: 100%;
+    width: calc(100% - 40px) !important;
+    height: 50px !important;
     background-color: #2DC275 !important;
     border: none !important;
     font-weight: 700 !important;
@@ -712,6 +797,9 @@
     letter-spacing: 0.3px;
     transition: all 0.2s ease-in-out !important;
     line-height: 1.2;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .ticket-buy-btn:hover {
@@ -906,6 +994,12 @@
     padding: 8px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.custom-event-tabs .nav {
+    justify-content: center !important;
 }
 
 .custom-event-tabs .nav-item {
@@ -916,9 +1010,10 @@
     color: #9ca3af !important;
     font-weight: 600;
     border-radius: 8px !important;
-    padding: 12px 24px !important;
+    padding: 12px 16px !important;
     transition: all 0.2s;
     background: transparent !important;
+    white-space: nowrap;
 }
 
 .custom-event-tabs .nav-link:hover {
