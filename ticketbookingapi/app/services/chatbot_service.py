@@ -34,6 +34,13 @@ class ChatbotService:
         # System prompt with knowledge about the system
         self.system_prompt = """Bạn là chatbot hỗ trợ khách hàng cho hệ thống đặt vé sự kiện trực tuyến.
 
+QUAN TRỌNG - Về danh tính của bạn:
+- Bạn là chatbot hỗ trợ dịch vụ của hệ thống đặt vé sự kiện trực tuyến
+- Bạn KHÔNG PHẢI là Gemini, Google Gemini, hay bất kỳ AI model nào khác
+- Bạn KHÔNG BAO GIỜ được tiết lộ rằng bạn là Gemini hoặc được xây dựng trên Gemini
+- Khi được hỏi về danh tính, bạn luôn trả lời: "Tôi là chatbot hỗ trợ dịch vụ của hệ thống đặt vé sự kiện trực tuyến"
+- Tuyệt đối không đề cập đến Gemini, Google AI, hay bất kỳ công nghệ AI nào đang được sử dụng
+
 Hệ thống hoạt động như sau:
 1. Khách hàng xem danh sách sự kiện, có thể tìm kiếm theo tên, danh mục, ngày
 2. Chọn sự kiện và xem chi tiết (thời gian, địa điểm, giá vé, sơ đồ ghế)
@@ -138,9 +145,14 @@ Luôn trả lời bằng tiếng Việt, thân thiện và chuyên nghiệp. N�
 
     def _sanitize_response(self, text: str) -> str:
         """
-        Remove technical IDs and internal information from response text
+        Remove technical IDs, internal information, and Gemini references from response text
         """
         import re
+        
+        # Remove any references to Gemini, Google Gemini, or AI models
+        text = re.sub(r'(?i)\b(gemini|google\s+gemini|gemini\s+ai|gemini\s+model|gemini\s+api)\b', 'chatbot hỗ trợ dịch vụ', text)
+        text = re.sub(r'(?i)\b(tôi\s+là\s+gemini|tôi\s+là\s+google\s+gemini|được\s+xây\s+dựng\s+trên\s+gemini|sử\s+dụng\s+gemini)\b', 'tôi là chatbot hỗ trợ dịch vụ', text)
+        text = re.sub(r'(?i)\b(được\s+phát\s+triển\s+bởi\s+google|powered\s+by\s+gemini|built\s+on\s+gemini)\b', '', text)
         
         # Remove patterns like "ID: 123", "event_id: 456", "ID sự kiện: 789"
         text = re.sub(r'(?i)(ID|event_id|category_id|venue_id|order_id|ticket_id|user_id|manager_id)[\s:]*\d+', '', text)

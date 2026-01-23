@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
 import { FaHome } from 'react-icons/fa';
-import { DatePicker, Select, InputNumber, Button, Space, Card as AntCard } from 'antd';
+import { DatePicker, Select, InputNumber, Button, Space, Card as AntCard, Row as AntRow, Col as AntCol } from 'antd';
 import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import { api } from '@services/api';
 import EventCard from '@features/user/components/Event/EventCard';
 import AntBreadcrumb from '@features/user/components/AntBreadcrumb';
@@ -149,6 +148,15 @@ const CategoryEvents = () => {
         ? (categories.find((c) => c.category_id === breadcrumbCategoryId)?.category_name ?? categoryName)
         : categoryName;
 
+    const baseCategoryId = id ? parseInt(id) : undefined;
+    const hasActiveFilters = Boolean(
+        (filters.dateRange && filters.dateRange.length === 2) ||
+        filters.venueId ||
+        (filters.categoryId && baseCategoryId && filters.categoryId !== baseCategoryId) ||
+        filters.minPrice !== undefined ||
+        filters.maxPrice !== undefined
+    );
+
     // Show fullscreen loading only on initial load (when no events yet)
     if (loading && events.length === 0) {
         return <LoadingSpinner fullScreen tip={`Đang tải sự kiện ${categoryName || ''}...`} />;
@@ -169,36 +177,70 @@ const CategoryEvents = () => {
 
                 {/* Filter Section */}
                 <AntCard 
-                    className="mb-4" 
-                    style={{ 
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '8px'
-                    }}
+                    className="category-filters-card mb-4"
                 >
-                    <div style={{ marginBottom: 16 }}>
-                        <FilterOutlined style={{ marginRight: 8, color: '#fff' }} />
-                        <span style={{ color: '#fff', fontWeight: 600, fontSize: '16px' }}>Bộ lọc</span>
+                    <div className="category-filters-header">
+                        <div className="category-filters-title">
+                            <span className="category-filters-icon" aria-hidden="true">
+                                <FilterOutlined />
+                            </span>
+                            <div className="category-filters-title-text">
+                                <div className="category-filters-title-row">
+                                    <span className="category-filters-title-main">Bộ lọc</span>
+                                    {hasActiveFilters ? <span className="category-filters-badge">Đang áp dụng</span> : null}
+                                </div>
+                                <div className="category-filters-subtitle">Lọc theo ngày, địa điểm, giá và thể loại.</div>
+                            </div>
+                        </div>
+
+                        <Space className="category-filters-actions" size={10} wrap>
+                            <Button
+                                size="large"
+                                type="primary"
+                                icon={<FilterOutlined />}
+                                onClick={handleApplyFilters}
+                                loading={loading}
+                            >
+                                Áp dụng
+                            </Button>
+                            <Button
+                                size="large"
+                                icon={<ReloadOutlined />}
+                                onClick={handleResetFilters}
+                                disabled={loading || !hasActiveFilters}
+                            >
+                                Đặt lại
+                            </Button>
+                        </Space>
                     </div>
-                    <Row gutter={[16, 16]}>
-                        <Col xs={24} sm={12} md={6}>
-                            <div style={{ marginBottom: 8, color: 'rgba(255, 255, 255, 0.85)' }}>Ngày diễn ra</div>
+
+                    <AntRow gutter={[16, 16]} className="category-filters-grid">
+                        <AntCol xs={24} sm={12} md={8} lg={7}>
+                            <div className="filter-field">
+                                <div className="filter-label">Ngày diễn ra</div>
                             <RangePicker
+                                size="large"
                                 style={{ width: '100%' }}
                                 value={filters.dateRange}
                                 onChange={(dates) => setFilters({ ...filters, dateRange: dates })}
                                 format="DD/MM/YYYY"
                                 placeholder={['Từ ngày', 'Đến ngày']}
                             />
-                        </Col>
-                        <Col xs={24} sm={12} md={6}>
-                            <div style={{ marginBottom: 8, color: 'rgba(255, 255, 255, 0.85)' }}>Vị trí</div>
+                            </div>
+                        </AntCol>
+
+                        <AntCol xs={24} sm={12} md={8} lg={7}>
+                            <div className="filter-field">
+                                <div className="filter-label">Vị trí</div>
                             <Select
+                                size="large"
                                 style={{ width: '100%' }}
                                 placeholder="Chọn địa điểm"
                                 value={filters.venueId}
                                 onChange={(value) => setFilters({ ...filters, venueId: value })}
                                 allowClear
+                                showSearch
+                                optionFilterProp="children"
                             >
                                 {venues.map(venue => (
                                     <Option key={venue.venue_id} value={venue.venue_id}>
@@ -206,10 +248,14 @@ const CategoryEvents = () => {
                                     </Option>
                                 ))}
                             </Select>
-                        </Col>
-                        <Col xs={24} sm={12} md={4}>
-                            <div style={{ marginBottom: 8, color: 'rgba(255, 255, 255, 0.85)' }}>Giá từ (VNĐ)</div>
+                            </div>
+                        </AntCol>
+
+                        <AntCol xs={24} sm={12} md={8} lg={5}>
+                            <div className="filter-field">
+                                <div className="filter-label">Giá từ (VNĐ)</div>
                             <InputNumber
+                                size="large"
                                 style={{ width: '100%' }}
                                 placeholder="Tối thiểu"
                                 value={filters.minPrice}
@@ -218,10 +264,14 @@ const CategoryEvents = () => {
                                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                 parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                             />
-                        </Col>
-                        <Col xs={24} sm={12} md={4}>
-                            <div style={{ marginBottom: 8, color: 'rgba(255, 255, 255, 0.85)' }}>Giá đến (VNĐ)</div>
+                            </div>
+                        </AntCol>
+
+                        <AntCol xs={24} sm={12} md={8} lg={5}>
+                            <div className="filter-field">
+                                <div className="filter-label">Giá đến (VNĐ)</div>
                             <InputNumber
+                                size="large"
                                 style={{ width: '100%' }}
                                 placeholder="Tối đa"
                                 value={filters.maxPrice}
@@ -230,14 +280,21 @@ const CategoryEvents = () => {
                                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                 parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                             />
-                        </Col>
-                        <Col xs={24} sm={12} md={4}>
-                            <div style={{ marginBottom: 8, color: 'rgba(255, 255, 255, 0.85)' }}>Thể loại</div>
+                            </div>
+                        </AntCol>
+
+                        <AntCol xs={24} sm={12} md={8} lg={6}>
+                            <div className="filter-field">
+                                <div className="filter-label">Thể loại</div>
                             <Select
+                                size="large"
                                 style={{ width: '100%' }}
                                 placeholder="Chọn thể loại"
                                 value={filters.categoryId}
                                 onChange={(value) => setFilters({ ...filters, categoryId: value })}
+                                allowClear
+                                showSearch
+                                optionFilterProp="children"
                             >
                                 {categories.map(cat => (
                                     <Option key={cat.category_id} value={cat.category_id}>
@@ -245,29 +302,9 @@ const CategoryEvents = () => {
                                     </Option>
                                 ))}
                             </Select>
-                        </Col>
-                    </Row>
-                    <Row gutter={16} style={{ marginTop: 16 }}>
-                        <Col>
-                            <Button 
-                                type="primary" 
-                                icon={<FilterOutlined />}
-                                onClick={handleApplyFilters}
-                                loading={loading}
-                            >
-                                Áp dụng
-                            </Button>
-                        </Col>
-                        <Col>
-                            <Button 
-                                icon={<ReloadOutlined />}
-                                onClick={handleResetFilters}
-                                disabled={loading}
-                            >
-                                Thiết lập lại
-                            </Button>
-                        </Col>
-                    </Row>
+                            </div>
+                        </AntCol>
+                    </AntRow>
                 </AntCard>
 
                 {/* Events List Section */}

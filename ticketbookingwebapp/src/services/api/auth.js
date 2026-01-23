@@ -45,11 +45,20 @@ export const authApi = {
         
         if (!response.ok) {
             let errorMessage = 'Đăng ký không thành công';
+            let errorData = null;
             try {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const error = await response.json();
-                    errorMessage = error.message || error.error || errorMessage;
+                    // Backend returns: { success: false, error: { code, message, field, value } }
+                    if (error.error && error.error.message) {
+                        errorMessage = error.error.message;
+                        errorData = error.error;
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    } else if (error.error) {
+                        errorMessage = typeof error.error === 'string' ? error.error : 'Đăng ký không thành công';
+                    }
                 } else {
                     const text = await response.text();
                     errorMessage = text || errorMessage;
@@ -66,6 +75,7 @@ export const authApi = {
             }
             const error = new Error(errorMessage);
             error.status = response.status;
+            error.data = errorData; // Attach error data for field-specific handling
             throw error;
         }
         return await response.json();

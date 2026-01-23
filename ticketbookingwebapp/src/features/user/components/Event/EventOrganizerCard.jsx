@@ -5,9 +5,6 @@ import { getImageUrl } from '@shared/utils/eventUtils';
 const EventOrganizerCard = ({ organizerInfo, eventName }) => {
     return (
         <Card className="sidebar-card" id="organizer">
-            <Card.Header className="bg-white">
-                <h5 className="mb-0">Thông tin ban tổ chức</h5>
-            </Card.Header>
             <Card.Body>
                 <div className="organizer-info">
                     <div className="organizer-avatar">

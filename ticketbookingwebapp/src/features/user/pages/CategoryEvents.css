@@ -44,14 +44,118 @@
     border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Filter Section Styles - Chỉ áp dụng cho filter card, không ảnh hưởng EventCard */
-.category-events-wrapper .ant-card:not(.event-card-premium) {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+/* =========================
+   Filters (Premium / Glass)
+   ========================= */
+.category-events-wrapper .category-filters-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35) !important;
 }
 
-.category-events-wrapper .ant-card:not(.event-card-premium) .ant-card-body {
-    padding: 20px;
+.category-events-wrapper .category-filters-card::after {
+    content: "";
+    position: absolute;
+    inset: -120px -120px auto auto;
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle at 30% 30%, rgba(45, 194, 117, 0.25), rgba(45, 194, 117, 0) 60%);
+    pointer-events: none;
+}
+
+.category-events-wrapper .category-filters-card .ant-card-body {
+    position: relative;
+    padding: 18px !important;
+}
+
+.category-filters-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.category-filters-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.category-filters-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #d1fae5;
+    background: rgba(45, 194, 117, 0.16);
+    border: 1px solid rgba(45, 194, 117, 0.22);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.category-filters-title-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.category-filters-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.category-filters-title-main {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.category-filters-badge {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(209, 250, 229, 0.95);
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(45, 194, 117, 0.14);
+    border: 1px solid rgba(45, 194, 117, 0.22);
+}
+
+.category-filters-subtitle {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.category-filters-actions {
+    display: flex;
+    align-items: center;
+}
+
+.category-filters-grid {
+    margin-top: 2px;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* Đảm bảo EventCard không bị override */
@@ -65,53 +169,89 @@
     background-color: rgb(39, 39, 42) !important;
 }
 
-.category-events-wrapper .ant-picker,
-.category-events-wrapper .ant-select-selector,
-.category-events-wrapper .ant-input-number {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
-    color: #fff !important;
+/* Filter controls styling (scoped to the filter card) */
+.category-events-wrapper .category-filters-card .ant-select-selector,
+.category-events-wrapper .category-filters-card .ant-picker,
+.category-events-wrapper .category-filters-card .ant-input-number {
+    background: rgba(0, 0, 0, 0.22) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 14px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.category-events-wrapper .ant-picker-input > input,
-.category-events-wrapper .ant-select-selection-item,
-.category-events-wrapper .ant-select-selection-placeholder {
-    color: #fff !important;
+.category-events-wrapper .category-filters-card .ant-picker:hover,
+.category-events-wrapper .category-filters-card .ant-select:hover .ant-select-selector,
+.category-events-wrapper .category-filters-card .ant-input-number:hover {
+    border-color: rgba(255, 255, 255, 0.24) !important;
+    transform: translateY(-1px);
 }
 
-.category-events-wrapper .ant-picker:hover,
-.category-events-wrapper .ant-select:hover .ant-select-selector,
-.category-events-wrapper .ant-input-number:hover {
-    border-color: rgba(255, 255, 255, 0.4) !important;
+.category-events-wrapper .category-filters-card .ant-picker-focused,
+.category-events-wrapper .category-filters-card .ant-select-focused .ant-select-selector,
+.category-events-wrapper .category-filters-card .ant-input-number-focused {
+    border-color: rgba(45, 194, 117, 0.7) !important;
+    box-shadow: 0 0 0 4px rgba(45, 194, 117, 0.16) !important;
 }
 
-.category-events-wrapper .ant-picker-focused,
-.category-events-wrapper .ant-select-focused .ant-select-selector,
-.category-events-wrapper .ant-input-number-focused {
-    border-color: #1890ff !important;
-    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+.category-events-wrapper .category-filters-card .ant-picker-input > input,
+.category-events-wrapper .category-filters-card .ant-select-selection-item,
+.category-events-wrapper .category-filters-card .ant-select-selection-placeholder,
+.category-events-wrapper .category-filters-card .ant-input-number-input {
+    color: rgba(255, 255, 255, 0.92) !important;
+    font-size: 16px !important;
 }
 
-.category-events-wrapper .ant-btn-primary {
-    background-color: #1890ff;
-    border-color: #1890ff;
+.category-events-wrapper .category-filters-card .ant-select-arrow,
+.category-events-wrapper .category-filters-card .ant-picker-suffix,
+.category-events-wrapper .category-filters-card .ant-picker-clear,
+.category-events-wrapper .category-filters-card .ant-select-clear {
+    color: rgba(255, 255, 255, 0.7) !important;
 }
 
-.category-events-wrapper .ant-btn-primary:hover {
-    background-color: #40a9ff;
-    border-color: #40a9ff;
+.category-events-wrapper .category-filters-card .ant-select-selection-placeholder {
+    color: rgba(255, 255, 255, 0.55) !important;
 }
 
-.category-events-wrapper .ant-btn-default {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: #fff;
+/* Filter buttons (scoped) */
+.category-events-wrapper .category-filters-card .ant-btn {
+    border-radius: 14px !important;
+    font-weight: 700 !important;
 }
 
-.category-events-wrapper .ant-btn-default:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: #fff;
+.category-events-wrapper .category-filters-card .ant-btn-primary {
+    border: none !important;
+    background: rgba(45, 194, 117, 1) !important;
+    box-shadow: none !important;
+}
+
+.category-events-wrapper .category-filters-card .ant-btn-default {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Remove hover effects: keep hover same as normal */
+.category-events-wrapper .category-filters-card .ant-btn-primary:hover,
+.category-events-wrapper .category-filters-card .ant-btn-primary:focus,
+.category-events-wrapper .category-filters-card .ant-btn-primary:active,
+.category-events-wrapper .category-filters-card .ant-btn-default:hover,
+.category-events-wrapper .category-filters-card .ant-btn-default:focus,
+.category-events-wrapper .category-filters-card .ant-btn-default:active {
+    filter: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+@media (max-width: 576px) {
+    .category-filters-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .category-filters-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
 }
 
 /* Loading Overlay Styles */

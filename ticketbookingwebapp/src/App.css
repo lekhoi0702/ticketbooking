@@ -2,7 +2,7 @@
 
 :root {
   --ticketbooking-green: #2DC275;
-  --ticketbooking-bg: #000000;
+  --ticketbooking-bg: rgb(39, 39, 42);
   --ticketbooking-text: #ffffff;
   --ticketbooking-gray: #1a1a1a;
 }
@@ -98,4 +98,37 @@ main {
   color: #73d13d !important;
   /* Lighter green on hover */
   text-decoration: underline;
+}
+
+/* Filter Select Dropdown Items - Increase font size globally */
+.ant-select-item-option {
+  font-size: 16px !important;
+  padding: 8px 12px !important;
+  min-height: 40px !important;
+  line-height: 24px !important;
+}
+
+.ant-select-item-option-content {
+  font-size: 16px !important;
+}
+
+.ant-select-selection-item,
+.ant-select-selection-placeholder {
+  font-size: 16px !important;
+}
+
+.ant-select-selector {
+  font-size: 16px !important;
+}
+
+.ant-select-selection-search-input {
+  font-size: 16px !important;
+}
+
+.ant-input-number-input {
+  font-size: 16px !important;
+}
+
+.ant-picker-input > input {
+  font-size: 16px !important;
 }

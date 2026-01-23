@@ -2,7 +2,7 @@
 
 .ant-breadcrumb {
     margin-bottom: 16px;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .ant-breadcrumb-list {
@@ -30,7 +30,7 @@
     padding: 4px 8px;
     background: transparent;
     border: none;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.5715;
     border-radius: 4px;
 }
@@ -53,7 +53,7 @@
 .ant-breadcrumb-icon {
     display: inline-flex;
     align-items: center;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .ant-breadcrumb-text {
@@ -65,7 +65,7 @@
     align-items: center;
     margin: 0 8px;
     color: rgba(0, 0, 0, 0.45);
-    font-size: 10px;
+    font-size: 12px;
 }
 
 /* Dark theme support */
@@ -98,7 +98,7 @@
 /* Responsive */
 @media (max-width: 576px) {
     .ant-breadcrumb {
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .ant-breadcrumb-separator {

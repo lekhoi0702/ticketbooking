@@ -7,7 +7,9 @@ from app.models.seat import Seat
 from app.models.seat_reservation import SeatReservation
 from app.models.ticket_type import TicketType
 from app.models.event import Event
+from app.models.user import User
 from datetime import datetime, timedelta
+from sqlalchemy.exc import IntegrityError
 import threading
 import time
 
@@ -130,11 +132,33 @@ def handle_lock_seat(data):
     
     try:
         with db.session.begin():
-            seat = Seat.query.get(seat_id)
-            if not seat:
+            # Validate user exists
+            user = User.query.get(user_id)
+            if not user:
+                print(f"SeatReservation validation failed: User {user_id} not found")
                 socketio.emit('seat_lock_error', {
                     'seat_id': seat_id,
-                    'message': 'Seat not found'
+                    'message': f'User not found (user_id: {user_id})'
+                }, room=request.sid)
+                return
+            
+            # Validate event exists
+            event = Event.query.get(event_id)
+            if not event:
+                print(f"SeatReservation validation failed: Event {event_id} not found")
+                socketio.emit('seat_lock_error', {
+                    'seat_id': seat_id,
+                    'message': f'Event not found (event_id: {event_id})'
+                }, room=request.sid)
+                return
+            
+            # Validate seat exists
+            seat = Seat.query.get(seat_id)
+            if not seat:
+                print(f"SeatReservation validation failed: Seat {seat_id} not found")
+                socketio.emit('seat_lock_error', {
+                    'seat_id': seat_id,
+                    'message': f'Seat not found (seat_id: {seat_id})'
                 }, room=request.sid)
                 return
             
@@ -176,27 +200,52 @@ def handle_lock_seat(data):
                 return
             
             # Create new reservation
-            reservation = SeatReservation(
-                seat_id=seat_id,
-                user_id=user_id,
-                event_id=event_id,
-                reservation_duration_minutes=RESERVATION_DURATION_MINUTES
-            )
-            
-            seat.status = 'RESERVED'
-            db.session.add(reservation)
-            db.session.commit()
-            
-            # Start timer
-            start_seat_timer(seat_id, event_id, user_id)
-            
-            # Emit success to client
-            socketio.emit('seat_locked', {
-                'seat_id': seat_id,
-                'user_id': user_id,
-                'event_id': event_id,
-                'expires_at': reservation.expires_at.isoformat()
-            }, room=request.sid)
+            try:
+                reservation = SeatReservation(
+                    seat_id=seat_id,
+                    user_id=user_id,
+                    event_id=event_id,
+                    reservation_duration_minutes=RESERVATION_DURATION_MINUTES
+                )
+                
+                seat.status = 'RESERVED'
+                db.session.add(reservation)
+                db.session.commit()
+                
+                # Start timer
+                start_seat_timer(seat_id, event_id, user_id)
+                
+                # Emit success to client
+                socketio.emit('seat_locked', {
+                    'seat_id': seat_id,
+                    'user_id': user_id,
+                    'event_id': event_id,
+                    'expires_at': reservation.expires_at.isoformat()
+                }, room=request.sid)
+            except IntegrityError as e:
+                db.session.rollback()
+                error_msg = str(e.orig) if hasattr(e, 'orig') else str(e)
+                if 'fk_seat_reservation_user' in error_msg or 'user_id' in error_msg.lower():
+                    socketio.emit('seat_lock_error', {
+                        'seat_id': seat_id,
+                        'message': 'User not found or invalid user_id'
+                    }, room=request.sid)
+                elif 'fk_seat_reservation_event' in error_msg or 'event_id' in error_msg.lower():
+                    socketio.emit('seat_lock_error', {
+                        'seat_id': seat_id,
+                        'message': 'Event not found or invalid event_id'
+                    }, room=request.sid)
+                elif 'fk_seat_reservation_seat' in error_msg or 'seat_id' in error_msg.lower():
+                    socketio.emit('seat_lock_error', {
+                        'seat_id': seat_id,
+                        'message': 'Seat not found or invalid seat_id'
+                    }, room=request.sid)
+                else:
+                    socketio.emit('seat_lock_error', {
+                        'seat_id': seat_id,
+                        'message': f'Database constraint error: {error_msg}'
+                    }, room=request.sid)
+                return
             
             # Broadcast to event room
             socketio.emit('seat_reserved', {

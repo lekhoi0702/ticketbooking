@@ -4,7 +4,10 @@ from app.models.seat import Seat
 from app.models.seat_reservation import SeatReservation
 from app.models.ticket_type import TicketType
 from app.models.event import Event
+from app.models.user import User
 from datetime import datetime, timedelta
+from sqlalchemy.exc import IntegrityError
+import pymysql
 
 seats_bp = Blueprint("seats", __name__)
 
@@ -196,9 +199,26 @@ def lock_seat():
         if not all([seat_id, user_id, event_id]):
             return jsonify({'success': False, 'message': 'Missing required parameters'}), 400
         
+        # Validate user exists
+        user = User.query.get(user_id)
+        if not user:
+            import logging
+            logging.error(f"SeatReservation validation failed: User {user_id} not found")
+            return jsonify({'success': False, 'message': f'User not found (user_id: {user_id})'}), 404
+        
+        # Validate event exists
+        event = Event.query.get(event_id)
+        if not event:
+            import logging
+            logging.error(f"SeatReservation validation failed: Event {event_id} not found")
+            return jsonify({'success': False, 'message': f'Event not found (event_id: {event_id})'}), 404
+        
+        # Validate seat exists
         seat = Seat.query.get(seat_id)
         if not seat:
-            return jsonify({'success': False, 'message': 'Seat not found'}), 404
+            import logging
+            logging.error(f"SeatReservation validation failed: Seat {seat_id} not found")
+            return jsonify({'success': False, 'message': f'Seat not found (seat_id: {seat_id})'}), 404
         
         # Check if seat is available
         if seat.status != 'AVAILABLE':
@@ -255,6 +275,17 @@ def lock_seat():
             }
         }), 200
         
+    except IntegrityError as e:
+        db.session.rollback()
+        error_msg = str(e.orig) if hasattr(e, 'orig') else str(e)
+        if 'fk_seat_reservation_user' in error_msg or 'user_id' in error_msg.lower():
+            return jsonify({'success': False, 'message': 'User not found or invalid user_id'}), 404
+        elif 'fk_seat_reservation_event' in error_msg or 'event_id' in error_msg.lower():
+            return jsonify({'success': False, 'message': 'Event not found or invalid event_id'}), 404
+        elif 'fk_seat_reservation_seat' in error_msg or 'seat_id' in error_msg.lower():
+            return jsonify({'success': False, 'message': 'Seat not found or invalid seat_id'}), 404
+        else:
+            return jsonify({'success': False, 'message': f'Database constraint error: {error_msg}'}), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -271,6 +302,12 @@ def unlock_seat():
         if not all([seat_id, user_id, event_id]):
             return jsonify({'success': False, 'message': 'Missing required parameters'}), 400
         
+        # Validate user exists
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Validate seat exists
         seat = Seat.query.get(seat_id)
         if not seat:
             return jsonify({'success': False, 'message': 'Seat not found'}), 404
@@ -302,6 +339,16 @@ def unlock_seat():
 def get_my_reservations(event_id, user_id):
     """Get active reservations for a user in an event"""
     try:
+        # Validate user exists
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Validate event exists
+        event = Event.query.get(event_id)
+        if not event:
+            return jsonify({'success': False, 'message': 'Event not found'}), 404
+        
         reservations = SeatReservation.query.filter_by(
             event_id=event_id,
             user_id=user_id,
@@ -342,6 +389,16 @@ def unlock_all_seats():
         
         if not all([user_id, event_id]):
             return jsonify({'success': False, 'message': 'Missing required parameters'}), 400
+        
+        # Validate user exists
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Validate event exists
+        event = Event.query.get(event_id)
+        if not event:
+            return jsonify({'success': False, 'message': 'Event not found'}), 404
         
         # Find all active reservations for this user in this event
         reservations = SeatReservation.query.filter_by(

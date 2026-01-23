@@ -16,6 +16,7 @@ const Login = () => {
         phone: ''
     });
     const [error, setError] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
     const { login } = useAuth();
@@ -52,6 +53,7 @@ const Login = () => {
 
         setLoading(true);
         setError(null);
+        setFieldErrors({});
 
         try {
             if (activeTab === 'register') {
@@ -73,7 +75,12 @@ const Login = () => {
                         setActiveTab('login');
                         setError({ type: 'success', msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
                         setFormData({ ...formData, full_name: '', phone: '' });
+                        setFieldErrors({});
                     }
+                } else {
+                    // Registration response indicates failure
+                    const errorMsg = res.message || 'Đăng ký không thành công';
+                    setError({ type: 'danger', msg: errorMsg });
                 }
             } else {
                 const res = await api.login({
@@ -91,9 +98,55 @@ const Login = () => {
                 }
             }
         } catch (err) {
-            // Always show error message to user
-            const errorMsg = err.message || 'Có lỗi xảy ra';
-            setError({ type: 'danger', msg: errorMsg });
+            const msg = err.message || 'Có lỗi xảy ra';
+            const newFieldErrors = {};
+            
+            // Check if error has field information from backend
+            if (err.data && err.data.field) {
+                const field = err.data.field;
+                const fieldMsg = err.data.message || msg;
+                
+                // Map backend field names to form field names
+                if (field === 'phone') {
+                    newFieldErrors.phone = fieldMsg.includes('already exists') 
+                        ? 'Số điện thoại này đã được sử dụng' 
+                        : fieldMsg;
+                } else if (field === 'email') {
+                    newFieldErrors.email = fieldMsg.includes('already exists') 
+                        ? 'Email này đã được sử dụng' 
+                        : fieldMsg;
+                }
+                
+                // Also show general error message
+                setError({ type: 'danger', msg: fieldMsg.includes('already exists') 
+                    ? (field === 'phone' ? 'Số điện thoại này đã được sử dụng' : 'Email này đã được sử dụng')
+                    : fieldMsg });
+            } else {
+                // Fallback to message-based detection
+                const lowerMsg = msg.toLowerCase();
+                if (lowerMsg.includes('email') && activeTab === 'register') {
+                    newFieldErrors.email = lowerMsg.includes('already exists') || lowerMsg.includes('đã được sử dụng')
+                        ? 'Email này đã được sử dụng'
+                        : msg;
+                    setError({ type: 'danger', msg: lowerMsg.includes('already exists') || lowerMsg.includes('đã được sử dụng')
+                        ? 'Email này đã được sử dụng'
+                        : msg });
+                } else if ((lowerMsg.includes('số điện thoại') || lowerMsg.includes('phone')) && activeTab === 'register') {
+                    newFieldErrors.phone = lowerMsg.includes('already exists') || lowerMsg.includes('đã được sử dụng')
+                        ? 'Số điện thoại này đã được sử dụng'
+                        : msg;
+                    setError({ type: 'danger', msg: lowerMsg.includes('already exists') || lowerMsg.includes('đã được sử dụng')
+                        ? 'Số điện thoại này đã được sử dụng'
+                        : msg });
+                } else {
+                    setError({ type: 'danger', msg: msg });
+                }
+            }
+
+            // Set field-specific errors if any
+            if (Object.keys(newFieldErrors).length > 0) {
+                setFieldErrors(newFieldErrors);
+            }
         } finally {
             setLoading(false);
         }
@@ -230,10 +283,16 @@ const Login = () => {
                                                 required
                                                 type="tel"
                                                 value={formData.phone}
-                                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                                className="py-2 px-3"
+                                                onChange={e => {
+                                                    setFormData({ ...formData, phone: e.target.value });
+                                                    if (fieldErrors.phone) setFieldErrors({ ...fieldErrors, phone: null });
+                                                }}
+                                                className={`py-2 px-3 ${fieldErrors.phone ? 'is-invalid' : ''}`}
                                                 pattern="[0-9]{10}"
                                             />
+                                            {fieldErrors.phone && (
+                                                <Form.Text className="text-danger small">{fieldErrors.phone}</Form.Text>
+                                            )}
                                         </Form.Group>
 
                                         <Form.Group className="mb-3">
@@ -245,9 +304,15 @@ const Login = () => {
                                                 required
                                                 type="email"
                                                 value={formData.email}
-                                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                className="py-2 px-3"
+                                                onChange={e => {
+                                                    setFormData({ ...formData, email: e.target.value });
+                                                    if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: null });
+                                                }}
+                                                className={`py-2 px-3 ${fieldErrors.email ? 'is-invalid' : ''}`}
                                             />
+                                            {fieldErrors.email && (
+                                                <Form.Text className="text-danger small">{fieldErrors.email}</Form.Text>
+                                            )}
                                         </Form.Group>
 
                                         <Form.Group className="mb-4">

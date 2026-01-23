@@ -167,7 +167,7 @@ function EventDetail() {
 
             <Container className="event-main-content">
                 <Row>
-                    <Col lg={8}>
+                    <Col lg={9}>
                         <section className="detail-section" id="description">
                             <h3 className="section-title">Giới thiệu</h3>
                             <div className="event-description">
@@ -198,56 +198,40 @@ function EventDetail() {
 
                         <EventVenueInfo venue={event.venue} />
 
-                        {/* Organizer Information Section */}
+                        {/* Organizer Information Section - Below Maps */}
                         {event.organizer_info && (
-                            <section className="detail-section d-lg-none" id="organizer">
+                            <section className="detail-section" id="organizer">
                                 <h3 className="section-title">Ban tổ chức</h3>
-                                <div className="organizer-section-content">
-                                    <div className="organizer-info">
-                                        <div className="organizer-avatar">
-                                            {event.organizer_info?.logo_url ? (
-                                                <img src={getImageUrl(event.organizer_info.logo_url)} alt={event.organizer_info.organization_name} />
-                                            ) : (
-                                                (event.organizer_info?.organization_name || event.event_name || 'O').charAt(0).toString().toUpperCase()
-                                            )}
-                                        </div>
-                                        <div className="organizer-details">
-                                            <h6>{event.organizer_info?.organization_name || 'Ban tổ chức sự kiện'}</h6>
-                                            <p className="text-muted small mb-0">
-                                                {event.organizer_info?.description || 'Chuyên tổ chức các sự kiện giải trí hàng đầu'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <EventOrganizerCard 
+                                    organizerInfo={event.organizer_info}
+                                    eventName={event.event_name}
+                                />
                             </section>
                         )}
                     </Col>
-                    <Col lg={4}>
-                        {event.organizer_info && (
-                            <EventOrganizerCard 
-                                organizerInfo={event.organizer_info}
-                                eventName={event.event_name}
-                            />
-                        )}
-                        
-                        {/* Advertisement Banner */}
-                        <div className="sidebar-advertisement mt-4">
-                            <a 
-                                href="https://shopee.vn" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="ad-link"
-                            >
-                                <img 
-                                    src="/quangcaoshopee.webp" 
-                                    alt="Quảng cáo Shopee" 
-                                    className="ad-image"
-                                    onError={(e) => {
-                                        // Fallback nếu ảnh không tìm thấy
-                                        e.target.style.display = 'none';
-                                    }}
-                                />
-                            </a>
+                    <Col lg={3}>
+                        <div className="sidebar-sticky-wrapper">
+                            {/* Advertisement Banner */}
+                            <div className="sidebar-advertisement">
+                                <a 
+                                    href="https://shopee.vn" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="ad-link"
+                                >
+                                    <img 
+                                        key={`ad-${Date.now()}`}
+                                        src={`/uploads/misc/quangcaoshopee.png?nocache=${Math.random()}`}
+                                        alt="Quảng cáo ShopeePay - Giảm 40.000đ khi thanh toán bằng ShopeePay tại Ticketbox" 
+                                        className="ad-image"
+                                        loading="eager"
+                                        onError={(e) => {
+                                            // Fallback nếu ảnh không tìm thấy
+                                            e.target.style.display = 'none';
+                                        }}
+                                    />
+                                </a>
+                            </div>
                         </div>
                     </Col>
                 </Row>

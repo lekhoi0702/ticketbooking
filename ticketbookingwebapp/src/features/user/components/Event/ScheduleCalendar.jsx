@@ -119,7 +119,6 @@ const ScheduleCalendar = ({ currentEvent, schedules, onSelectSchedule, selectedS
     return (
         <div className="schedule-calendar-wrapper">
             <div className="schedule-calendar-header">
-                <h5 className="schedule-calendar-title">Lịch diễn</h5>
                 <div className="schedule-view-toggle">
                     <button
                         className={`schedule-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}

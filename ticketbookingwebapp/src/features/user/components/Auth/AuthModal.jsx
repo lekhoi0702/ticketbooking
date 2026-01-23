@@ -128,21 +128,54 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
         } catch (err) {
             const msg = err.message || 'Có lỗi xảy ra';
             const newFieldErrors = {};
-
-            // Always show error message to user
-            if (msg.toLowerCase().includes('email') && activeTab === 'login') {
-                // For login, show email error in field
-                newFieldErrors.email = msg;
+            
+            // Check if error has field information from backend
+            if (err.data && err.data.field) {
+                const field = err.data.field;
+                const fieldMsg = err.data.message || msg;
+                
+                // Map backend field names to form field names
+                if (field === 'phone') {
+                    newFieldErrors.phone = fieldMsg.includes('already exists') 
+                        ? 'Số điện thoại này đã được sử dụng' 
+                        : fieldMsg;
+                } else if (field === 'email') {
+                    newFieldErrors.email = fieldMsg.includes('already exists') 
+                        ? 'Email này đã được sử dụng' 
+                        : fieldMsg;
+                }
+                
                 // Also show general error message
-                setError({ type: 'danger', msg: msg });
-            } else if ((msg.toLowerCase().includes('số điện thoại') || msg.toLowerCase().includes('phone')) && activeTab === 'register') {
-                // For register, show phone error in field
-                newFieldErrors.phone = msg;
-                // Also show general error message
-                setError({ type: 'danger', msg: msg });
+                setError({ type: 'danger', msg: fieldMsg.includes('already exists') 
+                    ? (field === 'phone' ? 'Số điện thoại này đã được sử dụng' : 'Email này đã được sử dụng')
+                    : fieldMsg });
             } else {
-                // Always show error message
-                setError({ type: 'danger', msg: msg });
+                // Fallback to message-based detection
+                const lowerMsg = msg.toLowerCase();
+                if (lowerMsg.includes('email') && activeTab === 'login') {
+                    // For login, show email error in field
+                    newFieldErrors.email = msg;
+                    setError({ type: 'danger', msg: msg });
+                } else if ((lowerMsg.includes('số điện thoại') || lowerMsg.includes('phone')) && activeTab === 'register') {
+                    // For register, show phone error in field
+                    newFieldErrors.phone = lowerMsg.includes('already exists') || lowerMsg.includes('đã được sử dụng')
+                        ? 'Số điện thoại này đã được sử dụng'
+                        : msg;
+                    setError({ type: 'danger', msg: lowerMsg.includes('already exists') || lowerMsg.includes('đã được sử dụng')
+                        ? 'Số điện thoại này đã được sử dụng'
+                        : msg });
+                } else if (lowerMsg.includes('email') && activeTab === 'register') {
+                    // For register, show email error in field
+                    newFieldErrors.email = lowerMsg.includes('already exists') || lowerMsg.includes('đã được sử dụng')
+                        ? 'Email này đã được sử dụng'
+                        : msg;
+                    setError({ type: 'danger', msg: lowerMsg.includes('already exists') || lowerMsg.includes('đã được sử dụng')
+                        ? 'Email này đã được sử dụng'
+                        : msg });
+                } else {
+                    // Always show error message
+                    setError({ type: 'danger', msg: msg });
+                }
             }
 
             // Set field-specific errors if any

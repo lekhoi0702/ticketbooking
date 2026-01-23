@@ -1,7 +1,7 @@
 /* EventDetail.css - TicketBooking Style */
 
 .event-detail-page {
-    background-color: #18181b;
+    background-color: rgb(39, 39, 42);
     color: #ffffff;
     min-height: 100vh;
     padding-bottom: 120px;
@@ -19,10 +19,17 @@
     position: sticky;
     top: 120px;
     /* Below the total header height (72px + 48px) */
-    background: #1f1f23;
+    background: #1f1f23 !important;
     z-index: 100;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 12px 0;
+    padding: 12px 15px 12px 8px;
+}
+
+.event-detail-nav .container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: 1320px;
+    margin: 0 auto;
 }
 
 .event-detail-nav .nav-link {
@@ -221,7 +228,7 @@
 }
 
 .detail-section {
-    background: #27272a;
+    background: #1f1f23;
     padding: 40px;
     border-radius: 12px;
     margin-bottom: 32px;
@@ -254,7 +261,7 @@
 
 .ticket-type-card:hover {
     border-color: #2dc275;
-    background-color: #27272a;
+    background-color: #1f1f23;
 }
 
 .ticket-name {
@@ -270,7 +277,7 @@
 }
 
 .quantity-selector {
-    background: #18181b;
+    background: rgb(39, 39, 42);
     border-radius: 4px;
     padding: 8px 16px;
     display: flex;
@@ -385,10 +392,18 @@
     line-height: 1.4;
 }
 
+/* Sidebar Sticky Wrapper */
+.sidebar-sticky-wrapper {
+    position: sticky;
+    top: 180px; /* Below header + nav bar */
+    align-self: flex-start;
+    padding-top: 0;
+}
+
 /* Sidebar Advertisement */
 .sidebar-advertisement {
     width: 100%;
-    margin-top: 24px;
+    margin-top: 0;
 }
 
 .sidebar-advertisement .ad-link {
@@ -411,6 +426,14 @@
     display: block;
     border-radius: 12px;
     object-fit: cover;
+}
+
+/* Responsive - Sidebar Sticky */
+@media (max-width: 991px) {
+    .sidebar-sticky-wrapper {
+        position: static;
+        top: auto;
+    }
 }
 
 /* Venue Map Embed */
@@ -1028,12 +1051,12 @@
 }
 
 .tab-content-wrapper {
-    background: #1f1f23;
+    background: #000000;
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 12px;
-    padding: 24px;
+    padding: 22px;
     margin-top: 20px;
-    min-height: 300px;
+    min-height: 270px;
 }
 
 /* Adjust Schedule List inside Tab */
