@@ -8,7 +8,7 @@ export const AntdThemeConfig = {
         colorError: '#ff4d4f',
         colorInfo: '#1890ff',
         borderRadius: 8,
-        fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     },
     algorithm: theme.defaultAlgorithm,
     components: {

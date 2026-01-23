@@ -70,7 +70,7 @@
 .organizer-layout {
     background-color: var(--bg-main);
     color: var(--text-primary);
-    font-family: 'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
 }
 
 /* Sidebar Styling */
