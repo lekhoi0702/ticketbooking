@@ -45,6 +45,29 @@ def create_app():
     migrate.init_app(app, db)
     socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
     
+    # Initialize Swagger/OpenAPI documentation
+    try:
+        from flasgger import Swagger
+        from app.swagger_config import SWAGGER_CONFIG
+        import yaml
+        
+        # Load Swagger spec from YAML file
+        swagger_spec_path = os.path.join(os.path.dirname(__file__), 'swagger_spec.yaml')
+        if os.path.exists(swagger_spec_path):
+            with open(swagger_spec_path, 'r', encoding='utf-8') as f:
+                swagger_template = yaml.safe_load(f)
+        else:
+            # Fallback to config template if YAML file doesn't exist
+            from app.swagger_config import SWAGGER_TEMPLATE
+            swagger_template = SWAGGER_TEMPLATE
+        
+        swagger = Swagger(app, config=SWAGGER_CONFIG, template=swagger_template)
+        app.logger.info("Swagger documentation initialized at /api/docs")
+    except ImportError:
+        app.logger.warning("Flasgger not installed. Swagger documentation will not be available.")
+    except Exception as e:
+        app.logger.warning(f"Failed to initialize Swagger: {str(e)}")
+    
     # Initialize Redis
     from app.extensions import init_redis
     redis_client = init_redis(app)

@@ -1,0 +1,974 @@
+swagger: "2.0"
+info:
+  title: "Ticket Booking API"
+  description: "API documentation for Ticket Booking System"
+  version: "1.0.0"
+  contact:
+    name: "API Support"
+    email: "support@ticketbooking.com"
+
+basePath: "/api"
+schemes:
+  - "http"
+  - "https"
+
+securityDefinitions:
+  Bearer:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
+    description: "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
+
+tags:
+  - name: "Authentication"
+    description: "Endpoints for user authentication and authorization"
+  - name: "Events"
+    description: "Endpoints for managing events"
+  - name: "Orders"
+    description: "Endpoints for managing orders"
+  - name: "Payments"
+    description: "Endpoints for payment processing"
+  - name: "Venues"
+    description: "Endpoints for managing venues"
+  - name: "Categories"
+    description: "Endpoints for event categories"
+  - name: "Organizer"
+    description: "Endpoints for organizer management"
+  - name: "Seats"
+    description: "Endpoints for seat management and reservations"
+  - name: "Admin"
+    description: "Admin endpoints for system management"
+  - name: "Banners"
+    description: "Endpoints for banner management"
+  - name: "Health"
+    description: "Health check endpoints"
+
+paths:
+  /health:
+    get:
+      tags:
+        - "Health"
+      summary: "Kiểm tra trạng thái API"
+      description: "Endpoint để kiểm tra xem API có đang hoạt động không"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "API đang hoạt động"
+          schema:
+            type: "object"
+            properties:
+              status:
+                type: "string"
+                example: "ok"
+              message:
+                type: "string"
+                example: "API is running"
+
+  /auth/login:
+    post:
+      tags:
+        - "Authentication"
+      summary: "Đăng nhập người dùng"
+      description: "Đăng nhập bằng email, số điện thoại hoặc username. Trả về access token và refresh token."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Thông tin đăng nhập"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "identifier"
+              - "password"
+            properties:
+              identifier:
+                type: "string"
+                description: "Email, số điện thoại hoặc username"
+                example: "user@example.com"
+              password:
+                type: "string"
+                description: "Mật khẩu"
+                example: "password123"
+              required_role:
+                type: "string"
+                description: "Vai trò yêu cầu (ADMIN, ORGANIZER, USER) - tùy chọn"
+                example: "USER"
+      responses:
+        200:
+          description: "Đăng nhập thành công"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                example: true
+              message:
+                type: "string"
+                example: "Đăng nhập thành công"
+              data:
+                type: "object"
+                properties:
+                  access_token:
+                    type: "string"
+                  refresh_token:
+                    type: "string"
+                  token_type:
+                    type: "string"
+                    example: "Bearer"
+                  expires_in:
+                    type: "integer"
+                    example: 86400
+                  user:
+                    type: "object"
+        400:
+          description: "Dữ liệu không hợp lệ"
+        401:
+          description: "Thông tin đăng nhập không chính xác"
+        403:
+          description: "Tài khoản bị khóa hoặc không có quyền truy cập"
+        500:
+          description: "Lỗi server"
+
+  /auth/register:
+    post:
+      tags:
+        - "Authentication"
+      summary: "Đăng ký tài khoản mới"
+      description: "Đăng ký tài khoản mới cho khách hàng"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Thông tin đăng ký"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "email"
+              - "full_name"
+              - "password"
+            properties:
+              email:
+                type: "string"
+                format: "email"
+                description: "Email người dùng"
+                example: "user@example.com"
+              phone:
+                type: "string"
+                description: "Số điện thoại (tùy chọn)"
+                example: "0123456789"
+              full_name:
+                type: "string"
+                description: "Họ và tên"
+                example: "Nguyễn Văn A"
+              password:
+                type: "string"
+                description: "Mật khẩu (tối thiểu 6 ký tự)"
+                example: "password123"
+      responses:
+        201:
+          description: "Đăng ký thành công"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                example: true
+              message:
+                type: "string"
+                example: "Đăng ký thành công"
+              data:
+                type: "object"
+                properties:
+                  user_id:
+                    type: "integer"
+                  email:
+                    type: "string"
+        400:
+          description: "Dữ liệu không hợp lệ"
+        409:
+          description: "Email hoặc số điện thoại đã tồn tại"
+        500:
+          description: "Lỗi server"
+
+  /auth/refresh:
+    post:
+      tags:
+        - "Authentication"
+      summary: "Làm mới access token"
+      description: "Sử dụng refresh token để lấy access token mới"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Refresh token"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "refresh_token"
+            properties:
+              refresh_token:
+                type: "string"
+                description: "Refresh token"
+                example: "eyJ0eXAiOiJKV1QiLCJhbGc..."
+      responses:
+        200:
+          description: "Token đã được làm mới"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                example: true
+              message:
+                type: "string"
+                example: "Token đã được làm mới"
+              data:
+                type: "object"
+                properties:
+                  access_token:
+                    type: "string"
+                  token_type:
+                    type: "string"
+                    example: "Bearer"
+                  expires_in:
+                    type: "integer"
+                    example: 86400
+        400:
+          description: "Dữ liệu không hợp lệ"
+        401:
+          description: "Refresh token không hợp lệ hoặc đã hết hạn"
+        500:
+          description: "Lỗi server"
+
+  /events:
+    get:
+      tags:
+        - "Events"
+      summary: "Lấy danh sách sự kiện"
+      description: "Lấy danh sách sự kiện với các bộ lọc tùy chọn"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "query"
+          name: "category_id"
+          type: "integer"
+          description: "Lọc theo danh mục"
+        - in: "query"
+          name: "status"
+          type: "string"
+          default: "PUBLISHED"
+          description: "Trạng thái sự kiện"
+        - in: "query"
+          name: "is_featured"
+          type: "boolean"
+          description: "Sự kiện nổi bật"
+        - in: "query"
+          name: "venue_id"
+          type: "integer"
+          description: "Lọc theo địa điểm"
+        - in: "query"
+          name: "date_from"
+          type: "string"
+          format: "date"
+          description: "Ngày bắt đầu (YYYY-MM-DD)"
+        - in: "query"
+          name: "date_to"
+          type: "string"
+          format: "date"
+          description: "Ngày kết thúc (YYYY-MM-DD)"
+        - in: "query"
+          name: "min_price"
+          type: "number"
+          format: "float"
+          description: "Giá tối thiểu"
+        - in: "query"
+          name: "max_price"
+          type: "number"
+          format: "float"
+          description: "Giá tối đa"
+        - in: "query"
+          name: "limit"
+          type: "integer"
+          default: 20
+          description: "Số lượng kết quả"
+        - in: "query"
+          name: "offset"
+          type: "integer"
+          default: 0
+          description: "Vị trí bắt đầu"
+        - in: "query"
+          name: "sort"
+          type: "string"
+          description: "Sắp xếp (date_asc, date_desc, price_asc, price_desc)"
+      responses:
+        200:
+          description: "Danh sách sự kiện"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "array"
+                items:
+                  type: "object"
+              total:
+                type: "integer"
+        500:
+          description: "Lỗi server"
+
+  /categories:
+    get:
+      tags:
+        - "Categories"
+      summary: "Lấy danh sách danh mục sự kiện"
+      description: "Lấy tất cả danh mục sự kiện đang hoạt động"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Danh sách danh mục"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "array"
+                items:
+                  type: "object"
+        500:
+          description: "Lỗi server"
+
+  /categories/{category_id}:
+    get:
+      tags:
+        - "Categories"
+      summary: "Lấy thông tin danh mục theo ID"
+      description: "Lấy thông tin chi tiết của một danh mục sự kiện"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "path"
+          name: "category_id"
+          type: "integer"
+          required: true
+          description: "ID danh mục"
+      responses:
+        200:
+          description: "Thông tin danh mục"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "object"
+        404:
+          description: "Không tìm thấy danh mục"
+        500:
+          description: "Lỗi server"
+
+  /venues:
+    get:
+      tags:
+        - "Venues"
+      summary: "Lấy danh sách địa điểm"
+      description: "Lấy tất cả địa điểm đang hoạt động"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Danh sách địa điểm"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "array"
+                items:
+                  type: "object"
+        500:
+          description: "Lỗi server"
+
+  /venues/{venue_id}:
+    get:
+      tags:
+        - "Venues"
+      summary: "Lấy thông tin địa điểm theo ID"
+      description: "Lấy thông tin chi tiết của một địa điểm"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "path"
+          name: "venue_id"
+          type: "integer"
+          required: true
+          description: "ID địa điểm"
+      responses:
+        200:
+          description: "Thông tin địa điểm"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "object"
+        404:
+          description: "Không tìm thấy địa điểm"
+        500:
+          description: "Lỗi server"
+
+  /orders/create:
+    post:
+      tags:
+        - "Orders"
+      summary: "Tạo đơn hàng mới"
+      description: "Tạo đơn hàng mới với vé và chỗ ngồi"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Thông tin đơn hàng"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "event_id"
+              - "ticket_items"
+            properties:
+              event_id:
+                type: "integer"
+                description: "ID sự kiện"
+              ticket_items:
+                type: "array"
+                description: "Danh sách vé"
+                items:
+                  type: "object"
+                  properties:
+                    ticket_type_id:
+                      type: "integer"
+                    quantity:
+                      type: "integer"
+                    seat_ids:
+                      type: "array"
+                      items:
+                        type: "integer"
+      responses:
+        201:
+          description: "Đơn hàng đã được tạo"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              message:
+                type: "string"
+              data:
+                type: "object"
+        400:
+          description: "Dữ liệu không hợp lệ"
+        500:
+          description: "Lỗi server"
+
+  /orders/{order_id}:
+    get:
+      tags:
+        - "Orders"
+      summary: "Lấy chi tiết đơn hàng"
+      description: "Lấy thông tin chi tiết của đơn hàng theo ID"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "path"
+          name: "order_id"
+          type: "integer"
+          required: true
+          description: "ID đơn hàng"
+      responses:
+        200:
+          description: "Chi tiết đơn hàng"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "object"
+        404:
+          description: "Không tìm thấy đơn hàng"
+        500:
+          description: "Lỗi server"
+
+  /payments/create:
+    post:
+      tags:
+        - "Payments"
+      summary: "Tạo bản ghi thanh toán"
+      description: "Tạo một bản ghi thanh toán mới cho đơn hàng"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Thông tin thanh toán"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "order_id"
+              - "payment_method"
+            properties:
+              order_id:
+                type: "integer"
+                description: "ID đơn hàng"
+              payment_method:
+                type: "string"
+                enum: ["CASH", "VNPAY", "PAYPAL", "VIETQR"]
+                description: "Phương thức thanh toán"
+      responses:
+        201:
+          description: "Thanh toán đã được tạo"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              message:
+                type: "string"
+              data:
+                type: "object"
+        400:
+          description: "Dữ liệu không hợp lệ"
+        404:
+          description: "Không tìm thấy đơn hàng"
+        500:
+          description: "Lỗi server"
+
+  /payments/vnpay/create-url:
+    post:
+      tags:
+        - "Payments"
+      summary: "Tạo URL thanh toán VNPay"
+      description: "Tạo URL thanh toán VNPay cho đơn hàng"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Thông tin đơn hàng"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "order_id"
+            properties:
+              order_id:
+                type: "integer"
+                description: "ID đơn hàng"
+      responses:
+        200:
+          description: "URL thanh toán đã được tạo"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "object"
+                properties:
+                  payment_url:
+                    type: "string"
+                  payment_code:
+                    type: "string"
+        400:
+          description: "Dữ liệu không hợp lệ"
+        404:
+          description: "Không tìm thấy đơn hàng"
+        500:
+          description: "Lỗi server"
+
+  /payments/{payment_id}:
+    get:
+      tags:
+        - "Payments"
+      summary: "Lấy thông tin thanh toán"
+      description: "Lấy thông tin chi tiết của một thanh toán theo ID"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "path"
+          name: "payment_id"
+          type: "integer"
+          required: true
+          description: "ID thanh toán"
+      responses:
+        200:
+          description: "Thông tin thanh toán"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "object"
+        404:
+          description: "Không tìm thấy thanh toán"
+        500:
+          description: "Lỗi server"
+
+  /seats/event/{event_id}:
+    get:
+      tags:
+        - "Seats"
+      summary: "Lấy danh sách ghế của sự kiện"
+      description: "Lấy toàn bộ danh sách ghế đã được gán của một sự kiện (cho tất cả hạng vé)"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "path"
+          name: "event_id"
+          type: "integer"
+          required: true
+          description: "ID sự kiện"
+      responses:
+        200:
+          description: "Danh sách ghế"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "array"
+                items:
+                  type: "object"
+        500:
+          description: "Lỗi server"
+
+  /seats/lock:
+    post:
+      tags:
+        - "Seats"
+      summary: "Khóa ghế để đặt chỗ"
+      description: "Khóa ghế để đặt chỗ trong 5 phút"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Thông tin khóa ghế"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "seat_id"
+              - "user_id"
+              - "event_id"
+            properties:
+              seat_id:
+                type: "integer"
+                description: "ID ghế"
+              user_id:
+                type: "integer"
+                description: "ID người dùng"
+              event_id:
+                type: "integer"
+                description: "ID sự kiện"
+      responses:
+        200:
+          description: "Ghế đã được khóa"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              message:
+                type: "string"
+              data:
+                type: "object"
+                properties:
+                  seat_id:
+                    type: "integer"
+                  expires_at:
+                    type: "string"
+                    format: "date-time"
+        400:
+          description: "Thiếu tham số"
+        404:
+          description: "Không tìm thấy ghế"
+        409:
+          description: "Ghế đã được đặt chỗ"
+        500:
+          description: "Lỗi server"
+
+  /banners:
+    get:
+      tags:
+        - "Banners"
+      summary: "Lấy danh sách banner"
+      description: "Lấy tất cả banner đang hoạt động để hiển thị"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Danh sách banner"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "array"
+                items:
+                  type: "object"
+        500:
+          description: "Lỗi server"
+
+  /organizer/dashboard:
+    get:
+      tags:
+        - "Organizer"
+      summary: "Lấy thống kê dashboard cho nhà tổ chức"
+      description: "Lấy các số liệu thống kê tổng quan cho dashboard của nhà tổ chức"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "query"
+          name: "manager_id"
+          type: "integer"
+          required: true
+          description: "ID nhà tổ chức"
+      responses:
+        200:
+          description: "Thống kê dashboard"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "object"
+        500:
+          description: "Lỗi server"
+
+  /organizer/events:
+    get:
+      tags:
+        - "Organizer"
+      summary: "Lấy danh sách sự kiện của nhà tổ chức"
+      description: "Lấy tất cả sự kiện được quản lý bởi nhà tổ chức"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "query"
+          name: "manager_id"
+          type: "integer"
+          required: true
+          description: "ID nhà tổ chức"
+        - in: "query"
+          name: "status"
+          type: "string"
+          description: "Lọc theo trạng thái"
+      responses:
+        200:
+          description: "Danh sách sự kiện"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "array"
+                items:
+                  type: "object"
+        500:
+          description: "Lỗi server"
+
+  /organizer/discounts:
+    get:
+      tags:
+        - "Organizer"
+      summary: "Lấy danh sách mã giảm giá"
+      description: "Lấy tất cả mã giảm giá của nhà tổ chức"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "query"
+          name: "manager_id"
+          type: "integer"
+          required: true
+          description: "ID nhà tổ chức"
+      responses:
+        200:
+          description: "Danh sách mã giảm giá"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "array"
+                items:
+                  type: "object"
+        400:
+          description: "Thiếu manager_id"
+        500:
+          description: "Lỗi server"
+    post:
+      tags:
+        - "Organizer"
+      summary: "Tạo mã giảm giá mới"
+      description: "Tạo mã giảm giá mới cho nhà tổ chức"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Thông tin mã giảm giá"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "manager_id"
+              - "code"
+            properties:
+              manager_id:
+                type: "integer"
+              code:
+                type: "string"
+                description: "Mã giảm giá"
+              name:
+                type: "string"
+                description: "Tên mã giảm giá"
+              discount_type:
+                type: "string"
+                enum: ["PERCENTAGE", "FIXED"]
+              value:
+                type: "number"
+              event_id:
+                type: "integer"
+              start_date:
+                type: "string"
+                format: "date-time"
+              end_date:
+                type: "string"
+                format: "date-time"
+              usage_limit:
+                type: "integer"
+      responses:
+        201:
+          description: "Mã giảm giá đã được tạo"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "object"
+        400:
+          description: "Dữ liệu không hợp lệ hoặc mã đã tồn tại"
+        500:
+          description: "Lỗi server"
+
+  /admin/stats:
+    get:
+      tags:
+        - "Admin"
+      summary: "Lấy thống kê tổng quan cho Admin"
+      description: "Lấy các số liệu thống kê tổng quan của hệ thống"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Thống kê tổng quan"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "object"
+                properties:
+                  total_users:
+                    type: "integer"
+                  total_events:
+                    type: "integer"
+                  total_revenue:
+                    type: "number"
+                  total_tickets_sold:
+                    type: "integer"
+        500:
+          description: "Lỗi server"
+
+  /admin/users:
+    get:
+      tags:
+        - "Admin"
+      summary: "Lấy danh sách tất cả người dùng"
+      description: "Lấy danh sách toàn bộ người dùng trong hệ thống"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Danh sách người dùng"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "array"
+                items:
+                  type: "object"
+        500:
+          description: "Lỗi server"
+
+  /admin/events:
+    get:
+      tags:
+        - "Admin"
+      summary: "Lấy danh sách tất cả sự kiện"
+      description: "Lấy danh sách toàn bộ sự kiện với thông tin nhà tổ chức"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Danh sách sự kiện"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              data:
+                type: "array"
+                items:
+                  type: "object"
+        500:
+          description: "Lỗi server"

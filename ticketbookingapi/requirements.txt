@@ -35,3 +35,7 @@ requests>=2.31.0
 
 # Redis for caching and token storage
 redis>=5.0.0
+
+# Swagger/OpenAPI documentation
+flasgger>=0.9.7.1
+PyYAML>=6.0
