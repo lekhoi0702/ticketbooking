@@ -14,6 +14,7 @@ from app.models.venue import Venue
 from app.models.seat import Seat
 from app.models.organizer_info import OrganizerInfo
 from app.models.user import User
+from app.utils.datetime_utils import now_gmt7
 
 # Keep for backward compatibility
 ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS
@@ -334,7 +335,7 @@ class OrganizerService:
         if ticket.ticket_status != 'ACTIVE':
              raise ValueError(f'Vé không hợp lệ (Trạng thái: {ticket.ticket_status})')
              
-        now = datetime.utcnow()
+        now = now_gmt7()
         db.session.execute(text("UPDATE Ticket SET ticket_status = 'USED', checked_in_at = :now WHERE ticket_id = :tid"), 
                          {"now": now, "tid": ticket.ticket_id})
         db.session.commit()
@@ -401,7 +402,7 @@ class OrganizerService:
                 params['logo'] = logo_url
         
         update_fields.append("updated_at = :now")
-        params['now'] = datetime.utcnow()
+        params['now'] = now_gmt7()
         
         if update_fields:
             sql = f"UPDATE OrganizerInfo SET {', '.join(update_fields)} WHERE user_id = :uid"

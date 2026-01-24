@@ -1,5 +1,6 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class Payment(db.Model):
     __tablename__ = "Payment"
@@ -13,7 +14,7 @@ class Payment(db.Model):
     payment_status = db.Column(db.Enum('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED'), default='PENDING', index=True)
     payment_date = db.Column(db.DateTime)
     paid_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
 
     def to_dict(self):
         return {

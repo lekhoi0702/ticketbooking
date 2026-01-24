@@ -8,6 +8,7 @@ import logging.handlers
 import os
 import sys
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 from typing import Optional
 import json
 
@@ -18,7 +19,7 @@ class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON"""
         log_data = {
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'timestamp': now_gmt7().isoformat(),
             'level': record.levelname,
             'logger': record.name,
             'message': record.getMessage(),

@@ -18,7 +18,6 @@ import {
 } from 'antd';
 import {
     SearchOutlined,
-    ReloadOutlined,
     EyeOutlined,
     CheckCircleOutlined,
     WalletOutlined,
@@ -29,8 +28,11 @@ import {
     SyncOutlined
 } from '@ant-design/icons';
 import { api } from '@services/api';
+import { formatLocaleDateTime } from '@shared/utils/dateUtils';
 import AdminPortal from '@shared/components/AdminPortal';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
+import AdminTable from '@features/admin/components/AdminTable';
+import AdminToolbar from '@features/admin/components/AdminToolbar';
 
 const { Text } = Typography;
 
@@ -51,6 +53,7 @@ const AdminOrdersManagement = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
+            setSelectedRowKeys([]); // Clear selection when refreshing
             const [ordersRes, eventsRes] = await Promise.all([
                 api.getAllAdminOrders(),
                 api.getAllAdminEvents()
@@ -160,7 +163,7 @@ const AdminOrdersManagement = () => {
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
                     <Text strong style={{ color: '#2DC275' }}>{record.order_code}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" style={{ fontSize: 16 }}>
                         <HistoryOutlined /> {new Date(record.created_at).toLocaleString('vi-VN')}
                     </Text>
                 </Space>
@@ -171,8 +174,8 @@ const AdminOrdersManagement = () => {
             key: 'customer',
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
-                    <Text strong style={{ fontSize: 13 }}>{record.customer_name}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>SĐT: {record.customer_phone || 'N/A'}</Text>
+                    <Text strong style={{ fontSize: 16 }}>{record.customer_name}</Text>
+                    <Text type="secondary" style={{ fontSize: 16 }}>SĐT: {record.customer_phone || 'N/A'}</Text>
                 </Space>
             ),
         },
@@ -180,7 +183,7 @@ const AdminOrdersManagement = () => {
             title: 'SỰ KIỆN',
             key: 'event',
             render: (_, record) => (
-                <Text ellipsis style={{ maxWidth: 200, fontSize: 13 }}>{record.event_name || 'N/A'}</Text>
+                <Text ellipsis style={{ maxWidth: 200, fontSize: 16 }}>{record.event_name || 'N/A'}</Text>
             ),
         },
         {
@@ -222,7 +225,7 @@ const AdminOrdersManagement = () => {
             <Card style={{ marginBottom: 24, borderRadius: 12 }}>
                 <Row gutter={16}>
                     <Col span={12}>
-                        <div style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c', fontWeight: 600 }}>LỌC THEO SỰ KIỆN</div>
+                        <div style={{ marginBottom: 8, fontSize: 16, color: '#8c8c8c', fontWeight: 600 }}>LỌC THEO SỰ KIỆN</div>
                         <Select
                             placeholder="Tất cả sự kiện"
                             style={{ width: '100%' }}
@@ -235,7 +238,7 @@ const AdminOrdersManagement = () => {
                         />
                     </Col>
                     <Col span={12}>
-                        <div style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c', fontWeight: 600 }}>TÌM KIẾM CHI TIẾT</div>
+                        <div style={{ marginBottom: 8, fontSize: 16, color: '#8c8c8c', fontWeight: 600 }}>TÌM KIẾM CHI TIẾT</div>
                         <Input
                             prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
                             value={searchTerm}
@@ -253,17 +256,16 @@ const AdminOrdersManagement = () => {
                     <div>
                         {selectedRowKeys.length > 0 && (
                             <Space size="middle">
-                                <Text strong>{selectedRowKeys.length} đã chọn:</Text>
+                                <Text strong>Đã chọn:</Text>
                                 <Button
                                     icon={<EyeOutlined />}
                                     onClick={() => handleViewDetails(selectedRowKeys[0])}
-                                    disabled={selectedRowKeys.length > 1}
                                 >
                                     Xem chi tiết
                                 </Button>
                                 {(() => {
                                     const record = orders.find(o => o.order_id === selectedRowKeys[0]);
-                                    if (!record || selectedRowKeys.length > 1) return null;
+                                    if (!record) return null;
 
                                     return (
                                         <>
@@ -301,24 +303,23 @@ const AdminOrdersManagement = () => {
                             </Space>
                         )}
                     </div>
-                    <Space>
-                        <Button icon={<ReloadOutlined />} onClick={fetchData} size="middle">
-                            Làm mới
-                        </Button>
-                    </Space>
+                    <AdminToolbar
+                        onRefresh={fetchData}
+                        refreshLoading={loading}
+                    />
                 </div>
             </Card>
 
             <Card styles={{ body: { padding: 0 } }}>
-                <Table
-                    rowSelection={{
-                        selectedRowKeys,
-                        onChange: (keys) => setSelectedRowKeys(keys),
-                    }}
+                <AdminTable
+                    selectedRowKeys={selectedRowKeys}
+                    setSelectedRowKeys={setSelectedRowKeys}
+                    selectionType="single"
                     rowKey="order_id"
                     columns={columns}
                     dataSource={filteredOrders}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{ pageSize: 50 }}
+                    emptyText="Không có đơn hàng"
                 />
             </Card>
 
@@ -335,7 +336,7 @@ const AdminOrdersManagement = () => {
                             <Descriptions.Item label="Khách hàng">{selectedOrder.customer_name}</Descriptions.Item>
                             <Descriptions.Item label="SĐT">{selectedOrder.customer_phone}</Descriptions.Item>
                             <Descriptions.Item label="Email">{selectedOrder.customer_email}</Descriptions.Item>
-                            <Descriptions.Item label="Ngày đặt">{new Date(selectedOrder.created_at).toLocaleString('vi-VN')}</Descriptions.Item>
+                            <Descriptions.Item label="Ngày đặt">{formatLocaleDateTime(selectedOrder.created_at)}</Descriptions.Item>
                             <Descriptions.Item label="Trạng thái">
                                 {(() => {
                                     const config = getStatusConfig(selectedOrder.order_status);

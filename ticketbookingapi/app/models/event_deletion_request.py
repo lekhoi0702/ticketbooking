@@ -1,18 +1,19 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class EventDeletionRequest(db.Model):
     __tablename__ = "EventDeletionRequest"
     
     request_id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('Event.event_id', ondelete='SET NULL'), nullable=True, index=True)
-    organizer_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=False)
+    organizer_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=False)
     reason = db.Column(db.Text)
     request_status = db.Column(db.Enum('PENDING', 'APPROVED', 'REJECTED'), default='PENDING', index=True)
     admin_note = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
     reviewed_at = db.Column(db.DateTime)
-    reviewed_by = db.Column(db.Integer, db.ForeignKey('User.user_id'))
+    reviewed_by = db.Column(db.BigInteger, db.ForeignKey('User.user_id'))
     
     # Relationships
     event = db.relationship('Event', backref='deletion_requests')

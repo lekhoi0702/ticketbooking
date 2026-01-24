@@ -81,7 +81,8 @@ class DiscountCreateSchema(Schema):
                 field_name='end_date'
             )
         
-        if data['start_date'] < datetime.now():
+        from app.utils.datetime_utils import now_gmt7
+        if data['start_date'] < now_gmt7():
             raise ValidationError(
                 'Start date must be in the future',
                 field_name='start_date'

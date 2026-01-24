@@ -40,9 +40,10 @@ def allowed_file(filename: str, allowed_extensions: set = None) -> bool:
 
 
 def generate_unique_filename(original_filename: str, prefix: str = "") -> str:
-    """Generate unique filename with timestamp and uuid"""
+    """Generate unique filename with timestamp and uuid (GMT+7)"""
+    from app.utils.datetime_utils import now_gmt7
     filename = secure_filename(original_filename)
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    timestamp = now_gmt7().strftime('%Y%m%d_%H%M%S')
     unique_id = uuid.uuid4().hex[:6]
     
     name, ext = os.path.splitext(filename)
@@ -233,3 +234,25 @@ def get_upload_url(organizer_id: int, upload_type: str, filename: str) -> str:
         URL path to access the file
     """
     return f"/uploads/organizers/{organizer_id}/{upload_type}/{filename}"
+
+
+def save_advertisement_image(file) -> str:
+    """
+    Save advertisement image
+    
+    Args:
+        file: File object from request.files
+    
+    Returns:
+        URL path to access the file
+    """
+    if not file or not allowed_file(file.filename):
+        return None
+    
+    upload_path = get_misc_upload_path()
+    filename = generate_unique_filename(file.filename, "ad")
+    
+    filepath = os.path.join(upload_path, filename)
+    file.save(filepath)
+    
+    return f"/uploads/misc/{filename}"

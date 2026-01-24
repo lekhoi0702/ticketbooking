@@ -19,7 +19,8 @@ const SeatMapTemplateView = ({
     activeTicketType,
     handleSeatMouseDown,
     handleSeatMouseEnter,
-    toggleAreaSeats
+    toggleAreaSeats,
+    scale = 1
 }) => {
     // Robust seat matching logic
     const isSameSeat = (s1, s2) => {
@@ -70,23 +71,23 @@ const SeatMapTemplateView = ({
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', userSelect: 'none' }}>
             {/* Debug info - can be removed after testing */}
-            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginBottom: 8 }}>
+            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 16, marginBottom: 8 }}>
                 Ghế hiện có: {selectedTemplateSeats?.length || 0} | Tổng ghế đã gán: {allOccupiedSeats?.length || 0}
             </div>
-            {/* Stage element */}
-            <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {/* Stage element — scale theo prop scale */}
+            <div style={{ marginBottom: Math.round(32 * scale), display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{
-                    width: 250,
-                    padding: '8px 40px',
+                    width: Math.round(250 * scale),
+                    padding: `${Math.round(8 * scale)}px ${Math.round(40 * scale)}px`,
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '0 0 20px 20px',
+                    borderRadius: `0 0 ${Math.round(20 * scale)}px ${Math.round(20 * scale)}px`,
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderTop: 'none',
                     color: 'rgba(255, 255, 255, 0.4)',
                     fontWeight: 'bold',
-                    fontSize: 12,
+                    fontSize: Math.max(12, Math.round(12 * scale)),
                     textAlign: 'center',
-                    letterSpacing: 2
+                    letterSpacing: Math.round(2 * scale)
                 }}>
                     SÂN KHẤU / STAGE
                 </div>
@@ -174,24 +175,28 @@ const SeatMapTemplateView = ({
                                 <div style={{
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    gap: 8,
-                                    padding: 16,
+                                    gap: Math.round(8 * scale),
+                                    padding: Math.round(16 * scale),
                                     backgroundColor: 'rgba(255,255,255,0.02)',
-                                    borderRadius: 8
+                                    borderRadius: Math.round(8 * scale)
                                 }}>
                                     {[...Array(area.rows)].map((_, rIdx) => {
                                         const rowName = String.fromCharCode(65 + rIdx);
+                                        const rowLabelWidth = Math.round(24 * scale);
+                                        const rowLabelHeight = Math.round(32 * scale);
+                                        const rowLabelFontSize = Math.max(12, Math.round(12 * scale));
+                                        const rowGap = Math.round(8 * scale);
                                         return (
-                                            <div key={rowName} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <div key={rowName} style={{ display: 'flex', alignItems: 'center', gap: rowGap }}>
                                                 <div style={{
-                                                    width: 24,
-                                                    height: 32,
+                                                    width: rowLabelWidth,
+                                                    height: rowLabelHeight,
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     color: 'rgba(255,255,255,0.5)',
                                                     fontWeight: 'bold',
-                                                    fontSize: 12,
+                                                    fontSize: rowLabelFontSize,
                                                     userSelect: 'none'
                                                 }}>
                                                     {rowName}
@@ -220,6 +225,7 @@ const SeatMapTemplateView = ({
                                                             activeTicketTypeId={activeTicketType?.ticket_type_id}
                                                             onMouseDown={handleSeatMouseDown}
                                                             onMouseEnter={handleSeatMouseEnter}
+                                                            scale={scale}
                                                         />
                                                     );
                                                 })}
@@ -231,7 +237,7 @@ const SeatMapTemplateView = ({
                         );
                     })
                 ) : Array.isArray(venueTemplate) ? (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: Math.round(8 * scale) }}>
                         {venueTemplate.map((t, idx) => {
                             const isSelected = selectedTemplateSeats.some(s => isSameSeat(s, t));
                             const occupiedBy = allOccupiedSeats.find(s => isSameSeat(s, t));
@@ -245,6 +251,7 @@ const SeatMapTemplateView = ({
                                     activeTicketTypeId={activeTicketType?.ticket_type_id}
                                     onMouseDown={handleSeatMouseDown}
                                     onMouseEnter={handleSeatMouseEnter}
+                                    scale={scale}
                                 />
                             );
                         })}

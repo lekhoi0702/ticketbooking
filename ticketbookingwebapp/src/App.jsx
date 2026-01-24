@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -24,6 +24,7 @@ import CategoryEvents from '@features/user/pages/CategoryEvents';
 import Profile from '@features/user/pages/Profile';
 import Login from '@features/user/pages/Login';
 import AllEvents from '@features/user/pages/AllEvents';
+import ResetPassword from '@features/user/pages/ResetPassword';
 
 // Organizer Imports
 import OrganizerLayout from '@features/organizer/components/OrganizerLayout';
@@ -46,15 +47,17 @@ import QRCodeManagement from '@features/organizer/pages/QRCodeManagement';
 
 // Admin Imports
 import AdminLayout from '@features/admin/components/AdminLayout';
-import UsersManagement from '@features/admin/pages/Users';
-import AdminEventsManagement from '@features/admin/pages/Events';
-import AdminOrdersManagement from '@features/admin/pages/Orders';
+import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
 
-import AdminLogin from '@features/admin/pages/Login';
-import AdminStatistics from '@features/admin/pages/Statistics';
-import AdminCategories from '@features/admin/pages/Categories';
-import AdminBanners from '@features/admin/pages/Banners';
-import AdminAuditLogs from '@features/admin/pages/AuditLogs';
+const AdminLogin = lazy(() => import('@features/admin/pages/Login'));
+const UsersManagement = lazy(() => import('@features/admin/pages/Users'));
+const AdminEventsManagement = lazy(() => import('@features/admin/pages/Events'));
+const AdminEventDetail = lazy(() => import('@features/admin/pages/EventDetail'));
+const AdminOrdersManagement = lazy(() => import('@features/admin/pages/Orders'));
+const AdminStatistics = lazy(() => import('@features/admin/pages/Statistics'));
+const AdminCategories = lazy(() => import('@features/admin/pages/Categories'));
+const AdminBanners = lazy(() => import('@features/admin/pages/Banners'));
+const Advertisements = lazy(() => import('@features/admin/pages/Advertisements'));
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -137,17 +140,85 @@ function App() {
                   />
                 </Route>
 
+                {/* Standalone User Routes (outside UserLayout) */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+
                 {/* Admin Routes */}
-                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route
+                  path="/admin/login"
+                  element={
+                    <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                      <AdminLogin />
+                    </Suspense>
+                  }
+                />
                 <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Navigate to="events" />} />
-                  <Route path="users" element={<UsersManagement />} />
-                  <Route path="categories" element={<AdminCategories />} />
-                  <Route path="banners" element={<AdminBanners />} />
-                  <Route path="events" element={<AdminEventsManagement />} />
-                  <Route path="orders" element={<AdminOrdersManagement />} />
-                  <Route path="statistics" element={<AdminStatistics />} />
-                  <Route path="audit-logs" element={<AdminAuditLogs />} />
+                  <Route index element={<Navigate to="statistics" replace />} />
+                  <Route
+                    path="users"
+                    element={
+                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                        <UsersManagement />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="categories"
+                    element={
+                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                        <AdminCategories />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="banners"
+                    element={
+                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                        <AdminBanners />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="advertisements"
+                    element={
+                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                        <Advertisements />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="events"
+                    element={
+                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                        <AdminEventsManagement />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="events/:id"
+                    element={
+                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                        <AdminEventDetail />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="orders"
+                    element={
+                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                        <AdminOrdersManagement />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="statistics"
+                    element={
+                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                        <AdminStatistics />
+                      </Suspense>
+                    }
+                  />
                 </Route>
 
                 {/* Organizer Routes */}

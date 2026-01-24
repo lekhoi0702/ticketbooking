@@ -80,7 +80,15 @@ class Config:
     # Application Configuration
     APP_NAME = os.getenv('APP_NAME', 'TicketBooking API')
     APP_VERSION = os.getenv('APP_VERSION', '2.0.0')
+    APP_TIMEZONE = os.getenv('APP_TIMEZONE', 'Asia/Ho_Chi_Minh')  # GMT+7
     
+    # Mail (for forgot-password)
+    MAIL_FROM_EMAIL = os.getenv('MAIL_FROM_EMAIL', '')
+    MAIL_APP_PASSWORD = os.getenv('MAIL_APP_PASSWORD', '')
+    
+    # Frontend URL (for password reset links)
+    FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
     # Gemini Chatbot Configuration
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
     # Default to gemini-2.5-flash (latest stable model)

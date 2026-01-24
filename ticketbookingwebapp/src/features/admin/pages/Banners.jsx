@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Card, Space, Typography, Tooltip, Switch, App, Upload, InputNumber } from 'antd';
+import { Button, Modal, Form, Input, Card, Space, Typography, Tooltip, Switch, App, Upload, InputNumber } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, WarningOutlined, UploadOutlined, LinkOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
 import AdminPortal from '@shared/components/AdminPortal';
 import { getImageUrl } from '@shared/utils/eventUtils';
+import AdminTable from '@features/admin/components/AdminTable';
+import AdminToolbar from '@features/admin/components/AdminToolbar';
 
 const { Title, Text } = Typography;
 
@@ -268,23 +270,27 @@ const Banners = () => {
     return (
         <div style={{ paddingTop: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="middle">
-                    Thêm banner
-                </Button>
+                <AdminToolbar
+                    onAdd={handleAdd}
+                    onRefresh={fetchBanners}
+                    addLabel="Thêm banner"
+                    refreshLoading={loading}
+                />
             </div>
 
             <Card className="shadow-sm">
-                <Table
+                <AdminTable
                     columns={columns}
                     dataSource={banners}
                     rowKey="banner_id"
-                    pagination={{ pageSize: 10 }}
+                    pagination={{ pageSize: 50 }}
+                    emptyText="Không có banner"
                 />
             </Card>
 
 
             <Modal
-                title={<Text strong style={{ fontSize: 18 }}>{isEditing ? `Chỉnh sửa: ${currentBanner?.title || 'Banner'}` : "Thêm banner mới"}</Text>}
+                title={<Text strong style={{ fontSize: 16 }}>{isEditing ? `Chỉnh sửa: ${currentBanner?.title || 'Banner'}` : "Thêm banner mới"}</Text>}
                 open={modalVisible}
                 onOk={handleSubmit}
                 onCancel={() => setModalVisible(false)}

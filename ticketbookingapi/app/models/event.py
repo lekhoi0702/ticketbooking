@@ -1,5 +1,6 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class Event(db.Model):
     __tablename__ = "Event"
@@ -7,22 +8,20 @@ class Event(db.Model):
     event_id = db.Column(db.Integer, primary_key=True)
     category_id = db.Column(db.Integer, db.ForeignKey('EventCategory.category_id'), nullable=False, index=True)
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.venue_id'), nullable=False, index=True)
-    manager_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=False)
+    manager_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=False)
     event_name = db.Column(db.String(500), nullable=False)
     description = db.Column(db.Text)
     start_datetime = db.Column(db.DateTime, nullable=False, index=True)
     end_datetime = db.Column(db.DateTime, nullable=False)
-    sale_start_datetime = db.Column(db.DateTime)
-    sale_end_datetime = db.Column(db.DateTime)
     banner_image_url = db.Column(db.String(500))
     vietqr_image_url = db.Column(db.String(500), nullable=True)  # QR code image URL for VietQR payment
     total_capacity = db.Column(db.Integer, nullable=False)
     sold_tickets = db.Column(db.Integer, default=0)
-    status = db.Column(db.Enum('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION', 'DELETED'), default='PENDING_APPROVAL', index=True)
+    status = db.Column(db.Enum('DRAFT', 'PENDING_APPROVAL', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION', 'DELETED'), default='PENDING_APPROVAL', index=True)
     is_featured = db.Column(db.Boolean, default=False, index=True)
     group_id = db.Column(db.String(100), index=True, nullable=True) # For grouping recurrent events (showtimes)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
+    updated_at = db.Column(db.DateTime, default=now_gmt7, onupdate=now_gmt7)
 
     # Relationships
     ticket_types = db.relationship('TicketType', backref='event', lazy=True, cascade='all, delete-orphan')
@@ -32,13 +31,11 @@ class Event(db.Model):
             'event_id': self.event_id,
             'category_id': self.category_id,
             'venue_id': self.venue_id,
-            'manager_id': self.manager_id,  # Include manager_id for audit logging
+            'manager_id': self.manager_id,
             'event_name': self.event_name,
             'description': self.description,
             'start_datetime': self.start_datetime.isoformat() if self.start_datetime else None,
             'end_datetime': self.end_datetime.isoformat() if self.end_datetime else None,
-            'sale_start_datetime': self.sale_start_datetime.isoformat() if self.sale_start_datetime else None,
-            'sale_end_datetime': self.sale_end_datetime.isoformat() if self.sale_end_datetime else None,
             'banner_image_url': self.banner_image_url,
             'vietqr_image_url': getattr(self, 'vietqr_image_url', None),  # Handle case where column doesn't exist yet
             'total_capacity': self.total_capacity,

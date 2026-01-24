@@ -51,13 +51,13 @@ class APIException(Exception):
 class BadRequestException(APIException):
     """400 Bad Request"""
     status_code = 400
-    message = "Bad request"
+    message = "Yêu cầu không hợp lệ"
     error_code = "BAD_REQUEST"
 
 
 class ValidationException(BadRequestException):
     """400 Validation Error"""
-    message = "Validation failed"
+    message = "Dữ liệu không hợp lệ"
     error_code = "VALIDATION_ERROR"
     
     def __init__(self, errors: Dict[str, Any], message: Optional[str] = None):
@@ -70,32 +70,32 @@ class ValidationException(BadRequestException):
 class UnauthorizedException(APIException):
     """401 Unauthorized"""
     status_code = 401
-    message = "Authentication required"
+    message = "Vui lòng đăng nhập"
     error_code = "UNAUTHORIZED"
 
 
 class InvalidCredentialsException(UnauthorizedException):
     """401 Invalid credentials"""
-    message = "Invalid email or password"
+    message = "Email hoặc mật khẩu không đúng"
     error_code = "INVALID_CREDENTIALS"
 
 
 class TokenExpiredException(UnauthorizedException):
     """401 Token expired"""
-    message = "Token has expired"
+    message = "Phiên đăng nhập đã hết hạn"
     error_code = "TOKEN_EXPIRED"
 
 
 class InvalidTokenException(UnauthorizedException):
     """401 Invalid token"""
-    message = "Invalid or malformed token"
+    message = "Token không hợp lệ"
     error_code = "INVALID_TOKEN"
 
 
 class ForbiddenException(APIException):
     """403 Forbidden"""
     status_code = 403
-    message = "You don't have permission to access this resource"
+    message = "Bạn không có quyền truy cập tài nguyên này"
     error_code = "FORBIDDEN"
 
 
@@ -108,7 +108,7 @@ class InsufficientPermissionException(ForbiddenException):
 class NotFoundException(APIException):
     """404 Not Found"""
     status_code = 404
-    message = "Resource not found"
+    message = "Không tìm thấy tài nguyên"
     error_code = "NOT_FOUND"
 
 
@@ -124,15 +124,20 @@ class ResourceNotFoundException(NotFoundException):
 class ConflictException(APIException):
     """409 Conflict"""
     status_code = 409
-    message = "Resource conflict"
+    message = "Xung đột tài nguyên"
     error_code = "CONFLICT"
 
 
 class DuplicateResourceException(ConflictException):
     """409 Duplicate resource"""
     def __init__(self, resource_type: str, field: str, value: Any):
+        msg_map = {
+            'email': 'Email này đã được sử dụng',
+            'phone': 'Số điện thoại này đã được sử dụng',
+        }
+        message = msg_map.get(field, f"{resource_type} với {field} '{value}' đã tồn tại")
         super().__init__(
-            message=f"{resource_type} with {field} '{value}' already exists",
+            message=message,
             error_code="DUPLICATE_RESOURCE",
             payload={'resource_type': resource_type, 'field': field, 'value': str(value)}
         )
@@ -308,10 +313,10 @@ def register_error_handlers(app):
             'success': False,
             'error': {
                 'code': 'NOT_FOUND',
-                'message': 'The requested resource was not found'
+                'message': 'Không tìm thấy tài nguyên'
             }
         }), 404
-    
+
     @app.errorhandler(405)
     def handle_405(error):
         """Handle 405 Method Not Allowed"""
@@ -319,10 +324,10 @@ def register_error_handlers(app):
             'success': False,
             'error': {
                 'code': 'METHOD_NOT_ALLOWED',
-                'message': 'Method not allowed for this endpoint'
+                'message': 'Phương thức không được phép cho đường dẫn này'
             }
         }), 405
-    
+
     @app.errorhandler(500)
     def handle_500(error):
         """Handle 500 Internal Server Error"""
@@ -331,10 +336,10 @@ def register_error_handlers(app):
             'success': False,
             'error': {
                 'code': 'INTERNAL_ERROR',
-                'message': 'An internal server error occurred'
+                'message': 'Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau.'
             }
         }), 500
-    
+
     @app.errorhandler(Exception)
     def handle_unexpected_error(error):
         """Handle unexpected errors"""
@@ -343,6 +348,6 @@ def register_error_handlers(app):
             'success': False,
             'error': {
                 'code': 'UNEXPECTED_ERROR',
-                'message': 'An unexpected error occurred'
+                'message': 'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.'
             }
         }), 500

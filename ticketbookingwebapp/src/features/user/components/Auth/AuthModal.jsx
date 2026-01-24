@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, Form, Button, Alert, Tabs, Tab } from 'react-bootstrap';
-import { FaLock, FaEnvelope, FaUser, FaPhone, FaArrowRight } from 'react-icons/fa';
+import { Modal, Form, Button } from 'react-bootstrap';
+import { FaLock, FaEnvelope, FaUser, FaPhone, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
@@ -8,6 +8,11 @@ import './AuthModal.css';
 
 const AuthModal = ({ show, onHide, onSuccess }) => {
     const [activeTab, setActiveTab] = useState('login');
+    const [viewMode, setViewMode] = useState('tabs'); // 'tabs' or 'forgot'
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotLoading, setForgotLoading] = useState(false);
+    const [forgotError, setForgotError] = useState(null);
+    const [forgotSuccess, setForgotSuccess] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -111,17 +116,23 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                     setError({ type: 'danger', msg: errorMsg });
                 }
             } else {
-                const res = await api.login({
-                    email: formData.email,
-                    password: formData.password
-                });
-                if (res.success && res.data) {
-                    login(res.data.user, res.data.access_token);
-                    onHide();
-                    if (onSuccess) onSuccess();
-                } else {
-                    // Always show error message
-                    const errorMsg = res.message || 'Đăng nhập không thành công';
+                try {
+                    const res = await api.login({
+                        email: formData.email,
+                        password: formData.password
+                    });
+                    if (res.success && res.data) {
+                        login(res.data.user, res.data.access_token);
+                        onHide();
+                        if (onSuccess) onSuccess();
+                    } else {
+                        // Always show error message
+                        const errorMsg = res.message || 'Đăng nhập không thành công';
+                        setError({ type: 'danger', msg: errorMsg });
+                    }
+                } catch (loginErr) {
+                    // Error from api.login() will be caught here
+                    const errorMsg = loginErr.message || 'Đăng nhập không thành công';
                     setError({ type: 'danger', msg: errorMsg });
                 }
             }
@@ -193,20 +204,67 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
         setFieldErrors({});
     };
 
+    const handleForgotPassword = () => {
+        setForgotEmail(formData.email);
+        setViewMode('forgot');
+        setForgotError(null);
+        setForgotSuccess(false);
+    };
+
+    const handleBackToLogin = () => {
+        setViewMode('tabs');
+        setForgotError(null);
+        setForgotSuccess(false);
+        setForgotEmail('');
+    };
+
+    const handleForgotSubmit = async (e) => {
+        e.preventDefault();
+        const trimmed = (forgotEmail || '').trim();
+        if (!trimmed) {
+            setForgotError('Vui lòng nhập email.');
+            return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+            setForgotError('Email không hợp lệ.');
+            return;
+        }
+        setForgotLoading(true);
+        setForgotError(null);
+        setForgotSuccess(false);
+        try {
+            const res = await api.forgotPassword(trimmed);
+            if (res.success) {
+                setForgotSuccess(true);
+            } else {
+                setForgotError(res.message || 'Không thể gửi email khôi phục mật khẩu.');
+            }
+        } catch (err) {
+            setForgotError(err.message || 'Không thể gửi email khôi phục mật khẩu.');
+        } finally {
+            setForgotLoading(false);
+        }
+    };
+
     const handleClose = () => {
         setFormData({ email: '', password: '', full_name: '', phone: '' });
         setError(null);
         setFieldErrors({});
         setActiveTab('login');
+        setViewMode('tabs');
+        setForgotEmail('');
+        setForgotError(null);
+        setForgotSuccess(false);
         onHide();
     };
 
     return (
+        <>
         <Modal show={show} onHide={handleClose} centered size="sm" className="auth-modal">
             <Modal.Header closeButton className="auth-modal-header border-0">
                 <div className="auth-header-content">
                     <h3 className="auth-header-title">
-                        {activeTab === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+                        {viewMode === 'forgot' ? 'Quên mật khẩu' : (activeTab === 'login' ? 'Đăng nhập' : 'Đăng ký')}
                     </h3>
                     <div className="auth-mascot">
                         <img src="/mascot.svg" alt="Mascot" />
@@ -214,16 +272,79 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                 </div>
             </Modal.Header>
             <Modal.Body className="px-4 pb-4">
-                <Tabs
-                    activeKey={activeTab}
-                    onSelect={handleTabChange}
-                    className="auth-tabs mb-4 nav-justified border-0"
-                >
-                    <Tab eventKey="login" title="Đăng nhập">
+                {viewMode === 'forgot' ? (
+                    <>
+                        {forgotSuccess ? (
+                            <>
+                                <div className="small text-success mb-3">
+                                    Bạn sẽ nhận được link đặt lại mật khẩu qua email. Vui lòng kiểm tra hộp thư và thư mục spam. Link sẽ hết hạn sau 5 phút.
+                                </div>
+                                <Button variant="primary" className="w-100 auth-submit-btn" onClick={handleBackToLogin}>
+                                    <FaArrowLeft className="me-2" />
+                                    Quay lại đăng nhập
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <p className="small text-muted mb-3">
+                                    Nhập email đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu về email của bạn.
+                                </p>
+                                {forgotError && (
+                                    <div className="small mb-3 text-danger">{forgotError}</div>
+                                )}
+                                <Form onSubmit={handleForgotSubmit} noValidate>
+                                    <Form.Group className="mb-3">
+                                        <Form.Control
+                                            type="email"
+                                            value={forgotEmail}
+                                            onChange={e => { setForgotEmail(e.target.value); setForgotError(null); }}
+                                            placeholder="Nhập email"
+                                            className="auth-input"
+                                        />
+                                    </Form.Group>
+                                    <Button
+                                        variant="primary"
+                                        type="submit"
+                                        className="w-100 auth-submit-btn mb-2"
+                                        disabled={forgotLoading}
+                                    >
+                                        {forgotLoading ? <LoadingOutlined spin className="me-2" /> : null}
+                                        ĐẶT LẠI MẬT KHẨU
+                                    </Button>
+                                    <Button variant="link" className="w-100 text-muted small" onClick={handleBackToLogin}>
+                                        <FaArrowLeft className="me-2" />
+                                        Quay lại đăng nhập
+                                    </Button>
+                                </Form>
+                            </>
+                        )}
+                    </>
+                ) : (
+                    <>
+                    <div className="auth-tabs-row mb-4">
+                        <button
+                            type="button"
+                            className={`auth-tab-btn ${activeTab === 'login' ? 'active' : ''}`}
+                            onClick={() => handleTabChange('login')}
+                            aria-selected={activeTab === 'login'}
+                        >
+                            Đăng nhập
+                        </button>
+                        <button
+                            type="button"
+                            className={`auth-tab-btn ${activeTab === 'register' ? 'active' : ''}`}
+                            onClick={() => handleTabChange('register')}
+                            aria-selected={activeTab === 'register'}
+                        >
+                            Đăng ký
+                        </button>
+                    </div>
+                    {activeTab === 'login' && (
+                        <>
                         {error && (
-                            <Alert variant={error.type} className="rounded-3 border-0 py-2 small">
+                            <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : error.type === 'warning' ? 'text-warning' : 'text-danger'}`}>
                                 {error.msg}
-                            </Alert>
+                            </div>
                         )}
 
                         <Form onSubmit={handleSubmit} noValidate>
@@ -265,14 +386,24 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 ĐĂNG NHẬP
                                 {!loading && <FaArrowRight className="ms-2" />}
                             </Button>
+                            <div className="text-center mt-2">
+                                <Button
+                                    variant="link"
+                                    className="p-0 small text-muted text-decoration-none"
+                                    onClick={handleForgotPassword}
+                                >
+                                    Quên mật khẩu?
+                                </Button>
+                            </div>
                         </Form>
-                    </Tab>
-
-                    <Tab eventKey="register" title="Đăng ký">
+                        </>
+                    )}
+                    {activeTab === 'register' && (
+                        <>
                         {error && (
-                            <Alert variant={error.type} className="rounded-3 border-0 py-2 small">
+                            <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : error.type === 'warning' ? 'text-warning' : 'text-danger'}`}>
                                 {error.msg}
-                            </Alert>
+                            </div>
                         )}
 
                         <Form onSubmit={handleSubmit} noValidate>
@@ -342,10 +473,13 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 {!loading && <FaArrowRight className="ms-2" />}
                             </Button>
                         </Form>
-                    </Tab>
-                </Tabs>
+                        </>
+                    )}
+                    </>
+                )}
             </Modal.Body>
         </Modal>
+        </>
     );
 };
 

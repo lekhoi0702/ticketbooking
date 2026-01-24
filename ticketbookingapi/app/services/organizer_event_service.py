@@ -1,6 +1,7 @@
 import os
 import json
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7, parse_to_gmt7
 from werkzeug.utils import secure_filename
 from sqlalchemy import text
 from app.extensions import db
@@ -192,9 +193,11 @@ class OrganizerEventService:
                      return (current, next_event)
             return None
 
-        # 1. Collect all times to be created (Main + Extra)
-        start_datetime = datetime.fromisoformat(data.get('start_datetime'))
-        end_datetime = datetime.fromisoformat(data.get('end_datetime'))
+        # 1. Collect all times to be created (Main + Extra) — GMT+7
+        start_datetime = parse_to_gmt7(data.get('start_datetime'))
+        end_datetime = parse_to_gmt7(data.get('end_datetime'))
+        if not start_datetime or not end_datetime:
+            raise ValueError('start_datetime và end_datetime không hợp lệ')
         
         all_new_times = [{'start': start_datetime, 'end': end_datetime, 'label': 'Sự kiện chính'}]
         
@@ -203,9 +206,10 @@ class OrganizerEventService:
             for idx, st_json in enumerate(extra_showtimes):
                 st_data = json.loads(st_json)
                 if 'start_datetime' in st_data and 'end_datetime' in st_data:
-                    s_dt = datetime.fromisoformat(st_data['start_datetime'])
-                    e_dt = datetime.fromisoformat(st_data['end_datetime'])
-                    all_new_times.append({'start': s_dt, 'end': e_dt, 'label': f'Suất diễn phụ #{idx+1}'})
+                    s_dt = parse_to_gmt7(st_data['start_datetime'])
+                    e_dt = parse_to_gmt7(st_data['end_datetime'])
+                    if s_dt and e_dt:
+                        all_new_times.append({'start': s_dt, 'end': e_dt, 'label': f'Suất diễn phụ #{idx+1}'})
 
         # 2. Check internal overlap
         internal_conflict = check_internal_overlap(all_new_times)
@@ -223,18 +227,18 @@ class OrganizerEventService:
         insert_sql = text("""
             INSERT INTO Event (
                 category_id, venue_id, manager_id, event_name, description,
-                start_datetime, end_datetime, sale_start_datetime, sale_end_datetime,
+                start_datetime, end_datetime,
                 banner_image_url, vietqr_image_url, total_capacity, status, is_featured,
                 sold_tickets, created_at, updated_at
             ) VALUES (
                 :category_id, :venue_id, :manager_id, :event_name, :description,
-                :start_datetime, :end_datetime, :sale_start_datetime, :sale_end_datetime,
+                :start_datetime, :end_datetime,
                 :banner_image_url, :vietqr_image_url, :total_capacity, :status, :is_featured,
                 0, :now, :now
             )
         """)
         
-        now = datetime.utcnow()
+        now = now_gmt7()
         is_featured = data.get('is_featured', 'false').lower() == 'true'
         
         params = {
@@ -243,10 +247,8 @@ class OrganizerEventService:
             "manager_id": manager_id,
             "event_name": data.get('event_name'),
             "description": data.get('description'),
-            "start_datetime": datetime.fromisoformat(data.get('start_datetime')),
-            "end_datetime": datetime.fromisoformat(data.get('end_datetime')),
-            "sale_start_datetime": datetime.fromisoformat(data.get('sale_start_datetime')) if data.get('sale_start_datetime') else None,
-            "sale_end_datetime": datetime.fromisoformat(data.get('sale_end_datetime')) if data.get('sale_end_datetime') else None,
+            "start_datetime": parse_to_gmt7(data.get('start_datetime')),
+            "end_datetime": parse_to_gmt7(data.get('end_datetime')),
             "banner_image_url": banner_image_url,
             "vietqr_image_url": vietqr_image_url,
             "total_capacity": int(data.get('total_capacity', 0)),
@@ -359,46 +361,33 @@ class OrganizerEventService:
                 update_fields.append(f"{col} = :{col}")
                 params[col] = val
 
-        date_fields = ['start_datetime', 'end_datetime', 'sale_start_datetime', 'sale_end_datetime']
+        date_fields = ['start_datetime', 'end_datetime']
         for df in date_fields:
             if data.get(df):
                 val = data.get(df)
-                try:
-                    # Handle multiple formats: ISO (T), space-separated with or without seconds
-                    if ' ' in val:
-                        if val.count(':') == 1: # HH:MM
-                            params[df] = datetime.strptime(val, '%Y-%m-%d %H:%M')
-                        else: # HH:MM:SS
-                            params[df] = datetime.strptime(val, '%Y-%m-%d %H:%M:%S')
-                    else:
-                        params[df] = datetime.fromisoformat(val.replace('Z', '+00:00'))
+                parsed = parse_to_gmt7(val)
+                if parsed:
+                    params[df] = parsed
                     update_fields.append(f"{df} = :{df}")
-                except (ValueError, TypeError) as e:
-                    print(f"Warning: Failed to parse date {df}: {val}. Error: {e}")
+                else:
+                    print(f"Warning: Failed to parse date {df}: {val}")
                     # Skip this field instead of failing the whole update
                 
-        # Handle status changes with new workflow rules
+        # Handle status changes with new workflow rules (bỏ APPROVED: nháp, chờ duyệt, công khai, từ chối duyệt, hủy)
         current_status = event_row.status
         requested_status = data.get('status')
         
-        # Rule 1: If event is PUBLISHED and organizer wants to edit, auto-change to APPROVED
-        # Organizer cannot keep PUBLISHED status when editing - must go through approval again
+        # Rule 1: Nếu sự kiện đang Công khai (PUBLISHED) mà organizer sửa -> chuyển về Chờ duyệt (PENDING_APPROVAL)
         if current_status == 'PUBLISHED':
-            if requested_status == 'PUBLISHED':
-                # Organizer trying to keep PUBLISHED status - not allowed, change to APPROVED
-                update_fields.append("status = :status")
-                params['status'] = 'APPROVED'
-            else:
-                # Auto-change to APPROVED when editing published event
-                update_fields.append("status = :status")
-                params['status'] = 'APPROVED'
+            update_fields.append("status = :status")
+            params['status'] = 'PENDING_APPROVAL'
         elif requested_status:
             new_status = requested_status
-            # Rule 2: Cannot change from APPROVED back to DRAFT
-            if current_status == 'APPROVED' and new_status == 'DRAFT':
-                raise ValueError('Không thể chuyển sự kiện đã được duyệt về trạng thái nháp. Chỉ có thể sửa, xóa hoặc hủy.')
-            # Rule 3: Cannot publish without admin approval
-            if new_status == 'PUBLISHED' and current_status not in ['APPROVED', 'PUBLISHED']:
+            # Rule 2: Không cho chuyển từ PUBLISHED về DRAFT
+            if current_status == 'PUBLISHED' and new_status == 'DRAFT':
+                raise ValueError('Không thể chuyển sự kiện đã công khai về trạng thái nháp. Chỉ có thể sửa, xóa hoặc hủy.')
+            # Rule 3: Chỉ admin mới duyệt (PENDING_APPROVAL -> PUBLISHED). Organizer không được set PUBLISHED.
+            if new_status == 'PUBLISHED' and current_status != 'PUBLISHED':
                 raise ValueError('Sự kiện cần được Admin phê duyệt trước khi đăng')
             update_fields.append("status = :status")
             params['status'] = new_status
@@ -408,12 +397,7 @@ class OrganizerEventService:
             params['is_featured'] = (data.get('is_featured', 'false').lower() == 'true')
             
         update_fields.append("updated_at = :now")
-        params['now'] = datetime.utcnow()
-        
-        # Track if status was changed to APPROVED (for auto-change to PENDING_APPROVAL later)
-        status_changed_to_approved = False
-        if params.get('status') == 'APPROVED':
-            status_changed_to_approved = True
+        params['now'] = now_gmt7()
         
         if update_fields:
             sql = f"UPDATE Event SET {', '.join(update_fields)} WHERE event_id = :event_id"
@@ -475,16 +459,6 @@ class OrganizerEventService:
                 st_data = json.loads(st_json)
                 if 'start_datetime' in st_data and 'end_datetime' in st_data:
                     OrganizerEventService.add_showtime(event_id, st_data)
-        
-        # Rule 4: After updating event in APPROVED status, auto-change to PENDING_APPROVAL
-        # Check if event was updated and is now in APPROVED status
-        if status_changed_to_approved or update_fields or ticket_types_data or extra_showtimes:
-            # Re-fetch current status
-            current_event = db.session.execute(text("SELECT status FROM Event WHERE event_id = :id"), {"id": event_id}).fetchone()
-            if current_event and current_event.status == 'APPROVED':
-                # Change to PENDING_APPROVAL for admin re-approval after any update
-                db.session.execute(text("UPDATE Event SET status = 'PENDING_APPROVAL' WHERE event_id = :id"), {"id": event_id})
-                db.session.commit()
 
         return OrganizerEventService._fetch_event(event_id)
 
@@ -511,39 +485,22 @@ class OrganizerEventService:
         start_str = data.get('start_datetime')
         end_str = data.get('end_datetime')
         
-        # Handle both ISO format and our custom format
-        try:
-            start_datetime = datetime.strptime(start_str, '%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            start_datetime = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
-            
-        try:
-            end_datetime = datetime.strptime(end_str, '%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            end_datetime = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
-        # Optional sale times
-        def parse_dt(dt_str, default):
-            if not dt_str: return default
-            try:
-                return datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
-            except ValueError:
-                return datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
-
-        sale_start = parse_dt(data.get('sale_start_datetime'), source_event.sale_start_datetime)
-        sale_end = parse_dt(data.get('sale_end_datetime'), source_event.sale_end_datetime)
-
-        now = datetime.utcnow()
+        start_datetime = parse_to_gmt7(start_str)
+        end_datetime = parse_to_gmt7(end_str)
+        if not start_datetime or not end_datetime:
+            raise ValueError('start_datetime và end_datetime không hợp lệ')
+        now = now_gmt7()
         
         # Insert New Event (Clone)
         insert_sql = text("""
             INSERT INTO Event (
                 group_id, category_id, venue_id, manager_id, event_name, description,
-                start_datetime, end_datetime, sale_start_datetime, sale_end_datetime,
+                start_datetime, end_datetime,
                 banner_image_url, vietqr_image_url, total_capacity, sold_tickets, status, is_featured,
                 created_at, updated_at
             ) VALUES (
                 :group_id, :category_id, :venue_id, :manager_id, :event_name, :description,
-                :start_datetime, :end_datetime, :sale_start_datetime, :sale_end_datetime,
+                :start_datetime, :end_datetime,
                 :banner_image_url, :vietqr_image_url, :total_capacity, 0, 'PENDING_APPROVAL', 0,
                 :now, :now
             )
@@ -562,8 +519,6 @@ class OrganizerEventService:
             "description": source_event.description,
             "start_datetime": start_datetime,
             "end_datetime": end_datetime,
-            "sale_start_datetime": sale_start,
-            "sale_end_datetime": sale_end,
             "banner_image_url": source_event.banner_image_url,
             "vietqr_image_url": source_event.vietqr_image_url,
             "total_capacity": int(show_capacity),
@@ -694,7 +649,7 @@ class OrganizerEventService:
         
         # Soft delete: Set status to 'DELETED'
         update_sql = text("UPDATE Event SET status = 'DELETED', updated_at = :now WHERE event_id = :id")
-        db.session.execute(update_sql, {"id": event_id, "now": datetime.utcnow()})
+        db.session.execute(update_sql, {"id": event_id, "now": now_gmt7()})
         db.session.commit()
         
         return True
@@ -740,7 +695,7 @@ class OrganizerEventService:
                 
                 # Soft delete: Set status to 'DELETED' instead of actual deletion
                 update_sql = text("UPDATE Event SET status = 'DELETED', updated_at = :now WHERE event_id = :id")
-                db.session.execute(update_sql, {"id": event_id, "now": datetime.utcnow()})
+                db.session.execute(update_sql, {"id": event_id, "now": now_gmt7()})
                 
                 results['success_count'] += 1
                 results['deleted_event_ids'].append(event_id)

@@ -3,6 +3,7 @@ from app.models.favorite_event import FavoriteEvent
 from app.models.event import Event
 from app.models.venue import Venue
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class EventService:
     @staticmethod
@@ -61,10 +62,8 @@ class EventService:
         if not event_ids:
             return []
         
-        # Get current time
-        now = datetime.utcnow()
+        now = now_gmt7()
         
-        # Get only events that haven't ended yet
         active_events = Event.query.filter(
             Event.event_id.in_(event_ids),
             Event.end_datetime > now

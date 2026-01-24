@@ -24,15 +24,8 @@ import {
 import { useParams } from 'react-router-dom';
 import { api } from '@services/api';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import { formatDateTime } from '@shared/utils/dateUtils';
 import OrderDetailModal from '@features/organizer/components/OrderDetailModal';
-
-// Configure dayjs for Vietnam timezone
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.tz.setDefault('Asia/Ho_Chi_Minh');
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -195,7 +188,7 @@ const EventOrders = () => {
             dataIndex: 'created_at',
             key: 'created_at',
             width: 150,
-            render: (date) => dayjs.utc(date).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm'),
+            render: (date) => formatDateTime(date),
         },
         {
             title: 'Trạng thái',

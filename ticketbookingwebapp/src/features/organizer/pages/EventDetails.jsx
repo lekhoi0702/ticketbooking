@@ -31,6 +31,7 @@ import {
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { api } from '@services/api';
 import { getImageUrl } from '@shared/utils/eventUtils';
+import { formatLocale, formatLocaleDateTime } from '@shared/utils/dateUtils';
 import SeatMapTemplateView from '@features/organizer/components/SeatMapTemplateView';
 
 const { Title, Text, Paragraph } = Typography;
@@ -100,11 +101,11 @@ const EventDetails = () => {
 
     const getStatusConfig = (status) => {
         const configs = {
-            'PENDING_APPROVAL': { color: 'warning', label: 'CHỜ DUYỆT' },
-            'APPROVED': { color: 'cyan', label: 'ĐÃ DUYỆT' },
-            'REJECTED': { color: 'error', label: 'TỪ CHỐI' },
-            'PUBLISHED': { color: 'success', label: 'CÔNG KHAI' },
             'DRAFT': { color: 'default', label: 'NHÁP' },
+            'PENDING_APPROVAL': { color: 'warning', label: 'CHỜ DUYỆT' },
+            'PUBLISHED': { color: 'success', label: 'CÔNG KHAI' },
+            'REJECTED': { color: 'error', label: 'TỪ CHỐI DUYỆT' },
+            'CANCELLED': { color: 'default', label: 'HỦY' },
             'ONGOING': { color: 'processing', label: 'ĐANG DIỄN RA' },
             'COMPLETED': { color: 'default', label: 'ĐÃ KẾT THÚC' }
         };
@@ -280,7 +281,7 @@ const EventDetails = () => {
                                     <Space><CalendarOutlined /> <Text strong>Ngày tổ chức</Text></Space>
                                 }>
                                     <Text type="secondary">
-                                        {event.start_datetime ? new Date(event.start_datetime).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
+                                        {event.start_datetime ? formatLocale(event.start_datetime, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
                                     </Text>
                                 </Descriptions.Item>
 
@@ -288,9 +289,9 @@ const EventDetails = () => {
                                     <Space><ClockCircleOutlined /> <Text strong>Thời gian</Text></Space>
                                 }>
                                     <Text type="secondary">
-                                        {event.start_datetime ? new Date(event.start_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--'}
+                                        {event.start_datetime ? formatLocale(event.start_datetime, { hour: '2-digit', minute: '2-digit' }) : '--'}
                                         {' - '}
-                                        {event.end_datetime ? new Date(event.end_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--'}
+                                        {event.end_datetime ? formatLocale(event.end_datetime, { hour: '2-digit', minute: '2-digit' }) : '--'}
                                     </Text>
                                 </Descriptions.Item>
 
@@ -307,10 +308,10 @@ const EventDetails = () => {
                             <div>
                                 <Text strong style={{ display: 'block', marginBottom: 8 }}>Kênh bán vé</Text>
                                 <Text type="secondary" style={{ fontSize: 13, display: 'block' }}>
-                                    Mở: {event.sale_start_datetime ? new Date(event.sale_start_datetime).toLocaleString('vi-VN') : 'N/A'}
+                                    Mở: {event.sale_start_datetime ? formatLocaleDateTime(event.sale_start_datetime) : 'N/A'}
                                 </Text>
                                 <Text type="secondary" style={{ fontSize: 13, display: 'block' }}>
-                                    Đóng: {event.sale_end_datetime ? new Date(event.sale_end_datetime).toLocaleString('vi-VN') : 'N/A'}
+                                    Đóng: {event.sale_end_datetime ? formatLocaleDateTime(event.sale_end_datetime) : 'N/A'}
                                 </Text>
                             </div>
                         </Card>

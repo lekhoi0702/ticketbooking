@@ -3,7 +3,8 @@ Payment repository for payment-specific database operations
 """
 
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
+from app.utils.datetime_utils import now_gmt7
 from app.models.payment import Payment
 from app.repositories.base_repository import BaseRepository
 
@@ -93,8 +94,7 @@ class PaymentRepository(BaseRepository[Payment]):
         Returns:
             List of pending payments
         """
-        from datetime import timedelta
-        threshold = datetime.utcnow() - timedelta(minutes=older_than_minutes)
+        threshold = now_gmt7() - timedelta(minutes=older_than_minutes)
         
         return self.session.query(Payment).filter(
             Payment.payment_status == 'PENDING',
@@ -127,7 +127,7 @@ class PaymentRepository(BaseRepository[Payment]):
         if paid_at:
             updates['paid_at'] = paid_at
         elif new_status == 'SUCCESS' and not payment.paid_at:
-            updates['paid_at'] = datetime.utcnow()
+            updates['paid_at'] = now_gmt7()
         
         return self.update(payment, **updates)
     
@@ -150,7 +150,7 @@ class PaymentRepository(BaseRepository[Payment]):
             payment,
             'SUCCESS',
             transaction_id=transaction_id,
-            paid_at=datetime.utcnow()
+            paid_at=now_gmt7()
         )
     
     def mark_as_failed(self, payment: Payment) -> Payment:

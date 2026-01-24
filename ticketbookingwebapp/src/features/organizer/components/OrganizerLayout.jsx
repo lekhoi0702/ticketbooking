@@ -35,6 +35,7 @@ import {
 import { AntdThemeConfig } from '@theme/AntdThemeConfig';
 import { usePendingRefunds } from '@shared/hooks/usePendingRefunds';
 import { api } from '@services/api';
+import ChangePasswordModal from '@features/user/components/Account/ChangePasswordModal';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -42,7 +43,7 @@ const { Title, Text } = Typography;
 const OrganizerLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout, updateUser } = useAuth();
     const { pendingCount, refresh: refreshPendingCount } = usePendingRefunds();
     const [notifications, setNotifications] = useState([]);
     const [loadingNotifications, setLoadingNotifications] = useState(false);
@@ -394,6 +395,14 @@ const OrganizerLayout = () => {
                     <Text type="secondary">© 2026 TicketBooking</Text>
                 </div>
             </Layout>
+
+            {user?.must_change_password && (
+                <ChangePasswordModal
+                    show
+                    forceChange
+                    onSuccess={() => updateUser({ must_change_password: false })}
+                />
+            )}
             
             {/* Inline styles for hover effects and animations */}
             <style>{`

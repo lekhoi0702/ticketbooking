@@ -6,6 +6,7 @@ from app.models.order import Order
 from app.models.ticket import Ticket
 from app.models.ticket_type import TicketType
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 event_deletion_bp = Blueprint("event_deletion", __name__)
 
@@ -104,7 +105,7 @@ def approve_deletion_request(request_id):
         # Now update deletion request status
         deletion_request.request_status = 'APPROVED'
         deletion_request.reviewed_by = admin_id
-        deletion_request.reviewed_at = datetime.utcnow()
+        deletion_request.reviewed_at = now_gmt7()
         deletion_request.admin_note = admin_note
         
         # Commit everything in a single transaction
@@ -147,7 +148,7 @@ def reject_deletion_request(request_id):
         # Update deletion request status
         deletion_request.request_status = 'REJECTED'
         deletion_request.reviewed_by = admin_id
-        deletion_request.reviewed_at = datetime.utcnow()
+        deletion_request.reviewed_at = now_gmt7()
         deletion_request.admin_note = admin_note
         
         db.session.commit()

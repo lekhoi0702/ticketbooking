@@ -158,7 +158,7 @@ const AdminLogin = () => {
 
                             }}>
 
-                                <SafetyCertificateOutlined style={{ fontSize: 24, color: '#2DC275' }} />
+                                <SafetyCertificateOutlined style={{ fontSize: 16, color: '#2DC275' }} />
 
                             </div>
 
@@ -168,7 +168,7 @@ const AdminLogin = () => {
 
                             </Title>
 
-                            <Text type="secondary" style={{ fontSize: 13 }}>Hệ thống quản trị TICKETBOOKING</Text>
+                            <Text type="secondary" style={{ fontSize: 16 }}>Hệ thống quản trị TICKETBOOKING</Text>
 
                         </div>
 
@@ -212,7 +212,7 @@ const AdminLogin = () => {
 
                                 name="email"
 
-                                label={<Text strong style={{ fontSize: 12 }}>TÀI KHOẢN</Text>}
+                                label={<Text strong style={{ fontSize: 16 }}>TÀI KHOẢN</Text>}
 
                                 rules={[{ required: true, message: 'Vui lòng nhập email admin!' }]}
 
@@ -232,7 +232,7 @@ const AdminLogin = () => {
 
                                 name="password"
 
-                                label={<Text strong style={{ fontSize: 12 }}>MẬT KHẨU</Text>}
+                                label={<Text strong style={{ fontSize: 16 }}>MẬT KHẨU</Text>}
 
                                 rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
 
@@ -280,7 +280,7 @@ const AdminLogin = () => {
 
                 <footer style={{ textAlign: 'center', padding: '24px 0', opacity: 0.45 }}>
 
-                    <Text style={{ fontSize: 11 }}>© 2026 TicketBooking Security Engine. All rights reserved.</Text>
+                    <Text style={{ fontSize: 16 }}>© 2026 TicketBooking Security Engine. All rights reserved.</Text>
 
                 </footer>
 

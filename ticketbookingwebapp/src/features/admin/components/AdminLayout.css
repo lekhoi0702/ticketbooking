@@ -1,0 +1,80 @@
+/* Admin Layout - Pure / Borderless (admin thuần, không có border) */
+/* Thống nhất font-size 16px cho toàn bộ giao diện admin */
+
+.admin-layout-pure {
+  min-height: 100vh;
+  font-size: 16px;
+}
+
+.admin-layout-pure .ant-table,
+.admin-layout-pure .ant-table-thead > tr > th,
+.admin-layout-pure .ant-table-tbody > tr > td,
+.admin-layout-pure .ant-breadcrumb,
+.admin-layout-pure .ant-breadcrumb-link,
+.admin-layout-pure .ant-menu-item,
+.admin-layout-pure .ant-btn,
+.admin-layout-pure .ant-input,
+.admin-layout-pure .ant-select-selector,
+.admin-layout-pure .ant-tag,
+.admin-layout-pure .ant-typography,
+.admin-layout-pure .ant-card-head-title,
+.admin-layout-pure .ant-list-item,
+.admin-layout-pure .ant-statistic-content-value,
+.admin-layout-pure .ant-pagination-item,
+.admin-layout-pure .ant-pagination-item-link {
+  font-size: 16px !important;
+}
+
+.admin-layout-pure .ant-layout {
+  background: #f5f5f5;
+}
+
+/* Sider: no border, no shadow */
+.admin-layout-pure .ant-layout-sider {
+  border: none;
+  border-right: none;
+  box-shadow: none;
+}
+
+.admin-layout-pure .ant-layout-sider .ant-layout-sider-children {
+  border: none;
+}
+
+/* Menu: no borders between items */
+.admin-layout-pure .ant-menu-dark {
+  border: none;
+  background: transparent;
+}
+
+.admin-layout-pure .ant-menu-dark.ant-menu-inline .ant-menu-item,
+.admin-layout-pure .ant-menu-dark.ant-menu-inline .ant-menu-submenu-title {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+.admin-layout-pure .ant-menu-dark.ant-menu-inline .ant-menu-item::after {
+  display: none;
+}
+
+/* Header: no border, no shadow - flat */
+.admin-layout-pure .admin-layout-header {
+  border: none;
+  box-shadow: none;
+  background: #fff;
+}
+
+/* User dropdown trigger: no divider border */
+.admin-layout-pure .admin-user-trigger {
+  border: none;
+}
+
+/* Content area: no extra borders */
+.admin-layout-pure .ant-layout-content {
+  background: transparent;
+}
+
+.admin-layout-pure .admin-content-inner {
+  border: none;
+  box-shadow: none;
+}

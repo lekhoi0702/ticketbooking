@@ -200,7 +200,7 @@ def require_organizer(f):
 
 def require_admin(f):
     """
-    Decorator to require Admin role (role_id=3)
+    Decorator to require Admin role (role_id=1)
     
     Usage:
         @app.route('/api/admin/stats')
@@ -208,7 +208,7 @@ def require_admin(f):
         def get_stats():
             ...
     """
-    return require_role(3)(f)
+    return require_role(1)(f)
 
 
 def optional_auth(f):

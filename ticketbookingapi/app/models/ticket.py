@@ -1,5 +1,6 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class Ticket(db.Model):
     __tablename__ = "Ticket"
@@ -15,7 +16,7 @@ class Ticket(db.Model):
     holder_name = db.Column(db.String(255))
     holder_email = db.Column(db.String(255))
     checked_in_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
 
     # Relationships
     seat = db.relationship('Seat', backref='tickets', lazy=True)

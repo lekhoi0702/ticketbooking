@@ -5,6 +5,7 @@ Refresh Token model for JWT token refresh mechanism
 from app.extensions import db
 from datetime import datetime, timedelta
 from typing import Optional
+from app.utils.datetime_utils import now_gmt7
 
 
 class RefreshToken(db.Model):
@@ -12,10 +13,10 @@ class RefreshToken(db.Model):
     __tablename__ = "RefreshToken"
 
     token_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=False, index=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=False, index=True)
     token = db.Column(db.String(500), unique=True, nullable=False, index=True)
     expires_at = db.Column(db.DateTime, nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=now_gmt7, nullable=False)
     revoked = db.Column(db.Boolean, default=False, nullable=False, index=True)
     revoked_at = db.Column(db.DateTime, nullable=True)
     ip_address = db.Column(db.String(45), nullable=True)
@@ -34,7 +35,7 @@ class RefreshToken(db.Model):
     ):
         self.user_id = user_id
         self.token = token
-        self.expires_at = datetime.utcnow() + timedelta(days=expires_in_days)
+        self.expires_at = now_gmt7() + timedelta(days=expires_in_days)
         self.ip_address = ip_address
         self.user_agent = user_agent
         self.revoked = False
@@ -43,14 +44,14 @@ class RefreshToken(db.Model):
         """Check if token is valid (not revoked and not expired)"""
         if self.revoked:
             return False
-        if datetime.utcnow() > self.expires_at:
+        if now_gmt7() > self.expires_at:
             return False
         return True
 
     def revoke(self) -> None:
         """Revoke the refresh token"""
         self.revoked = True
-        self.revoked_at = datetime.utcnow()
+        self.revoked_at = now_gmt7()
 
     def to_dict(self) -> dict:
         """Convert to dictionary"""
@@ -66,7 +67,7 @@ class RefreshToken(db.Model):
     def cleanup_expired(cls) -> int:
         """Delete expired refresh tokens, returns count of deleted tokens"""
         expired_tokens = cls.query.filter(
-            cls.expires_at < datetime.utcnow()
+            cls.expires_at < now_gmt7()
         ).all()
         
         count = len(expired_tokens)

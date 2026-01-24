@@ -1,6 +1,7 @@
 from sqlalchemy import text
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class OrganizerStatsService:
     @staticmethod
@@ -257,7 +258,7 @@ class OrganizerStatsService:
                 status = tr.ticket_status
                 if status == 'ACTIVE' and tr.end_datetime:
                      end_dt = datetime.fromisoformat(tr.end_datetime) if isinstance(tr.end_datetime, str) else tr.end_datetime
-                     if end_dt < datetime.utcnow():
+                     if end_dt < now_gmt7():
                          status = 'EXPIRED'
                          
                 ticket_list.append({

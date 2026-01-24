@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Select, DatePicker, InputNumber, Tag, Space, message, Typography, Popconfirm, Skeleton } from 'antd';
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { formatLocaleDate, parseGMT7 } from '@shared/utils/dateUtils';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
 
@@ -54,8 +55,8 @@ const DiscountManagement = () => {
             if (values.event_id) {
                 const selectedEvent = events.find(e => e.event_id === values.event_id);
                 if (selectedEvent && selectedEvent.sale_start_datetime && selectedEvent.sale_end_datetime) {
-                    const saleStart = dayjs(selectedEvent.sale_start_datetime);
-                    const saleEnd = dayjs(selectedEvent.sale_end_datetime);
+                    const saleStart = parseGMT7(selectedEvent.sale_start_datetime);
+                    const saleEnd = parseGMT7(selectedEvent.sale_end_datetime);
 
                     if (startDate.isBefore(saleStart) || endDate.isAfter(saleEnd)) {
                         form.setFields([{
@@ -73,8 +74,8 @@ const DiscountManagement = () => {
                 ...values,
                 code: values.code.toUpperCase(),
                 event_id: values.event_id || null,
-                start_date: startDate.toISOString(),
-                end_date: endDate.toISOString(),
+                start_date: startDate.format('YYYY-MM-DDTHH:mm:ss'),
+                end_date: endDate.format('YYYY-MM-DDTHH:mm:ss'),
             };
 
             const res = editingDiscount
@@ -185,7 +186,7 @@ const DiscountManagement = () => {
             setSelectedEventInfo(event);
             form.setFieldsValue({
                 ...discount,
-                date_range: [dayjs(discount.start_date), dayjs(discount.end_date)]
+                date_range: [parseGMT7(discount.start_date), parseGMT7(discount.end_date)]
             });
             setIsModalOpen(true);
         }
@@ -293,15 +294,19 @@ const DiscountManagement = () => {
                     <Form.Item
                         name="event_id"
                         label="Áp dụng cho sự kiện"
-                        help={selectedEventInfo && selectedEventInfo.sale_start_datetime && (
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                                Thời gian mở bán vé: {dayjs(selectedEventInfo.sale_start_datetime).format('DD/MM/YYYY HH:mm')} - {dayjs(selectedEventInfo.sale_end_datetime).format('DD/MM/YYYY HH:mm')}
-                            </Text>
-                        )}
+                        help={selectedEventInfo && selectedEventInfo.sale_start_datetime && (() => {
+                            const f = parseGMT7(selectedEventInfo.sale_start_datetime);
+                            const t = parseGMT7(selectedEventInfo.sale_end_datetime);
+                            return f && t ? (
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                    Thời gian mở bán vé: {f.format('DD/MM/YYYY HH:mm')} - {t.format('DD/MM/YYYY HH:mm')}
+                                </Text>
+                            ) : null;
+                        })()}
                     >
                         <Select allowClear placeholder="Chọn sự kiện (Để trống = Áp dụng tất cả)">
                             {events
-                                .filter(e => ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'PUBLISHED'].includes(e.status))
+                                .filter(e => ['DRAFT', 'PENDING_APPROVAL', 'PUBLISHED'].includes(e.status))
                                 .map(e => (
                                     <Select.Option key={e.event_id} value={e.event_id}>
                                         {e.event_name} <Tag style={{ marginLeft: 8, fontSize: 10 }}>{e.status}</Tag>

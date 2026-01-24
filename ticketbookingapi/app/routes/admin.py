@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
 from app.extensions import db
 from app.models.event import Event
 from app.models.user import User
@@ -7,10 +7,10 @@ from app.models.payment import Payment
 from app.models.venue import Venue
 from app.models.event_category import EventCategory
 from app.models.discount import Discount
-from app.models.audit_log import AuditLog
-from app.services.audit_service import AuditService
+from app.decorators.auth import optional_auth
 from sqlalchemy import func
 from datetime import datetime, timedelta
+from app.utils.datetime_utils import now_gmt7
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -128,6 +128,7 @@ def reset_user_password(user_id):
         # Generate secure random password
         new_password = generate_temporary_password()
         user.set_password(new_password)
+        user.must_change_password = True
         db.session.commit()
         
         return jsonify({
@@ -136,7 +137,8 @@ def reset_user_password(user_id):
             'data': {
                 'new_password': new_password,
                 'user_id': user_id,
-                'email': user.email
+                'email': user.email,
+                'full_name': user.full_name
             }
         }), 200
     except Exception as e:
@@ -145,22 +147,87 @@ def reset_user_password(user_id):
 
 @admin_bp.route("/admin/events", methods=["GET"])
 def get_all_events():
-    """Lấy danh sách toàn bộ sự kiện với thông tin nhà tổ chức"""
+    """Lấy danh sách sự kiện: cùng nhóm (nhiều ngày diễn) chỉ trả 1 record đại diện."""
     try:
-        events = Event.query.order_by(Event.created_at.desc()).all()
+        min_per_group = (
+            db.session.query(Event.group_id, func.min(Event.event_id).label("min_id"))
+            .filter(Event.group_id.isnot(None))
+            .group_by(Event.group_id)
+            .subquery()
+        )
+        base = (
+            Event.query.outerjoin(min_per_group, Event.group_id == min_per_group.c.group_id)
+            .filter(
+                (Event.group_id.is_(None))
+                | ((Event.group_id.isnot(None)) & (Event.event_id == min_per_group.c.min_id))
+            )
+            .order_by(Event.created_at.desc())
+        )
+        events = base.all()
         events_data = []
         for event in events:
-            edata = event.to_dict(include_details=True)
-            # Lấy tên nhà tổ chức (User)
-            organizer = User.query.get(event.manager_id)
-            edata['organizer_name'] = organizer.full_name if organizer else "Hệ thống"
-            events_data.append(edata)
+            try:
+                edata = event.to_dict(include_details=True)
+                # Lấy tên nhà tổ chức (User)
+                if event.manager_id:
+                    organizer = User.query.get(event.manager_id)
+                    edata['organizer_name'] = organizer.full_name if organizer else "Hệ thống"
+                else:
+                    edata['organizer_name'] = "Hệ thống"
+                events_data.append(edata)
+            except Exception as e:
+                # Log error but continue processing other events
+                print(f"Error processing event {event.event_id}: {str(e)}")
+                continue
             
         return jsonify({
             'success': True,
             'data': events_data
         }), 200
     except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@admin_bp.route("/admin/events/<int:event_id>/showtimes", methods=["GET"])
+def get_event_showtimes(event_id):
+    """Lấy tất cả các ngày diễn (showtimes) trong cùng nhóm với event_id"""
+    try:
+        event = Event.query.get(event_id)
+        if not event:
+            return jsonify({'success': False, 'message': 'Sự kiện không tồn tại'}), 404
+        
+        if not event.group_id:
+            edata = event.to_dict(include_details=True)
+            if event.manager_id:
+                organizer = User.query.get(event.manager_id)
+                edata['organizer_name'] = organizer.full_name if organizer else "Hệ thống"
+            else:
+                edata['organizer_name'] = "Hệ thống"
+            return jsonify({'success': True, 'data': [edata]}), 200
+        
+        showtimes = Event.query.filter(
+            Event.group_id == event.group_id
+        ).order_by(Event.start_datetime.asc()).all()
+        
+        showtimes_data = []
+        for st in showtimes:
+            try:
+                st_data = st.to_dict(include_details=True)
+                if st.manager_id:
+                    organizer = User.query.get(st.manager_id)
+                    st_data['organizer_name'] = organizer.full_name if organizer else "Hệ thống"
+                else:
+                    st_data['organizer_name'] = "Hệ thống"
+                showtimes_data.append(st_data)
+            except Exception as e:
+                print(f"Error processing showtime {st.event_id}: {str(e)}")
+                continue
+        
+        return jsonify({'success': True, 'data': showtimes_data}), 200
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @admin_bp.route("/admin/events/<int:event_id>/status", methods=["PUT"])
@@ -174,10 +241,7 @@ def update_event_status(event_id):
             
         if 'status' in data:
             new_status = data.get('status')
-            if new_status == 'APPROVED':
-                 new_status = 'PUBLISHED'
-            
-            valid_statuses = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION', 'DELETED']
+            valid_statuses = ['DRAFT', 'PENDING_APPROVAL', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'PENDING_DELETION', 'DELETED']
             if new_status not in valid_statuses:
                 return jsonify({'success': False, 'message': 'Trạng thái không hợp lệ'}), 400
             event.status = new_status
@@ -241,22 +305,27 @@ def get_all_orders():
         
         orders_data = []
         for order in orders:
-            odata = order.to_dict()
-            
-            # Payment method from relationship
-            odata['payment_method'] = order.payment.payment_method if order.payment else "N/A"
-            
-            # Get event name from first ticket (already loaded via eager loading)
-            if order.tickets:
-                ticket = order.tickets[0]
-                if ticket.ticket_type and ticket.ticket_type.event:
-                    odata['event_name'] = ticket.ticket_type.event.event_name
+            try:
+                odata = order.to_dict()
+                
+                # Payment method from relationship
+                odata['payment_method'] = order.payment.payment_method if order.payment else "N/A"
+                
+                # Get event name from first ticket (already loaded via eager loading)
+                if order.tickets and len(order.tickets) > 0:
+                    ticket = order.tickets[0]
+                    if ticket and ticket.ticket_type and ticket.ticket_type.event:
+                        odata['event_name'] = ticket.ticket_type.event.event_name
+                    else:
+                        odata['event_name'] = "N/A"
                 else:
                     odata['event_name'] = "N/A"
-            else:
-                odata['event_name'] = "N/A"
-            
-            orders_data.append(odata)
+                
+                orders_data.append(odata)
+            except Exception as e:
+                # Log error but continue processing other orders
+                print(f"Error processing order {order.order_id}: {str(e)}")
+                continue
             
         return jsonify({
             'success': True,
@@ -449,7 +518,21 @@ def process_order_cancellation(order_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@admin_bp.route("/admin/categories", methods=["GET"])
+def admin_get_categories():
+    """Get all event categories (admin: includes inactive, created_by, created_at)"""
+    try:
+        categories = EventCategory.query.order_by(EventCategory.category_id).all()
+        return jsonify({
+            'success': True,
+            'data': [c.to_dict() for c in categories]
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 @admin_bp.route("/admin/categories", methods=["POST"])
+@optional_auth
 def admin_create_category():
     """Create a new event category"""
     try:
@@ -460,10 +543,15 @@ def admin_create_category():
         # Check duplicate
         if EventCategory.query.filter_by(category_name=data['category_name']).first():
             return jsonify({'success': False, 'message': 'Category name already exists'}), 400
+
+        created_by = None
+        if hasattr(g, 'current_user') and g.current_user:
+            created_by = g.current_user.user_id
             
         category = EventCategory(
             category_name=data['category_name'],
-            is_active=True
+            is_active=True,
+            created_by=created_by,
         )
         
         db.session.add(category)
@@ -515,16 +603,40 @@ def admin_delete_category(category_id):
         category = EventCategory.query.get(category_id)
         if not category:
             return jsonify({'success': False, 'message': 'Category not found'}), 404
-            
-        # Check if events exist in this category
-        if category.events:
+        
+        # Check if events exist in this category (including DELETED status)
+        from app.models.event import Event
+        from sqlalchemy import text
+        
+        # Check using raw SQL to be absolutely sure
+        check_query = text("SELECT COUNT(*) as cnt FROM Event WHERE category_id = :cat_id")
+        result = db.session.execute(check_query, {"cat_id": category_id})
+        event_count = result.fetchone()[0]
+        
+        if event_count > 0:
             return jsonify({
                 'success': False, 
-                'message': 'Cannot delete category with existing events. Please reassign items first.'
+                'message': f'Không thể xóa danh mục này vì đang có {event_count} sự kiện sử dụng. Vui lòng chuyển các sự kiện sang danh mục khác trước khi xóa.'
             }), 400
-            
-        db.session.delete(category)
-        db.session.commit()
+        
+        # Try to delete
+        try:
+            db.session.delete(category)
+            db.session.flush()  # Flush to catch any constraint errors early
+            db.session.commit()
+        except Exception as db_error:
+            db.session.rollback()
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"[ERROR] Database error deleting category {category_id}: {error_trace}")
+            # Check if it's a foreign key constraint error
+            error_msg = str(db_error).lower()
+            if 'foreign key' in error_msg or 'constraint' in error_msg:
+                return jsonify({
+                    'success': False,
+                    'message': 'Không thể xóa danh mục này do có ràng buộc dữ liệu. Vui lòng kiểm tra lại các sự kiện liên quan.'
+                }), 400
+            raise  # Re-raise if it's a different error
         
         return jsonify({
             'success': True,
@@ -532,7 +644,13 @@ def admin_delete_category(category_id):
         }), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"[ERROR] Failed to delete category {category_id}: {error_trace}")
+        return jsonify({
+            'success': False, 
+            'message': f'Lỗi khi xóa danh mục: {str(e)}'
+        }), 500
 
 
 @admin_bp.route("/admin/discounts", methods=["GET"])
@@ -568,7 +686,7 @@ def admin_get_all_discounts():
             # Status logic
             if not d.is_active:
                 item['status'] = 'INACTIVE'
-            elif d.end_date and d.end_date < datetime.utcnow():
+            elif d.end_date and d.end_date < now_gmt7():
                 item['status'] = 'EXPIRED'
             elif d.usage_limit and d.used_count >= d.usage_limit:
                 item['status'] = 'USED_UP'
@@ -631,7 +749,7 @@ def admin_get_event_discounts(event_id):
             # Status
             if not d.is_active:
                 item['status'] = 'INACTIVE'
-            elif d.end_date and d.end_date < datetime.utcnow():
+            elif d.end_date and d.end_date < now_gmt7():
                 item['status'] = 'EXPIRED'
             elif d.usage_limit and d.used_count >= d.usage_limit:
                 item['status'] = 'USED_UP'
@@ -651,313 +769,3 @@ def admin_get_event_discounts(event_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-
-# ============== AUDIT LOG ENDPOINTS ==============
-
-@admin_bp.route("/admin/audit-logs", methods=["GET"])
-def get_audit_logs():
-    """
-    Lấy danh sách audit logs với các filter
-    Query params:
-        - user_id: Filter theo user (changed_by)
-        - action: Filter theo loại action (INSERT, UPDATE, DELETE)
-        - table_name: Filter theo tên bảng (Event, Venue, Discount, etc.)
-        - start_date: Lọc từ ngày (ISO format)
-        - end_date: Lọc đến ngày (ISO format)
-        - page: Trang hiện tại (default 1)
-        - per_page: Số record mỗi trang (default 50)
-    """
-    try:
-        # Get query params
-        user_id = request.args.get('user_id', type=int)
-        action = request.args.get('action')
-        table_name = request.args.get('table_name') or request.args.get('entity_type')
-        start_date_str = request.args.get('start_date')
-        end_date_str = request.args.get('end_date')
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 50, type=int)
-        
-        # Build query
-        query = AuditLog.query
-        
-        if user_id:
-            query = query.filter(AuditLog.changed_by == user_id)
-        if action:
-            query = query.filter(AuditLog.action == action)
-        if table_name:
-            query = query.filter(AuditLog.table_name == table_name)
-        
-        # Date filters
-        if start_date_str:
-            try:
-                start_date = datetime.fromisoformat(start_date_str.replace('Z', ''))
-                query = query.filter(AuditLog.changed_at >= start_date)
-            except ValueError:
-                pass
-        
-        if end_date_str:
-            try:
-                end_date = datetime.fromisoformat(end_date_str.replace('Z', ''))
-                # Add 1 day to include the end date
-                end_date = end_date + timedelta(days=1)
-                query = query.filter(AuditLog.changed_at < end_date)
-            except ValueError:
-                pass
-        
-        # Order by newest first
-        query = query.order_by(AuditLog.changed_at.desc())
-        
-        # Paginate
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        
-        logs_data = [log.to_dict() for log in pagination.items]
-        
-        return jsonify({
-            'success': True,
-            'data': logs_data,
-            'pagination': {
-                'total': pagination.total,
-                'pages': pagination.pages,
-                'page': page,
-                'per_page': per_page,
-                'has_next': pagination.has_next,
-                'has_prev': pagination.has_prev
-            }
-        }), 200
-    except Exception as e:
-        import traceback
-        print(traceback.format_exc())
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
-@admin_bp.route("/admin/audit-logs/stats", methods=["GET"])
-def get_audit_logs_stats():
-    """Lấy thống kê tổng quan về audit logs"""
-    try:
-        # Count by action type
-        action_counts = db.session.query(
-            AuditLog.action,
-            func.count(AuditLog.audit_id)
-        ).group_by(AuditLog.action).all()
-        
-        # Count by table name
-        table_counts = db.session.query(
-            AuditLog.table_name,
-            func.count(AuditLog.audit_id)
-        ).group_by(AuditLog.table_name).all()
-        
-        # Recent activity (last 7 days)
-        week_ago = datetime.utcnow() - timedelta(days=7)
-        recent_count = AuditLog.query.filter(AuditLog.changed_at >= week_ago).count()
-        
-        # Today's activity
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        today_count = AuditLog.query.filter(AuditLog.changed_at >= today_start).count()
-        
-        # Top active users (join with User table)
-        top_users = db.session.query(
-            AuditLog.changed_by,
-            func.count(AuditLog.audit_id).label('action_count')
-        ).filter(
-            AuditLog.changed_at >= week_ago
-        ).group_by(
-            AuditLog.changed_by
-        ).order_by(
-            func.count(AuditLog.audit_id).desc()
-        ).limit(10).all()
-        
-        # Get user info for top users
-        top_users_data = []
-        for user_id, action_count in top_users:
-            if user_id:
-                user = User.query.get(user_id)
-                top_users_data.append({
-                    'user_id': user_id,
-                    'user_name': user.full_name if user else 'Unknown',
-                    'user_email': user.email if user else 'Unknown',
-                    'action_count': action_count
-                })
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'action_counts': {action: count for action, count in action_counts},
-                'entity_counts': {table: count for table, count in table_counts},
-                'recent_count': recent_count,
-                'today_count': today_count,
-                'top_users': top_users_data
-            }
-        }), 200
-    except Exception as e:
-        import traceback
-        print(traceback.format_exc())
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
-@admin_bp.route("/admin/audit-logs/user/<int:user_id>", methods=["GET"])
-def get_user_audit_logs(user_id):
-    """Lấy audit logs của một user cụ thể"""
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 50, type=int)
-        
-        # Get user info
-        user = User.query.get(user_id)
-        if not user:
-            return jsonify({'success': False, 'message': 'User not found'}), 404
-        
-        # Get logs
-        pagination = AuditLog.query.filter_by(changed_by=user_id)\
-            .order_by(AuditLog.changed_at.desc())\
-            .paginate(page=page, per_page=per_page, error_out=False)
-        
-        return jsonify({
-            'success': True,
-            'user': {
-                'user_id': user.user_id,
-                'email': user.email,
-                'full_name': user.full_name
-            },
-            'data': [log.to_dict() for log in pagination.items],
-            'pagination': {
-                'total': pagination.total,
-                'pages': pagination.pages,
-                'page': page,
-                'per_page': per_page
-            }
-        }), 200
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
-@admin_bp.route("/admin/audit-logs/entity/<string:table_name>/<int:record_id>", methods=["GET"])
-def get_entity_audit_logs(table_name, record_id):
-    """Lấy lịch sử thay đổi của một entity cụ thể"""
-    try:
-        logs = AuditLog.query.filter_by(
-            table_name=table_name,
-            record_id=record_id
-        ).order_by(AuditLog.changed_at.desc()).all()
-        
-        return jsonify({
-            'success': True,
-            'table_name': table_name,
-            'record_id': record_id,
-            'data': [log.to_dict() for log in logs]
-        }), 200
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
-@admin_bp.route("/admin/audit-logs/actions", methods=["GET"])
-def get_audit_log_action_types():
-    """Lấy danh sách các loại action để hiển thị trong filter dropdown"""
-    try:
-        actions = db.session.query(AuditLog.action).distinct().all()
-        table_names = db.session.query(AuditLog.table_name).distinct().all()
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'actions': [a[0] for a in actions if a[0]],
-                'entity_types': [t[0] for t in table_names if t[0]]
-            }
-        }), 200
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
-@admin_bp.route("/admin/audit-logs/organizers", methods=["GET"])
-def get_organizer_audit_logs():
-    """
-    Lấy audit logs của tất cả organizers
-    Query params:
-        - table_name: Filter theo tên bảng (Event, Venue, TicketType, etc.) - optional
-        - action: Filter theo loại action (INSERT, UPDATE, DELETE) - optional
-        - page: Trang hiện tại (default 1)
-        - per_page: Số record mỗi trang (default 50)
-    """
-    # #region agent log
-    import json
-    try:
-        with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
-            f.write(json.dumps({'location':'admin.py:841','message':'get_organizer_audit_logs entry','data':{'page':request.args.get('page',1,type=int),'per_page':request.args.get('per_page',50,type=int),'table_name':request.args.get('table_name')},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'A'})+'\n')
-    except: pass
-    # #endregion
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 50, type=int)
-        table_name = request.args.get('table_name')  # Optional filter by table name
-        action = request.args.get('action')  # Optional filter by action
-        
-        # Get all organizer user IDs (role_id = 2)
-        organizer_ids = [u.user_id for u in User.query.filter_by(role_id=2).all()]
-        # #region agent log
-        try:
-            with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
-                f.write(json.dumps({'location':'admin.py:849','message':'Organizer IDs found','data':{'organizerCount':len(organizer_ids),'organizerIds':organizer_ids[:5],'table_name':table_name,'action':action},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'B'})+'\n')
-        except: pass
-        # #endregion
-        
-        if not organizer_ids:
-            # #region agent log
-            try:
-                with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
-                    f.write(json.dumps({'location':'admin.py:851','message':'No organizers found','data':{},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'C'})+'\n')
-            except: pass
-            # #endregion
-            return jsonify({
-                'success': True,
-                'data': [],
-                'pagination': {'total': 0, 'pages': 0, 'page': page, 'per_page': per_page}
-            }), 200
-        
-        # Build query with filters
-        query = AuditLog.query.filter(
-            AuditLog.changed_by.in_(organizer_ids)
-        )
-        
-        # Add table_name filter if provided
-        if table_name:
-            query = query.filter(AuditLog.table_name == table_name)
-        
-        # Add action filter if provided
-        if action:
-            query = query.filter(AuditLog.action == action)
-        
-        # Get logs with pagination
-        pagination = query.order_by(
-            AuditLog.changed_at.desc()
-        ).paginate(page=page, per_page=per_page, error_out=False)
-        
-        # #region agent log
-        try:
-            logs_dicts = [log.to_dict() for log in pagination.items]
-            with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
-                f.write(json.dumps({'location':'admin.py:863','message':'Before return','data':{'total':pagination.total,'itemsCount':len(pagination.items),'firstLogKeys':list(logs_dicts[0].keys()) if logs_dicts else None},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'D'})+'\n')
-        except: pass
-        # #endregion
-        
-        return jsonify({
-            'success': True,
-            'data': [log.to_dict() for log in pagination.items],
-            'pagination': {
-                'total': pagination.total,
-                'pages': pagination.pages,
-                'page': page,
-                'per_page': per_page,
-                'has_next': pagination.has_next,
-                'has_prev': pagination.has_prev
-            }
-        }), 200
-    except Exception as e:
-        # #region agent log
-        try:
-            import traceback
-            with open(r'c:\Users\khoi.le\Desktop\ticketbooking\.cursor\debug.log', 'a', encoding='utf-8') as f:
-                f.write(json.dumps({'location':'admin.py:876','message':'Exception caught','data':{'error':str(e),'traceback':traceback.format_exc()[:500]},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'E'})+'\n')
-        except: pass
-        # #endregion
-        import traceback
-        print(traceback.format_exc())
-        return jsonify({'success': False, 'message': str(e)}), 500

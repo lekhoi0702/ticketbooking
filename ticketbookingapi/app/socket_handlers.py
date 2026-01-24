@@ -9,6 +9,7 @@ from app.models.ticket_type import TicketType
 from app.models.event import Event
 from app.models.user import User
 from datetime import datetime, timedelta
+from app.utils.datetime_utils import now_gmt7
 from sqlalchemy.exc import IntegrityError
 import threading
 import time
@@ -25,7 +26,7 @@ def cleanup_expired_reservations():
     try:
         expired_reservations = SeatReservation.query.filter(
             SeatReservation.is_active == True,
-            SeatReservation.expires_at < datetime.utcnow()
+            SeatReservation.expires_at < now_gmt7()
         ).all()
         
         for reservation in expired_reservations:

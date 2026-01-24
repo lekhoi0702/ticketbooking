@@ -4,7 +4,7 @@ import { Tooltip } from 'antd';
 /**
  * Professional TemplateSeat Component for Organizer Management
  */
-const TemplateSeat = React.memo(({ t, isSelected, occupiedBy, activeTicketTypeId, onMouseDown, onMouseEnter, isLocked }) => {
+const TemplateSeat = React.memo(({ t, isSelected, occupiedBy, activeTicketTypeId, onMouseDown, onMouseEnter, isLocked, scale = 1 }) => {
     const isOtherType = occupiedBy && activeTicketTypeId && String(occupiedBy.ticket_type_id) !== String(activeTicketTypeId);
     const isBooked = occupiedBy && occupiedBy.status === 'BOOKED';
 
@@ -42,6 +42,11 @@ const TemplateSeat = React.memo(({ t, isSelected, occupiedBy, activeTicketTypeId
         cursor = activeTicketTypeId ? 'not-allowed' : 'pointer';
     }
 
+    // Tính toán kích thước dựa trên scale
+    const seatSize = Math.round(32 * scale);
+    const fontSize = Math.max(10, Math.round(10 * scale));
+    const borderRadius = Math.round(6 * scale);
+
     const title = `${t.area ? t.area + ' - ' : ''}Hàng ${t.row_name} - Ghế ${t.seat_number} ${isLocked ? '(Ghế hỏng/Khóa)' : isBooked ? '(Đã đặt)' : occupiedBy ? '(Đã gán hạng vé khác)' : '(Chưa gán)'}`;
 
     return (
@@ -49,14 +54,14 @@ const TemplateSeat = React.memo(({ t, isSelected, occupiedBy, activeTicketTypeId
             <div
                 className="template-seat"
                 style={{
-                    width: '32px',
-                    height: '32px',
-                    fontSize: '10px',
+                    width: `${seatSize}px`,
+                    height: `${seatSize}px`,
+                    fontSize: `${fontSize}px`,
                     fontWeight: 'bold',
                     backgroundColor: bgColor,
                     color: textColor,
                     border: `1px solid ${borderColor}`,
-                    borderRadius: '6px',
+                    borderRadius: `${borderRadius}px`,
                     cursor: cursor,
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     boxShadow: shadow,

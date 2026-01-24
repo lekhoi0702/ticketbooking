@@ -16,11 +16,11 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     EyeOutlined,
-    ExclamationCircleOutlined,
-    ReloadOutlined
+    ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { api } from '@services/api';
 import AdminPortal from '@shared/components/AdminPortal';
+import AdminToolbar from '@features/admin/components/AdminToolbar';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -152,7 +152,7 @@ const EventDeletionRequests = () => {
             title: 'Ngày yêu cầu',
             dataIndex: 'created_at',
             key: 'created_at',
-            render: (date) => dayjs.utc(date).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm'),
+            render: (date) => formatDateTime(date),
         },
         {
             title: 'Trạng thái',
@@ -210,9 +210,10 @@ const EventDeletionRequests = () => {
     return (
         <div style={{ paddingTop: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-                <Button icon={<ReloadOutlined />} onClick={fetchRequests} size="middle">
-                    Làm mới yêu cầu
-                </Button>
+                <AdminToolbar
+                    onRefresh={fetchRequests}
+                    refreshLoading={loading}
+                />
             </div>
 
 
@@ -222,7 +223,7 @@ const EventDeletionRequests = () => {
                     dataSource={requests}
                     rowKey="request_id"
                     loading={loading}
-                    pagination={{ pageSize: 10, showTotal: (total) => `Tổng ${total} yêu cầu` }}
+                    pagination={{ pageSize: 50, showTotal: (total) => `Tổng ${total} yêu cầu` }}
                     locale={{ emptyText: 'Chưa có yêu cầu nào' }}
                 />
             </Card>
@@ -265,7 +266,7 @@ const EventDeletionRequests = () => {
                             {selectedRequest.reviewed_at && (
                                 <>
                                     <Descriptions.Item label="Ngày xét duyệt" span={2}>
-                                        {dayjs.utc(selectedRequest.reviewed_at).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}
+                                        {formatDateTime(selectedRequest.reviewed_at)}
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Ghi chú từ admin" span={2}>
                                         {selectedRequest.admin_note || 'Không có'}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import HeroBanner from '@features/user/components/Event/HeroBanner';
 import EventSection from '@features/user/components/Event/EventSection';
 import TrendingSection from '@features/user/components/Event/TrendingSection';
+import AdSection from '@shared/components/AdSection';
 import { api } from '@services/api';
 import { transformEvent } from '@shared/utils/eventUtils';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
@@ -149,40 +150,20 @@ function Home() {
             )}
 
             {popularEvents.length > 0 && (
-                <TrendingSection
-                    title="Sự kiện bán chạy nhất"
-                    events={popularEvents.map(transformEvent).filter(e => e !== null)}
-                />
-            )}
+                <>
+                    <TrendingSection
+                        title="Sự kiện bán chạy nhất"
+                        events={popularEvents.map(transformEvent).filter(e => e !== null)}
+                    />
 
-            <section className="home-ad-section" style={{ padding: '20px 0' }}>
-                <Container>
-                    <div
-                        className="ad-banner-wrapper"
-                        style={{
-                            position: 'relative',
-                            overflow: 'hidden',
-                            borderRadius: '16px',
-                            cursor: 'pointer',
-                            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                            transition: 'transform 0.3s ease'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                    >
-                        <img
-                            src={`${UPLOADS_BASE_URL}/misc/quangcao.webp`}
-                            alt="Quảng cáo"
-                            style={{
-                                width: '100%',
-                                height: 'auto',
-                                display: 'block',
-                                objectFit: 'cover'
-                            }}
-                        />
-                    </div>
-                </Container>
-            </section>
+                    {/* Advertisement between sections */}
+                    <AdSection
+                        position="HOME_BETWEEN_SECTIONS"
+                        limit={1}
+                        containerClassName="home-ad-section"
+                    />
+                </>
+            )}
 
             {upcomingEvents.length > 0 && (
                 <TrendingSection

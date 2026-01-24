@@ -1,11 +1,12 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class Order(db.Model):
     __tablename__ = "Order"
 
     order_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=False, index=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=False, index=True)
     order_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
     total_amount = db.Column(db.Numeric(15, 2), nullable=False)
     final_amount = db.Column(db.Numeric(15, 2), nullable=False)
@@ -13,8 +14,8 @@ class Order(db.Model):
     customer_name = db.Column(db.String(255))
     customer_email = db.Column(db.String(255))
     customer_phone = db.Column(db.String(20))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
+    updated_at = db.Column(db.DateTime, default=now_gmt7, onupdate=now_gmt7)
     paid_at = db.Column(db.DateTime)
 
     # Relationships

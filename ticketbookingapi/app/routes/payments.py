@@ -4,6 +4,7 @@ from app.models.order import Order
 from app.models.payment import Payment
 from app.services.order_service import OrderService
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 import hashlib
 import hmac
 import urllib.parse
@@ -36,7 +37,7 @@ VIETQR_RETURN_URL = "http://localhost:5173/payment/vietqr-return"
 
 def generate_payment_code():
     """Generate unique payment code"""
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    timestamp = now_gmt7().strftime('%Y%m%d%H%M%S')
     random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
     return f"PAY-{timestamp}-{random_str}"
 
@@ -168,7 +169,7 @@ def create_vnpay_payment_url():
             'vnp_Locale': 'vn',
             'vnp_ReturnUrl': VNPAY_RETURN_URL,
             'vnp_IpAddr': request.remote_addr or '127.0.0.1',
-            'vnp_CreateDate': datetime.now().strftime('%Y%m%d%H%M%S')
+            'vnp_CreateDate': now_gmt7().strftime('%Y%m%d%H%M%S')
         }
         
         # Sort parameters
@@ -253,13 +254,13 @@ def vnpay_callback():
         if response_code == '00':
             payment.payment_status = 'SUCCESS'
             payment.transaction_id = transaction_no
-            payment.paid_at = datetime.now()
+            payment.paid_at = now_gmt7()
             
             # Update order status
             order = Order.query.get(payment.order_id)
             if order:
                 order.order_status = 'PAID'
-                order.paid_at = datetime.now()
+                order.paid_at = now_gmt7()
                 # Mark seats as BOOKED when payment succeeds
                 OrderService.mark_seats_as_booked(order.order_id)
         else:
@@ -316,13 +317,13 @@ def confirm_cash_payment():
         
         # Update payment status
         payment.payment_status = 'SUCCESS'
-        payment.paid_at = datetime.now()
+        payment.paid_at = now_gmt7()
         
         # Update order status
         order = Order.query.get(payment.order_id)
         if order:
             order.order_status = 'PAID'
-            order.paid_at = datetime.now()
+            order.paid_at = now_gmt7()
             # Mark seats as BOOKED when payment succeeds
             OrderService.mark_seats_as_booked(order.order_id)
         
@@ -439,10 +440,10 @@ def vnpay_return():
         if response_code == '00':
             payment.payment_status = 'SUCCESS'
             payment.transaction_id = transaction_no
-            payment.paid_at = datetime.now()
+            payment.paid_at = now_gmt7()
             
             order.order_status = 'PAID'
-            order.paid_at = datetime.now()
+            order.paid_at = now_gmt7()
             # Mark seats as BOOKED when payment succeeds
             OrderService.mark_seats_as_booked(order.order_id)
             
@@ -691,10 +692,10 @@ def paypal_return():
                     
                     payment.payment_status = 'SUCCESS'
                     payment.transaction_id = transaction_id or token
-                    payment.paid_at = datetime.now()
+                    payment.paid_at = now_gmt7()
                     
                     order.order_status = 'PAID'
-                    order.paid_at = datetime.now()
+                    order.paid_at = now_gmt7()
                     # Mark seats as BOOKED when payment succeeds
                     OrderService.mark_seats_as_booked(order.order_id)
                     
@@ -728,10 +729,10 @@ def paypal_return():
         elif status == 'COMPLETED':
             # Already completed
             payment.payment_status = 'SUCCESS'
-            payment.paid_at = datetime.now()
+            payment.paid_at = now_gmt7()
             
             order.order_status = 'PAID'
-            order.paid_at = datetime.now()
+            order.paid_at = now_gmt7()
             # Mark seats as BOOKED when payment succeeds
             OrderService.mark_seats_as_booked(order.order_id)
             
@@ -1002,10 +1003,10 @@ def verify_vietqr_payment():
         if payment.payment_status == 'PENDING':
             payment.payment_status = 'SUCCESS'
             payment.transaction_id = f"VIETQR-{payment_code}"
-            payment.paid_at = datetime.now()
+            payment.paid_at = now_gmt7()
             
             order.order_status = 'PAID'
-            order.paid_at = datetime.now()
+            order.paid_at = now_gmt7()
             # Mark seats as BOOKED when payment succeeds
             OrderService.mark_seats_as_booked(order.order_id)
             

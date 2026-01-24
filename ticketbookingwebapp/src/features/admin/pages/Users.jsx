@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import { formatLocaleDate } from '@shared/utils/dateUtils';
 import {
 
     Card,
@@ -40,23 +40,30 @@ import {
 
     UserAddOutlined,
 
-    ReloadOutlined,
-
     LockOutlined,
 
     UnlockOutlined,
 
     KeyOutlined,
 
+    CopyOutlined,
+
     ExclamationCircleOutlined,
 
-    CheckCircleOutlined
+    CheckCircleOutlined,
+
+    MailOutlined,
+
+    PhoneOutlined
 
 } from '@ant-design/icons';
 
 import { api } from '@services/api';
 import AdminPortal from '@shared/components/AdminPortal';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
+import AdminTable from '@features/admin/components/AdminTable';
+import AdminToolbar from '@features/admin/components/AdminToolbar';
+import { useAuth } from '@context/AuthContext';
 
 
 
@@ -67,6 +74,8 @@ const { confirm } = Modal;
 
 
 const UsersManagement = () => {
+
+    const { user: currentUser } = useAuth();
 
     const [loading, setLoading] = useState(true);
 
@@ -82,6 +91,7 @@ const UsersManagement = () => {
 
     const [form] = Form.useForm();
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [resetPasswordResult, setResetPasswordResult] = useState(null);
 
 
 
@@ -161,7 +171,7 @@ const UsersManagement = () => {
 
             icon: <ExclamationCircleOutlined />,
 
-            content: `Bạn có chắc chắn muốn khôi phục mật khẩu cho tài khoản ${fullName} về mặc định?`,
+            content: `Bạn có chắc chắn muốn khôi phục mật khẩu cho tài khoản ${fullName}? Mật khẩu tạm sẽ hiển thị sau khi xác nhận — vui lòng cung cấp cho user/organizer.`,
 
             okText: 'Xác nhận',
 
@@ -173,15 +183,17 @@ const UsersManagement = () => {
 
                     const res = await api.resetUserPassword(userId);
 
-                    if (res.success) {
+                    if (res.success && res.data) {
 
-                        message.success("Đã khôi phục mật khẩu thành công!");
+                        setResetPasswordResult(res.data);
+
+                        message.success('Đã khôi phục mật khẩu. Vui lòng ghi lại mật khẩu tạm bên dưới.');
 
                     }
 
                 } catch (err) {
 
-                    message.error(err.message || "Lỗi khi khôi phục mật khẩu");
+                    message.error(err.message || 'Lỗi khi khôi phục mật khẩu');
 
                 }
 
@@ -191,11 +203,32 @@ const UsersManagement = () => {
 
     };
 
+    const handleCopyTempPassword = () => {
+
+        if (!resetPasswordResult?.new_password) return;
+
+        navigator.clipboard.writeText(resetPasswordResult.new_password).then(
+
+            () => message.success('Đã sao chép mật khẩu tạm'),
+
+            () => message.error('Không thể sao chép')
+
+        );
+
+    };
 
 
-    const handleToggleLock = (userId, fullName, currentlyLocked) => {
 
-        const actionText = currentlyLocked ? 'mở khóa' : 'khóa';
+    const handleToggleLock = (userId, fullName, isActive) => {
+
+        // Không cho phép khóa chính mình
+        if (currentUser && currentUser.user_id === userId) {
+            message.warning('Bạn không thể khóa tài khoản của chính mình!');
+            return;
+        }
+
+        const actionText = isActive ? 'khóa' : 'mở khóa';
+        const newLockStatus = isActive; // true = khóa (is_locked: true), false = mở khóa (is_locked: false)
 
         confirm({
 
@@ -213,13 +246,17 @@ const UsersManagement = () => {
 
                 try {
 
-                    const res = await api.toggleUserLock(userId, !currentlyLocked);
+                    const res = await api.toggleUserLock(userId, newLockStatus);
 
                     if (res.success) {
 
                         message.success(`Đã ${actionText} tài khoản thành công!`);
 
                         fetchUsers();
+
+                    } else {
+
+                        message.error(res.message || `Lỗi khi ${actionText} tài khoản`);
 
                     }
 
@@ -291,13 +328,51 @@ const UsersManagement = () => {
 
                     </Avatar>
 
-                    <Space direction="vertical" size={0}>
+                    <Text strong style={{ fontSize: 16 }}>{record.full_name || 'Anonymous'}</Text>
 
-                        <Text strong style={{ fontSize: 14 }}>{record.full_name || 'Anonymous'}</Text>
+                </Space>
 
-                        <Text type="secondary" style={{ fontSize: 12 }}>{record.email}</Text>
+            ),
 
-                    </Space>
+        },
+
+        {
+
+            title: 'EMAIL',
+
+            key: 'email',
+
+            dataIndex: 'email',
+
+            render: (email) => (
+
+                <Space size={8}>
+
+                    <MailOutlined style={{ color: '#8c8c8c', fontSize: 16 }} />
+
+                    <Text type="secondary" style={{ fontSize: 16 }}>{email || '-'}</Text>
+
+                </Space>
+
+            ),
+
+        },
+
+        {
+
+            title: 'SỐ ĐIỆN THOẠI',
+
+            key: 'phone',
+
+            dataIndex: 'phone',
+
+            render: (phone) => (
+
+                <Space size={8}>
+
+                    <PhoneOutlined style={{ color: '#8c8c8c', fontSize: 16 }} />
+
+                    <Text type="secondary" style={{ fontSize: 16 }}>{phone || '-'}</Text>
 
                 </Space>
 
@@ -315,7 +390,7 @@ const UsersManagement = () => {
 
                 const config = getRoleConfig(record.role);
 
-                return <Tag color={config.color} style={{ fontWeight: 600 }}>{config.label.toUpperCase()}</Tag>;
+                return <Tag color={config.color} style={{ fontWeight: 600, fontSize: 16 }}>{config.label.toUpperCase()}</Tag>;
 
             },
 
@@ -331,11 +406,11 @@ const UsersManagement = () => {
 
                 record.is_active ? (
 
-                    <Tag color="success" icon={<CheckCircleOutlined />}>ACTIVE</Tag>
+                    <Tag color="success" icon={<CheckCircleOutlined style={{ fontSize: 16 }} />} style={{ fontSize: 16 }}>ACTIVE</Tag>
 
                 ) : (
 
-                    <Tag color="error" icon={<LockOutlined />}>LOCKED</Tag>
+                    <Tag color="error" icon={<LockOutlined style={{ fontSize: 16 }} />} style={{ fontSize: 16 }}>LOCKED</Tag>
 
                 )
 
@@ -351,9 +426,9 @@ const UsersManagement = () => {
 
             render: (_, record) => (
 
-                <Text type="secondary">
+                <Text type="secondary" style={{ fontSize: 16 }}>
 
-                    {record.created_at ? new Date(record.created_at).toLocaleDateString('vi-VN') : 'Default'}
+                    {record.created_at ? formatLocaleDate(record.created_at) || '—' : '—'}
 
                 </Text>
 
@@ -380,7 +455,7 @@ const UsersManagement = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
                         <Space size="middle">
-                            <span style={{ fontSize: 13, color: '#8c8c8c', fontWeight: 600 }}>VAI TRÒ:</span>
+                            <span style={{ fontSize: 16, color: '#8c8c8c', fontWeight: 600 }}>VAI TRÒ:</span>
                             <Select
                                 placeholder="Lọc theo vai trò"
                                 style={{ width: 160 }}
@@ -396,63 +471,63 @@ const UsersManagement = () => {
                             />
                         </Space>
 
-                        {selectedRowKeys.length > 0 && (
-                            <Space size="middle" style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: 24 }}>
-                                <Text strong>{selectedRowKeys.length} đã chọn:</Text>
-                                <Button
-                                    icon={<LockOutlined />}
-                                    danger
-                                    onClick={() => {
-                                        const user = users.find(u => u.user_id === selectedRowKeys[0]);
-                                        handleToggleLock(user.user_id, user.full_name, user.is_active);
-                                    }}
-                                    disabled={selectedRowKeys.length > 1}
-                                >
-                                    Khóa/Mở khóa
-                                </Button>
+                        {selectedRowKeys.length > 0 && (() => {
+                            const selectedUser = users.find(u => u.user_id === selectedRowKeys[0]);
+                            if (!selectedUser) return null;
+                            const isActive = selectedUser.is_active;
+                            const actionText = isActive ? 'Khóa' : 'Mở khóa';
+                            const isCurrentUser = currentUser && currentUser.user_id === selectedUser.user_id;
+
+                            return (
+                                <Space size="middle" style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: 24 }}>
+                                    <Text strong>Đã chọn:</Text>
+                                    <Button
+                                        icon={isActive ? <LockOutlined /> : <UnlockOutlined />}
+                                        danger={isActive}
+                                        onClick={() => {
+                                            handleToggleLock(selectedUser.user_id, selectedUser.full_name, isActive);
+                                        }}
+                                        disabled={isCurrentUser && isActive}
+                                        title={isCurrentUser && isActive ? 'Bạn không thể khóa tài khoản của chính mình' : undefined}
+                                    >
+                                        {actionText}
+                                    </Button>
                                 <Button
                                     icon={<KeyOutlined />}
                                     onClick={() => {
                                         const user = users.find(u => u.user_id === selectedRowKeys[0]);
                                         handleResetPassword(user.user_id, user.full_name);
                                     }}
-                                    disabled={selectedRowKeys.length > 1}
                                     style={{ color: '#1890ff' }}
                                 >
                                     Đặt lại mật khẩu
                                 </Button>
-                            </Space>
-                        )}
+                                </Space>
+                            );
+                        })()}
                     </div>
-                    <Space>
-                        <Button icon={<ReloadOutlined />} onClick={fetchUsers}>
-                            Làm mới
-                        </Button>
-                        <Button type="primary" icon={<UserAddOutlined />} onClick={() => setShowCreateModal(true)}>
-                            Thêm Organizer
-                        </Button>
-                    </Space>
+                    <AdminToolbar
+                        onAdd={() => setShowCreateModal(true)}
+                        onRefresh={fetchUsers}
+                        addLabel="Thêm Organizer"
+                        refreshLoading={loading}
+                    />
                 </div>
             </Card>
 
 
 
             <Card styles={{ body: { padding: 0 } }}>
-                <Table
-                    rowSelection={{
-                        selectedRowKeys,
-                        onChange: (keys) => setSelectedRowKeys(keys),
-                    }}
+                <AdminTable
+                    selectedRowKeys={selectedRowKeys}
+                    setSelectedRowKeys={setSelectedRowKeys}
+                    selectionType="single"
                     rowKey="user_id"
                     columns={columns}
                     dataSource={filteredUsers}
-
-                    pagination={{ pageSize: 10 }}
-
-                    locale={{ emptyText: 'Không tìm thấy người dùng' }}
-
+                    pagination={{ pageSize: 50 }}
+                    emptyText="Không tìm thấy người dùng"
                 />
-
             </Card>
 
 
@@ -567,6 +642,50 @@ const UsersManagement = () => {
 
                 </Form>
 
+            </Modal>
+
+            <Modal
+                title="Mật khẩu tạm đã được tạo"
+                open={!!resetPasswordResult}
+                onCancel={() => setResetPasswordResult(null)}
+                footer={[
+                    <Button key="copy" icon={<CopyOutlined />} onClick={handleCopyTempPassword}>
+                        Sao chép mật khẩu
+                    </Button>,
+                    <Button key="close" type="primary" onClick={() => setResetPasswordResult(null)}>
+                        Đóng
+                    </Button>
+                ]}
+                width={420}
+                closable
+            >
+                {resetPasswordResult && (
+                    <div style={{ marginTop: 8 }}>
+                        <Alert
+                            type="info"
+                            message="Vui lòng cung cấp mật khẩu tạm cho user/organizer. Sau khi đăng nhập, họ sẽ được yêu cầu đổi mật khẩu."
+                            style={{ marginBottom: 16 }}
+                        />
+                        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                            {resetPasswordResult.full_name && (
+                                <div>
+                                    <Text type="secondary">Họ tên: </Text>
+                                    <Text strong>{resetPasswordResult.full_name}</Text>
+                                </div>
+                            )}
+                            <div>
+                                <Text type="secondary">Email: </Text>
+                                <Text strong>{resetPasswordResult.email}</Text>
+                            </div>
+                            <div>
+                                <Text type="secondary">Mật khẩu tạm: </Text>
+                                <Text strong copyable={{ text: resetPasswordResult.new_password }}>
+                                    {resetPasswordResult.new_password}
+                                </Text>
+                            </div>
+                        </Space>
+                    </div>
+                )}
             </Modal>
 
         </div >

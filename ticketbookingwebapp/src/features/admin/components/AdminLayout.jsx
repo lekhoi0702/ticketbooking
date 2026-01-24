@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@context/AuthContext';
 import AdminLogin from '../pages/Login';
@@ -14,122 +14,88 @@ import {
     Modal,
     Form,
     Input,
-    message
+    message,
+    Grid,
 } from 'antd';
 import {
     UserOutlined,
-    CalendarOutlined,
-    FileTextOutlined,
-    EnvironmentOutlined,
-    TeamOutlined,
-    ExclamationCircleOutlined,
-    BarChartOutlined,
-    TagsOutlined,
     HomeOutlined,
-    HistoryOutlined,
     LockOutlined,
     LogoutOutlined,
-    DownOutlined
+    DownOutlined,
 } from '@ant-design/icons';
 import { api } from '@services/api';
+import { ADMIN_MENU_ITEMS, SIDER_WIDTH, BREADCRUMB_MAP, ADMIN_HOME_PATH } from '../config';
+import AdminErrorBoundary from './AdminErrorBoundary';
+import './AdminLayout.css';
 
 const { Header, Sider, Content } = Layout;
 const { Text, Title } = Typography;
+const { useBreakpoint } = Grid;
 
 const AdminLayout = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const screens = useBreakpoint();
     const [passwordModalVisible, setPasswordModalVisible] = useState(false);
     const [passwordForm] = Form.useForm();
     const [changingPassword, setChangingPassword] = useState(false);
+    const [collapsed, setCollapsed] = useState(false);
 
-    const menuItems = [
-        {
-            key: '/admin/users',
-            icon: <TeamOutlined />,
-            label: 'Người dùng',
-            onClick: () => navigate('/admin/users'),
-        },
-        {
-            key: '/admin/categories',
-            icon: <TagsOutlined />,
-            label: 'Quản lý thể loại',
-            onClick: () => navigate('/admin/categories'),
-        },
-        {
-            key: '/admin/events',
-            icon: <CalendarOutlined />,
-            label: 'Sự kiện',
-            onClick: () => navigate('/admin/events'),
-        },
-        {
-            key: '/admin/orders',
-            icon: <FileTextOutlined />,
-            label: 'Đơn hàng',
-            onClick: () => navigate('/admin/orders'),
-        },
+    const isDesktop = screens.lg === true;
 
-        {
-            key: '/admin/statistics',
-            icon: <BarChartOutlined />,
-            label: 'Thống kê',
-            onClick: () => navigate('/admin/statistics'),
-        },
-        {
-            key: '/admin/banners',
-            icon: <FileTextOutlined />,
-            label: 'Quản lý Banner',
-            onClick: () => navigate('/admin/banners'),
-        },
-        {
-            key: '/admin/audit-logs',
-            icon: <HistoryOutlined />,
-            label: 'Nhật ký hoạt động',
-            onClick: () => navigate('/admin/audit-logs'),
-        },
-    ];
+    const menuItems = useMemo(
+        () =>
+            ADMIN_MENU_ITEMS.map(({ key, icon: Icon, label }) => ({
+                key,
+                icon: Icon ? <Icon /> : null,
+                label,
+                onClick: () => navigate(key),
+            })),
+        [navigate]
+    );
 
-
-
-    const getBreadcrumbs = () => {
-        const pathSnippets = location.pathname.split('/').filter(i => i);
-        const breadcrumbs = [];
-
-        // Initial Home icon dẫn về trang Thống kê
-        breadcrumbs.push({
-            title: <HomeOutlined />,
-            onClick: (e) => { e.preventDefault(); navigate('/admin/statistics'); }
-        });
-
-        const pathMap = {
-            'users': 'Quản lý người dùng',
-            'categories': 'Quản lý thể loại',
-            'events': 'Quản lý sự kiện',
-            'orders': 'Quản lý đơn hàng',
-            'statistics': 'Thống kê hệ thống',
-            'banners': 'Quản lý Banner',
-            'audit-logs': 'Nhật ký hoạt động'
-        };
-
+    const breadcrumbItems = useMemo(() => {
+        const pathSnippets = location.pathname.split('/').filter(Boolean);
+        const items = [
+            {
+                title: <HomeOutlined />,
+                onClick: (e) => {
+                    e.preventDefault();
+                    navigate(ADMIN_HOME_PATH);
+                },
+            },
+        ];
+        const isEventDetail = pathSnippets[0] === 'admin' && pathSnippets[1] === 'events' && pathSnippets[2] != null && /^\d+$/.test(pathSnippets[2]);
+        if (isEventDetail) {
+            items.push({
+                title: BREADCRUMB_MAP.events || 'Quản lý sự kiện',
+                onClick: (e) => {
+                    e.preventDefault();
+                    navigate('/admin/events');
+                },
+            });
+            items.push({ title: 'Chi tiết sự kiện' });
+            return items;
+        }
         let currentPath = '/admin';
-
-        pathSnippets.forEach((snippet) => {
-            if (snippet === 'admin') return;
-
+        for (const snippet of pathSnippets) {
+            if (snippet === 'admin') continue;
             currentPath += `/${snippet}`;
-            const title = pathMap[snippet];
-
+            const title = BREADCRUMB_MAP[snippet];
             if (title) {
-                breadcrumbs.push({
-                    title: title,
-                    onClick: (e) => { e.preventDefault(); navigate(currentPath); }
+                items.push({
+                    title,
+                    onClick: (e) => {
+                        e.preventDefault();
+                        navigate(currentPath);
+                    },
                 });
             }
-        });
-
-        return breadcrumbs;
-    };
+        }
+        return items;
+    }, [location.pathname, navigate]);
 
     const handleChangePassword = async (values) => {
         try {
@@ -182,14 +148,25 @@ const AdminLayout = () => {
         },
     ];
 
+    const siderWidth = collapsed ? 80 : SIDER_WIDTH;
+    const contentMarginLeft = isDesktop ? siderWidth : 0;
+
     if (!isAuthenticated || user?.role !== 'ADMIN') {
         return <AdminLogin />;
     }
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
+        <Layout className="admin-layout-pure">
             <Sider
-                width={260}
+                width={SIDER_WIDTH}
+                collapsedWidth={80}
+                collapsed={collapsed}
+                collapsible={isDesktop}
+                trigger={null}
+                breakpoint="lg"
+                onBreakpoint={(broken) => {
+                    if (broken) setCollapsed(true);
+                }}
                 style={{
                     overflow: 'auto',
                     height: '100vh',
@@ -198,6 +175,7 @@ const AdminLayout = () => {
                     top: 0,
                     bottom: 0,
                     zIndex: 1001,
+                    borderRight: 'none',
                 }}
             >
                 <div style={{
@@ -211,7 +189,7 @@ const AdminLayout = () => {
                     <Title level={4} style={{ color: 'white', margin: 0, fontFamily: "'Outfit', sans-serif", fontWeight: 800, letterSpacing: '-1px', lineHeight: 1 }}>
                         TICKETBOOKING
                     </Title>
-                    <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: '11px', marginTop: 4, letterSpacing: '1px' }}>
+                    <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 16, marginTop: 4, letterSpacing: '1px' }}>
                         ADMIN DASHBOARD
                     </Text>
                 </div>
@@ -224,24 +202,26 @@ const AdminLayout = () => {
             </Sider>
             <Layout
                 style={{
-                    marginLeft: 260,
-                    background: '#f0f2f5'
+                    marginLeft: contentMarginLeft,
+                    background: '#f5f5f5',
                 }}
             >
                 <Header
+                    className="admin-layout-header"
                     style={{
                         padding: '0 24px',
                         background: '#fff',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                         position: 'sticky',
                         top: 0,
                         zIndex: 1000,
+                        border: 'none',
+                        borderBottom: 'none',
                     }}
                 >
-                    <Breadcrumb items={getBreadcrumbs()} />
+                    <Breadcrumb items={breadcrumbItems} />
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         <Dropdown
@@ -250,7 +230,8 @@ const AdminLayout = () => {
                             trigger={['click']}
                         >
                             <Space
-                                style={{ cursor: 'pointer', padding: '0 8px', borderLeft: '1px solid #f0f0f0', marginLeft: 8 }}
+                                className="admin-user-trigger"
+                                style={{ cursor: 'pointer', padding: '0 8px', marginLeft: 8 }}
                             >
                                 <Avatar
                                     style={{ backgroundColor: '#1890ff' }}
@@ -259,19 +240,21 @@ const AdminLayout = () => {
                                 <Text strong>
                                     {user?.full_name || user?.email?.split('@')[0] || 'Admin'}
                                 </Text>
-                                <DownOutlined style={{ fontSize: 12, color: '#8c8c8c' }} />
+                                <DownOutlined style={{ fontSize: 16, color: '#8c8c8c' }} />
                             </Space>
                         </Dropdown>
                     </div>
                 </Header>
                 <Content style={{ margin: '24px 24px 0', minHeight: 280 }}>
-                    <div style={{
-                        padding: 0,
-                        minHeight: 'calc(100vh - 112px)',
-                        background: 'transparent'
-                    }}>
-                        <Outlet />
-                    </div>
+                    <AdminErrorBoundary>
+                        <div className="admin-content-inner" style={{
+                            padding: 0,
+                            minHeight: 'calc(100vh - 112px)',
+                            background: 'transparent',
+                        }}>
+                            <Outlet />
+                        </div>
+                    </AdminErrorBoundary>
                 </Content>
             </Layout>
 

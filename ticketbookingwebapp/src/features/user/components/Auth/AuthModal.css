@@ -1,6 +1,6 @@
 /* Auth Modal Styles */
 .auth-modal .modal-dialog {
-    max-width: 400px;
+    max-width: 520px;
 }
 
 .auth-modal .modal-content {
@@ -10,6 +10,9 @@
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
     background-color: #ffffff;
     color: #111827;
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Green Header with Mascot */
@@ -68,30 +71,62 @@
 
 .auth-modal .modal-body {
     padding: 20px 28px 28px;
+    min-height: 300px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
-/* Tabs Styling */
-.auth-tabs {
-    border-bottom: none !important;
-    margin-bottom: 20px !important;
+.auth-modal .modal-body > form,
+.auth-modal .modal-body > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
-.auth-tabs .nav-link {
-    color: #6b7280;
-    font-weight: 600;
+/* Ensure ForgotPasswordModal content fills space */
+.auth-modal .modal-body > div:not(.auth-tabs-row) {
+    min-height: 100%;
+}
+
+.auth-modal .modal-body form {
+    min-height: 100%;
+}
+
+/* Tabs - Đăng nhập & Đăng ký nằm ngang hàng */
+.auth-tabs-row {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    width: 100%;
+    gap: 0;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.auth-tab-btn {
+    flex: 1;
     padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    background: transparent;
     border: none;
     border-bottom: 3px solid transparent;
+    cursor: pointer;
     transition: all 0.2s;
-    font-size: 14px;
-    background: transparent !important;
+    text-align: center;
+    white-space: nowrap;
+    margin-bottom: -2px;
 }
 
-.auth-tabs .nav-link:hover {
+.auth-tab-btn:hover {
     color: #2DC275;
 }
 
-.auth-tabs .nav-link.active {
+.auth-tab-btn.active {
     color: #2DC275;
     border-bottom-color: #2DC275;
 }
@@ -160,9 +195,69 @@
     margin-bottom: 14px;
 }
 
+/* Reset Password Page - same look as auth modal */
+.auth-reset-page {
+    max-width: 520px;
+    margin: 0 auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    color: #111827;
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-reset-page .auth-reset-body {
+    padding: 20px 28px 28px;
+    min-height: 300px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.auth-reset-page .auth-reset-body form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.auth-reset-page .btn-close-custom {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.auth-reset-page .btn-close-custom:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.1);
+}
+
 /* Responsive */
 @media (max-width: 576px) {
     .auth-modal .modal-body {
+        padding: 20px 24px 24px;
+    }
+
+    .auth-reset-page .auth-reset-body {
         padding: 20px 24px 24px;
     }
 
@@ -179,7 +274,7 @@
         width: 90px;
     }
 
-    .auth-tabs .nav-link {
+    .auth-tab-btn {
         padding: 10px 16px;
         font-size: 13px;
     }

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Modal, Form, Button, Alert } from 'react-bootstrap';
+import { Modal, Form, Button } from 'react-bootstrap';
 import { FaArrowRight } from 'react-icons/fa';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
 import './ChangePasswordModal.css';
 
-const ChangePasswordModal = ({ show, onHide }) => {
-    const { user } = useAuth();
+const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) => {
+    const { user, token } = useAuth();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         oldPassword: '',
@@ -26,10 +26,8 @@ const ChangePasswordModal = ({ show, onHide }) => {
         const newPassword = formData.newPassword?.trim() || '';
         const confirmPassword = formData.confirmPassword?.trim() || '';
 
-        console.log('Form data:', { oldPassword: oldPassword.length, newPassword: newPassword.length, confirmPassword: confirmPassword.length });
-
-        // Validation
-        if (!oldPassword) {
+        // Validation (forceChange: skip old password)
+        if (!forceChange && !oldPassword) {
             newFieldErrors.oldPassword = 'Vui lòng nhập mật khẩu hiện tại';
         }
         if (!newPassword) {
@@ -44,7 +42,6 @@ const ChangePasswordModal = ({ show, onHide }) => {
         }
 
         if (Object.keys(newFieldErrors).length > 0) {
-            console.log('Validation errors:', newFieldErrors);
             setFieldErrors(newFieldErrors);
             return;
         }
@@ -54,28 +51,36 @@ const ChangePasswordModal = ({ show, onHide }) => {
             setError(null);
             setFieldErrors({});
 
-            if (!user || !user.user_id) {
+            if (!forceChange && (!user || !user.user_id)) {
                 setError({ type: 'danger', msg: 'Không tìm thấy thông tin người dùng' });
                 setLoading(false);
                 return;
             }
+            if (forceChange && !token) {
+                setError({ type: 'danger', msg: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.' });
+                setLoading(false);
+                return;
+            }
 
-            const res = await api.changePassword({
-                user_id: user.user_id,
-                old_password: oldPassword,
-                new_password: newPassword
-            });
+            const payload = forceChange
+                ? { new_password: newPassword }
+                : { user_id: user.user_id, old_password: oldPassword, new_password: newPassword };
+            const res = await api.changePassword(payload, forceChange ? token : undefined);
 
             if (res.success) {
                 setError({ type: 'success', msg: 'Đổi mật khẩu thành công!' });
-                setTimeout(() => {
-                    handleClose();
-                }, 1500);
+                if (forceChange && onSuccess) {
+                    onSuccess();
+                    setFormData({ oldPassword: '', newPassword: '', confirmPassword: '' });
+                    setError(null);
+                    setFieldErrors({});
+                } else {
+                    setTimeout(() => handleClose(), 1500);
+                }
             } else {
                 setError({ type: 'danger', msg: res.message || 'Có lỗi xảy ra khi đổi mật khẩu' });
             }
         } catch (err) {
-            console.error('Change password error:', err);
             setError({ type: 'danger', msg: err.message || 'Lỗi server, vui lòng thử lại sau' });
         } finally {
             setLoading(false);
@@ -86,15 +91,23 @@ const ChangePasswordModal = ({ show, onHide }) => {
         setFormData({ oldPassword: '', newPassword: '', confirmPassword: '' });
         setError(null);
         setFieldErrors({});
-        onHide();
+        onHide?.();
     };
 
     return (
-        <Modal show={show} onHide={handleClose} centered size="sm" className="change-password-modal">
-            <Modal.Header closeButton className="change-password-modal-header border-0">
+        <Modal
+            show={show}
+            onHide={forceChange ? () => {} : handleClose}
+            backdrop={forceChange ? 'static' : true}
+            keyboard={!forceChange}
+            centered
+            size="sm"
+            className="change-password-modal"
+        >
+            <Modal.Header closeButton={!forceChange} className="change-password-modal-header border-0">
                 <div className="change-password-header-content">
                     <h3 className="change-password-header-title">
-                        Đổi mật khẩu
+                        {forceChange ? 'Bạn cần đổi mật khẩu' : 'Đổi mật khẩu'}
                     </h3>
                     <div className="change-password-mascot">
                         <img src="/mascot.svg" alt="Mascot" />
@@ -103,25 +116,27 @@ const ChangePasswordModal = ({ show, onHide }) => {
             </Modal.Header>
             <Modal.Body className="px-4 pb-4">
                 {error && (
-                    <Alert variant={error.type} className="rounded-3 border-0 py-2 small">
+                    <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : error.type === 'warning' ? 'text-warning' : 'text-danger'}`}>
                         {error.msg}
-                    </Alert>
+                    </div>
                 )}
 
                 <Form onSubmit={handleSubmit} noValidate>
-                    <Form.Group className="mb-3">
-                        <Form.Control
-                            type="password"
-                            value={formData.oldPassword}
-                            onChange={e => {
-                                setFormData({ ...formData, oldPassword: e.target.value });
-                                if (fieldErrors.oldPassword) setFieldErrors({ ...fieldErrors, oldPassword: null });
-                            }}
-                            placeholder="Mật khẩu hiện tại"
-                            className={`change-password-input ${fieldErrors.oldPassword ? 'is-invalid' : ''}`}
-                        />
-                        {fieldErrors.oldPassword && <div className="text-danger small mt-1">{fieldErrors.oldPassword}</div>}
-                    </Form.Group>
+                    {!forceChange && (
+                        <Form.Group className="mb-3">
+                            <Form.Control
+                                type="password"
+                                value={formData.oldPassword}
+                                onChange={e => {
+                                    setFormData({ ...formData, oldPassword: e.target.value });
+                                    if (fieldErrors.oldPassword) setFieldErrors({ ...fieldErrors, oldPassword: null });
+                                }}
+                                placeholder="Mật khẩu hiện tại"
+                                className={`change-password-input ${fieldErrors.oldPassword ? 'is-invalid' : ''}`}
+                            />
+                            {fieldErrors.oldPassword && <div className="text-danger small mt-1">{fieldErrors.oldPassword}</div>}
+                        </Form.Group>
+                    )}
 
                     <Form.Group className="mb-3">
                         <Form.Control

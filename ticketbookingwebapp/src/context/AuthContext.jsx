@@ -58,6 +58,20 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem(`${prefix}user`);
     };
 
+    const updateUser = useCallback((patches) => {
+        setUser((prev) => {
+            if (!prev) return prev;
+            const updated = { ...prev, ...patches };
+            const prefix = getScopePrefix(prev.role);
+            try {
+                const raw = localStorage.getItem(`${prefix}user`);
+                const stored = raw ? JSON.parse(raw) : {};
+                localStorage.setItem(`${prefix}user`, JSON.stringify({ ...stored, ...patches }));
+            } catch (_) {}
+            return updated;
+        });
+    }, []);
+
     // Trigger login with optional redirect intent
     // Usage: triggerLogin() or triggerLogin({ path: '/checkout/123', state: {...}, action: 'checkout' })
     const triggerLogin = useCallback((intent = null) => {
@@ -74,7 +88,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{
-            user, token, login, logout,
+            user, token, login, logout, updateUser,
             isAuthenticated: !!token, loading,
             showLoginModal, setShowLoginModal, triggerLogin,
             redirectIntent, setRedirectIntent, clearRedirectIntent

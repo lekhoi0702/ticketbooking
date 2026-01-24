@@ -4,6 +4,7 @@ Discount repository for discount-specific database operations
 
 from typing import Optional, List
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 from app.models.discount import Discount
 from app.repositories.base_repository import BaseRepository
 from app.exceptions import InvalidDiscountException
@@ -42,7 +43,7 @@ class DiscountRepository(BaseRepository[Discount]):
         Returns:
             List of active discounts
         """
-        now = datetime.now()
+        now = now_gmt7()
         
         query = self.session.query(Discount).filter(
             Discount.is_active == True,
@@ -79,7 +80,7 @@ class DiscountRepository(BaseRepository[Discount]):
         )
         
         if not include_expired:
-            now = datetime.now()
+            now = now_gmt7()
             query = query.filter(Discount.end_date >= now)
         
         return query.order_by(Discount.created_at.desc()).all()
@@ -113,7 +114,7 @@ class DiscountRepository(BaseRepository[Discount]):
             raise InvalidDiscountException('Discount code is not active')
         
         # Check dates
-        now = datetime.now()
+        now = now_gmt7()
         if now < discount.start_date:
             raise InvalidDiscountException('Discount code is not yet valid')
         if now > discount.end_date:

@@ -1,5 +1,6 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class Venue(db.Model):
     __tablename__ = "Venue"
@@ -9,7 +10,7 @@ class Venue(db.Model):
     address = db.Column(db.String(500), nullable=False)
     city = db.Column(db.String(100), nullable=False, index=True)
     capacity = db.Column(db.Integer, nullable=False)
-    manager_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=False)
+    manager_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=False)
     vip_seats = db.Column(db.Integer, default=0)
     standard_seats = db.Column(db.Integer, default=0)
     economy_seats = db.Column(db.Integer, default=0)
@@ -18,7 +19,7 @@ class Venue(db.Model):
     contact_phone = db.Column(db.String(20))
     is_active = db.Column(db.Boolean, default=True, index=True)
     status = db.Column(db.String(50), default='ACTIVE', index=True) # ACTIVE, MAINTENANCE, INACTIVE
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
 
     # Relationships
     events = db.relationship('Event', backref='venue', lazy=True)

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from app.extensions import db
 from app.exceptions import ResourceNotFoundException, DatabaseException
+from app.utils.datetime_utils import now_gmt7
 
 T = TypeVar('T')
 
@@ -177,8 +178,7 @@ class BaseRepository(Generic[T]):
         """
         try:
             if soft and hasattr(instance, 'deleted_at'):
-                from datetime import datetime
-                instance.deleted_at = datetime.utcnow()
+                instance.deleted_at = now_gmt7()
             else:
                 self.session.delete(instance)
             return True

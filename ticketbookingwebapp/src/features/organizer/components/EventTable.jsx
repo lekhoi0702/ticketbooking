@@ -27,6 +27,7 @@ import {
 } from '@ant-design/icons';
 
 import { getImageUrl } from '@shared/utils/eventUtils';
+import { formatLocaleDate } from '@shared/utils/dateUtils';
 
 const { Text } = Typography;
 
@@ -40,11 +41,11 @@ const EventTable = ({
 
     const getStatusConfig = (status) => {
         const configs = {
-            'PENDING_APPROVAL': { color: 'warning', label: 'Đang duyệt', icon: <SyncOutlined spin /> },
-            'APPROVED': { color: 'cyan', label: 'Đã duyệt', icon: <CheckCircleOutlined /> },
-            'REJECTED': { color: 'error', label: 'Bị từ chối', icon: <CloseCircleOutlined /> },
-            'PUBLISHED': { color: 'success', label: 'Công khai', icon: <CloudUploadOutlined /> },
             'DRAFT': { color: 'default', label: 'Nháp', icon: <ClockCircleOutlined /> },
+            'PENDING_APPROVAL': { color: 'warning', label: 'Chờ duyệt', icon: <SyncOutlined spin /> },
+            'PUBLISHED': { color: 'success', label: 'Công khai', icon: <CloudUploadOutlined /> },
+            'REJECTED': { color: 'error', label: 'Từ chối duyệt', icon: <CloseCircleOutlined /> },
+            'CANCELLED': { color: 'default', label: 'Hủy', icon: <StopOutlined /> },
             'ONGOING': { color: 'processing', label: 'Đang diễn ra', icon: <PlayCircleOutlined /> },
             'COMPLETED': { color: 'default', label: 'Hoàn thành', icon: <CheckCircleOutlined /> }
         };
@@ -78,7 +79,7 @@ const EventTable = ({
             key: 'info',
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
-                    <Text style={{ fontSize: 13 }}>{new Date(record.start_datetime).toLocaleDateString('vi-VN')}</Text>
+                    <Text style={{ fontSize: 13 }}>{formatLocaleDate(record.start_datetime)}</Text>
                     <Text type="secondary" style={{ fontSize: 12, maxWidth: 200 }} ellipsis>
                         {record.venue?.venue_name}
                     </Text>

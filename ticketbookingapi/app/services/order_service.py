@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
+from app.utils.datetime_utils import now_gmt7
 import string
 from flask import current_app
 from app.extensions import db
@@ -19,14 +20,14 @@ class OrderService:
     @staticmethod
     def generate_order_code() -> str:
         """Generate unique order code"""
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        timestamp = now_gmt7().strftime('%Y%m%d%H%M%S')
         random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
         return f"ORD-{timestamp}-{random_str}"
 
     @staticmethod
     def generate_ticket_code() -> str:
         """Generate unique ticket code"""
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        timestamp = now_gmt7().strftime('%Y%m%d%H%M%S')
         random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         return f"TKT-{timestamp}-{random_str}"
 
@@ -46,10 +47,10 @@ class OrderService:
         if not discount.is_active:
             return False, 0, "Mã giảm giá đã bị khóa", None
 
-        if discount.end_date < datetime.utcnow():
+        if discount.end_date < now_gmt7():
              return False, 0, "Mã giảm giá đã hết hạn", None
         
-        if discount.start_date > datetime.utcnow():
+        if discount.start_date > now_gmt7():
              return False, 0, "Mã giảm giá chưa có hiệu lực", None
 
         if discount.usage_limit and discount.usage_limit > 0:
@@ -348,7 +349,7 @@ class OrderService:
                             'banner_image_url': event.banner_image_url,
                             'status': event.status,
                             'sale_end': min_sale_end.isoformat() if min_sale_end else None,
-                            'is_sale_active': min_sale_end > datetime.utcnow() if min_sale_end else True
+                            'is_sale_active': min_sale_end > now_gmt7() if min_sale_end else True
                         }
                         
                         # Get venue info
@@ -414,7 +415,7 @@ class OrderService:
             for ticket in tickets:
                 ticket_type = TicketType.query.get(ticket.ticket_type_id)
                 if ticket_type and ticket_type.sale_end:
-                    if datetime.utcnow() > ticket_type.sale_end:
+                    if now_gmt7() > ticket_type.sale_end:
                          raise ValueError(f'Rất tiếc, vé {ticket_type.type_name} đã qua thời hạn hỗ trợ hủy (kết thúc bán vé).')
             
             # Set to PENDING instead of immediate cancellation
@@ -511,10 +512,9 @@ class OrderService:
         Returns:
             Tuple of (cancelled_count, released_seats_count)
         """
-        from datetime import timedelta
         from app.repositories.order_repository import OrderRepository
         
-        threshold = datetime.utcnow() - timedelta(minutes=older_than_minutes)
+        threshold = now_gmt7() - timedelta(minutes=older_than_minutes)
         
         # Get expired pending orders
         expired_orders = Order.query.filter(

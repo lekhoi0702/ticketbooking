@@ -4,6 +4,7 @@ Ticket repository for ticket-specific database operations
 
 from typing import Optional, List
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 from app.models.ticket import Ticket
 from app.models.ticket_type import TicketType
 from app.repositories.base_repository import BaseRepository
@@ -146,7 +147,7 @@ class TicketRepository(BaseRepository[Ticket]):
         return self.update_ticket_status(
             ticket,
             'USED',
-            checked_in_at=datetime.utcnow()
+            checked_in_at=now_gmt7()
         )
     
     def cancel_tickets(self, order_id: int) -> int:
@@ -183,7 +184,7 @@ class TicketRepository(BaseRepository[Ticket]):
         count = 0
         
         for ticket in tickets:
-            self.update(ticket, deleted_at=datetime.utcnow())
+            self.update(ticket, deleted_at=now_gmt7())
             count += 1
         
         return count

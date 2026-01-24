@@ -11,9 +11,10 @@ from app.models.discount import Discount
 from app.models.banner import Banner
 from app.models.organizer_info import OrganizerInfo
 from app.models.favorite_event import FavoriteEvent
-from app.models.audit_log import AuditLog
 from app.models.seat_reservation import SeatReservation
 from app.models.organizer_qr_code import OrganizerQRCode
+from app.models.advertisement import Advertisement
+from app.models.password_reset_token import PasswordResetToken
 # Note: RefreshToken model removed - using Redis instead
 
 __all__ = [
@@ -30,7 +31,8 @@ __all__ = [
     'Banner',
     'OrganizerInfo',
     'FavoriteEvent',
-    'AuditLog',
     'SeatReservation',
-    'OrganizerQRCode'
+    'OrganizerQRCode',
+    'Advertisement',
+    'PasswordResetToken'
 ]

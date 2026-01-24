@@ -19,7 +19,6 @@ import {
     EditOutlined,
     EyeOutlined,
     ShoppingOutlined,
-    CloudUploadOutlined,
     DeleteOutlined,
     CloseCircleOutlined
 } from '@ant-design/icons';
@@ -35,7 +34,6 @@ const EventList = () => {
         events,
         loading,
         error,
-        handlePublishEvent,
         handleCancelApproval,
         fetchEvents,
         handleDeleteClick,
@@ -120,14 +118,6 @@ const EventList = () => {
                                         onClick={() => navigate(`/organizer/event/${firstSelected.event_id}/orders`)}
                                     >Đơn hàng</Button>
                                 </Tooltip>
-                                {firstSelected.status === 'APPROVED' && (
-                                    <Button
-                                        type="primary"
-                                        icon={<CloudUploadOutlined />}
-                                        onClick={() => handlePublishEvent(firstSelected.event_id)}
-                                        style={{ background: '#2DC275', borderColor: '#2DC275' }}
-                                    >Đăng sự kiện</Button>
-                                )}
                                 {firstSelected.status === 'DRAFT' && (
                                     <Button
                                         danger

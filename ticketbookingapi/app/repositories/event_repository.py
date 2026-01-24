@@ -7,6 +7,7 @@ from datetime import datetime
 from sqlalchemy import and_, or_
 from app.models.event import Event
 from app.repositories.base_repository import BaseRepository
+from app.utils.datetime_utils import now_gmt7
 
 
 class EventRepository(BaseRepository[Event]):
@@ -85,7 +86,7 @@ class EventRepository(BaseRepository[Event]):
             List of upcoming events
         """
         if start_date is None:
-            start_date = datetime.now()
+            start_date = now_gmt7()
         
         query = self.session.query(Event).filter(
             Event.deleted_at.is_(None),
@@ -181,7 +182,7 @@ class EventRepository(BaseRepository[Event]):
         Returns:
             Updated event instance
         """
-        return self.update(event, deleted_at=datetime.utcnow())
+        return self.update(event, deleted_at=now_gmt7())
     
     def get_events_with_pagination(
         self,

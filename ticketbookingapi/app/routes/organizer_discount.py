@@ -3,8 +3,8 @@ from app.extensions import db
 from app.models.discount import Discount
 from app.models.event import Event
 from app.models.user import User
-from app.services.audit_service import AuditService
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7, parse_to_gmt7
 
 organizer_discount_bp = Blueprint("organizer_discount", __name__)
 
@@ -21,8 +21,10 @@ def create_discount():
         if Discount.query.filter_by(discount_code=code).first():
             return jsonify({'success': False, 'message': 'Mã giảm giá đã tồn tại'}), 400
 
-        start_str = data.get('start_date', '').replace('Z', '')
-        end_str = data.get('end_date', '').replace('Z', '')
+        start_date = parse_to_gmt7(data.get('start_date'))
+        end_date = parse_to_gmt7(data.get('end_date'))
+        if not start_date or not end_date:
+            return jsonify({'success': False, 'message': 'start_date và end_date không hợp lệ'}), 400
 
         discount = Discount(
             manager_id=manager_id,
@@ -32,39 +34,14 @@ def create_discount():
             discount_type=data.get('discount_type', 'PERCENTAGE'),
             discount_value=data.get('value', 0),
             min_order_amount=0,
-            start_date=datetime.fromisoformat(start_str),
-            end_date=datetime.fromisoformat(end_str),
+            start_date=start_date,
+            end_date=end_date,
             usage_limit=data.get('usage_limit', 0),
             is_active=True
         )
         
         db.session.add(discount)
-        db.session.flush()
-        
-        # Audit log
-        manager_id_int = int(manager_id)
-        if manager_id_int:
-            try:
-                AuditService.log_insert(
-                    user_id=manager_id_int,
-                    table_name=AuditService.TABLE_DISCOUNT,
-                    record_id=discount.discount_id,
-                    new_values={
-                        'discount_code': discount.discount_code,
-                        'discount_name': discount.discount_name,
-                        'discount_type': discount.discount_type,
-                        'discount_value': float(discount.discount_value),
-                        'event_id': discount.event_id,
-                        'usage_limit': discount.usage_limit,
-                        'is_active': discount.is_active
-                    }
-                )
-                db.session.commit()
-            except Exception as e:
-                print(f"[AUDIT WARNING] Failed to log discount creation: {e}")
-                db.session.rollback()
-                db.session.commit()  # Commit discount creation even if audit fails
-        
+        db.session.commit()
         return jsonify({'success': True, 'data': discount.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
@@ -91,7 +68,7 @@ def get_discounts():
             # Status logic
             if not d.is_active:
                 item['status'] = 'INACTIVE'
-            elif d.end_date < datetime.utcnow():
+            elif d.end_date < now_gmt7():
                 item['status'] = 'EXPIRED'
             else:
                 item['status'] = 'ACTIVE'
@@ -119,19 +96,6 @@ def update_discount(id):
         data = request.json
         discount = Discount.query.get_or_404(id)
         
-        # Get old values before update for audit log
-        old_values = {
-            'discount_code': discount.discount_code,
-            'discount_name': discount.discount_name,
-            'discount_type': discount.discount_type,
-            'discount_value': float(discount.discount_value) if discount.discount_value else 0,
-            'event_id': discount.event_id,
-            'usage_limit': discount.usage_limit,
-            'is_active': discount.is_active,
-            'start_date': discount.start_date.isoformat() if discount.start_date else None,
-            'end_date': discount.end_date.isoformat() if discount.end_date else None
-        }
-        
         if 'name' in data: discount.discount_name = data['name']
         if 'value' in data: discount.discount_value = data['value']
         if 'discount_type' in data: discount.discount_type = data['discount_type']
@@ -139,58 +103,23 @@ def update_discount(id):
         if 'event_id' in data: discount.event_id = data['event_id']
 
         if 'start_date' in data:
-            start_str = data['start_date'].replace('Z', '')
-            discount.start_date = datetime.fromisoformat(start_str)
+            d = parse_to_gmt7(data['start_date'])
+            if d: discount.start_date = d
         if 'end_date' in data:
-            end_str = data['end_date'].replace('Z', '')
-            discount.end_date = datetime.fromisoformat(end_str)
+            d = parse_to_gmt7(data['end_date'])
+            if d: discount.end_date = d
 
         if 'status' in data:
             new_status = data['status']
             if new_status == 'ACTIVE':
                 # Check if it's already expired
-                if discount.end_date < datetime.utcnow():
+                if discount.end_date < now_gmt7():
                     return jsonify({'success': False, 'message': 'Không thể kích hoạt mã đã hết hạn'}), 400
                 discount.is_active = True
             elif new_status == 'INACTIVE':
                 discount.is_active = False
 
-        # Audit log
-        manager_id = data.get('manager_id') or discount.manager_id
-        manager_id_int = int(manager_id) if manager_id else None
-        if manager_id_int:
-            try:
-                new_values = {}
-                if 'name' in data:
-                    new_values['discount_name'] = data['name']
-                if 'value' in data:
-                    new_values['discount_value'] = float(data['value'])
-                if 'discount_type' in data:
-                    new_values['discount_type'] = data['discount_type']
-                if 'usage_limit' in data:
-                    new_values['usage_limit'] = data['usage_limit']
-                if 'event_id' in data:
-                    new_values['event_id'] = data['event_id']
-                if 'start_date' in data:
-                    new_values['start_date'] = data['start_date']
-                if 'end_date' in data:
-                    new_values['end_date'] = data['end_date']
-                if 'status' in data:
-                    new_values['is_active'] = discount.is_active
-                
-                AuditService.log_update(
-                    user_id=manager_id_int,
-                    table_name=AuditService.TABLE_DISCOUNT,
-                    record_id=discount.discount_id,
-                    old_values=old_values,
-                    new_values=new_values if new_values else None
-                )
-                db.session.commit()
-            except Exception as e:
-                print(f"[AUDIT WARNING] Failed to log discount update: {e}")
-                db.session.rollback()
-                db.session.commit()  # Commit discount update even if audit fails
-
+        db.session.commit()
         return jsonify({'success': True, 'message': 'Updated successfully', 'data': discount.to_dict()}), 200
     except Exception as e:
         db.session.rollback()
@@ -200,37 +129,8 @@ def update_discount(id):
 def delete_discount(id):
     try:
         discount = Discount.query.get_or_404(id)
-        discount_code = discount.discount_code
-        manager_id = discount.manager_id
-        
-        # Get old values before delete for audit log
-        old_values = {
-            'discount_code': discount.discount_code,
-            'discount_name': discount.discount_name,
-            'discount_type': discount.discount_type,
-            'discount_value': float(discount.discount_value) if discount.discount_value else 0,
-            'event_id': discount.event_id,
-            'is_active': discount.is_active
-        }
-        
         db.session.delete(discount)
-        
-        # Audit log
-        manager_id_int = int(manager_id) if manager_id else None
-        if manager_id_int:
-            try:
-                AuditService.log_delete(
-                    user_id=manager_id_int,
-                    table_name=AuditService.TABLE_DISCOUNT,
-                    record_id=id,
-                    old_values=old_values
-                )
-                db.session.commit()
-            except Exception as e:
-                print(f"[AUDIT WARNING] Failed to log discount deletion: {e}")
-                db.session.rollback()
-                db.session.commit()  # Commit discount deletion even if audit fails
-        
+        db.session.commit()
         return jsonify({'success': True, 'message': 'Deleted successfully'}), 200
     except Exception as e:
         db.session.rollback()

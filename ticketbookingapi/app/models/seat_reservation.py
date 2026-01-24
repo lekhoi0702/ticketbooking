@@ -1,5 +1,6 @@
 from app.extensions import db
 from datetime import datetime, timedelta
+from app.utils.datetime_utils import now_gmt7
 
 class SeatReservation(db.Model):
     """Track seat reservations with expiry time"""
@@ -7,9 +8,9 @@ class SeatReservation(db.Model):
 
     reservation_id = db.Column(db.Integer, primary_key=True)
     seat_id = db.Column(db.Integer, db.ForeignKey('Seat.seat_id', ondelete='CASCADE'), nullable=False, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('User.user_id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id', ondelete='CASCADE'), nullable=False, index=True)
     event_id = db.Column(db.Integer, db.ForeignKey('Event.event_id', ondelete='CASCADE'), nullable=False, index=True)
-    reserved_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    reserved_at = db.Column(db.DateTime, default=now_gmt7, nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False, index=True)
     is_active = db.Column(db.Boolean, default=True, index=True)
     
@@ -22,13 +23,13 @@ class SeatReservation(db.Model):
         self.seat_id = seat_id
         self.user_id = user_id
         self.event_id = event_id
-        self.reserved_at = datetime.utcnow()
-        self.expires_at = datetime.utcnow() + timedelta(minutes=reservation_duration_minutes)
+        self.reserved_at = now_gmt7()
+        self.expires_at = now_gmt7() + timedelta(minutes=reservation_duration_minutes)
         self.is_active = True
 
     def is_expired(self):
         """Check if reservation has expired"""
-        return datetime.utcnow() > self.expires_at
+        return now_gmt7() > self.expires_at
 
     def to_dict(self):
         return {

@@ -3,7 +3,8 @@ Order repository for order-specific database operations
 """
 
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
+from app.utils.datetime_utils import now_gmt7
 from sqlalchemy import and_, or_
 from app.models.order import Order
 from app.models.ticket import Ticket
@@ -73,8 +74,7 @@ class OrderRepository(BaseRepository[Order]):
         Returns:
             List of pending orders
         """
-        from datetime import timedelta
-        threshold = datetime.utcnow() - timedelta(minutes=older_than_minutes)
+        threshold = now_gmt7() - timedelta(minutes=older_than_minutes)
         
         return self.session.query(Order).filter(
             Order.order_status == 'PENDING',
@@ -177,7 +177,7 @@ class OrderRepository(BaseRepository[Order]):
         Returns:
             Updated order instance
         """
-        return self.update(order, deleted_at=datetime.utcnow())
+        return self.update(order, deleted_at=now_gmt7())
     
     def get_user_order_count(self, user_id: int, status: Optional[str] = None) -> int:
         """

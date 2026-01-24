@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Typography, message, Row, Col, Statistic, Button } from 'antd';
+import { Card, Table, Typography, App, Row, Col, Statistic, Button } from 'antd';
 import AdminPortal from '@shared/components/AdminPortal';
-import { TrophyOutlined, DollarCircleOutlined, TeamOutlined, ShoppingCartOutlined, ReloadOutlined } from '@ant-design/icons';
+import { TrophyOutlined, DollarCircleOutlined, TeamOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
+import AdminToolbar from '@features/admin/components/AdminToolbar';
 
 const { Title, Text } = Typography;
 
 const AdminStatistics = () => {
+    const { message } = App.useApp();
     const [loading, setLoading] = useState(true);
     const [organizerStats, setOrganizerStats] = useState([]);
     const [summary, setSummary] = useState({
@@ -40,10 +42,10 @@ const AdminStatistics = () => {
     };
 
     const processStats = (orders, events) => {
-        // Map event_id to organizer info
+        // Map event_name to organizer info (backend returns event_name in order, not event_id)
         const eventMap = {};
         events.forEach(e => {
-            eventMap[e.event_id] = {
+            eventMap[e.event_name] = {
                 organizerName: e.organizer_name || 'N/A',
                 eventName: e.event_name
             };
@@ -55,10 +57,18 @@ const AdminStatistics = () => {
         orders.forEach(order => {
             if (order.order_status !== 'PAID') return; // Only count paid orders
 
-            const eventInfo = eventMap[order.event_id];
-            if (!eventInfo) return;
+            // Use event_name from order (backend adds this field)
+            const eventName = order.event_name;
+            if (!eventName || eventName === 'N/A') return; // Skip if no event_name
 
-            const organizerName = eventInfo.organizerName;
+            const eventInfo = eventMap[eventName];
+            if (!eventInfo) {
+                // Log missing event for debugging
+                console.warn(`Event not found in map: ${eventName}`);
+                return; // Skip if event not found in map
+            }
+
+            const organizerName = eventInfo.organizerName || 'N/A';
 
             if (!statsMap[organizerName]) {
                 statsMap[organizerName] = {
@@ -69,11 +79,10 @@ const AdminStatistics = () => {
                 };
             }
 
-            statsMap[organizerName].revenue += order.total_amount || 0;
+            statsMap[organizerName].revenue += parseFloat(order.total_amount) || 0;
             statsMap[organizerName].ordersCount += 1;
-            statsMap[organizerName].ticketsSold += (order.tickets ? order.tickets.length : 0); // Assuming tickets array exists or just count basic
-            // Note: If order.tickets is not populated in getAllAdminOrders, we might just count 1 order.
-            // But let's assume total_amount is accurate.
+            // Note: tickets array may not be populated in getAllAdminOrders response
+            // We're just counting orders, not individual tickets
         });
 
         // Convert to array and sort
@@ -109,9 +118,9 @@ const AdminStatistics = () => {
             key: 'rank',
             width: 80,
             render: (rank) => {
-                if (rank === 1) return <TrophyOutlined style={{ color: '#fadb14', fontSize: 24 }} />;
-                if (rank === 2) return <TrophyOutlined style={{ color: '#d9d9d9', fontSize: 20 }} />;
-                if (rank === 3) return <TrophyOutlined style={{ color: '#cf1322', fontSize: 18 }} />;
+                if (rank === 1) return <TrophyOutlined style={{ color: '#fadb14', fontSize: 16 }} />;
+                if (rank === 2) return <TrophyOutlined style={{ color: '#d9d9d9', fontSize: 16 }} />;
+                if (rank === 3) return <TrophyOutlined style={{ color: '#cf1322', fontSize: 16 }} />;
                 return <Text strong>{rank}</Text>;
             },
             align: 'center'
@@ -145,9 +154,7 @@ const AdminStatistics = () => {
     return (
         <div style={{ paddingTop: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-                <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading} size="middle">
-                    Làm mới số liệu
-                </Button>
+                <AdminToolbar onRefresh={fetchData} refreshLoading={loading} />
             </div>
             <Row gutter={16} style={{ marginBottom: 24 }}>
                 <Col span={8}>
@@ -178,7 +185,7 @@ const AdminStatistics = () => {
                             title="Nhà tổ chức Top 1"
                             value={summary.topOrganizer}
                             prefix={<TrophyOutlined style={{ color: '#fadb14' }} />}
-                            valueStyle={{ fontSize: '1.2rem' }}
+                            valueStyle={{ fontSize: 16 }}
                         />
                     </Card>
                 </Col>
@@ -189,7 +196,7 @@ const AdminStatistics = () => {
                     columns={columns}
                     dataSource={organizerStats}
                     rowKey="organizer"
-                    pagination={{ pageSize: 10 }}
+                    pagination={{ pageSize: 50 }}
                 />
             </Card>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '@services/api';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from '@shared/utils/eventUtils';
+import { formatLocaleDate } from '@shared/utils/dateUtils';
 import {
     Grid,
     Card,
@@ -19,10 +20,8 @@ import {
     IconButton,
     CircularProgress
 } from '@mui/material';
-import {
-    Visibility,
-    Refresh
-} from '@mui/icons-material';
+import { Visibility } from '@mui/icons-material';
+import AdminToolbar from '@features/admin/components/AdminToolbar';
 
 
 
@@ -65,11 +64,11 @@ const AdminDashboard = () => {
 
     const getStatusConfig = (status) => {
         const configs = {
-            'PUBLISHED': { color: 'success', label: 'Published', bg: '#ecfdf5', text: '#065f46' },
-            'PENDING_APPROVAL': { color: 'warning', label: 'Pending', bg: '#fffbeb', text: '#92400e' },
-            'APPROVED': { color: 'info', label: 'Approved', bg: '#eff6ff', text: '#1e40af' },
-            'REJECTED': { color: 'error', label: 'Rejected', bg: '#fef2f2', text: '#991b1b' },
-            'DRAFT': { color: 'default', label: 'Draft', bg: '#f8fafc', text: '#475569' }
+            'PUBLISHED': { color: 'success', label: 'Công khai', bg: '#ecfdf5', text: '#065f46' },
+            'PENDING_APPROVAL': { color: 'warning', label: 'Chờ duyệt', bg: '#fffbeb', text: '#92400e' },
+            'REJECTED': { color: 'error', label: 'Từ chối duyệt', bg: '#fef2f2', text: '#991b1b' },
+            'CANCELLED': { color: 'default', label: 'Hủy', bg: '#f1f5f9', text: '#475569' },
+            'DRAFT': { color: 'default', label: 'Nháp', bg: '#f8fafc', text: '#475569' }
         };
         return configs[status] || { color: 'default', label: status, bg: '#f1f5f9', text: '#475569' };
     };
@@ -94,15 +93,7 @@ const AdminDashboard = () => {
                         Thống kê hoạt động và dữ liệu mới nhất trên toàn hệ thống.
                     </Typography>
                 </Box>
-                <Button
-                    variant="outlined"
-                    startIcon={<Refresh />}
-                    onClick={fetchData}
-                    size="small"
-                    sx={{ color: 'text.secondary', borderColor: 'divider' }}
-                >
-                    Làm mới
-                </Button>
+                <AdminToolbar onRefresh={fetchData} refreshLoading={loading} />
             </Box>
 
 
@@ -163,7 +154,7 @@ const AdminDashboard = () => {
                                                     </TableCell>
                                                     <TableCell>
                                                         <Typography variant="body2">
-                                                            {new Date(event.start_datetime).toLocaleDateString('vi-VN')}
+                                                            {formatLocaleDate(event.start_datetime)}
                                                         </Typography>
                                                     </TableCell>
                                                     <TableCell>
@@ -175,7 +166,7 @@ const AdminDashboard = () => {
                                                                 color: status.text,
                                                                 fontWeight: 700,
                                                                 borderRadius: 1.5,
-                                                                fontSize: '0.7rem'
+                                                                fontSize: 16
                                                             }}
                                                         />
                                                     </TableCell>

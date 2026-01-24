@@ -1,17 +1,18 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class OrganizerInfo(db.Model):
     __tablename__ = "OrganizerInfo"
 
     organizer_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), unique=True, nullable=False)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), unique=True, nullable=False)
     organization_name = db.Column(db.String(255), nullable=True)
     description = db.Column(db.Text, nullable=True)
     logo_url = db.Column(db.String(500), nullable=True)
     contact_phone = db.Column(db.String(20), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
+    updated_at = db.Column(db.DateTime, default=now_gmt7, onupdate=now_gmt7)
 
     # Relationship
     user = db.relationship('User', backref=db.backref('organizer_info', uselist=False))

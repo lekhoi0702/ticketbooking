@@ -16,15 +16,13 @@ class EventSchema(Schema):
     description = fields.Str(allow_none=True)
     start_datetime = fields.DateTime(required=True)
     end_datetime = fields.DateTime(required=True)
-    sale_start_datetime = fields.DateTime(allow_none=True)
-    sale_end_datetime = fields.DateTime(allow_none=True)
     banner_image_url = fields.Str(allow_none=True, validate=validate.Length(max=500))
     total_capacity = fields.Int(required=True, validate=validate.Range(min=1))
     sold_tickets = fields.Int(dump_only=True)
     status = fields.Str(
         dump_only=True,
         validate=validate.OneOf([
-            'DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED',
+            'DRAFT', 'PENDING_APPROVAL', 'REJECTED',
             'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED'
         ])
     )
@@ -43,14 +41,6 @@ class EventSchema(Schema):
                     'End datetime must be after start datetime',
                     field_name='end_datetime'
                 )
-        
-        if 'sale_start_datetime' in data and 'sale_end_datetime' in data:
-            if data.get('sale_start_datetime') and data.get('sale_end_datetime'):
-                if data['sale_start_datetime'] >= data['sale_end_datetime']:
-                    raise ValidationError(
-                        'Sale end datetime must be after sale start datetime',
-                        field_name='sale_end_datetime'
-                    )
 
 
 class EventCreateSchema(Schema):
@@ -71,8 +61,6 @@ class EventCreateSchema(Schema):
         required=True,
         error_messages={'required': 'End datetime is required'}
     )
-    sale_start_datetime = fields.DateTime(allow_none=True)
-    sale_end_datetime = fields.DateTime(allow_none=True)
     banner_image_url = fields.Str(allow_none=True, validate=validate.Length(max=500))
     total_capacity = fields.Int(
         required=True,
@@ -91,16 +79,9 @@ class EventCreateSchema(Schema):
                 field_name='end_datetime'
             )
         
-        # Validate sale dates
-        if data.get('sale_start_datetime') and data.get('sale_end_datetime'):
-            if data['sale_start_datetime'] >= data['sale_end_datetime']:
-                raise ValidationError(
-                    'Sale end datetime must be after sale start datetime',
-                    field_name='sale_end_datetime'
-                )
-        
         # Validate start datetime is in the future
-        if data['start_datetime'] < datetime.now():
+        from app.utils.datetime_utils import now_gmt7
+        if data['start_datetime'] < now_gmt7():
             raise ValidationError(
                 'Start datetime must be in the future',
                 field_name='start_datetime'
@@ -115,14 +96,12 @@ class EventUpdateSchema(Schema):
     description = fields.Str(allow_none=True)
     start_datetime = fields.DateTime()
     end_datetime = fields.DateTime()
-    sale_start_datetime = fields.DateTime(allow_none=True)
-    sale_end_datetime = fields.DateTime(allow_none=True)
     banner_image_url = fields.Str(allow_none=True, validate=validate.Length(max=500))
     total_capacity = fields.Int(validate=validate.Range(min=1))
     is_featured = fields.Bool()
     status = fields.Str(
         validate=validate.OneOf([
-            'DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED',
+            'DRAFT', 'PENDING_APPROVAL', 'REJECTED',
             'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED'
         ])
     )
@@ -145,7 +124,7 @@ class EventFilterSchema(Schema):
     status = fields.Str(
         allow_none=True,
         validate=validate.OneOf([
-            'DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED',
+            'DRAFT', 'PENDING_APPROVAL', 'REJECTED',
             'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED'
         ])
     )

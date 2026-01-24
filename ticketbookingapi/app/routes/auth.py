@@ -2,6 +2,7 @@
 Authentication routes with refresh token support, custom exceptions, and structured logging
 """
 
+import os
 from flask import Blueprint, jsonify, request
 from app.extensions import db, get_redis_token_manager
 from app.models.user import User
@@ -10,6 +11,8 @@ from app.exceptions import (
     ValidationException,
     UnauthorizedException,
     InvalidCredentialsException,
+    InvalidTokenException,
+    TokenExpiredException,
     ForbiddenException,
     DuplicateResourceException,
     ResourceNotFoundException,
@@ -257,64 +260,261 @@ def register() -> Tuple[Dict[str, Any], int]:
         raise InternalServerException(message='Đã xảy ra lỗi khi đăng ký')
 
 
-@auth_bp.route("/auth/change-password", methods=["POST"])
-def change_password() -> Tuple[Dict[str, Any], int]:
-    """Đổi mật khẩu người dùng - requires authentication"""
+@auth_bp.route("/auth/forgot-password", methods=["POST"])
+def forgot_password() -> Tuple[Dict[str, Any], int]:
+    """Quên mật khẩu: gửi link reset password về email."""
     try:
-        # TODO: Add authentication decorator
+        from app.models.password_reset_token import PasswordResetToken
+        from app.utils.email_sender import send_email
+        from app.config import Config
+
         data = request.get_json() or {}
-        user_id = data.get('user_id')
-        old_password = data.get('old_password')
-        new_password = data.get('new_password')
-        
-        errors = {}
-        
-        if not user_id:
-            errors['user_id'] = 'User ID không được để trống'
-        if not old_password:
-            errors['old_password'] = 'Mật khẩu hiện tại không được để trống'
-        if not new_password:
-            errors['new_password'] = 'Mật khẩu mới không được để trống'
-        
-        if errors:
-            raise ValidationException(errors=errors, message='Vui lòng nhập đầy đủ thông tin')
-        
-        # Validate new password
-        is_valid, error_msg = validate_password(new_password)
+        email = (data.get('email') or '').strip()
+
+        is_valid, err_msg = validate_email(email)
         if not is_valid:
-            raise ValidationException(errors={'new_password': error_msg}, message=error_msg)
-        
-        # Find user
-        user = User.query.get(user_id)
+            raise ValidationException(errors={'email': err_msg}, message=err_msg)
+
+        user = User.query.filter_by(email=email).first()
+        # Generic success to avoid revealing whether email exists
         if not user:
-            raise ResourceNotFoundException('User', user_id)
+            logger.info(f"Forgot-password request for unknown email: {email}")
+            return jsonify({
+                'success': True,
+                'message': 'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu qua email. Vui lòng kiểm tra hộp thư và thư mục spam.'
+            }), 200
+
+        # Create reset token (expires in 5 minutes)
+        reset_token = PasswordResetToken.create_token(user.user_id, expires_in_minutes=5)
+        db.session.flush()  # Get token_id
+
+        # Generate reset link
+        from app.config import Config
+        reset_link = f"{Config.FRONTEND_URL}/reset-password?token={reset_token.token}"
+
+        subject = 'TicketBooking - Đặt lại mật khẩu'
+        body_plain = (
+            f'Xin chào {user.full_name},\n\n'
+            'Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản TicketBooking.\n\n'
+            f'Vui lòng nhấp vào link sau để đặt lại mật khẩu:\n{reset_link}\n\n'
+            'Link này sẽ hết hạn sau 5 phút.\n\n'
+            'Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n\n'
+            'Trân trọng,\nTicketBooking'
+        )
+        body_html = (
+            f'<html><body>'
+            f'<p>Xin chào <strong>{user.full_name}</strong>,</p>'
+            f'<p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản TicketBooking.</p>'
+            f'<p>Vui lòng nhấp vào link sau để đặt lại mật khẩu:</p>'
+            f'<p><a href="{reset_link}" style="background-color: #2DC275; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Đặt lại mật khẩu</a></p>'
+            f'<p>Hoặc copy link sau vào trình duyệt:</p>'
+            f'<p style="word-break: break-all;">{reset_link}</p>'
+            f'<p><small>Link này sẽ hết hạn sau 5 phút.</small></p>'
+            f'<p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>'
+            f'<p>Trân trọng,<br>TicketBooking</p>'
+            f'</body></html>'
+        )
         
-        # Verify old password
-        if not user.check_password(old_password):
-            logger.warning(f"Password change failed: Invalid old password - User {user_id}", extra={'user_id': user_id})
-            raise InvalidCredentialsException(message='Mật khẩu hiện tại không chính xác')
-        
+        sent = send_email(user.email, subject, body_plain, body_html)
+        if not sent:
+            logger.warning(f"Failed to send forgot-password email to {user.email}")
+            db.session.rollback()
+            raise InternalServerException(message='Không thể gửi email. Vui lòng thử lại sau.')
+
+        db.session.commit()
+        logger.info(f"Forgot-password email sent to user_id={user.user_id}")
+        return jsonify({
+            'success': True,
+            'message': 'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu qua email. Vui lòng kiểm tra hộp thư và thư mục spam.'
+        }), 200
+
+    except ValidationException:
+        raise
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Forgot-password error: {str(e)}", exc_info=True)
+        raise InternalServerException(message='Đã xảy ra lỗi. Vui lòng thử lại sau.')
+
+
+@auth_bp.route("/auth/reset-password", methods=["POST"])
+def reset_password() -> Tuple[Dict[str, Any], int]:
+    """Đặt lại mật khẩu bằng token từ link reset password."""
+    try:
+        from app.models.password_reset_token import PasswordResetToken
+
+        data = request.get_json() or {}
+        token = (data.get('token') or '').strip()
+        new_password = data.get('new_password')
+
+        if not token:
+            raise ValidationException(
+                errors={'token': 'Token không được để trống'},
+                message='Token là bắt buộc'
+            )
+
+        if not new_password:
+            raise ValidationException(
+                errors={'new_password': 'Mật khẩu mới không được để trống'},
+                message='Vui lòng nhập mật khẩu mới'
+            )
+
+        is_valid, err_msg = validate_password(new_password)
+        if not is_valid:
+            raise ValidationException(errors={'new_password': err_msg}, message=err_msg)
+
+        # Verify token
+        reset_token = PasswordResetToken.verify_token(token)
+        if not reset_token:
+            raise InvalidTokenException(message='Token không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu link đặt lại mật khẩu mới.')
+
+        # Get user
+        user = User.query.get(reset_token.user_id)
+        if not user:
+            raise ResourceNotFoundException(message='Người dùng không tồn tại')
+
+        if not user.is_active:
+            raise ForbiddenException(message='Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.')
+
         # Update password
         user.set_password(new_password)
+        user.must_change_password = False  # Clear flag if set
+
+        # Mark token as used
+        reset_token.mark_as_used()
+
+        # Revoke all existing tokens for this user (security)
+        from app.extensions import get_redis_token_manager
+        token_manager = get_redis_token_manager()
+        if token_manager:
+            try:
+                token_manager.revoke_all_user_tokens(user.user_id)
+            except Exception:
+                pass  # Ignore if Redis is unavailable
+
         db.session.commit()
+        logger.info(f"Password reset successful for user_id={user.user_id}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.'
+        }), 200
+
+    except (ValidationException, InvalidTokenException, ResourceNotFoundException, ForbiddenException):
+        raise
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Reset-password error: {str(e)}", exc_info=True)
+        raise InternalServerException(message='Đã xảy ra lỗi. Vui lòng thử lại sau.')
+
+
+@auth_bp.route("/auth/check-reset-token", methods=["GET"])
+def check_reset_token() -> Tuple[Dict[str, Any], int]:
+    """Kiểm tra trạng thái token reset password (đã sử dụng, hết hạn, hoặc hợp lệ)."""
+    try:
+        from app.models.password_reset_token import PasswordResetToken
+
+        token = request.args.get('token', '').strip()
         
-        # Revoke all refresh tokens for security
+        if not token:
+            raise ValidationException(
+                errors={'token': 'Token không được để trống'},
+                message='Token là bắt buộc'
+            )
+
+        # Check token status
+        status_info = PasswordResetToken.check_token_status(token)
+        
+        if status_info['status'] == 'valid':
+            return jsonify({
+                'success': True,
+                'status': 'valid',
+                'message': status_info['message']
+            }), 200
+        else:
+            # Token is used, expired, or not found
+            status_code = 400 if status_info['status'] == 'not_found' else 410  # 410 Gone for used/expired
+            return jsonify({
+                'success': False,
+                'status': status_info['status'],
+                'message': status_info['message']
+            }), status_code
+
+    except ValidationException:
+        raise
+    except Exception as e:
+        logger.error(f"Check-reset-token error: {str(e)}", exc_info=True)
+        raise InternalServerException(message='Đã xảy ra lỗi. Vui lòng thử lại sau.')
+
+
+@auth_bp.route("/auth/change-password", methods=["POST"])
+def change_password() -> Tuple[Dict[str, Any], int]:
+    """Đổi mật khẩu. Có 2 chế độ:
+    - Có old_password: user_id + old + new (không cần JWT).
+    - Không có old_password (force): cần JWT, user phải có must_change_password; chỉ gửi new_password.
+    """
+    try:
+        from app.decorators.auth import get_token_from_header, decode_token
+
+        data = request.get_json() or {}
+        old_password = data.get('old_password')
+        new_password = data.get('new_password')
+        user_id = data.get('user_id')
+
+        if not new_password:
+            raise ValidationException(
+                errors={'new_password': 'Mật khẩu mới không được để trống'},
+                message='Vui lòng nhập mật khẩu mới'
+            )
+        is_valid, err_msg = validate_password(new_password)
+        if not is_valid:
+            raise ValidationException(errors={'new_password': err_msg}, message=err_msg)
+
+        force_mode = not old_password or (isinstance(old_password, str) and not old_password.strip())
+
+        if force_mode:
+            try:
+                token = get_token_from_header()
+                payload = decode_token(token)
+                token_user_id = payload.get('user_id')
+                if not token_user_id:
+                    raise InvalidTokenException('Token không hợp lệ')
+                user = User.query.get(token_user_id)
+                if not user:
+                    raise ResourceNotFoundException('User', token_user_id)
+                if not getattr(user, 'must_change_password', False):
+                    raise ForbiddenException(message='Bạn không có quyền đổi mật khẩu ở chế độ này.')
+                user_id = user.user_id
+            except (InvalidTokenException, TokenExpiredException, UnauthorizedException, ForbiddenException):
+                raise
+        else:
+            if not user_id:
+                raise ValidationException(
+                    errors={'user_id': 'User ID không được để trống'},
+                    message='Vui lòng nhập đầy đủ thông tin'
+                )
+            user = User.query.get(user_id)
+            if not user:
+                raise ResourceNotFoundException('User', user_id)
+            if not user.check_password(old_password):
+                logger.warning(f"Password change failed: Invalid old password - User {user_id}", extra={'user_id': user_id})
+                raise InvalidCredentialsException(message='Mật khẩu hiện tại không chính xác')
+
+        user.set_password(new_password)
+        user.must_change_password = False
+        db.session.commit()
+
         token_manager = get_redis_token_manager()
         if not token_manager:
             from app.utils.fallback_token_manager import FallbackTokenManager
             token_manager = FallbackTokenManager()
-        
         revoked_count = token_manager.revoke_all_user_tokens(user_id)
         logger.info(f"Revoked {revoked_count} refresh tokens for user {user_id}")
-        
+
         logger.info(f"Password changed successfully for user: {user_id}", extra={'user_id': user_id})
-        
-        return jsonify({
-            'success': True,
-            'message': 'Đổi mật khẩu thành công'
-        }), 200
-        
-    except (ValidationException, ResourceNotFoundException, InvalidCredentialsException) as e:
+        return jsonify({'success': True, 'message': 'Đổi mật khẩu thành công'}), 200
+
+    except (ValidationException, ResourceNotFoundException, InvalidCredentialsException, ForbiddenException,
+            InvalidTokenException, TokenExpiredException, UnauthorizedException) as e:
         raise
     except Exception as e:
         db.session.rollback()

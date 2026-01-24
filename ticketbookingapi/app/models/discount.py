@@ -1,11 +1,12 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class Discount(db.Model):
     __tablename__ = "Discount"
 
     discount_id = db.Column(db.Integer, primary_key=True)
-    manager_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=True)
+    manager_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=True)
     event_id = db.Column(db.Integer, db.ForeignKey('Event.event_id'), nullable=True)
     discount_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
     discount_name = db.Column(db.String(255), nullable=False)
@@ -18,7 +19,7 @@ class Discount(db.Model):
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     is_active = db.Column(db.Boolean, default=True, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
 
     def to_dict(self):
         return {

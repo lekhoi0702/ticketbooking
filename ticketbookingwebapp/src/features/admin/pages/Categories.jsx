@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Card, Space, Typography, Tooltip, Switch, Tag, App } from 'antd';
-import { PlusOutlined, EditOutlined, TagsOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, Card, Space, Typography, Tooltip, Switch, App } from 'antd';
+import { EditOutlined, TagsOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
-import AdminPortal from '@shared/components/AdminPortal';
+import AdminTable from '@features/admin/components/AdminTable';
+import AdminToolbar from '@features/admin/components/AdminToolbar';
+import useAdminUndo from '@features/admin/hooks/useAdminUndo';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const Categories = () => {
-    // Use App hooks for static methods to avoid warnings and ensure theme context
     const { message, modal } = App.useApp();
 
     const [categories, setCategories] = useState([]);
@@ -18,15 +19,13 @@ const Categories = () => {
     const [currentCategory, setCurrentCategory] = useState(null);
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
-
-    useEffect(() => {
-        fetchCategories();
-    }, []);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
     const fetchCategories = async () => {
         try {
             setLoading(true);
-            const response = await api.getCategories();
+            setSelectedRowKeys([]); // Clear selection when refreshing
+            const response = await api.getAdminCategories();
             if (response.success) {
                 setCategories(response.data);
             }
@@ -38,20 +37,42 @@ const Categories = () => {
         }
     };
 
+    const { canUndo, undo, recordCreate, clear: clearUndo, undoing } = useAdminUndo({
+        onDelete: (id) => api.deleteCategory(id),
+        onRefetch: fetchCategories,
+        onSuccess: () => message.success('Đã hoàn tác'),
+        onError: () => message.error('Không thể hoàn tác'),
+    });
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
     const handleAdd = () => {
         setIsEditing(false);
         setCurrentCategory(null);
+        setSelectedRowKeys([]);
+        clearUndo();
         form.resetFields();
         setModalVisible(true);
     };
 
-    const handleEdit = (category) => {
+    const handleEdit = (category = null) => {
+        const categoryToEdit = category || categories.find(c => c.category_id === selectedRowKeys[0]);
+        if (!categoryToEdit) return;
+        
         setIsEditing(true);
-        setCurrentCategory(category);
+        setCurrentCategory(categoryToEdit);
+        clearUndo();
         form.setFieldsValue({
-            category_name: category.category_name
+            category_name: categoryToEdit.category_name
         });
         setModalVisible(true);
+    };
+
+    const handleEditFromSelection = () => {
+        if (selectedRowKeys.length === 0) return;
+        handleEdit();
     };
 
     const handleSubmit = async () => {
@@ -62,9 +83,12 @@ const Categories = () => {
             if (isEditing) {
                 await api.updateCategory(currentCategory.category_id, values);
                 message.success('Cập nhật danh mục thành công');
+                clearUndo();
+                setSelectedRowKeys([]);
             } else {
-                await api.createCategory(values);
+                const res = await api.createCategory(values);
                 message.success('Tạo danh mục mới thành công');
+                if (res?.data?.category_id) recordCreate(res.data.category_id);
             }
 
             setModalVisible(false);
@@ -79,24 +103,33 @@ const Categories = () => {
         }
     };
 
-    const handleDelete = (category) => {
+    const handleDelete = (category = null) => {
+        const categoryToDelete = category || categories.find(c => c.category_id === selectedRowKeys[0]);
+        if (!categoryToDelete) return;
+
         modal.confirm({
             title: 'Xác nhận xóa danh mục',
             icon: <WarningOutlined style={{ color: '#ff4d4f' }} />,
-            content: `Bạn có chắc chắn muốn xóa danh mục "${category.category_name}"? Hành động này không thể hoàn tác.`,
+            content: `Bạn có chắc chắn muốn xóa danh mục "${categoryToDelete.category_name}"? Hành động này không thể hoàn tác.`,
             okText: 'Xóa danh mục',
             okType: 'danger',
             cancelText: 'Hủy',
             onOk: async () => {
                 try {
-                    await api.deleteCategory(category.category_id);
+                    await api.deleteCategory(categoryToDelete.category_id);
                     message.success('Xóa danh mục thành công');
+                    setSelectedRowKeys([]);
                     fetchCategories();
                 } catch (error) {
                     message.error('Không thể xóa danh mục này');
                 }
             }
         });
+    };
+
+    const handleDeleteFromSelection = () => {
+        if (selectedRowKeys.length === 0) return;
+        handleDelete();
     };
 
     const handleToggleStatus = async (category, checked) => {
@@ -146,31 +179,6 @@ const Categories = () => {
                 />
             )
         },
-        {
-            title: 'Hành động',
-            key: 'action',
-            width: 150,
-            align: 'center',
-            render: (_, record) => (
-                <Space>
-                    <Tooltip title="Chỉnh sửa">
-                        <Button
-                            type="primary"
-                            ghost
-                            icon={<EditOutlined />}
-                            onClick={() => handleEdit(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Xóa">
-                        <Button
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleDelete(record)}
-                        />
-                    </Tooltip>
-                </Space>
-            ),
-        }
     ];
 
     if (loading) return <AdminLoadingScreen tip="Đang tải danh mục..." />;
@@ -178,22 +186,57 @@ const Categories = () => {
     return (
         <div style={{ paddingTop: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="middle">
-                    Thêm thể loại
-                </Button>
+                <AdminToolbar
+                    onUndo={undo}
+                    onAdd={handleAdd}
+                    onRefresh={fetchCategories}
+                    addLabel="Thêm thể loại"
+                    undoDisabled={!canUndo}
+                    undoLoading={undoing}
+                    refreshLoading={loading}
+                    extraActions={[
+                        <Tooltip key="edit" title="Chỉnh sửa">
+                            <Button
+                                type="primary"
+                                ghost
+                                icon={<EditOutlined />}
+                                onClick={handleEditFromSelection}
+                                disabled={selectedRowKeys.length === 0}
+                                size="middle"
+                            >
+                                Chỉnh sửa
+                            </Button>
+                        </Tooltip>,
+                        <Tooltip key="delete" title="Xóa">
+                            <Button
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={handleDeleteFromSelection}
+                                disabled={selectedRowKeys.length === 0}
+                                size="middle"
+                            >
+                                Xóa
+                            </Button>
+                        </Tooltip>
+                    ]}
+                />
             </div>
 
             <Card className="shadow-sm">
-                <Table
+                <AdminTable
                     columns={columns}
                     dataSource={categories}
                     rowKey="category_id"
-                    pagination={{ pageSize: 10 }}
+                    selectedRowKeys={selectedRowKeys}
+                    setSelectedRowKeys={setSelectedRowKeys}
+                    selectionType="single"
+                    pagination={{ pageSize: 50 }}
+                    emptyText="Không có thể loại"
                 />
             </Card>
 
             <Modal
-                title={<Text strong style={{ fontSize: 18 }}>{isEditing ? `Chỉnh sửa: ${currentCategory?.category_name}` : "Thêm thể loại mới"}</Text>}
+                title={<Text strong style={{ fontSize: 16 }}>{isEditing ? `Chỉnh sửa: ${currentCategory?.category_name}` : "Thêm thể loại mới"}</Text>}
                 open={modalVisible}
                 onOk={handleSubmit}
                 onCancel={() => setModalVisible(false)}

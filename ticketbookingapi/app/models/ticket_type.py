@@ -1,5 +1,6 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class TicketType(db.Model):
     __tablename__ = "TicketType"
@@ -15,7 +16,7 @@ class TicketType(db.Model):
     sale_end = db.Column(db.DateTime)
     max_per_order = db.Column(db.Integer, default=10)
     is_active = db.Column(db.Boolean, default=True, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
 
     # Relationships
     tickets = db.relationship('Ticket', backref='ticket_type', lazy=True)

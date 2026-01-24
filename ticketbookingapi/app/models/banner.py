@@ -1,5 +1,6 @@
 from app.extensions import db
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7
 
 class Banner(db.Model):
     __tablename__ = "Banner"
@@ -10,7 +11,7 @@ class Banner(db.Model):
     link = db.Column(db.String(500), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     order = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_gmt7)
 
     def to_dict(self):
         return {

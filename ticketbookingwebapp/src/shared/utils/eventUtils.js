@@ -1,27 +1,14 @@
 import { BASE_URL, UPLOADS_BASE_URL } from '@shared/constants';
+import { parseGMT7 } from '@shared/utils/dateUtils';
 
 /**
- * Parse datetime string as local time (Vietnam timezone)
- * Prevents timezone conversion issues that cause dates to shift
- * @param {string} datetimeString - DateTime string from backend (e.g., "2026-01-20 19:30:00")
- * @returns {Date} - Date object in local timezone
+ * Parse datetime string as GMT+7 (Vietnam). Backend sends naive Vietnam time.
+ * @param {string} datetimeString - DateTime from backend (e.g. "2026-01-20 19:30:00" or ISO)
+ * @returns {Date|null} - Date instance (instant) for that Vietnam wall-clock time
  */
 export const parseLocalDateTime = (datetimeString) => {
-    if (!datetimeString) return null;
-
-    // Remove 'Z' or timezone info if present to force local interpretation
-    const cleanString = datetimeString.replace('Z', '').replace(/[+-]\d{2}:\d{2}$/, '');
-
-    // Parse as local time
-    const date = new Date(cleanString);
-
-    // Validate the date
-    if (isNaN(date.getTime())) {
-        console.warn('Invalid datetime string:', datetimeString);
-        return null;
-    }
-
-    return date;
+    const d = parseGMT7(datetimeString);
+    return d ? d.toDate() : null;
 };
 
 // Default placeholder - using data URI to avoid external dependency

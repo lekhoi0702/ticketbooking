@@ -5,6 +5,7 @@ from app.models.event_category import EventCategory
 from app.models.venue import Venue
 from sqlalchemy import or_, and_, func
 from datetime import datetime
+from app.utils.datetime_utils import now_gmt7, parse_to_gmt7
 
 events_bp = Blueprint("events", __name__)
 
@@ -47,20 +48,16 @@ def get_events():
         if venue_id:
             query = query.filter(Event.venue_id == venue_id)
         
-        # Date filters
+        # Date filters (GMT+7)
         if date_from:
-            try:
-                date_from_obj = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+            date_from_obj = parse_to_gmt7(date_from)
+            if date_from_obj:
                 query = query.filter(Event.start_datetime >= date_from_obj)
-            except ValueError:
-                pass
         
         if date_to:
-            try:
-                date_to_obj = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+            date_to_obj = parse_to_gmt7(date_to)
+            if date_to_obj:
                 query = query.filter(Event.start_datetime <= date_to_obj)
-            except ValueError:
-                pass
         
         # Price filters - use subquery in WHERE clause
         if min_price is not None or max_price is not None:
@@ -102,7 +99,7 @@ def get_events():
         
         # Add basic filters (e.g. upcoming) if needed before grouping
         if sort == 'upcoming':
-            query = query.filter(Event.start_datetime >= datetime.utcnow())
+            query = query.filter(Event.start_datetime >= now_gmt7())
 
         # Group showtimes: Only show one record per group_id among events that matched the filters
         # Using coalesce(group_id, event_id_as_string) to create a unique identifier for grouping
@@ -171,8 +168,6 @@ def get_event(event_id):
                 'description': event.description,
                 'start_datetime': event.start_datetime.isoformat() if event.start_datetime else None,
                 'end_datetime': event.end_datetime.isoformat() if event.end_datetime else None,
-                'sale_start_datetime': event.sale_start_datetime.isoformat() if event.sale_start_datetime else None,
-                'sale_end_datetime': event.sale_end_datetime.isoformat() if event.sale_end_datetime else None,
                 'banner_image_url': event.banner_image_url,
                 'vietqr_image_url': None,  # Default to None if column doesn't exist
                 'total_capacity': event.total_capacity,
@@ -194,7 +189,7 @@ def get_event(event_id):
                 Event.group_id == event.group_id,
                 Event.status == 'PUBLISHED',
                 Event.event_id != event.event_id,
-                Event.start_datetime >= datetime.utcnow()
+                Event.start_datetime >= now_gmt7()
             ).order_by(Event.start_datetime.asc()).all()
             
             event_data['schedule'] = [
@@ -437,10 +432,8 @@ def cleanup_expired_favorites():
     """Cleanup favorites for expired events (admin/system endpoint)"""
     try:
         from app.models.favorite_event import FavoriteEvent
-        from datetime import datetime
         
-        # Get current time
-        now = datetime.utcnow()
+        now = now_gmt7()
         
         # Find all events that have ended
         expired_events = Event.query.filter(Event.end_datetime <= now).all()
