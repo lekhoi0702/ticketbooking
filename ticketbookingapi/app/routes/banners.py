@@ -11,7 +11,7 @@ def get_banners():
     """Get all active banners for display"""
     try:
         banners = Banner.query.filter_by(is_active=True)\
-            .order_by(Banner.order.asc(), Banner.created_at.desc())\
+            .order_by(Banner.display_order.asc(), Banner.banner_id.desc())\
             .all()
             
         return jsonify({
@@ -26,7 +26,7 @@ def get_banners():
 def admin_get_banners():
     """Get all banners for admin (including inactive)"""
     try:
-        banners = Banner.query.order_by(Banner.order.asc(), Banner.created_at.desc()).all()
+        banners = Banner.query.order_by(Banner.display_order.asc(), Banner.banner_id.desc()).all()
         return jsonify({
             'success': True,
             'data': [banner.to_dict() for banner in banners]
@@ -39,8 +39,8 @@ def create_banner():
     """Create a new banner"""
     try:
         title = request.form.get('title')
-        link = request.form.get('link')
-        order = request.form.get('order', 0, type=int)
+        url = request.form.get('url') or None
+        display_order = request.form.get('display_order', 0, type=int)
         is_active = request.form.get('is_active', 'true').lower() == 'true'
         
         file = request.files.get('image')
@@ -54,10 +54,10 @@ def create_banner():
         
         banner = Banner(
             title=title,
-            link=link,
-            order=order,
+            url=url,
+            display_order=display_order,
             is_active=is_active,
-            image_url=image_url
+            image=image_url
         )
         
         db.session.add(banner)
@@ -83,11 +83,11 @@ def update_banner(banner_id):
         if 'title' in request.form:
             banner.title = request.form.get('title')
             
-        if 'link' in request.form:
-            banner.link = request.form.get('link')
+        if 'url' in request.form:
+            banner.url = request.form.get('url') or None
             
-        if 'order' in request.form:
-            banner.order = request.form.get('order', type=int)
+        if 'display_order' in request.form:
+            banner.display_order = request.form.get('display_order', type=int)
             
         if 'is_active' in request.form:
             banner.is_active = request.form.get('is_active').lower() == 'true'
@@ -96,7 +96,7 @@ def update_banner(banner_id):
         if file and allowed_file(file.filename):
             image_url = save_banner_image(file)
             if image_url:
-                banner.image_url = image_url
+                banner.image = image_url
             
         db.session.commit()
         

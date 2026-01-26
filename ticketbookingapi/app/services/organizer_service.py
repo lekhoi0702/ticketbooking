@@ -32,7 +32,7 @@ class OrganizerService:
         
         if not order:
             raise ValueError('Order not found')
-        if order.order_status != 'CANCELLATION_PENDING':
+        if order.order_status != 'REFUND_PENDING':
             raise ValueError('Order is not pending cancellation')
             
         # Get Ticket
@@ -86,7 +86,7 @@ class OrganizerService:
         
         if not order:
             raise ValueError('Order not found')
-        if order.order_status != 'CANCELLATION_PENDING':
+        if order.order_status != 'REFUND_PENDING':
             raise ValueError('Order is not pending cancellation')
         
         db.session.execute(text("UPDATE `Order` SET order_status = 'PAID' WHERE order_id = :id"), {"id": order_id})
@@ -95,10 +95,10 @@ class OrganizerService:
 
     @staticmethod
     def get_refund_requests(manager_id):
-        """Get all orders with CANCELLATION_PENDING status for organizer's events"""
+        """Get all orders with REFUND_PENDING status for organizer's events"""
         from decimal import Decimal
         
-        # Get all CANCELLATION_PENDING orders for this organizer's events
+        # Get all REFUND_PENDING orders for this organizer's events
         sql = text("""
             SELECT DISTINCT 
                 o.order_id,
@@ -119,7 +119,7 @@ class OrganizerService:
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
             LEFT JOIN User u ON o.user_id = u.user_id
-            WHERE e.manager_id = :mid AND o.order_status = 'CANCELLATION_PENDING'
+            WHERE e.manager_id = :mid AND o.order_status = 'REFUND_PENDING'
             ORDER BY o.created_at DESC
         """)
         

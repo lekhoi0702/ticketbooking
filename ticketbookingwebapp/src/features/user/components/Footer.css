@@ -11,6 +11,36 @@
     border-top: 1px solid #e5e7eb;
 }
 
+/* Dark theme (customer) overrides */
+.dark-theme .footer-content-wrapper {
+    background-color: var(--tb-bg);
+    border-top: 0.25px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+    box-shadow: none;
+}
+
+/* Soft gradient separation from content */
+.dark-theme .footer-content-wrapper::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 14px;
+    background: linear-gradient(
+        180deg,
+        rgba(39, 39, 42, 0) 0%,
+        rgba(27, 27, 30, 0.2) 100%
+    );
+    pointer-events: none;
+}
+
+.dark-theme .footer-content-wrapper .container {
+    position: relative;
+    z-index: 1;
+}
+
 /* Headings */
 .footer-heading {
     color: #111827 !important;
@@ -19,6 +49,10 @@
     margin-bottom: 24px !important;
     min-height: 24px;
     line-height: 1.5 !important;
+}
+
+.dark-theme .footer-heading {
+    color: var(--tb-text-strong) !important;
 }
 
 /* Specific fix for bottom section titles to align buttons */
@@ -42,9 +76,19 @@
     line-height: 1.6;
 }
 
+.dark-theme .footer-text-icon,
+.dark-theme .footer-content-wrapper .footer-address,
+.dark-theme .footer-email {
+    color: var(--tb-text) !important;
+}
+
 .footer-address .anticon {
     margin-right: 8px;
     color: #4b5563;
+}
+
+.dark-theme .footer-address .anticon {
+    color: rgba(255, 255, 255, 0.70);
 }
 
 .footer-hotline {
@@ -54,6 +98,10 @@
     font-weight: 700;
     margin: 8px 0 24px;
     text-decoration: none;
+}
+
+.dark-theme .footer-hotline {
+    color: var(--tb-primary);
 }
 
 .footer-email {
@@ -82,8 +130,16 @@
     transition: color 0.3s;
 }
 
+.dark-theme .footer-link {
+    color: rgba(255, 255, 255, 0.85);
+}
+
 .footer-link:hover {
     color: #2DC275;
+}
+
+.dark-theme .footer-link:hover {
+    color: var(--tb-primary);
 }
 
 /* App Download Buttons */
@@ -116,12 +172,33 @@
 
 .social-icon {
     font-size: 28px;
-    transition: transform 0.3s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
     display: inline-flex;
 }
 
 .social-icon:hover {
     transform: translateY(-2px);
+}
+
+/* Dark theme: keep brand colors, but add glass button container */
+.dark-theme .social-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tb-surface-2);
+    border: 1px solid var(--tb-border);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.dark-theme .social-icon:hover,
+.dark-theme .social-icon:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(45, 194, 117, 0.35);
+    box-shadow: 0 0 0 3px var(--tb-primary-ring), 0 10px 28px rgba(0, 0, 0, 0.35);
+    outline: none;
 }
 
 .social-icon.facebook {
@@ -140,6 +217,13 @@
     color: #0A66C2 !important;
 }
 
+/* TikTok brand is black; ensure visibility on dark theme */
+.dark-theme .social-icon.tiktok {
+    background: #ffffff;
+    border-color: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
 /* Bottom Section Spacing */
 .footer-bottom-section {
     margin-top: 32px;
@@ -152,6 +236,12 @@
     padding: 40px 0;
     font-size: 13px;
     line-height: 1.6;
+}
+
+.dark-theme .footer-company-info-bar {
+    background-color: var(--tb-surface-elevated);
+    border-top: 1px solid var(--tb-border);
+    box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.35);
 }
 
 .footer-company-info-bar .company-logo {

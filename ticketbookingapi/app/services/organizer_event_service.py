@@ -53,9 +53,9 @@ class EventWrapper:
             if isinstance(v, datetime):
                 d[k] = v.isoformat()
         
-        # Ensure vietqr_image_url exists (for backward compatibility)
-        if 'vietqr_image_url' not in d:
-            d['vietqr_image_url'] = None
+        # Ensure qr_image_url exists (DB field). Fallback from legacy vietqr_image_url if present.
+        if 'qr_image_url' not in d:
+            d['qr_image_url'] = d.get('vietqr_image_url')
         
         if include_details:
             if self.venue:
@@ -143,14 +143,18 @@ class OrganizerEventService:
             file = files['banner_image']
             banner_image_url = save_event_image(file, manager_id)
         
-        # Save VietQR QR code image (file upload or URL)
-        vietqr_image_url = None
-        if 'vietqr_image' in files:
+        # Save QR image (file upload or URL). Legacy keys are accepted.
+        qr_image_url = None
+        if 'qr_image' in files:
+            file = files['qr_image']
+            qr_image_url = save_vietqr_image(file, manager_id)
+        elif 'vietqr_image' in files:
             file = files['vietqr_image']
-            vietqr_image_url = save_vietqr_image(file, manager_id)
+            qr_image_url = save_vietqr_image(file, manager_id)
+        elif 'qr_image_url' in data:
+            qr_image_url = data.get('qr_image_url')
         elif 'vietqr_image_url' in data:
-            # Use provided URL directly
-            vietqr_image_url = data.get('vietqr_image_url')
+            qr_image_url = data.get('vietqr_image_url')
         
         venue_id = int(data.get('venue_id'))
         # Check venue
@@ -228,12 +232,12 @@ class OrganizerEventService:
             INSERT INTO Event (
                 category_id, venue_id, manager_id, event_name, description,
                 start_datetime, end_datetime,
-                banner_image_url, vietqr_image_url, total_capacity, status, is_featured,
+                banner_image_url, qr_image_url, total_capacity, status, is_featured,
                 sold_tickets, created_at, updated_at
             ) VALUES (
                 :category_id, :venue_id, :manager_id, :event_name, :description,
                 :start_datetime, :end_datetime,
-                :banner_image_url, :vietqr_image_url, :total_capacity, :status, :is_featured,
+                :banner_image_url, :qr_image_url, :total_capacity, :status, :is_featured,
                 0, :now, :now
             )
         """)
@@ -250,7 +254,7 @@ class OrganizerEventService:
             "start_datetime": parse_to_gmt7(data.get('start_datetime')),
             "end_datetime": parse_to_gmt7(data.get('end_datetime')),
             "banner_image_url": banner_image_url,
-            "vietqr_image_url": vietqr_image_url,
+            "qr_image_url": qr_image_url,
             "total_capacity": int(data.get('total_capacity', 0)),
             "status": 'PENDING_APPROVAL',
             "is_featured": is_featured,
@@ -330,20 +334,31 @@ class OrganizerEventService:
                 update_fields.append("banner_image_url = :banner_image_url")
                 params['banner_image_url'] = banner_url
         
-        # Save VietQR QR code image (file upload or URL)
-        if 'vietqr_image' in files:
+        # Save QR image (file upload or URL). Legacy keys are accepted.
+        if 'qr_image' in files:
+            file = files['qr_image']
+            manager_id = event_row.manager_id
+            qr_url = save_vietqr_image(file, manager_id, event_id)
+            if qr_url:
+                update_fields.append("qr_image_url = :qr_image_url")
+                params['qr_image_url'] = qr_url
+        elif 'vietqr_image' in files:
             file = files['vietqr_image']
             manager_id = event_row.manager_id
-            vietqr_url = save_vietqr_image(file, manager_id, event_id)
-            if vietqr_url:
-                update_fields.append("vietqr_image_url = :vietqr_image_url")
-                params['vietqr_image_url'] = vietqr_url
+            qr_url = save_vietqr_image(file, manager_id, event_id)
+            if qr_url:
+                update_fields.append("qr_image_url = :qr_image_url")
+                params['qr_image_url'] = qr_url
+        elif 'qr_image_url' in data:
+            qr_url = data.get('qr_image_url')
+            if qr_url:
+                update_fields.append("qr_image_url = :qr_image_url")
+                params['qr_image_url'] = qr_url
         elif 'vietqr_image_url' in data:
-            # Use provided URL directly
-            vietqr_url = data.get('vietqr_image_url')
-            if vietqr_url:
-                update_fields.append("vietqr_image_url = :vietqr_image_url")
-                params['vietqr_image_url'] = vietqr_url
+            qr_url = data.get('vietqr_image_url')
+            if qr_url:
+                update_fields.append("qr_image_url = :qr_image_url")
+                params['qr_image_url'] = qr_url
         
         mapping = {
             'event_name': 'event_name',
@@ -496,12 +511,12 @@ class OrganizerEventService:
             INSERT INTO Event (
                 group_id, category_id, venue_id, manager_id, event_name, description,
                 start_datetime, end_datetime,
-                banner_image_url, vietqr_image_url, total_capacity, sold_tickets, status, is_featured,
+                banner_image_url, qr_image_url, total_capacity, sold_tickets, status, is_featured,
                 created_at, updated_at
             ) VALUES (
                 :group_id, :category_id, :venue_id, :manager_id, :event_name, :description,
                 :start_datetime, :end_datetime,
-                :banner_image_url, :vietqr_image_url, :total_capacity, 0, 'PENDING_APPROVAL', 0,
+                :banner_image_url, :qr_image_url, :total_capacity, 0, 'PENDING_APPROVAL', 0,
                 :now, :now
             )
         """)
@@ -520,7 +535,7 @@ class OrganizerEventService:
             "start_datetime": start_datetime,
             "end_datetime": end_datetime,
             "banner_image_url": source_event.banner_image_url,
-            "vietqr_image_url": source_event.vietqr_image_url,
+            "qr_image_url": getattr(source_event, "qr_image_url", None),
             "total_capacity": int(show_capacity),
             "now": now
         }
@@ -639,7 +654,7 @@ class OrganizerEventService:
             JOIN Ticket t ON o.order_id = t.order_id
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             WHERE tt.event_id = :eid
-            AND o.order_status IN ('PAID', 'PENDING', 'CANCELLATION_PENDING')
+            AND o.order_status IN ('PAID', 'PENDING', 'REFUND_PENDING')
         """)
         cnt_row = db.session.execute(order_count_sql, {"eid": event_id}).fetchone()
         active_orders = cnt_row.cnt if cnt_row else 0

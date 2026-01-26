@@ -5,18 +5,18 @@ import json
 
 class OrganizerVenueService:
     @staticmethod
-    def get_venues(manager_id, exclude_maintenance=True):
+    def get_venues(organizer_id, exclude_maintenance=True):
         """
         Get venues managed by organizer
         
         Args:
-            manager_id: The organizer's user ID
+            organizer_id: The organizer's user ID (maps to Venue.organizer_id in DB)
             exclude_maintenance: If True, exclude venues with MAINTENANCE status (default: True)
         """
         if exclude_maintenance:
             query = text("""
                 SELECT * FROM Venue 
-                WHERE manager_id = :manager_id 
+                WHERE organizer_id = :organizer_id 
                 AND status != 'MAINTENANCE' 
                 AND is_active = TRUE
                 AND status != 'INACTIVE'
@@ -24,9 +24,9 @@ class OrganizerVenueService:
         else:
             query = text("""
                 SELECT * FROM Venue 
-                WHERE manager_id = :manager_id
+                WHERE organizer_id = :organizer_id
             """)
-        result = db.session.execute(query, {"manager_id": manager_id})
+        result = db.session.execute(query, {"organizer_id": organizer_id})
         
         class VenueWrapper:
             def __init__(self, row):
@@ -36,13 +36,12 @@ class OrganizerVenueService:
                 for k, v in d.items():
                     if isinstance(v, datetime):
                         d[k] = v.isoformat()
-                # Parse seat_map_template from JSON string to dict
-                if 'seat_map_template' in d and d['seat_map_template']:
-                    if isinstance(d['seat_map_template'], str):
-                        try:
-                            d['seat_map_template'] = json.loads(d['seat_map_template'])
-                        except:
-                            pass
+                # Parse seat_map from JSON string to dict (if driver returns string)
+                if 'seat_map' in d and d['seat_map'] and isinstance(d['seat_map'], str):
+                    try:
+                        d['seat_map'] = json.loads(d['seat_map'])
+                    except Exception:
+                        pass
                 return d
 
         venues = []
@@ -54,13 +53,11 @@ class OrganizerVenueService:
     def create_venue(data):
         query = text("""
             INSERT INTO Venue (
-                venue_name, address, city, capacity, manager_id,
-                vip_seats, standard_seats, economy_seats,
-                contact_phone, seat_map_template, map_embed_code, status
+                venue_name, address, city, capacity, organizer_id,
+                contact_phone, seat_map, map_embed, status, is_active
             ) VALUES (
-                :venue_name, :address, :city, :capacity, :manager_id,
-                :vip_seats, :standard_seats, :economy_seats,
-                :contact_phone, :seat_map_template, :map_embed_code, :status
+                :venue_name, :address, :city, :capacity, :organizer_id,
+                :contact_phone, :seat_map, :map_embed, :status, :is_active
             )
         """)
         
@@ -69,48 +66,37 @@ class OrganizerVenueService:
             "address": data.get('address'),
             "city": data.get('city'),
             "capacity": int(data.get('capacity', 0)),
-            "manager_id": data.get('manager_id', 1),
-            "vip_seats": int(data.get('vip_seats', 0)),
-            "standard_seats": int(data.get('standard_seats', 0)),
-            "economy_seats": int(data.get('economy_seats', 0)),
+            "organizer_id": data.get('organizer_id', data.get('manager_id', 1)),
             "contact_phone": data.get('contact_phone'),
-            "seat_map_template": json.dumps(data.get('seat_map_template')) if data.get('seat_map_template') and isinstance(data.get('seat_map_template'), dict) else data.get('seat_map_template'),
-            "map_embed_code": data.get('map_embed_code'),
-            "status": 'ACTIVE'
+            "seat_map": json.dumps(data.get('seat_map')) if isinstance(data.get('seat_map'), (dict, list)) else data.get('seat_map'),
+            "map_embed": data.get('map_embed'),
+            "status": data.get('status') or 'ACTIVE',
+            "is_active": data.get('is_active', True),
         }
         
         db.session.execute(query, params)
         db.session.commit()
         
-        # Fetch created venue to return object-like dict (for consistency)
-        # Using last_insert_id is DB specific. Safer to query by unique or max ID if concurrency low, 
-        # or just return what we inserted + ID if backend supports RETURNING
-        # SQLite supports RETURNING in newer versions. MySQL does not always.
-        # Let's simple query back.
-        
-        # For simplicity in this specific "Core" style request without specialized DB knowledge,
-        # we often rely on driver quirks. But a standardized simple way:
-        fetch_query = text("SELECT * FROM Venue WHERE venue_name = :venue_name AND manager_id = :manager_id ORDER BY venue_id DESC LIMIT 1")
-        result = db.session.execute(fetch_query, {"venue_name": params['venue_name'], "manager_id": params['manager_id']})
+        fetch_query = text("""
+            SELECT * FROM Venue
+            WHERE venue_name = :venue_name AND organizer_id = :organizer_id
+            ORDER BY venue_id DESC
+            LIMIT 1
+        """)
+        result = db.session.execute(fetch_query, {"venue_name": params['venue_name'], "organizer_id": params['organizer_id']})
         venue = result.fetchone()
-        
-        # Mocking a class to support .to_dict() if the controller expects it?
-        # The controller calls .to_dict(). I should check the controller usage.
-        # The controller calls new_venue.to_dict().
-        # So I need to return an object that has to_dict(), or change the controller.
-        # Since I'm refactoring the "backend" (service), I should probably return a dict or an object wrapping it.
-        # Or better: Update the controller in next steps to handle dicts?
-        # The prompt is "refactor backend". Usually implies Service layer logic.
-        # If I change return type to dict, accessing .to_dict() in controller will fail.
-        # I should provide a wrapper or change controller.
-        # Changing controller is cleaner for "Core" style (working with dicts).
-        # OR I return a simple object that mimics the model.
         
         class VenueWrapper:
             def __init__(self, row):
                 self.row = row
             def to_dict(self):
-                return dict(self.row._mapping)
+                d = dict(self.row._mapping) if self.row else {}
+                if 'seat_map' in d and d['seat_map'] and isinstance(d['seat_map'], str):
+                    try:
+                        d['seat_map'] = json.loads(d['seat_map'])
+                    except Exception:
+                        pass
+                return d
 
         return VenueWrapper(venue)
 
@@ -125,7 +111,7 @@ class OrganizerVenueService:
 
         # Check if venue is being used by any PUBLISHED events
         # Only check if we're updating fields that would affect published events
-        fields_that_affect_events = ['venue_name', 'address', 'city', 'capacity', 'vip_seats', 'standard_seats', 'economy_seats', 'seat_map_template', 'map_embed_code']
+        fields_that_affect_events = ['venue_name', 'address', 'city', 'capacity', 'seat_map', 'map_embed']
         is_updating_critical_fields = any(field in data for field in fields_that_affect_events)
         
         if is_updating_critical_fields:
@@ -159,15 +145,12 @@ class OrganizerVenueService:
         if 'capacity' in data:
              update_fields.append("capacity = :capacity")
              params['capacity'] = int(data['capacity'])
-        if 'vip_seats' in data:
-             update_fields.append("vip_seats = :vip_seats")
-             params['vip_seats'] = int(data['vip_seats'])
-        if 'standard_seats' in data:
-             update_fields.append("standard_seats = :standard_seats")
-             params['standard_seats'] = int(data['standard_seats'])
-        if 'economy_seats' in data:
-             update_fields.append("economy_seats = :economy_seats")
-             params['economy_seats'] = int(data['economy_seats'])
+        if 'organizer_id' in data:
+             update_fields.append("organizer_id = :organizer_id")
+             params['organizer_id'] = int(data['organizer_id'])
+        if 'is_active' in data:
+             update_fields.append("is_active = :is_active")
+             params['is_active'] = bool(data['is_active'])
         if 'status' in data:
              new_status = data['status']
              # Check if trying to set status to MAINTENANCE
@@ -186,12 +169,12 @@ class OrganizerVenueService:
              
              update_fields.append("status = :status")
              params['status'] = new_status
-        if 'seat_map_template' in data:
-             update_fields.append("seat_map_template = :seat_map_template")
-             params['seat_map_template'] = json.dumps(data['seat_map_template']) if isinstance(data['seat_map_template'], dict) else data['seat_map_template']
-        if 'map_embed_code' in data:
-             update_fields.append("map_embed_code = :map_embed_code")
-             params['map_embed_code'] = data['map_embed_code']
+        if 'seat_map' in data:
+             update_fields.append("seat_map = :seat_map")
+             params['seat_map'] = json.dumps(data['seat_map']) if isinstance(data['seat_map'], (dict, list)) else data['seat_map']
+        if 'map_embed' in data:
+             update_fields.append("map_embed = :map_embed")
+             params['map_embed'] = data['map_embed']
              
         if update_fields:
             sql = f"UPDATE Venue SET {', '.join(update_fields)} WHERE venue_id = :venue_id"
@@ -207,13 +190,12 @@ class OrganizerVenueService:
                 self.row = row
             def to_dict(self):
                 d = dict(self.row._mapping)
-                # Parse seat_map_template from JSON string to dict
-                if 'seat_map_template' in d and d['seat_map_template']:
-                    if isinstance(d['seat_map_template'], str):
-                        try:
-                            d['seat_map_template'] = json.loads(d['seat_map_template'])
-                        except:
-                            pass
+                # Parse seat_map from JSON string to dict
+                if 'seat_map' in d and d['seat_map'] and isinstance(d['seat_map'], str):
+                    try:
+                        d['seat_map'] = json.loads(d['seat_map'])
+                    except Exception:
+                        pass
                 return d
                 
         return VenueWrapper(updated_venue)
@@ -247,13 +229,12 @@ class OrganizerVenueService:
                     if isinstance(v, datetime):
                         d[k] = v.isoformat()
                 
-                # Parse seat_map_template from JSON string to dict
-                if 'seat_map_template' in d and d['seat_map_template']:
-                    if isinstance(d['seat_map_template'], str):
-                        try:
-                            d['seat_map_template'] = json.loads(d['seat_map_template'])
-                        except Exception as e:
-                            print(f"Error parsing seat_map_template: {e}")
+                # Parse seat_map from JSON string to dict
+                if 'seat_map' in d and d['seat_map'] and isinstance(d['seat_map'], str):
+                    try:
+                        d['seat_map'] = json.loads(d['seat_map'])
+                    except Exception:
+                        pass
                 
                 # Add published events info
                 d['has_published_events'] = self.has_published_events > 0

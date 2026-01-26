@@ -5,18 +5,19 @@ from app.utils.datetime_utils import now_gmt7
 class Order(db.Model):
     __tablename__ = "Order"
 
-    order_id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.BigInteger, primary_key=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=False, index=True)
     order_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
     total_amount = db.Column(db.Numeric(15, 2), nullable=False)
     final_amount = db.Column(db.Numeric(15, 2), nullable=False)
-    order_status = db.Column(db.Enum('PENDING', 'PAID', 'CANCELLED', 'REFUNDED', 'COMPLETED', 'CANCELLATION_PENDING'), default='PENDING', index=True)
+    order_status = db.Column(db.Enum('PENDING', 'PAID', 'CANCELLED', 'REFUNDED', 'COMPLETED', 'REFUND_PENDING'), default='PENDING', index=True)
     customer_name = db.Column(db.String(255))
     customer_email = db.Column(db.String(255))
-    customer_phone = db.Column(db.String(20))
+    customer_phone = db.Column(db.String(30))
     created_at = db.Column(db.DateTime, default=now_gmt7)
     updated_at = db.Column(db.DateTime, default=now_gmt7, onupdate=now_gmt7)
     paid_at = db.Column(db.DateTime)
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
     # Relationships
     tickets = db.relationship('Ticket', backref='order', lazy=True, cascade='all, delete-orphan')
@@ -33,5 +34,6 @@ class Order(db.Model):
             'customer_email': self.customer_email,
             'customer_phone': self.customer_phone,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'paid_at': self.paid_at.isoformat() if self.paid_at else None
+            'paid_at': self.paid_at.isoformat() if self.paid_at else None,
+            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
         }

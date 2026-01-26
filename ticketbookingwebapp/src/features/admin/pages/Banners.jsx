@@ -44,15 +44,15 @@ const Banners = () => {
         setIsEditing(false);
         setCurrentBanner(null);
         
-        // Tính toán order tiếp theo (max order + 1)
-        const maxOrder = banners.length > 0 
-            ? Math.max(...banners.map(b => b.order || 0))
+        // Tính toán display_order tiếp theo (max + 1)
+        const maxOrder = banners.length > 0
+            ? Math.max(...banners.map(b => b.display_order || 0))
             : -1;
         const nextOrder = maxOrder + 1;
         
         form.resetFields();
         form.setFieldsValue({ 
-            order: nextOrder, 
+            display_order: nextOrder, 
             is_active: true 
         });
         setFileList([]);
@@ -64,8 +64,8 @@ const Banners = () => {
         setCurrentBanner(banner);
         form.setFieldsValue({
             title: banner.title,
-            link: banner.link,
-            order: banner.order,
+            url: banner.url,
+            display_order: banner.display_order,
             is_active: banner.is_active
         });
 
@@ -86,8 +86,8 @@ const Banners = () => {
             setSubmitting(true);
             const formData = new FormData();
             formData.append('title', values.title || '');
-            formData.append('link', values.link || '');
-            formData.append('order', values.order || 0);
+            formData.append('url', values.url || '');
+            formData.append('display_order', values.display_order || 0);
             formData.append('is_active', values.is_active !== undefined ? values.is_active : true);
 
             if (fileList.length > 0) {
@@ -171,8 +171,8 @@ const Banners = () => {
     const columns = [
         {
             title: 'Hình ảnh',
-            dataIndex: 'image_url',
-            key: 'image_url',
+            dataIndex: 'image',
+            key: 'image',
             width: 150,
             render: (url) => (
                 <img
@@ -190,14 +190,14 @@ const Banners = () => {
         },
         {
             title: 'Liên kết',
-            dataIndex: 'link',
-            key: 'link',
+            dataIndex: 'url',
+            key: 'url',
             render: (text) => text ? <a href={text} target="_blank" rel="noreferrer"><LinkOutlined /> Link</a> : '-'
         },
         {
             title: 'Thứ tự',
-            dataIndex: 'order',
-            key: 'order',
+            dataIndex: 'display_order',
+            key: 'display_order',
             width: 80,
             align: 'center',
         },
@@ -312,7 +312,7 @@ const Banners = () => {
                     </Form.Item>
 
                     <Form.Item
-                        name="link"
+                    name="url"
                         label="Liên kết"
                         rules={[{ type: 'url', message: 'Vui lòng nhập URL hợp lệ!' }]}
                     >
@@ -320,7 +320,7 @@ const Banners = () => {
                     </Form.Item>
 
                     <Form.Item
-                        name="order"
+                    name="display_order"
                         label="Thứ tự hiển thị"
                         help="Số nhỏ hơn sẽ hiển thị trước (0 là đầu tiên)"
                     >
@@ -365,7 +365,7 @@ const Banners = () => {
                         )}
                         
                         {/* Hiển thị ảnh hiện tại khi edit và chưa chọn ảnh mới */}
-                        {isEditing && currentBanner?.image_url && fileList.length === 0 && (
+                        {isEditing && currentBanner?.image && fileList.length === 0 && (
                             <div style={{ marginTop: 16 }}>
                                 <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
                                     Hình ảnh hiện tại:
@@ -378,7 +378,7 @@ const Banners = () => {
                                     background: '#fafafa'
                                 }}>
                                     <img
-                                        src={getImageUrl(currentBanner.image_url)}
+                                        src={getImageUrl(currentBanner.image)}
                                         alt="current"
                                         style={{ 
                                             width: '100%', 

@@ -3,8 +3,8 @@
 .all-events-wrapper {
     min-height: 100vh;
     width: 100%;
-    background-color: rgb(39, 39, 42);
-    color: #ffffff;
+    background-color: var(--tb-bg);
+    color: var(--tb-text);
     padding-top: 40px;
     padding-bottom: 60px;
 }
@@ -15,21 +15,21 @@
 }
 
 .all-events-wrapper .ant-breadcrumb-link {
-    color: #ffffff !important;
+    color: var(--tb-text) !important;
 }
 
 .all-events-wrapper .ant-breadcrumb-link:hover {
-    color: #ffffff !important;
+    color: var(--tb-text) !important;
     background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 .all-events-wrapper .ant-breadcrumb-link-active {
-    color: #ffffff !important;
+    color: var(--tb-text) !important;
     font-weight: 600;
 }
 
 .all-events-wrapper .ant-breadcrumb-separator {
-    color: rgba(255, 255, 255, 0.65) !important;
+    color: var(--tb-text-muted) !important;
 }
 
 .all-events-header {
@@ -39,20 +39,20 @@
 .all-events-title {
     font-size: 2.5rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--tb-text-strong);
     margin-bottom: 12px;
     letter-spacing: -0.5px;
 }
 
 .all-events-subtitle {
     font-size: 1.1rem;
-    color: #b0b3b8;
+    color: var(--tb-text-muted);
 }
 
 .all-events-divider {
     height: 4px;
     width: 60px;
-    background-color: var(--primary-teal);
+    background-color: var(--tb-primary);
     margin-top: 20px;
     border-radius: 2px;
 }
@@ -66,17 +66,17 @@
     font-size: 4rem;
     margin-bottom: 24px;
     opacity: 0.3;
-    color: #ffffff;
+    color: var(--tb-text);
 }
 
 .empty-title {
-    color: #ffffff;
+    color: var(--tb-text-strong);
     font-weight: 600;
     margin-bottom: 12px;
 }
 
 .empty-text {
-    color: #b0b3b8;
+    color: var(--tb-text-muted);
     font-size: 1.2rem;
 }
 
@@ -89,25 +89,25 @@
 .category-title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--primary-teal);
+    color: var(--tb-primary);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 .category-line {
     height: 1px;
-    background: linear-gradient(to right, rgba(0, 188, 156, 0.5), transparent);
+    background: linear-gradient(to right, rgba(45, 194, 117, 0.45), transparent);
     border-radius: 1px;
 }
 
 .category-count {
     font-size: 0.9rem;
-    color: #6b7280;
+    color: rgba(255, 255, 255, 0.55);
     font-weight: 500;
 }
 
 /* Hover effect for sections */
 .category-section:hover .category-line {
-    background: linear-gradient(to right, rgba(0, 188, 156, 1), transparent);
+    background: linear-gradient(to right, rgba(45, 194, 117, 1), transparent);
     transition: all 0.3s ease;
 }

@@ -6,9 +6,9 @@ from app.utils.datetime_utils import now_gmt7
 class EventCategory(db.Model):
     __tablename__ = "EventCategory"
 
-    category_id = db.Column(db.Integer, primary_key=True)
+    category_id = db.Column(db.BigInteger, primary_key=True)
     category_name = db.Column(db.String(100), unique=True, nullable=False)
-    is_active = db.Column(db.Boolean, default=True, index=True)
+    is_active = db.Column(db.Boolean, default=True, index=True, nullable=True)
     created_at = db.Column(db.DateTime, default=now_gmt7)
     created_by = db.Column(
         db.BigInteger,

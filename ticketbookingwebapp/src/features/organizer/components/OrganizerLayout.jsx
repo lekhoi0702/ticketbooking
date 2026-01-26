@@ -117,12 +117,7 @@ const OrganizerLayout = () => {
             label: 'Mã giảm giá',
             onClick: () => navigate('/organizer/discounts'),
         },
-        {
-            key: '/organizer/qr-codes',
-            icon: <QrcodeOutlined />,
-            label: 'Quản lý QR Code',
-            onClick: () => navigate('/organizer/qr-codes'),
-        }
+        // QR Code management removed (no DB table)
     ];
 
 
@@ -150,7 +145,7 @@ const OrganizerLayout = () => {
             'orders': 'Quản lý đơn hàng',
             'refund-requests': 'Yêu cầu hoàn tiền',
             'discounts': 'Mã giảm giá',
-            'qr-codes': 'Quản lý QR Code'
+            // 'qr-codes': 'Quản lý QR Code'
         };
 
         let currentPath = '/organizer';

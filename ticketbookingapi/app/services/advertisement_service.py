@@ -2,7 +2,6 @@
 Advertisement Service
 Business logic for advertisement management
 """
-from datetime import datetime
 from typing import List, Optional, Dict
 from sqlalchemy import and_, or_
 from app.models.advertisement import Advertisement
@@ -40,7 +39,7 @@ class AdvertisementService:
                     Advertisement.end_date >= now
                 )
             )
-        ).order_by(Advertisement.display_order.asc(), Advertisement.created_at.desc())
+        ).order_by(Advertisement.display_order.asc(), Advertisement.ad_id.desc())
         
         if limit:
             query = query.limit(limit)
@@ -66,7 +65,7 @@ class AdvertisementService:
         return query.order_by(
             Advertisement.position.asc(),
             Advertisement.display_order.asc(),
-            Advertisement.created_at.desc()
+            Advertisement.ad_id.desc()
         ).all()
     
     @staticmethod
@@ -86,15 +85,13 @@ class AdvertisementService:
             Created Advertisement object
         """
         ad = Advertisement(
-            title=data['title'],
-            image_url=data['image_url'],
-            link_url=data.get('link_url'),
+            image=data['image'],
+            url=data.get('url'),
             position=data['position'],
             display_order=data.get('display_order', 0),
             is_active=data.get('is_active', True),
             start_date=data.get('start_date'),
             end_date=data.get('end_date'),
-            created_by=data.get('created_by')
         )
         
         db.session.add(ad)
@@ -119,12 +116,10 @@ class AdvertisementService:
             return None
         
         # Update fields
-        if 'title' in data:
-            ad.title = data['title']
-        if 'image_url' in data:
-            ad.image_url = data['image_url']
-        if 'link_url' in data:
-            ad.link_url = data['link_url']
+        if 'image' in data:
+            ad.image = data['image']
+        if 'url' in data:
+            ad.url = data['url']
         if 'position' in data:
             ad.position = data['position']
         if 'display_order' in data:
@@ -157,46 +152,5 @@ class AdvertisementService:
         db.session.delete(ad)
         db.session.commit()
         return True
-    
-    @staticmethod
-    def increment_view(ad_id: int) -> bool:
-        """
-        Increment view count for an advertisement
-        
-        Args:
-            ad_id: Advertisement ID
-            
-        Returns:
-            True if successful, False if not found
-        """
-        ad = Advertisement.query.get(ad_id)
-        if not ad:
-            return False
-        
-        ad.increment_view_count()
-        return True
-    
-    @staticmethod
-    def increment_click(ad_id: int) -> bool:
-        """
-        Increment click count for an advertisement
-        
-        Args:
-            ad_id: Advertisement ID
-            
-        Returns:
-            True if successful, False if not found
-        """
-        ad = Advertisement.query.get(ad_id)
-        if not ad:
-            return False
-        
-        ad.increment_click_count()
-        return True
-    
-    @staticmethod
-    def get_ads_by_creator(user_id: int) -> List[Advertisement]:
-        """Get all advertisements created by a specific user"""
-        return Advertisement.query.filter_by(created_by=user_id).order_by(
-            Advertisement.created_at.desc()
-        ).all()
+
+    # NOTE: Tracking (view/click counts) removed because DB schema doesn't store them.

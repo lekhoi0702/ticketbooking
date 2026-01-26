@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, Input, Card, Space, Typography, Tooltip, Switch, App, InputNumber, Select, DatePicker, Tag, Statistic, Row, Col, Upload } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, WarningOutlined, LinkOutlined, EyeOutlined, BarChartOutlined, UploadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, WarningOutlined, LinkOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons';
 import { advertisementAPI } from '@services/advertisementService';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
 import AdminToolbar from '@features/admin/components/AdminToolbar';
@@ -26,8 +26,6 @@ const Advertisements = () => {
     const [currentAd, setCurrentAd] = useState(null);
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
-    const [statsModalVisible, setStatsModalVisible] = useState(false);
-    const [selectedAdStats, setSelectedAdStats] = useState(null);
     const [fileList, setFileList] = useState([]);
 
     useEffect(() => {
@@ -86,8 +84,7 @@ const Advertisements = () => {
         setIsEditing(true);
         setCurrentAd(ad);
         form.setFieldsValue({
-            title: ad.title,
-            link_url: ad.link_url,
+            url: ad.url,
             position: ad.position,
             display_order: ad.display_order,
             is_active: ad.is_active,
@@ -111,8 +108,7 @@ const Advertisements = () => {
             const token = localStorage.getItem('token');
 
             const formData = new FormData();
-            formData.append('title', values.title || '');
-            formData.append('link_url', values.link_url || '');
+            formData.append('url', values.url || '');
             formData.append('position', values.position);
             formData.append('display_order', values.display_order || 0);
             formData.append('is_active', (values.is_active !== undefined ? values.is_active : true).toString());
@@ -160,7 +156,7 @@ const Advertisements = () => {
         modal.confirm({
             title: 'Xác nhận xóa quảng cáo',
             icon: <WarningOutlined style={{ color: '#ff4d4f' }} />,
-            content: `Bạn có chắc chắn muốn xóa quảng cáo "${ad.title || 'Không tiêu đề'}"?`,
+            content: `Bạn có chắc chắn muốn xóa quảng cáo #${ad.ad_id}?`,
             okText: 'Xóa quảng cáo',
             okType: 'danger',
             cancelText: 'Hủy',
@@ -200,11 +196,6 @@ const Advertisements = () => {
             ));
             message.error('Lỗi khi cập nhật trạng thái');
         }
-    };
-
-    const showStats = (ad) => {
-        setSelectedAdStats(ad);
-        setStatsModalVisible(true);
     };
 
     const getPositionTag = (position) => {
@@ -258,8 +249,8 @@ const Advertisements = () => {
     const columns = [
         {
             title: 'Hình ảnh',
-            dataIndex: 'image_url',
-            key: 'image_url',
+            dataIndex: 'image',
+            key: 'image',
             width: 150,
             render: (url) => (
                 <img
@@ -273,10 +264,10 @@ const Advertisements = () => {
             )
         },
         {
-            title: 'Tiêu đề',
-            dataIndex: 'title',
-            key: 'title',
-            render: (text) => <b>{text || '-'}</b>
+            title: 'URL',
+            dataIndex: 'url',
+            key: 'url',
+            render: (text) => text ? <a href={text} target="_blank" rel="noreferrer"><LinkOutlined /> Link</a> : '-'
         },
         {
             title: 'Vị trí',
@@ -309,34 +300,12 @@ const Advertisements = () => {
             )
         },
         {
-            title: 'Thống kê',
-            key: 'stats',
-            width: 150,
-            render: (_, record) => (
-                <Space direction="vertical" size={0}>
-                    <Text type="secondary" style={{ fontSize: 16 }}>
-                        <EyeOutlined /> {record.view_count || 0} lượt xem
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: 16 }}>
-                        👆 {record.click_count || 0} lượt click
-                    </Text>
-                </Space>
-            )
-        },
-        {
             title: 'Hành động',
             key: 'action',
             width: 150,
             align: 'center',
             render: (_, record) => (
                 <Space>
-                    <Tooltip title="Xem thống kê">
-                        <Button
-                            type="default"
-                            icon={<BarChartOutlined />}
-                            onClick={() => showStats(record)}
-                        />
-                    </Tooltip>
                     <Tooltip title="Chỉnh sửa">
                         <Button
                             type="primary"
@@ -359,10 +328,7 @@ const Advertisements = () => {
 
     if (loading) return <AdminLoadingScreen tip="Đang tải quảng cáo..." />;
 
-    const totalViews = ads.reduce((sum, ad) => sum + (ad.view_count || 0), 0);
-    const totalClicks = ads.reduce((sum, ad) => sum + (ad.click_count || 0), 0);
     const activeAds = ads.filter(ad => ad.is_active).length;
-    const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(2) : 0;
 
     return (
         <div style={{ paddingTop: 0 }}>
@@ -386,22 +352,12 @@ const Advertisements = () => {
                         />
                     </Card>
                 </Col>
-                <Col span={6}>
+                <Col span={12}>
                     <Card>
                         <Statistic
-                            title="Tổng lượt xem"
-                            value={totalViews}
+                            title="Ghi chú"
+                            value="Tracking (view/click) đã được loại bỏ để khớp DB"
                             prefix={<EyeOutlined />}
-                        />
-                    </Card>
-                </Col>
-                <Col span={6}>
-                    <Card>
-                        <Statistic
-                            title="CTR"
-                            value={ctr}
-                            suffix="%"
-                            precision={2}
                         />
                     </Card>
                 </Col>
@@ -428,7 +384,7 @@ const Advertisements = () => {
 
             {/* Add/Edit Modal */}
             <Modal
-                title={<Text strong style={{ fontSize: 16 }}>{isEditing ? `Chỉnh sửa: ${currentAd?.title || 'Quảng cáo'}` : "Thêm quảng cáo mới"}</Text>}
+                title={<Text strong style={{ fontSize: 16 }}>{isEditing ? `Chỉnh sửa quảng cáo #${currentAd?.ad_id}` : "Thêm quảng cáo mới"}</Text>}
                 open={modalVisible}
                 onOk={handleSubmit}
                 onCancel={() => setModalVisible(false)}
@@ -443,14 +399,6 @@ const Advertisements = () => {
                     name="ad_form"
                     initialValues={{ is_active: true, position: 'HOME_BETWEEN_SECTIONS' }}
                 >
-                    <Form.Item
-                        name="title"
-                        label="Tiêu đề"
-                        rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
-                    >
-                        <Input placeholder="Nhập tiêu đề quảng cáo" />
-                    </Form.Item>
-
                     <Form.Item
                         name="position"
                         label="Vị trí hiển thị"
@@ -533,7 +481,7 @@ const Advertisements = () => {
                     </Form.Item>
 
                     <Form.Item
-                        name="link_url"
+                        name="url"
                         label="Liên kết (URL đích khi click)"
                         rules={[{ type: 'url', message: 'Vui lòng nhập URL hợp lệ!' }]}
                     >
@@ -588,87 +536,6 @@ const Advertisements = () => {
                         • Sidebar chi tiết sự kiện: 300x600px hoặc 300x250px
                     </Text>
                 </Form>
-            </Modal>
-
-            {/* Stats Modal */}
-            <Modal
-                title={<Text strong>Thống kê quảng cáo: {selectedAdStats?.title}</Text>}
-                open={statsModalVisible}
-                onCancel={() => setStatsModalVisible(false)}
-                footer={[
-                    <Button key="close" onClick={() => setStatsModalVisible(false)}>
-                        Đóng
-                    </Button>
-                ]}
-                width={600}
-            >
-                {selectedAdStats && (
-                    <div>
-                        <Row gutter={16} style={{ marginBottom: 24 }}>
-                            <Col span={8}>
-                                <Card>
-                                    <Statistic
-                                        title="Lượt xem"
-                                        value={selectedAdStats.view_count || 0}
-                                        prefix={<EyeOutlined />}
-                                    />
-                                </Card>
-                            </Col>
-                            <Col span={8}>
-                                <Card>
-                                    <Statistic
-                                        title="Lượt click"
-                                        value={selectedAdStats.click_count || 0}
-                                    />
-                                </Card>
-                            </Col>
-                            <Col span={8}>
-                                <Card>
-                                    <Statistic
-                                        title="CTR"
-                                        value={selectedAdStats.view_count > 0
-                                            ? ((selectedAdStats.click_count / selectedAdStats.view_count) * 100).toFixed(2)
-                                            : 0
-                                        }
-                                        suffix="%"
-                                        precision={2}
-                                    />
-                                </Card>
-                            </Col>
-                        </Row>
-
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                            <div>
-                                <Text strong>Vị trí: </Text>
-                                {getPositionTag(selectedAdStats.position)}
-                            </div>
-                            <div>
-                                <Text strong>Trạng thái: </Text>
-                                {getStatusTag(selectedAdStats)}
-                            </div>
-                            {selectedAdStats.link_url && (
-                                <div>
-                                    <Text strong>Liên kết: </Text>
-                                    <a href={selectedAdStats.link_url} target="_blank" rel="noreferrer">
-                                        {selectedAdStats.link_url}
-                                    </a>
-                                </div>
-                            )}
-                            {selectedAdStats.start_date && (
-                                <div>
-                                    <Text strong>Bắt đầu: </Text>
-                                    <Text>{formatDateTime(selectedAdStats.start_date)}</Text>
-                                </div>
-                            )}
-                            {selectedAdStats.end_date && (
-                                <div>
-                                    <Text strong>Kết thúc: </Text>
-                                    <Text>{formatDateTime(selectedAdStats.end_date)}</Text>
-                                </div>
-                            )}
-                        </Space>
-                    </div>
-                )}
             </Modal>
         </div>
     );

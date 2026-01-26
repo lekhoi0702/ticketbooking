@@ -264,7 +264,7 @@ def register() -> Tuple[Dict[str, Any], int]:
 def forgot_password() -> Tuple[Dict[str, Any], int]:
     """Quên mật khẩu: gửi link reset password về email."""
     try:
-        from app.models.password_reset_token import PasswordResetToken
+        from app.utils.redis_password_reset_manager import get_redis_password_reset_manager
         from app.utils.email_sender import send_email
         from app.config import Config
 
@@ -284,13 +284,16 @@ def forgot_password() -> Tuple[Dict[str, Any], int]:
                 'message': 'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu qua email. Vui lòng kiểm tra hộp thư và thư mục spam.'
             }), 200
 
+        # Get Redis password reset manager
+        reset_manager = get_redis_password_reset_manager()
+        if not reset_manager:
+            raise InternalServerException(message='Dịch vụ đặt lại mật khẩu tạm thời không khả dụng. Vui lòng thử lại sau.')
+
         # Create reset token (expires in 5 minutes)
-        reset_token = PasswordResetToken.create_token(user.user_id, expires_in_minutes=5)
-        db.session.flush()  # Get token_id
+        token = reset_manager.create_token(user.user_id, expires_in_minutes=5)
 
         # Generate reset link
-        from app.config import Config
-        reset_link = f"{Config.FRONTEND_URL}/reset-password?token={reset_token.token}"
+        reset_link = f"{Config.FRONTEND_URL}/reset-password?token={token}"
 
         subject = 'TicketBooking - Đặt lại mật khẩu'
         body_plain = (
@@ -318,10 +321,8 @@ def forgot_password() -> Tuple[Dict[str, Any], int]:
         sent = send_email(user.email, subject, body_plain, body_html)
         if not sent:
             logger.warning(f"Failed to send forgot-password email to {user.email}")
-            db.session.rollback()
             raise InternalServerException(message='Không thể gửi email. Vui lòng thử lại sau.')
 
-        db.session.commit()
         logger.info(f"Forgot-password email sent to user_id={user.user_id}")
         return jsonify({
             'success': True,
@@ -331,7 +332,6 @@ def forgot_password() -> Tuple[Dict[str, Any], int]:
     except ValidationException:
         raise
     except Exception as e:
-        db.session.rollback()
         logger.error(f"Forgot-password error: {str(e)}", exc_info=True)
         raise InternalServerException(message='Đã xảy ra lỗi. Vui lòng thử lại sau.')
 
@@ -340,7 +340,7 @@ def forgot_password() -> Tuple[Dict[str, Any], int]:
 def reset_password() -> Tuple[Dict[str, Any], int]:
     """Đặt lại mật khẩu bằng token từ link reset password."""
     try:
-        from app.models.password_reset_token import PasswordResetToken
+        from app.utils.redis_password_reset_manager import get_redis_password_reset_manager
 
         data = request.get_json() or {}
         token = (data.get('token') or '').strip()
@@ -362,13 +362,18 @@ def reset_password() -> Tuple[Dict[str, Any], int]:
         if not is_valid:
             raise ValidationException(errors={'new_password': err_msg}, message=err_msg)
 
+        # Get Redis password reset manager
+        reset_manager = get_redis_password_reset_manager()
+        if not reset_manager:
+            raise InternalServerException(message='Dịch vụ đặt lại mật khẩu tạm thời không khả dụng. Vui lòng thử lại sau.')
+
         # Verify token
-        reset_token = PasswordResetToken.verify_token(token)
-        if not reset_token:
+        user_id = reset_manager.verify_token(token)
+        if not user_id:
             raise InvalidTokenException(message='Token không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu link đặt lại mật khẩu mới.')
 
         # Get user
-        user = User.query.get(reset_token.user_id)
+        user = User.query.get(user_id)
         if not user:
             raise ResourceNotFoundException(message='Người dùng không tồn tại')
 
@@ -379,8 +384,8 @@ def reset_password() -> Tuple[Dict[str, Any], int]:
         user.set_password(new_password)
         user.must_change_password = False  # Clear flag if set
 
-        # Mark token as used
-        reset_token.mark_as_used()
+        # Mark token as used (delete from Redis)
+        reset_manager.mark_token_as_used(token)
 
         # Revoke all existing tokens for this user (security)
         from app.extensions import get_redis_token_manager
@@ -411,7 +416,7 @@ def reset_password() -> Tuple[Dict[str, Any], int]:
 def check_reset_token() -> Tuple[Dict[str, Any], int]:
     """Kiểm tra trạng thái token reset password (đã sử dụng, hết hạn, hoặc hợp lệ)."""
     try:
-        from app.models.password_reset_token import PasswordResetToken
+        from app.utils.redis_password_reset_manager import get_redis_password_reset_manager
 
         token = request.args.get('token', '').strip()
         
@@ -421,8 +426,13 @@ def check_reset_token() -> Tuple[Dict[str, Any], int]:
                 message='Token là bắt buộc'
             )
 
+        # Get Redis password reset manager
+        reset_manager = get_redis_password_reset_manager()
+        if not reset_manager:
+            raise InternalServerException(message='Dịch vụ đặt lại mật khẩu tạm thời không khả dụng. Vui lòng thử lại sau.')
+
         # Check token status
-        status_info = PasswordResetToken.check_token_status(token)
+        status_info = reset_manager.check_token_status(token)
         
         if status_info['status'] == 'valid':
             return jsonify({

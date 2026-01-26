@@ -65,6 +65,8 @@ class Config:
     REDIS_KEY_PREFIX = os.getenv('REDIS_KEY_PREFIX', 'ticketbooking:')
     REDIS_REFRESH_TOKEN_PREFIX = f"{REDIS_KEY_PREFIX}refresh_token:"
     REDIS_BLACKLIST_PREFIX = f"{REDIS_KEY_PREFIX}blacklist:"
+    REDIS_SEAT_RESERVATION_PREFIX = f"{REDIS_KEY_PREFIX}seat_reservation:"
+    REDIS_PASSWORD_RESET_TOKEN_PREFIX = f"{REDIS_KEY_PREFIX}password_reset_token:"
     
     # File Upload Configuration
     UPLOAD_FOLDER = os.path.join(basedir, os.getenv('UPLOAD_FOLDER', 'uploads'))

@@ -25,6 +25,7 @@ import Profile from '@features/user/pages/Profile';
 import Login from '@features/user/pages/Login';
 import AllEvents from '@features/user/pages/AllEvents';
 import ResetPassword from '@features/user/pages/ResetPassword';
+import CustomerAuthLayout from '@features/user/components/CustomerAuthLayout';
 
 // Organizer Imports
 import OrganizerLayout from '@features/organizer/components/OrganizerLayout';
@@ -43,7 +44,6 @@ import OrganizerProfileEdit from '@features/organizer/pages/OrganizerProfileEdit
 import ManageOrders from '@features/organizer/pages/ManageOrders';
 import RefundRequests from '@features/organizer/pages/RefundRequests';
 import DiscountManagement from '@features/organizer/pages/DiscountManagement';
-import QRCodeManagement from '@features/organizer/pages/QRCodeManagement';
 
 // Admin Imports
 import AdminLayout from '@features/admin/components/AdminLayout';
@@ -141,8 +141,22 @@ function App() {
                 </Route>
 
                 {/* Standalone User Routes (outside UserLayout) */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route
+                  path="/login"
+                  element={
+                    <CustomerAuthLayout>
+                      <Login />
+                    </CustomerAuthLayout>
+                  }
+                />
+                <Route
+                  path="/reset-password"
+                  element={
+                    <CustomerAuthLayout>
+                      <ResetPassword />
+                    </CustomerAuthLayout>
+                  }
+                />
 
                 {/* Admin Routes */}
                 <Route
@@ -246,7 +260,6 @@ function App() {
                   <Route path="orders" element={<ManageOrders />} />
                   <Route path="refund-requests" element={<RefundRequests />} />
                   <Route path="discounts" element={<DiscountManagement />} />
-                  <Route path="qr-codes" element={<QRCodeManagement />} />
                 </Route>
               </Routes>
             </Router>

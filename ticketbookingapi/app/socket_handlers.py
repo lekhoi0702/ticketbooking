@@ -4,13 +4,12 @@ Socket.IO event handlers for real-time seat reservation
 from flask import request
 from app.extensions import socketio, db
 from app.models.seat import Seat
-from app.models.seat_reservation import SeatReservation
 from app.models.ticket_type import TicketType
 from app.models.event import Event
 from app.models.user import User
 from datetime import datetime, timedelta
 from app.utils.datetime_utils import now_gmt7
-from sqlalchemy.exc import IntegrityError
+from app.utils.redis_reservation_manager import get_redis_reservation_manager
 import threading
 import time
 
@@ -22,27 +21,43 @@ timer_lock = threading.Lock()
 RESERVATION_DURATION_MINUTES = 5
 
 def cleanup_expired_reservations():
-    """Clean up expired reservations"""
+    """Clean up expired reservations - cleanup seats with RESERVED status but no active reservation in Redis"""
     try:
-        expired_reservations = SeatReservation.query.filter(
-            SeatReservation.is_active == True,
-            SeatReservation.expires_at < now_gmt7()
-        ).all()
+        reservation_manager = get_redis_reservation_manager()
+        if not reservation_manager:
+            return
         
-        for reservation in expired_reservations:
-            seat = Seat.query.get(reservation.seat_id)
-            if seat and seat.status == 'RESERVED':
-                seat.status = 'AVAILABLE'
-                reservation.is_active = False
-                
-                # Emit to event room
-                socketio.emit('seat_released', {
-                    'seat_id': seat.seat_id,
-                    'event_id': reservation.event_id
-                }, room=f'event_{reservation.event_id}')
+        # Find all seats with RESERVED status
+        reserved_seats = Seat.query.filter(Seat.status == 'RESERVED').all()
         
-        if expired_reservations:
+        seats_to_release = []
+        for seat in reserved_seats:
+            # Check if reservation still exists in Redis
+            reservation = reservation_manager.get_reservation(seat.seat_id)
+            if not reservation:
+                # No active reservation, release the seat
+                seats_to_release.append(seat)
+        
+        # Release seats that don't have active reservations
+        for seat in seats_to_release:
+            seat.status = 'AVAILABLE'
             db.session.commit()
+            
+            # Emit to event room (we need event_id, try to get from ticket_type)
+            try:
+                ticket_type = TicketType.query.get(seat.ticket_type_id)
+                if ticket_type:
+                    event_id = ticket_type.event_id
+                    socketio.emit('seat_released', {
+                        'seat_id': seat.seat_id,
+                        'event_id': event_id
+                    }, room=f'event_{event_id}')
+            except Exception:
+                pass
+        
+        # Also cleanup expired reservations in fallback storage
+        reservation_manager.cleanup_expired()
+        
     except Exception as e:
         db.session.rollback()
         print(f"Error in cleanup_expired_reservations: {str(e)}")
@@ -56,26 +71,31 @@ def start_seat_timer(seat_id, event_id, user_id):
             if seat_id in seat_timers:
                 del seat_timers[seat_id]
         
-        # Check if reservation still exists and is not completed
-        with db.session.begin():
-            reservation = SeatReservation.query.filter_by(
-                seat_id=seat_id,
-                user_id=user_id,
-                is_active=True
-            ).first()
+        # Check if reservation still exists in Redis
+        reservation_manager = get_redis_reservation_manager()
+        if reservation_manager:
+            reservation = reservation_manager.get_reservation(seat_id)
             
-            if reservation and reservation.is_expired():
-                seat = Seat.query.get(seat_id)
-                if seat and seat.status == 'RESERVED':
-                    seat.status = 'AVAILABLE'
-                    reservation.is_active = False
-                    db.session.commit()
-                    
-                    # Emit to event room
-                    socketio.emit('seat_released', {
-                        'seat_id': seat_id,
-                        'event_id': event_id
-                    }, room=f'event_{event_id}')
+            # If reservation exists and belongs to this user, check if expired
+            if reservation and reservation.get('user_id') == user_id:
+                from datetime import datetime
+                expires_at = datetime.fromisoformat(reservation['expires_at'])
+                if expires_at < now_gmt7():
+                    # Expired, release the seat
+                    with db.session.begin():
+                        seat = Seat.query.get(seat_id)
+                        if seat and seat.status == 'RESERVED':
+                            seat.status = 'AVAILABLE'
+                            db.session.commit()
+                            
+                            # Delete reservation from Redis
+                            reservation_manager.delete_reservation(seat_id)
+                            
+                            # Emit to event room
+                            socketio.emit('seat_released', {
+                                'seat_id': seat_id,
+                                'event_id': event_id
+                            }, room=f'event_{event_id}')
     
     timer = threading.Thread(target=release_seat, daemon=True)
     timer.start()
@@ -131,6 +151,14 @@ def handle_lock_seat(data):
         }, room=request.sid)
         return
     
+    reservation_manager = get_redis_reservation_manager()
+    if not reservation_manager:
+        socketio.emit('seat_lock_error', {
+            'seat_id': seat_id,
+            'message': 'Reservation service unavailable'
+        }, room=request.sid)
+        return
+    
     try:
         with db.session.begin():
             # Validate user exists
@@ -163,32 +191,32 @@ def handle_lock_seat(data):
                 }, room=request.sid)
                 return
             
-            # Check for existing active reservation
-            existing_reservation = SeatReservation.query.filter_by(
-                seat_id=seat_id,
-                is_active=True
-            ).first()
+            # Check for existing active reservation in Redis
+            existing_reservation = reservation_manager.get_reservation(seat_id)
             
             if existing_reservation:
-                if existing_reservation.is_expired():
-                    # Clean up expired reservation
+                # Check if expired
+                from datetime import datetime
+                expires_at = datetime.fromisoformat(existing_reservation['expires_at'])
+                if expires_at < now_gmt7():
+                    # Expired, clean up
                     seat.status = 'AVAILABLE'
-                    existing_reservation.is_active = False
+                    reservation_manager.delete_reservation(seat_id)
                     db.session.commit()
-                elif existing_reservation.user_id != user_id:
+                elif existing_reservation.get('user_id') != user_id:
                     # Seat is reserved by another user
                     socketio.emit('seat_lock_error', {
                         'seat_id': seat_id,
                         'message': 'Seat is already reserved by another user'
                     }, room=request.sid)
                     return
-                elif existing_reservation.user_id == user_id:
+                elif existing_reservation.get('user_id') == user_id:
                     # User already has this seat reserved
                     socketio.emit('seat_locked', {
                         'seat_id': seat_id,
                         'user_id': user_id,
                         'event_id': event_id,
-                        'expires_at': existing_reservation.expires_at.isoformat()
+                        'expires_at': existing_reservation['expires_at']
                     }, room=request.sid)
                     return
             
@@ -200,53 +228,39 @@ def handle_lock_seat(data):
                 }, room=request.sid)
                 return
             
-            # Create new reservation
-            try:
-                reservation = SeatReservation(
-                    seat_id=seat_id,
-                    user_id=user_id,
-                    event_id=event_id,
-                    reservation_duration_minutes=RESERVATION_DURATION_MINUTES
-                )
-                
-                seat.status = 'RESERVED'
-                db.session.add(reservation)
-                db.session.commit()
-                
-                # Start timer
-                start_seat_timer(seat_id, event_id, user_id)
-                
-                # Emit success to client
-                socketio.emit('seat_locked', {
+            # Create new reservation in Redis
+            success = reservation_manager.create_reservation(
+                seat_id=seat_id,
+                user_id=user_id,
+                event_id=event_id,
+                duration_minutes=RESERVATION_DURATION_MINUTES
+            )
+            
+            if not success:
+                socketio.emit('seat_lock_error', {
                     'seat_id': seat_id,
-                    'user_id': user_id,
-                    'event_id': event_id,
-                    'expires_at': reservation.expires_at.isoformat()
+                    'message': 'Failed to create reservation'
                 }, room=request.sid)
-            except IntegrityError as e:
-                db.session.rollback()
-                error_msg = str(e.orig) if hasattr(e, 'orig') else str(e)
-                if 'fk_seat_reservation_user' in error_msg or 'user_id' in error_msg.lower():
-                    socketio.emit('seat_lock_error', {
-                        'seat_id': seat_id,
-                        'message': 'User not found or invalid user_id'
-                    }, room=request.sid)
-                elif 'fk_seat_reservation_event' in error_msg or 'event_id' in error_msg.lower():
-                    socketio.emit('seat_lock_error', {
-                        'seat_id': seat_id,
-                        'message': 'Event not found or invalid event_id'
-                    }, room=request.sid)
-                elif 'fk_seat_reservation_seat' in error_msg or 'seat_id' in error_msg.lower():
-                    socketio.emit('seat_lock_error', {
-                        'seat_id': seat_id,
-                        'message': 'Seat not found or invalid seat_id'
-                    }, room=request.sid)
-                else:
-                    socketio.emit('seat_lock_error', {
-                        'seat_id': seat_id,
-                        'message': f'Database constraint error: {error_msg}'
-                    }, room=request.sid)
                 return
+            
+            # Update seat status
+            seat.status = 'RESERVED'
+            db.session.commit()
+            
+            # Get reservation to get expires_at
+            reservation = reservation_manager.get_reservation(seat_id)
+            expires_at = reservation['expires_at'] if reservation else None
+            
+            # Start timer
+            start_seat_timer(seat_id, event_id, user_id)
+            
+            # Emit success to client
+            socketio.emit('seat_locked', {
+                'seat_id': seat_id,
+                'user_id': user_id,
+                'event_id': event_id,
+                'expires_at': expires_at
+            }, room=request.sid)
             
             # Broadcast to event room
             socketio.emit('seat_reserved', {
@@ -272,20 +286,23 @@ def handle_unlock_seat(data):
     if not all([seat_id, user_id, event_id]):
         return
     
+    reservation_manager = get_redis_reservation_manager()
+    if not reservation_manager:
+        return
+    
     try:
         seat = Seat.query.get(seat_id)
         if not seat:
             return
         
-        # Find active reservation for this user
-        reservation = SeatReservation.query.filter_by(
-            seat_id=seat_id,
-            user_id=user_id,
-            is_active=True
-        ).first()
+        # Find active reservation in Redis
+        reservation = reservation_manager.get_reservation(seat_id)
         
-        if reservation:
-            reservation.is_active = False
+        if reservation and reservation.get('user_id') == user_id:
+            # Delete reservation from Redis
+            reservation_manager.delete_reservation(seat_id)
+            
+            # Update seat status
             seat.status = 'AVAILABLE'
             db.session.commit()
             
@@ -312,22 +329,20 @@ def handle_checkout_complete(data):
     if not all([seat_ids, user_id, event_id]):
         return
     
+    reservation_manager = get_redis_reservation_manager()
+    if not reservation_manager:
+        return
+    
     try:
-        with db.session.begin():
-            for seat_id in seat_ids:
-                reservation = SeatReservation.query.filter_by(
-                    seat_id=seat_id,
-                    user_id=user_id,
-                    is_active=True
-                ).first()
-                
-                if reservation:
-                    # Cancel timer - seat will be kept as RESERVED until order is paid
-                    cancel_seat_timer(seat_id)
-                    # Reservation stays active until payment completes
+        for seat_id in seat_ids:
+            reservation = reservation_manager.get_reservation(seat_id)
+            
+            if reservation and reservation.get('user_id') == user_id:
+                # Cancel timer - seat will be kept as RESERVED until order is paid
+                cancel_seat_timer(seat_id)
+                # Reservation stays in Redis until payment completes
                     
     except Exception as e:
-        db.session.rollback()
         print(f"Error handling checkout complete: {str(e)}")
 
 # Periodic cleanup task

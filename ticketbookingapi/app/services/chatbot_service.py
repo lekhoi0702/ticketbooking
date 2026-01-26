@@ -59,7 +59,7 @@ Trạng thái đơn hàng:
 - CANCELLED: Đã hủy
 - REFUNDED: Đã hoàn tiền
 - COMPLETED: Hoàn tất
-- CANCELLATION_PENDING: Đang chờ hủy
+- REFUND_PENDING: Đang chờ hoàn tiền
 
 Nhiệm vụ của bạn:
 1. Trả lời câu hỏi về sự kiện, đặt vé, thanh toán
@@ -115,7 +115,7 @@ Luôn trả lời bằng tiếng Việt, thân thiện và chuyên nghiệp. N�
                             'CANCELLED': 'Đã hủy',
                             'REFUNDED': 'Đã hoàn tiền',
                             'COMPLETED': 'Hoàn tất',
-                            'CANCELLATION_PENDING': 'Đang chờ hủy'
+                            'REFUND_PENDING': 'Đang chờ hoàn tiền'
                         }
                         context_parts.append(
                             f"- Mã đơn: {order.order_code}, "

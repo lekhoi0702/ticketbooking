@@ -206,6 +206,8 @@ const CategoryEvents = () => {
                             <Button
                                 size="large"
                                 icon={<ReloadOutlined />}
+                                className="category-reset-btn"
+                                style={{ '--wave-color': 'transparent' }}
                                 onClick={handleResetFilters}
                                 disabled={loading || !hasActiveFilters}
                             >

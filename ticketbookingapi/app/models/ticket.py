@@ -5,18 +5,19 @@ from app.utils.datetime_utils import now_gmt7
 class Ticket(db.Model):
     __tablename__ = "Ticket"
 
-    ticket_id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('Order.order_id', ondelete='CASCADE'), nullable=False, index=True)
-    ticket_type_id = db.Column(db.Integer, db.ForeignKey('TicketType.ticket_type_id'), nullable=False)
+    ticket_id = db.Column(db.BigInteger, primary_key=True)
+    order_id = db.Column(db.BigInteger, db.ForeignKey('Order.order_id', ondelete='CASCADE'), nullable=False, index=True)
+    ticket_type_id = db.Column(db.BigInteger, db.ForeignKey('TicketType.ticket_type_id'), nullable=False)
     ticket_code = db.Column(db.String(100), unique=True, nullable=False, index=True)
     ticket_status = db.Column(db.Enum('ACTIVE', 'USED', 'CANCELLED', 'REFUNDED'), default='ACTIVE', index=True)
-    seat_id = db.Column(db.Integer, db.ForeignKey('Seat.seat_id'), nullable=True)
+    seat_id = db.Column(db.BigInteger, db.ForeignKey('Seat.seat_id'), nullable=True)
     price = db.Column(db.Numeric(15, 2), nullable=False)
-    qr_code_url = db.Column(db.String(500))
+    qr_code_url = db.Column(db.String(1000))
     holder_name = db.Column(db.String(255))
     holder_email = db.Column(db.String(255))
     checked_in_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=now_gmt7)
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
     # Relationships
     seat = db.relationship('Seat', backref='tickets', lazy=True)
@@ -33,7 +34,9 @@ class Ticket(db.Model):
             'qr_code_url': self.qr_code_url,
             'holder_name': self.holder_name,
             'holder_email': self.holder_email,
-            'checked_in_at': self.checked_in_at.isoformat() if self.checked_in_at else None
+            'checked_in_at': self.checked_in_at.isoformat() if self.checked_in_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
         }
         
         if self.seat:

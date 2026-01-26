@@ -821,14 +821,14 @@ def create_vietqr_qr():
         from app.models.event import Event
         
         ticket = Ticket.query.filter_by(order_id=order_id).first()
-        vietqr_image_url = None
+        qr_image_url = None
         
         if ticket:
             ticket_type = TicketType.query.get(ticket.ticket_type_id)
             if ticket_type:
                 event = Event.query.get(ticket_type.event_id)
-                if event and event.vietqr_image_url:
-                    vietqr_image_url = event.vietqr_image_url
+                if event and getattr(event, "qr_image_url", None):
+                    qr_image_url = event.qr_image_url
         
         # Create or get payment record
         payment = Payment.query.filter_by(order_id=order_id).first()
@@ -844,12 +844,12 @@ def create_vietqr_qr():
             db.session.commit()
         
         # If organizer uploaded QR image, use it; otherwise generate mock QR code data
-        if vietqr_image_url:
+        if qr_image_url:
             # Check if URL is from Sepay.vn - if so, add amount and description dynamically
-            if 'qr.sepay.vn' in vietqr_image_url:
+            if 'qr.sepay.vn' in qr_image_url:
                 # Parse Sepay URL and add amount and description
                 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
-                parsed = urlparse(vietqr_image_url)
+                parsed = urlparse(qr_image_url)
                 params = parse_qs(parsed.query)
                 
                 # Add or update amount and description (only if not already set)
@@ -873,7 +873,7 @@ def create_vietqr_qr():
                     'success': True,
                     'data': {
                         'payment_code': payment.payment_code,
-                        'vietqr_image_url': dynamic_qr_url,
+                        'qr_image_url': dynamic_qr_url,
                         'amount': float(order.final_amount),
                         'order_code': order.order_code,
                         'expires_in': 900  # 15 minutes
@@ -885,7 +885,7 @@ def create_vietqr_qr():
                     'success': True,
                     'data': {
                         'payment_code': payment.payment_code,
-                        'vietqr_image_url': vietqr_image_url,
+                        'qr_image_url': qr_image_url,
                         'amount': float(order.final_amount),
                         'order_code': order.order_code,
                         'expires_in': 900  # 15 minutes

@@ -4,11 +4,7 @@ from app.services.organizer_event_service import OrganizerEventService
 from app.services.organizer_venue_service import OrganizerVenueService
 from app.services.organizer_stats_service import OrganizerStatsService
 from app.models.user import User
-from app.models.organizer_qr_code import OrganizerQRCode
 from app.extensions import db
-from app.utils.upload_helper import save_vietqr_image
-from werkzeug.utils import secure_filename
-import os
 
 organizer_bp = Blueprint("organizer", __name__)
 
@@ -255,7 +251,7 @@ def reject_refund(order_id):
 
 @organizer_bp.route("/organizer/refund-requests", methods=["GET"])
 def get_refund_requests():
-    """Get all refund requests (CANCELLATION_PENDING orders) for organizer's events"""
+    """Get all refund requests (REFUND_PENDING orders) for organizer's events"""
     try:
         manager_id = request.args.get('manager_id', type=int)
         if not manager_id:
@@ -273,11 +269,11 @@ def get_refund_requests():
 def get_organizer_venues():
     """Get all venues managed by organizer"""
     try:
-        manager_id = request.args.get('manager_id', 1, type=int)
+        organizer_id = request.args.get('organizer_id', type=int) or request.args.get('manager_id', type=int) or 1
         # exclude_maintenance defaults to True for backward compatibility
         # Set to False to show all venues including maintenance ones
         exclude_maintenance = request.args.get('exclude_maintenance', 'true').lower() == 'true'
-        venues = OrganizerVenueService.get_venues(manager_id, exclude_maintenance=exclude_maintenance)
+        venues = OrganizerVenueService.get_venues(organizer_id, exclude_maintenance=exclude_maintenance)
         return jsonify({
             'success': True,
             'data': [v.to_dict() for v in venues]
@@ -352,6 +348,11 @@ def update_venue_seats(venue_id):
     """Update seat map for venue"""
     try:
         data = request.get_json()
+        # Backward-compat: accept seat_map_template/map_embed_code from older clients.
+        if 'seat_map_template' in data and 'seat_map' not in data:
+            data['seat_map'] = data.get('seat_map_template')
+        if 'map_embed_code' in data and 'map_embed' not in data:
+            data['map_embed'] = data.get('map_embed_code')
         venue = OrganizerVenueService.update_venue(venue_id, data)
         return jsonify({
             'success': True,
@@ -460,162 +461,4 @@ def update_organizer_profile(user_id):
         print(traceback.format_exc())
         return jsonify({'success': False, 'message': str(e)}), 500
 
-# Organizer QR Code Management
-@organizer_bp.route("/organizer/qr-codes", methods=["GET"])
-def get_organizer_qr_codes():
-    """Get all QR codes for an organizer"""
-    try:
-        manager_id = request.args.get('manager_id', type=int)
-        if not manager_id:
-            return jsonify({'success': False, 'message': 'manager_id is required'}), 400
-        
-        qr_codes = OrganizerQRCode.query.filter_by(manager_id=manager_id).order_by(OrganizerQRCode.created_at.desc()).all()
-        return jsonify({
-            'success': True,
-            'data': [qr.to_dict() for qr in qr_codes]
-        }), 200
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@organizer_bp.route("/organizer/qr-codes", methods=["POST"])
-def create_organizer_qr_code():
-    """Create a new QR code for organizer"""
-    try:
-        manager_id = request.form.get('manager_id', type=int) or (request.get_json().get('manager_id') if request.is_json else None)
-        if not manager_id:
-            return jsonify({'success': False, 'message': 'manager_id is required'}), 400
-        
-        qr_image_url = None
-        
-        # Check if file upload
-        if 'qr_image' in request.files:
-            file = request.files['qr_image']
-            if file and file.filename:
-                qr_image_url = save_vietqr_image(file, manager_id)
-                if not qr_image_url:
-                    return jsonify({'success': False, 'message': 'Invalid file format'}), 400
-        elif 'qr_image_url' in request.form:
-            qr_image_url = request.form.get('qr_image_url')
-        elif request.is_json:
-            data = request.get_json()
-            qr_image_url = data.get('qr_image_url')
-        
-        if not qr_image_url:
-            return jsonify({'success': False, 'message': 'qr_image_url or qr_image file is required'}), 400
-        
-        qr_name = request.form.get('qr_name') or (request.get_json().get('qr_name') if request.is_json else 'QR Code')
-        bank_name = request.form.get('bank_name') or (request.get_json().get('bank_name') if request.is_json else None)
-        account_number = request.form.get('account_number') or (request.get_json().get('account_number') if request.is_json else None)
-        
-        qr_code = OrganizerQRCode(
-            manager_id=manager_id,
-            qr_name=qr_name,
-            qr_image_url=qr_image_url,
-            bank_name=bank_name,
-            account_number=account_number,
-            is_active=True
-        )
-        
-        db.session.add(qr_code)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Tạo QR code thành công',
-            'data': qr_code.to_dict()
-        }), 201
-    except Exception as e:
-        db.session.rollback()
-        import traceback
-        print(traceback.format_exc())
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@organizer_bp.route("/organizer/qr-codes/<int:qr_code_id>", methods=["PUT"])
-def update_organizer_qr_code(qr_code_id):
-    """Update an organizer QR code"""
-    try:
-        manager_id = request.form.get('manager_id', type=int) or request.get_json().get('manager_id') if request.is_json else None
-        if not manager_id:
-            return jsonify({'success': False, 'message': 'manager_id is required'}), 400
-        
-        qr_code = OrganizerQRCode.query.filter_by(qr_code_id=qr_code_id, manager_id=manager_id).first()
-        if not qr_code:
-            return jsonify({'success': False, 'message': 'QR code not found'}), 404
-        
-        # Update image if provided
-        if 'qr_image' in request.files:
-            file = request.files['qr_image']
-            if file and file.filename:
-                qr_image_url = save_vietqr_image(file, manager_id)
-                if qr_image_url:
-                    qr_code.qr_image_url = qr_image_url
-        
-        data = request.get_json(silent=True) or {}
-        if 'qr_name' in request.form or 'qr_name' in data:
-            qr_code.qr_name = request.form.get('qr_name') or data.get('qr_name')
-        if 'qr_image_url' in request.form or 'qr_image_url' in data:
-            qr_code.qr_image_url = request.form.get('qr_image_url') or data.get('qr_image_url')
-        if 'bank_name' in request.form or 'bank_name' in data:
-            qr_code.bank_name = request.form.get('bank_name') or data.get('bank_name')
-        if 'account_number' in request.form or 'account_number' in data:
-            qr_code.account_number = request.form.get('account_number') or data.get('account_number')
-        if 'is_active' in request.form or 'is_active' in data:
-            qr_code.is_active = request.form.get('is_active', type=bool) if 'is_active' in request.form else data.get('is_active', True)
-        
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Cập nhật QR code thành công',
-            'data': qr_code.to_dict()
-        }), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@organizer_bp.route("/organizer/qr-codes/<int:qr_code_id>", methods=["DELETE"])
-def delete_organizer_qr_code(qr_code_id):
-    """Delete an organizer QR code"""
-    try:
-        manager_id = request.args.get('manager_id', type=int) or request.get_json().get('manager_id') if request.is_json else None
-        if not manager_id:
-            return jsonify({'success': False, 'message': 'manager_id is required'}), 400
-        
-        qr_code = OrganizerQRCode.query.filter_by(qr_code_id=qr_code_id, manager_id=manager_id).first()
-        if not qr_code:
-            return jsonify({'success': False, 'message': 'QR code not found'}), 404
-        
-        db.session.delete(qr_code)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Xóa QR code thành công'
-        }), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@organizer_bp.route("/organizer/qr-codes/<int:qr_code_id>/toggle-active", methods=["POST"])
-def toggle_qr_code_active(qr_code_id):
-    """Toggle QR code active status"""
-    try:
-        manager_id = request.get_json().get('manager_id') if request.is_json else request.args.get('manager_id', type=int)
-        if not manager_id:
-            return jsonify({'success': False, 'message': 'manager_id is required'}), 400
-        
-        qr_code = OrganizerQRCode.query.filter_by(qr_code_id=qr_code_id, manager_id=manager_id).first()
-        if not qr_code:
-            return jsonify({'success': False, 'message': 'QR code not found'}), 404
-        
-        qr_code.is_active = not qr_code.is_active
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': f'QR code đã được {"kích hoạt" if qr_code.is_active else "vô hiệu hóa"}',
-            'data': qr_code.to_dict()
-        }), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+## Organizer QR Code endpoints removed (table not present in `ticketbookingdb.sql`).

@@ -4,12 +4,12 @@ from datetime import datetime
 class Seat(db.Model):
     __tablename__ = "Seat"
 
-    seat_id = db.Column(db.Integer, primary_key=True)
-    ticket_type_id = db.Column(db.Integer, db.ForeignKey('TicketType.ticket_type_id', ondelete='CASCADE'), nullable=False, index=True)
+    seat_id = db.Column(db.BigInteger, primary_key=True)
+    ticket_type_id = db.Column(db.BigInteger, db.ForeignKey('TicketType.ticket_type_id', ondelete='CASCADE'), nullable=False, index=True)
     row_name = db.Column(db.String(10), nullable=False) # e.g., 'A', 'B'
     seat_number = db.Column(db.String(10), nullable=False) # e.g., '1', '2'
     status = db.Column(db.Enum('AVAILABLE', 'LOCKED', 'BOOKED', 'RESERVED'), default='AVAILABLE', index=True)
-    is_active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=True)
     area_name = db.Column(db.String(100), nullable=True) # e.g., 'Khán đài A', 'Khu vực VIP'
     
     # Optional: x, y coordinates for custom map drawing

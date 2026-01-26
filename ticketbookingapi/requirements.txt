@@ -42,3 +42,6 @@ PyYAML>=6.0
 
 # Google Gemini API for chatbot
 google-genai>=1.0.0
+
+# Timezone data for zoneinfo (required on Windows)
+tzdata>=2024.1

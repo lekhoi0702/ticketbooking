@@ -77,17 +77,35 @@ def create_app():
         from app.utils.redis_token_manager import init_redis_token_manager
         init_redis_token_manager(redis_client)
         app.logger.info("Redis token manager initialized")
+        
+        # Initialize Redis reservation manager
+        from app.utils.redis_reservation_manager import init_redis_reservation_manager
+        init_redis_reservation_manager(redis_client)
+        app.logger.info("Redis reservation manager initialized")
+        
+        # Initialize Redis password reset manager
+        from app.utils.redis_password_reset_manager import init_redis_password_reset_manager
+        init_redis_password_reset_manager(redis_client)
+        app.logger.info("Redis password reset manager initialized")
     else:
         app.logger.warning("Redis not available - token management will use fallback")
+        # Initialize reservation manager with None (will use in-memory fallback)
+        from app.utils.redis_reservation_manager import init_redis_reservation_manager
+        init_redis_reservation_manager(None)
+        app.logger.warning("Redis not available - seat reservation will use in-memory fallback")
+        
+        # Initialize password reset manager with None (will use in-memory fallback)
+        from app.utils.redis_password_reset_manager import init_redis_password_reset_manager
+        init_redis_password_reset_manager(None)
+        app.logger.warning("Redis not available - password reset will use in-memory fallback")
 
     # Import models to ensure they are registered
     from app.models import (
         Role, User, EventCategory, Venue, Event, 
         TicketType, Order, Payment, Ticket, Discount, Banner, OrganizerInfo,
-        FavoriteEvent, SeatReservation, OrganizerQRCode, Advertisement
+        FavoriteEvent, Advertisement
     )
-    from app.models.event_deletion_request import EventDeletionRequest
-    # Note: RefreshToken model no longer needed with Redis implementation
+    # Note: DB schema is defined by `ticketbookingdb.sql` (no extra tables like SeatReservation/OrganizerQRCode/...).
 
     # Serve uploaded files
     @app.route('/uploads/<path:filename>')

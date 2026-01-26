@@ -40,7 +40,7 @@ def get_deletion_requests():
                     TicketType, Ticket.ticket_type_id == TicketType.ticket_type_id
                 ).filter(
                     TicketType.event_id == req.event_id,
-                    Order.order_status.in_(['PAID', 'PENDING', 'CANCELLATION_PENDING'])
+                    Order.order_status.in_(['PAID', 'PENDING', 'REFUND_PENDING'])
                 ).count()
                 
                 req_dict['active_orders'] = active_orders

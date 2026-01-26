@@ -102,6 +102,7 @@
     background: #ffffff !important;
     color: #1f2937 !important;
     border: none !important;
+    caret-color: #1f2937 !important;
 }
 
 .header-search .ant-input::placeholder {
@@ -148,6 +149,7 @@
     border-top-left-radius: 8px !important;
     border-bottom-left-radius: 8px !important;
     background-color: #ffffff !important;
+    caret-color: #1f2937 !important;
 }
 
 .custom-search-button {

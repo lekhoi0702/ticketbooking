@@ -4,8 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import Chatbot from './Chatbot/Chatbot';
 import ChangePasswordModal from '@features/user/components/Account/ChangePasswordModal';
-import { Layout, ConfigProvider } from 'antd';
-import { AntdThemeConfig } from '../../../theme/AntdThemeConfig';
+import { Layout } from 'antd';
 import { useAuth } from '@context/AuthContext';
 
 const { Content } = Layout;
@@ -20,17 +19,13 @@ const UserLayout = () => {
 
     return (
         <Layout className="app-layout dark-theme" style={{ minHeight: '100vh', width: '100%', padding: 0, margin: 0, overflowX: 'hidden' }}>
-            <ConfigProvider theme={AntdThemeConfig}>
-                <Header />
-            </ConfigProvider>
+            <Header />
             <Content className="app-content" style={{ background: 'transparent', color: '#ffffff' }}>
                 <main className="flex-grow-1">
                     <Outlet />
                 </main>
             </Content>
-            <ConfigProvider theme={AntdThemeConfig}>
-                <Footer />
-            </ConfigProvider>
+            <Footer />
             <Chatbot />
             {user?.must_change_password && (
                 <ChangePasswordModal

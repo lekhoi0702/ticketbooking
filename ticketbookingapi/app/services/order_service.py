@@ -142,32 +142,34 @@ class OrderService:
                     
                     # If seat is RESERVED, check if it's reserved by this user
                     if seat.status == 'RESERVED':
-                        from app.models.seat_reservation import SeatReservation
-                        # Check if there's an active reservation by this user
-                        user_reservation = SeatReservation.query.filter_by(
-                            seat_id=seat_id,
-                            user_id=data.get('user_id'),
-                            is_active=True
-                        ).first()
-                        
-                        if user_reservation and not user_reservation.is_expired():
-                            # User has valid reservation for this seat, allow it
-                            pass
+                        from app.utils.redis_reservation_manager import get_redis_reservation_manager
+                        reservation_manager = get_redis_reservation_manager()
+                        if reservation_manager:
+                            # Check if there's an active reservation by this user in Redis
+                            user_reservation = reservation_manager.get_reservation(seat_id)
+                            
+                            if user_reservation and user_reservation.get('user_id') == data.get('user_id'):
+                                # User has valid reservation for this seat, allow it
+                                pass
+                            else:
+                                # Seat is reserved by someone else or reservation expired
+                                raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được người khác chọn')
                         else:
-                            # Seat is reserved by someone else or reservation expired
-                            raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được người khác chọn')
+                            # If Redis unavailable, be more lenient but still check seat status
+                            pass
                     
                     # If seat is LOCKED, check if it's locked by this user
                     if seat.status == 'LOCKED':
-                        from app.models.seat_reservation import SeatReservation
-                        user_reservation = SeatReservation.query.filter_by(
-                            seat_id=seat_id,
-                            user_id=data.get('user_id'),
-                            is_active=True
-                        ).first()
-                        
-                        if not user_reservation or user_reservation.is_expired():
-                            raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được người khác chọn')
+                        from app.utils.redis_reservation_manager import get_redis_reservation_manager
+                        reservation_manager = get_redis_reservation_manager()
+                        if reservation_manager:
+                            user_reservation = reservation_manager.get_reservation(seat_id)
+                            
+                            if not user_reservation or user_reservation.get('user_id') != data.get('user_id'):
+                                raise ValueError(f'Ghế {seat.row_name}{seat.seat_number} đã được người khác chọn')
+                        else:
+                            # If Redis unavailable, be more lenient but still check seat status
+                            pass
                     
                     # If seat is AVAILABLE, it's fine to proceed
             
@@ -255,6 +257,12 @@ class OrderService:
                     seat = Seat.query.get(seat_id)
                     if seat.status == 'AVAILABLE':
                         seat.status = 'RESERVED'
+                    
+                    # Delete reservation from Redis since order is created
+                    from app.utils.redis_reservation_manager import get_redis_reservation_manager
+                    reservation_manager = get_redis_reservation_manager()
+                    if reservation_manager:
+                        reservation_manager.delete_reservation(seat_id)
             
             # NOTE: sold_quantity and sold_tickets will be updated when payment succeeds
             # Do NOT update them here to prevent counting unpaid orders as sold
@@ -405,7 +413,7 @@ class OrderService:
         if order.order_status == 'CANCELLED':
             raise ValueError('Đơn hàng đã được hủy trước đó.')
             
-        if order.order_status == 'CANCELLATION_PENDING':
+        if order.order_status == 'REFUND_PENDING':
             raise ValueError('Yêu cầu hủy đang được xử lý.')
 
         tickets = Ticket.query.filter_by(order_id=order_id).all()
@@ -419,7 +427,7 @@ class OrderService:
                          raise ValueError(f'Rất tiếc, vé {ticket_type.type_name} đã qua thời hạn hỗ trợ hủy (kết thúc bán vé).')
             
             # Set to PENDING instead of immediate cancellation
-            order.order_status = 'CANCELLATION_PENDING'
+            order.order_status = 'REFUND_PENDING'
             return False, 'Yêu cầu hủy của bạn đã được gửi. Chúng tôi sẽ sớm liên hệ để hoàn tiền.'
             
         # If order is PENDING (not paid yet), cancel immediately

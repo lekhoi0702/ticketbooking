@@ -1,8 +1,8 @@
 .profile-page {
     min-height: calc(100vh - 120px);
     padding: 60px 20px;
-    background: rgb(39, 39, 42) !important;
-    color: #ffffff !important;
+    background: var(--tb-bg) !important;
+    color: var(--tb-text) !important;
 }
 
 .profile-container {
@@ -15,8 +15,8 @@
 .profile-page .ant-card {
     margin-bottom: 24px;
     border-radius: 20px;
-    background: #121212 !important;
-    border: 1px solid #333 !important;
+    background: var(--tb-surface) !important;
+    border: 1px solid var(--tb-border) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
@@ -30,11 +30,11 @@
 
 .profile-header-card .ant-typography,
 .profile-tabs-card .ant-typography {
-    color: #ffffff !important;
+    color: var(--tb-text) !important;
 }
 
 .profile-header-card .ant-typography-secondary {
-    color: #b0b3b8 !important;
+    color: var(--tb-text-muted) !important;
 }
 
 .profile-tabs-card .ant-tabs-nav {
@@ -44,28 +44,28 @@
 .profile-tabs-card .ant-tabs-tab {
     font-size: 16px;
     padding: 12px 24px;
-    color: #b0b3b8 !important;
+    color: var(--tb-text-muted) !important;
 }
 
 .profile-tabs-card .ant-tabs-tab-active .ant-tabs-tab-btn {
-    color: var(--ticketbooking-green) !important;
+    color: var(--tb-primary) !important;
 }
 
 .profile-tabs-card .ant-tabs-ink-bar {
-    background: var(--ticketbooking-green) !important;
+    background: var(--tb-primary) !important;
 }
 
 /* Dark Theme Fixes for Tabs and Tables */
 .profile-tabs-card .ant-tabs-nav,
 .profile-tabs-card .ant-tabs-nav-wrap,
 .profile-tabs-card .ant-tabs-nav-list {
-    background: #121212 !important;
+    background: transparent !important;
 }
 
 .profile-tabs-card .ant-tabs-content-holder,
 .profile-tabs-card .ant-tabs-content,
 .profile-tabs-card .ant-tabs-tabpane {
-    background: #121212 !important;
+    background: transparent !important;
 }
 
 .profile-tabs-card .ant-table {
@@ -74,15 +74,15 @@
 }
 
 .profile-tabs-card .ant-table-thead>tr>th {
-    background: #1f1f1f !important;
-    color: #ffffff !important;
-    border-bottom: 1px solid #303030 !important;
+    background: var(--tb-surface-2) !important;
+    color: var(--tb-text) !important;
+    border-bottom: 1px solid var(--tb-border) !important;
 }
 
 .profile-tabs-card .ant-table-tbody>tr>td {
-    border-bottom: 1px solid #303030 !important;
+    border-bottom: 1px solid var(--tb-border) !important;
     background: transparent !important;
-    color: #d9d9d9 !important;
+    color: rgba(255, 255, 255, 0.86) !important;
 }
 
 .profile-tabs-card .ant-table-row:hover>td {
@@ -92,8 +92,8 @@
 .profile-tabs-card .ant-pagination-item,
 .profile-tabs-card .ant-pagination-prev,
 .profile-tabs-card .ant-pagination-next {
-    background: #1a1a1a !important;
-    border-color: #333 !important;
+    background: var(--tb-surface-2) !important;
+    border-color: var(--tb-border) !important;
 }
 
 .profile-tabs-card .ant-pagination-item a {
@@ -101,7 +101,7 @@
 }
 
 .profile-tabs-card .ant-empty-description {
-    color: #b0b3b8 !important;
+    color: var(--tb-text-muted) !important;
 }
 
 .profile-tabs-card .ant-empty {
@@ -119,27 +119,27 @@
 
 /* Form and Typography Visibility Fixes */
 .profile-tabs-card .ant-form-item-label>label {
-    color: #ffffff !important;
+    color: var(--tb-text) !important;
 }
 
 .profile-tabs-card .ant-input,
 .profile-tabs-card .ant-input-password,
 .profile-tabs-card .ant-input-affix-wrapper {
-    background: #141414 !important;
-    border: 1px solid #434343 !important;
-    color: #ffffff !important;
+    background: var(--tb-surface-2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: var(--tb-text) !important;
 }
 
 .profile-tabs-card .ant-input::placeholder,
 .profile-tabs-card .ant-input-password::placeholder {
-    color: #595959 !important;
+    color: rgba(255, 255, 255, 0.55) !important;
 }
 
 .profile-tabs-card .ant-input:focus,
 .profile-tabs-card .ant-input-focused,
 .profile-tabs-card .ant-input-affix-wrapper-focused {
     border-color: #2DC275 !important;
-    box-shadow: 0 0 0 2px rgba(45, 194, 117, 0.1) !important;
+    box-shadow: 0 0 0 3px var(--tb-primary-ring) !important;
 }
 
 .profile-tabs-card .ant-input-affix-wrapper .ant-input {
@@ -159,19 +159,19 @@
 
 /* Premium Purple Change Password Button */
 .profile-header-card .change-password-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: linear-gradient(135deg, var(--tb-primary) 0%, #22c55e 100%) !important;
     border: none !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
-    font-weight: 600 !important;
+    box-shadow: 0 10px 24px rgba(45, 194, 117, 0.25) !important;
+    font-weight: 800 !important;
     transition: all 0.3s ease !important;
 }
 
 .profile-header-card .change-password-btn:hover {
-    background: linear-gradient(135deg, #7c8ff0 0%, #8a5bb8 100%) !important;
+    background: linear-gradient(135deg, #26a65b 0%, #20b855 100%) !important;
     color: #ffffff !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
+    box-shadow: 0 12px 32px rgba(45, 194, 117, 0.35) !important;
 }
 
 /* Premium Red Logout Button */

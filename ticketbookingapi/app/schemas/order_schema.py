@@ -44,7 +44,7 @@ class OrderSchema(Schema):
         dump_only=True,
         validate=validate.OneOf([
             'PENDING', 'PAID', 'CANCELLED', 'REFUNDED',
-            'COMPLETED', 'CANCELLATION_PENDING'
+            'COMPLETED', 'REFUND_PENDING'
         ])
     )
     customer_name = fields.Str(dump_only=True)

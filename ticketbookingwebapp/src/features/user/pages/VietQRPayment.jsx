@@ -298,9 +298,9 @@ const VietQRPayment = () => {
                                             borderRadius: '8px',
                                             boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
                                         }}>
-                                            {qrData.vietqr_image_url ? (
+                                            {qrData.qr_image_url ? (
                                                 <img
-                                                    src={getImageUrl(qrData.vietqr_image_url)}
+                                                    src={getImageUrl(qrData.qr_image_url)}
                                                     alt="VietQR Code"
                                                     style={{
                                                         width: '220px',

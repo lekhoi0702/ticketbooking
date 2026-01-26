@@ -2,10 +2,10 @@
 -- Date: 2026-01-20
 
 CREATE TABLE IF NOT EXISTS `SeatReservation` (
-  `reservation_id` int(11) NOT NULL AUTO_INCREMENT,
-  `seat_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `event_id` int(11) NOT NULL,
+  `reservation_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `seat_id` bigint(20) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
+  `event_id` bigint(20) NOT NULL,
   `reserved_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `expires_at` datetime NOT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,

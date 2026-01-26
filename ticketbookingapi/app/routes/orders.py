@@ -100,7 +100,7 @@ def cancel_refund_request(order_id):
         if not order:
             return jsonify({'success': False, 'message': 'Đơn hàng không tồn tại'}), 404
         
-        if order.order_status != 'CANCELLATION_PENDING':
+        if order.order_status != 'REFUND_PENDING':
             return jsonify({'success': False, 'message': 'Đơn hàng không có yêu cầu hoàn tiền đang chờ xử lý'}), 400
         
         # Revert status back to PAID

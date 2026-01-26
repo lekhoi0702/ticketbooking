@@ -6,7 +6,7 @@ class FavoriteEvent(db.Model):
     __tablename__ = "FavoriteEvent"
 
     user_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id', ondelete='CASCADE'), primary_key=True)
-    event_id = db.Column(db.Integer, db.ForeignKey('Event.event_id', ondelete='CASCADE'), primary_key=True)
+    event_id = db.Column(db.BigInteger, db.ForeignKey('Event.event_id', ondelete='CASCADE'), primary_key=True)
     created_at = db.Column(db.DateTime, default=now_gmt7)
 
     # Relationships are handled via backrefs usually, or explicitly if needed

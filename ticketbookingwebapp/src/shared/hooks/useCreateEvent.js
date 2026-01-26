@@ -518,11 +518,11 @@ export const useCreateEvent = () => {
                 formDataToSend.append('banner_image', bannerImage);
             }
 
-            // Add VietQR QR image if a new one was selected (file or URL)
+            // Add QR image if a new one was selected (file or URL). Backend accepts legacy keys too.
             if (vietqrImage) {
-                formDataToSend.append('vietqr_image', vietqrImage);
+                formDataToSend.append('qr_image', vietqrImage);
             } else if (vietqrImageUrl) {
-                formDataToSend.append('vietqr_image_url', vietqrImageUrl);
+                formDataToSend.append('qr_image_url', vietqrImageUrl);
             }
 
             let response;

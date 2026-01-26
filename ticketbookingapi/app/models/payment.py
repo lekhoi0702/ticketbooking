@@ -5,10 +5,13 @@ from app.utils.datetime_utils import now_gmt7
 class Payment(db.Model):
     __tablename__ = "Payment"
 
-    payment_id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('Order.order_id', ondelete='CASCADE'), unique=True, nullable=False, index=True)
-    payment_code = db.Column(db.String(100), unique=True, index=True)
-    payment_method = db.Column(db.Enum('CREDIT_CARD', 'BANK_TRANSFER', 'E_WALLET', 'MOMO', 'VNPAY', 'PAYPAL', 'VIETQR', 'CASH'), nullable=False)
+    payment_id = db.Column(db.BigInteger, primary_key=True)
+    order_id = db.Column(db.BigInteger, db.ForeignKey('Order.order_id', ondelete='CASCADE'), unique=True, nullable=False, index=True)
+    payment_code = db.Column(db.String(50), unique=True, index=True, nullable=True)
+    payment_method = db.Column(
+        db.Enum('CREDIT_CARD', 'BANK_TRANSFER', 'E_WALLET', 'MOMO', 'VNPAY', 'CASH', 'PAYPAL', 'VIETQR'),
+        nullable=True,
+    )
     transaction_id = db.Column(db.String(255))
     amount = db.Column(db.Numeric(15, 2), nullable=False)
     payment_status = db.Column(db.Enum('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED'), default='PENDING', index=True)

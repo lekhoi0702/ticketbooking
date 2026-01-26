@@ -23,42 +23,6 @@ export const advertisementAPI = {
     },
 
     /**
-     * Track advertisement view
-     * @param {number} adId - Advertisement ID
-     * @returns {Promise}
-     */
-    async trackView(adId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/advertisements/${adId}/view`, {
-                method: 'POST'
-            });
-            if (!response.ok) throw new Error('Failed to track view');
-            return await response.json();
-        } catch (error) {
-            console.error('Error tracking view:', error);
-            // Don't throw - tracking failures shouldn't break the app
-        }
-    },
-
-    /**
-     * Track advertisement click
-     * @param {number} adId - Advertisement ID
-     * @returns {Promise}
-     */
-    async trackClick(adId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/advertisements/${adId}/click`, {
-                method: 'POST'
-            });
-            if (!response.ok) throw new Error('Failed to track click');
-            return await response.json();
-        } catch (error) {
-            console.error('Error tracking click:', error);
-            // Don't throw - tracking failures shouldn't break the app
-        }
-    },
-
-    /**
      * Get all advertisements (admin only)
      * @param {boolean} includeInactive - Include inactive ads
      * @param {string} token - Auth token

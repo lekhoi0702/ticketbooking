@@ -5,11 +5,11 @@ import {
     FacebookFilled,
     InstagramFilled,
     LinkedinFilled,
-    GlobalOutlined,
     PhoneOutlined,
     MailOutlined,
     EnvironmentOutlined
 } from '@ant-design/icons';
+import { FaTiktok } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import './Footer.css';
 
@@ -107,10 +107,10 @@ const Footer = () => {
                                 <div className="footer-social-group">
                                     <Title level={5} className="footer-heading">Follow us</Title>
                                     <Space size={16} className="social-icons">
-                                        <a href="#" className="social-icon facebook"><FacebookFilled /></a>
-                                        <a href="#" className="social-icon instagram"><InstagramFilled /></a>
-                                        <a href="#" className="social-icon tiktok"><GlobalOutlined /></a>
-                                        <a href="#" className="social-icon linkedin"><LinkedinFilled /></a>
+                                        <a href="#" className="social-icon facebook" aria-label="Facebook"><FacebookFilled /></a>
+                                        <a href="#" className="social-icon instagram" aria-label="Instagram"><InstagramFilled /></a>
+                                        <a href="#" className="social-icon tiktok" aria-label="TikTok"><FaTiktok /></a>
+                                        <a href="#" className="social-icon linkedin" aria-label="LinkedIn"><LinkedinFilled /></a>
                                     </Space>
                                 </div>
                             </Col>

@@ -1,35 +1,18 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { advertisementAPI } from '@services/advertisementService';
 import { getImageUrl } from '@shared/utils/eventUtils';
 import './AdBanner.css';
 
 /**
  * AdBanner Component
- * Displays advertisement banner with tracking
+ * Displays advertisement banner
  */
 const AdBanner = ({ ad, className = '', style = {} }) => {
-    const viewTracked = useRef(false);
-
-    useEffect(() => {
-        // Track view only once when component mounts
-        if (ad && ad.ad_id && !viewTracked.current) {
-            advertisementAPI.trackView(ad.ad_id);
-            viewTracked.current = true;
-        }
-    }, [ad]);
-
-    const handleClick = () => {
-        if (ad && ad.ad_id) {
-            advertisementAPI.trackClick(ad.ad_id);
-        }
-    };
-
     if (!ad) {
         return null;
     }
 
-    const imageUrl = getImageUrl(ad.image_url);
+    const imageUrl = getImageUrl(ad.image);
 
     const content = (
         <div
@@ -38,11 +21,11 @@ const AdBanner = ({ ad, className = '', style = {} }) => {
         >
             <img
                 src={imageUrl}
-                alt={ad.title}
+                alt="advertisement"
                 className="ad-banner-image"
                 loading="lazy"
                 onError={(e) => {
-                    console.error('Failed to load ad image:', ad.image_url);
+                    console.error('Failed to load ad image:', ad.image);
                     e.target.style.display = 'none';
                 }}
             />
@@ -50,14 +33,13 @@ const AdBanner = ({ ad, className = '', style = {} }) => {
     );
 
     // If there's a link, wrap in anchor tag
-    if (ad.link_url && ad.link_url !== '#') {
+    if (ad.url && ad.url !== '#') {
         return (
             <a
-                href={ad.link_url}
+                href={ad.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ad-banner-link"
-                onClick={handleClick}
             >
                 {content}
             </a>
@@ -70,9 +52,8 @@ const AdBanner = ({ ad, className = '', style = {} }) => {
 AdBanner.propTypes = {
     ad: PropTypes.shape({
         ad_id: PropTypes.number.isRequired,
-        title: PropTypes.string.isRequired,
-        image_url: PropTypes.string.isRequired,
-        link_url: PropTypes.string
+        image: PropTypes.string.isRequired,
+        url: PropTypes.string
     }),
     className: PropTypes.string,
     style: PropTypes.object

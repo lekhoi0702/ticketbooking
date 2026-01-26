@@ -463,7 +463,7 @@ def process_order_cancellation(order_id):
         if not order:
             return jsonify({'success': False, 'message': 'Đơn hàng không tồn tại'}), 404
             
-        if order.order_status != 'CANCELLATION_PENDING':
+        if order.order_status != 'REFUND_PENDING':
             return jsonify({'success': False, 'message': 'Đơn hàng không ở trạng thái chờ hủy'}), 400
             
         if action == 'approve':

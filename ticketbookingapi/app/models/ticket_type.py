@@ -5,16 +5,14 @@ from app.utils.datetime_utils import now_gmt7
 class TicketType(db.Model):
     __tablename__ = "TicketType"
 
-    ticket_type_id = db.Column(db.Integer, primary_key=True)
-    event_id = db.Column(db.Integer, db.ForeignKey('Event.event_id', ondelete='CASCADE'), nullable=False, index=True)
+    ticket_type_id = db.Column(db.BigInteger, primary_key=True)
+    event_id = db.Column(db.BigInteger, db.ForeignKey('Event.event_id', ondelete='CASCADE'), nullable=False, index=True)
     type_name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     price = db.Column(db.Numeric(15, 2), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     sold_quantity = db.Column(db.Integer, default=0)
-    sale_start = db.Column(db.DateTime)
-    sale_end = db.Column(db.DateTime)
-    max_per_order = db.Column(db.Integer, default=10)
+    max_per_order = db.Column(db.Integer, default=10, nullable=True)
     is_active = db.Column(db.Boolean, default=True, index=True)
     created_at = db.Column(db.DateTime, default=now_gmt7)
 

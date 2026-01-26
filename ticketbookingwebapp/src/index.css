@@ -29,8 +29,30 @@ body {
 }
 
 .dark-theme {
-  background-color: rgb(39, 39, 42) !important;
-  color: #ffffff !important;
+  /* Customer theme tokens (SeatSelection palette) */
+  --tb-bg: rgb(39, 39, 42);
+  --tb-surface: rgba(18, 18, 18, 0.55);
+  --tb-surface-2: rgba(0, 0, 0, 0.18);
+  --tb-surface-elevated: rgba(27, 27, 30, 0.98);
+  --tb-border: rgba(255, 255, 255, 0.10);
+  --tb-border-strong: rgba(255, 255, 255, 0.12);
+  --tb-text: rgba(255, 255, 255, 0.92);
+  --tb-text-strong: rgba(255, 255, 255, 0.95);
+  --tb-text-muted: rgba(255, 255, 255, 0.65);
+  --tb-primary: #2dc275;
+  --tb-primary-soft: rgba(45, 194, 117, 0.14);
+  --tb-primary-ring: rgba(45, 194, 117, 0.20);
+
+  /* Bootstrap dark vars (scoped) */
+  --bs-body-bg: var(--tb-bg);
+  --bs-body-color: var(--tb-text);
+  --bs-border-color: var(--tb-border);
+  --bs-primary: var(--tb-primary);
+  --bs-success: var(--tb-primary);
+  --bs-focus-ring-color: rgba(45, 194, 117, 0.25);
+
+  background-color: var(--tb-bg) !important;
+  color: var(--tb-text) !important;
 }
 
 .dark-theme .app-content h1,
@@ -55,7 +77,7 @@ body {
 
 .dark-theme .ant-typography-secondary,
 .dark-theme .info-item.ant-typography-secondary {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: var(--tb-text-muted) !important;
 }
 
 /* Exception for seat map - don't override seat colors */
@@ -79,8 +101,9 @@ body {
 
 /* Exception for Order Summary sidebar - use dark text on white background */
 .dark-theme .order-summary-sidebar.card {
-  background-color: #ffffff !important;
-  color: #1f2937 !important;
+  background: var(--tb-surface) !important;
+  border: 1px solid var(--tb-border) !important;
+  color: var(--tb-text) !important;
 }
 
 .dark-theme .order-summary-sidebar h1,
@@ -92,37 +115,85 @@ body {
 .dark-theme .order-summary-sidebar p,
 .dark-theme .order-summary-sidebar span,
 .dark-theme .order-summary-sidebar div {
-  color: #1f2937 !important;
+  color: var(--tb-text) !important;
 }
 
 .dark-theme .order-summary-sidebar .text-muted {
-  color: #6b7280 !important;
+  color: var(--tb-text-muted) !important;
 }
 
 .dark-theme .order-summary-sidebar .text-primary {
-  color: #2DC275 !important;
+  color: var(--tb-primary) !important;
 }
 
 .dark-theme .order-summary-sidebar .text-success {
-  color: #2DC275 !important;
+  color: var(--tb-primary) !important;
 }
 
 .dark-theme .order-summary-sidebar .fw-bold {
-  color: #111827 !important;
+  color: var(--tb-text-strong) !important;
 }
 
 
 .dark-theme .ant-card {
-  background-color: #121212 !important;
-  border-color: #333 !important;
+  background-color: var(--tb-surface) !important;
+  border-color: var(--tb-border) !important;
 }
 
 .dark-theme .event-card-footer {
-  border-top-color: #333 !important;
+  border-top-color: var(--tb-border) !important;
 }
 
 .dark-theme .ant-divider {
-  border-top-color: #333 !important;
+  border-top-color: var(--tb-border) !important;
+}
+
+/* Base primitives: Ant Design + Bootstrap (customer-only, scoped by .dark-theme) */
+.dark-theme .ant-card,
+.dark-theme .card {
+  background: var(--tb-surface) !important;
+  border: 1px solid var(--tb-border) !important;
+  border-radius: 18px !important;
+}
+
+.dark-theme .btn-primary,
+.dark-theme .btn-success,
+.dark-theme .ant-btn-primary {
+  background: linear-gradient(135deg, var(--tb-primary) 0%, #22c55e 100%) !important;
+  border: none !important;
+}
+
+.dark-theme .btn-outline-light {
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: var(--tb-text) !important;
+}
+
+.dark-theme .form-control,
+.dark-theme .ant-input,
+.dark-theme .ant-input-affix-wrapper,
+.dark-theme .ant-select-selector,
+.dark-theme .ant-picker,
+.dark-theme .ant-input-number {
+  background: var(--tb-surface-2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: var(--tb-text) !important;
+  border-radius: 14px !important;
+}
+
+.dark-theme .form-control::placeholder,
+.dark-theme .ant-input::placeholder,
+.dark-theme .ant-select-selection-placeholder {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.dark-theme .form-control:focus,
+.dark-theme .ant-input:focus,
+.dark-theme .ant-input-affix-wrapper-focused,
+.dark-theme .ant-select-focused .ant-select-selector,
+.dark-theme .ant-picker-focused {
+  border-color: rgba(45, 194, 117, 0.7) !important;
+  box-shadow: 0 0 0 3px var(--tb-primary-ring) !important;
+  outline: none !important;
 }
 
 h1,

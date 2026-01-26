@@ -1,8 +1,8 @@
 /* EventDetail.css - TicketBooking Style */
 
 .event-detail-page {
-    background-color: rgb(39, 39, 42);
-    color: #ffffff;
+    background-color: var(--tb-bg);
+    color: var(--tb-text);
     min-height: 100vh;
     padding-bottom: 120px;
 }
@@ -19,9 +19,9 @@
     position: sticky;
     top: 120px;
     /* Below the total header height (72px + 48px) */
-    background: #1f1f23 !important;
+    background: var(--tb-surface-elevated) !important;
     z-index: 100;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--tb-border);
     padding: 12px 15px 12px 8px;
 }
 
@@ -33,7 +33,7 @@
 }
 
 .event-detail-nav .nav-link {
-    color: #9ca3af !important;
+    color: rgba(255, 255, 255, 0.70) !important;
     font-size: 14px;
     font-weight: 600;
     padding: 8px 24px !important;
@@ -42,14 +42,14 @@
 }
 
 .event-detail-nav .nav-link:hover {
-    color: white !important;
+    color: var(--tb-text-strong) !important;
     background: rgba(255, 255, 255, 0.05);
 }
 
 .event-detail-nav .nav-link:focus,
 .event-detail-nav .nav-link.active {
-    background-color: #2dc275 !important;
-    color: white !important;
+    background-color: var(--tb-primary) !important;
+    color: #ffffff !important;
 }
 
 .event-main-content {

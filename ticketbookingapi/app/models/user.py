@@ -8,11 +8,11 @@ class User(db.Model):
     __tablename__ = "User"
 
     user_id = db.Column(db.BigInteger, primary_key=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('Role.role_id'), nullable=False)
+    role_id = db.Column(db.BigInteger, db.ForeignKey('Role.role_id'), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(255), nullable=False)
-    phone = db.Column(db.String(20))
+    phone = db.Column(db.String(30))
     created_at = db.Column(db.DateTime, default=now_gmt7)
     updated_at = db.Column(db.DateTime, default=now_gmt7, onupdate=now_gmt7)
     is_active = db.Column(db.Boolean, default=True, index=True)

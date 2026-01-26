@@ -130,8 +130,8 @@ const EditEvent = () => {
                     setBannerPreview(getImageUrl(event.banner_image_url));
                 }
 
-                if (event.vietqr_image_url) {
-                    setVietqrPreview(getImageUrl(event.vietqr_image_url));
+                if (event.qr_image_url) {
+                    setVietqrPreview(getImageUrl(event.qr_image_url));
                 }
 
                 // Optimized: Fetch ALL seats for the event in one go

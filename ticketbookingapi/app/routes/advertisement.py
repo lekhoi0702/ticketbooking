@@ -5,7 +5,6 @@ API endpoints for advertisement management
 from flask import Blueprint, jsonify, request, g
 from app.services.advertisement_service import AdvertisementService
 from app.decorators.auth import require_auth, require_admin
-from datetime import datetime
 from app.utils.datetime_utils import parse_to_gmt7
 
 advertisement_bp = Blueprint('advertisement', __name__, url_prefix='/api/advertisements')
@@ -96,8 +95,7 @@ def create_ad():
         from app.utils.upload_helper import save_advertisement_image, allowed_file
         
         # Get form data
-        title = request.form.get('title')
-        link_url = request.form.get('link_url', '')
+        url = request.form.get('url') or None
         position = request.form.get('position')
         display_order = request.form.get('display_order', 0, type=int)
         is_active = request.form.get('is_active', 'true').lower() == 'true'
@@ -105,10 +103,10 @@ def create_ad():
         end_date_str = request.form.get('end_date')
         
         # Validate required fields
-        if not title or not position:
+        if not position:
             return jsonify({
                 'success': False,
-                'message': 'Missing required fields: title, position'
+                'message': 'Missing required fields: position'
             }), 400
         
         # Handle file upload
@@ -134,9 +132,8 @@ def create_ad():
         
         # Prepare data
         data = {
-            'title': title,
-            'image_url': image_url,
-            'link_url': link_url,
+            'image': image_url,
+            'url': url,
             'position': position,
             'display_order': display_order,
             'is_active': is_active
@@ -146,10 +143,6 @@ def create_ad():
             data['start_date'] = parse_to_gmt7(start_date_str)
         if end_date_str:
             data['end_date'] = parse_to_gmt7(end_date_str)
-        
-        # Add creator (when auth is re-enabled)
-        # data['created_by'] = g.current_user.user_id
-        data['created_by'] = 1  # Temporary hardcode
         
         ad = AdvertisementService.create_ad(data)
         
@@ -179,10 +172,8 @@ def update_ad(ad_id):
         # Get form data
         data = {}
         
-        if 'title' in request.form:
-            data['title'] = request.form.get('title')
-        if 'link_url' in request.form:
-            data['link_url'] = request.form.get('link_url')
+        if 'url' in request.form:
+            data['url'] = request.form.get('url') or None
         if 'position' in request.form:
             data['position'] = request.form.get('position')
         if 'display_order' in request.form:
@@ -195,7 +186,7 @@ def update_ad(ad_id):
         if file and allowed_file(file.filename):
             image_url = save_advertisement_image(file)
             if image_url:
-                data['image_url'] = image_url
+                data['image'] = image_url
         
         # Parse dates if provided
         start_date_str = request.form.get('start_date')
@@ -254,53 +245,4 @@ def delete_ad(ad_id):
         }), 500
 
 
-@advertisement_bp.route('/<int:ad_id>/view', methods=['POST'])
-def track_view(ad_id):
-    """
-    Track advertisement view
-    Public endpoint - no authentication required
-    """
-    try:
-        success = AdvertisementService.increment_view(ad_id)
-        
-        if not success:
-            return jsonify({
-                'success': False,
-                'message': 'Advertisement not found'
-            }), 404
-        
-        return jsonify({
-            'success': True,
-            'message': 'View tracked successfully'
-        }), 200
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Error tracking view: {str(e)}'
-        }), 500
-
-
-@advertisement_bp.route('/<int:ad_id>/click', methods=['POST'])
-def track_click(ad_id):
-    """
-    Track advertisement click
-    Public endpoint - no authentication required
-    """
-    try:
-        success = AdvertisementService.increment_click(ad_id)
-        
-        if not success:
-            return jsonify({
-                'success': False,
-                'message': 'Advertisement not found'
-            }), 404
-        
-        return jsonify({
-            'success': True,
-            'message': 'Click tracked successfully'
-        }), 200
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Error tracking click: {str(e)}'
-        }), 500
+## Tracking endpoints removed (DB schema doesn't store view/click counts).
