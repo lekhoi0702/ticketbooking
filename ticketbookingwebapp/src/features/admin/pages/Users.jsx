@@ -492,16 +492,16 @@ const UsersManagement = () => {
                                     >
                                         {actionText}
                                     </Button>
-                                <Button
-                                    icon={<KeyOutlined />}
-                                    onClick={() => {
-                                        const user = users.find(u => u.user_id === selectedRowKeys[0]);
-                                        handleResetPassword(user.user_id, user.full_name);
-                                    }}
-                                    style={{ color: '#1890ff' }}
-                                >
-                                    Đặt lại mật khẩu
-                                </Button>
+                                    <Button
+                                        icon={<KeyOutlined />}
+                                        onClick={() => {
+                                            const user = users.find(u => u.user_id === selectedRowKeys[0]);
+                                            handleResetPassword(user.user_id, user.full_name);
+                                        }}
+                                        style={{ color: '#1890ff' }}
+                                    >
+                                        Đặt lại mật khẩu
+                                    </Button>
                                 </Space>
                             );
                         })()}
@@ -666,7 +666,7 @@ const UsersManagement = () => {
                             message="Vui lòng cung cấp mật khẩu tạm cho user/organizer. Sau khi đăng nhập, họ sẽ được yêu cầu đổi mật khẩu."
                             style={{ marginBottom: 16 }}
                         />
-                        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                        <Space orientation="vertical" size={12} style={{ width: '100%' }}>
                             {resetPasswordResult.full_name && (
                                 <div>
                                     <Text type="secondary">Họ tên: </Text>

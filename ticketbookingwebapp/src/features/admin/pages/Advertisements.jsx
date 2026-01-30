@@ -98,7 +98,7 @@ const Advertisements = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            
+
             if (!isEditing && fileList.length === 0) {
                 message.error('Vui lòng chọn hình ảnh quảng cáo');
                 return;
@@ -112,7 +112,7 @@ const Advertisements = () => {
             formData.append('position', values.position);
             formData.append('display_order', values.display_order || 0);
             formData.append('is_active', (values.is_active !== undefined ? values.is_active : true).toString());
-            
+
             if (values.start_date) {
                 formData.append('start_date', values.start_date.format('YYYY-MM-DDTHH:mm:ss'));
             }
@@ -287,7 +287,7 @@ const Advertisements = () => {
             key: 'status',
             width: 150,
             render: (_, record) => (
-                <Space direction="vertical" size={4}>
+                <Space orientation="vertical" size={4}>
                     {getStatusTag(record)}
                     <Switch
                         size="small"
@@ -420,16 +420,16 @@ const Advertisements = () => {
                         <Upload {...uploadProps}>
                             <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
                         </Upload>
-                        
+
                         {/* Preview ảnh mới được chọn */}
                         {fileList.length > 0 && (
                             <div style={{ marginTop: 16 }}>
                                 <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
                                     {isEditing ? 'Ảnh mới được chọn:' : 'Xem trước ảnh:'}
                                 </Text>
-                                <div style={{ 
-                                    border: '1px solid #d9d9d9', 
-                                    borderRadius: 4, 
+                                <div style={{
+                                    border: '1px solid #d9d9d9',
+                                    borderRadius: 4,
                                     padding: 8,
                                     display: 'inline-block',
                                     background: '#fafafa'
@@ -437,9 +437,9 @@ const Advertisements = () => {
                                     <img
                                         src={URL.createObjectURL(fileList[0].originFileObj || fileList[0])}
                                         alt="preview"
-                                        style={{ 
-                                            width: '100%', 
-                                            maxWidth: '400px', 
+                                        style={{
+                                            width: '100%',
+                                            maxWidth: '400px',
                                             maxHeight: '300px',
                                             objectFit: 'contain',
                                             borderRadius: 4,
@@ -449,16 +449,16 @@ const Advertisements = () => {
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* Hiển thị ảnh hiện tại khi edit và chưa chọn ảnh mới */}
                         {isEditing && currentAd?.image_url && fileList.length === 0 && (
                             <div style={{ marginTop: 16 }}>
                                 <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
                                     Hình ảnh hiện tại:
                                 </Text>
-                                <div style={{ 
-                                    border: '1px solid #d9d9d9', 
-                                    borderRadius: 4, 
+                                <div style={{
+                                    border: '1px solid #d9d9d9',
+                                    borderRadius: 4,
                                     padding: 8,
                                     display: 'inline-block',
                                     background: '#fafafa'
@@ -466,9 +466,9 @@ const Advertisements = () => {
                                     <img
                                         src={getImageUrl(currentAd.image_url)}
                                         alt="current"
-                                        style={{ 
-                                            width: '100%', 
-                                            maxWidth: '400px', 
+                                        style={{
+                                            width: '100%',
+                                            maxWidth: '400px',
                                             maxHeight: '300px',
                                             objectFit: 'contain',
                                             borderRadius: 4,
@@ -510,7 +510,7 @@ const Advertisements = () => {
                     </Row>
 
                     <Form.Item label="Thời gian hiển thị (tùy chọn)">
-                        <Space direction="vertical" style={{ width: '100%' }}>
+                        <Space orientation="vertical" style={{ width: '100%' }}>
                             <Form.Item name="start_date" noStyle>
                                 <DatePicker
                                     showTime

@@ -119,7 +119,7 @@ const DiscountManagement = () => {
             title: 'Thời gian',
             key: 'date',
             render: (_, r) => (
-                <Space direction="vertical" size={0}>
+                <Space orientation="vertical" size={0}>
                     <Text style={{ fontSize: 12 }}>{new Date(r.start_date).toLocaleDateString('vi-VN')}</Text>
                     <Text style={{ fontSize: 12 }}>đến {new Date(r.end_date).toLocaleDateString('vi-VN')}</Text>
                 </Space>

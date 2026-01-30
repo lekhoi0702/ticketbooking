@@ -23,14 +23,14 @@ const SeatSelection = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { isAuthenticated, triggerLogin } = useAuth();
-    
+
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedTicketType, setSelectedTicketType] = useState(null);
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [hasSeatMap, setHasSeatMap] = useState({});
     const [quantity, setQuantity] = useState(1);
-    
+
     // Get ticket type from location state (if coming from schedule selection)
     const ticketTypeIdFromState = location.state?.ticketTypeId;
 
@@ -60,14 +60,14 @@ const SeatSelection = () => {
             const response = await api.getEvent(eventId);
             if (response.success) {
                 const eventData = response.data;
-                
+
                 // Convert ticket_types to array if needed
                 if (eventData.ticket_types && typeof eventData.ticket_types === 'object' && !Array.isArray(eventData.ticket_types)) {
                     eventData.ticket_types = Object.values(eventData.ticket_types);
                 }
-                
+
                 setEvent(eventData);
-                
+
                 // Check seat maps for all ticket types
                 if (eventData.ticket_types) {
                     // Mark as "checking" to avoid premature checkout enablement
@@ -100,6 +100,10 @@ const SeatSelection = () => {
 
     const handleSeatSelection = (seats) => {
         setSelectedSeats(seats);
+        // When seat map exists, quantity = number of selected seats (each seat = 1 ticket)
+        if (selectedTicketType && hasSeatMap[selectedTicketType.ticket_type_id] === true) {
+            setQuantity(seats.length || 1);
+        }
     };
 
     const handleSeatsLoaded = (ticketTypeId, exists) => {
@@ -155,19 +159,14 @@ const SeatSelection = () => {
         const hasSeatMapForType = seatMapState === true;
 
         if (hasSeatMapForType && selectedSeats.length === 0) {
-            message.warning('Vui lòng chọn ghế trước khi thanh toán');
-            return;
-        }
-
-        if (hasSeatMapForType && selectedSeats.length !== quantity) {
-            message.warning(`Vui lòng chọn đủ ${quantity} ghế`);
+            message.warning('Vui lòng chọn ít nhất 1 ghế trước khi thanh toán');
             return;
         }
 
         // Navigate to checkout
         const navigationId = `checkout_${eventId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         sessionStorage.setItem(`checkout_nav_id_${eventId}`, navigationId);
-        
+
         navigate(`/checkout/${eventId}`, {
             state: {
                 selectedTickets: { [ticketTypeId]: quantity },
@@ -217,8 +216,8 @@ const SeatSelection = () => {
     const isSelectionComplete = !selectedTicketType
         ? false
         : requiresSeatSelection
-            ? selectedSeats.length === quantity && quantity > 0
-            : true;
+            ? selectedSeats.length > 0  // Just need at least 1 seat selected (quantity auto-updates)
+            : quantity > 0;  // For non-seat-map tickets, need quantity > 0
 
     const totalPrice = selectedTicketType ? selectedTicketType.price * quantity : 0;
 
@@ -318,55 +317,57 @@ const SeatSelection = () => {
                             </Card.Body>
                         </Card>
 
-                        {/* Quantity */}
-                        <Card className="seat-panel mb-4">
-                            <Card.Body className="seat-panel-body">
-                                <div className="seat-qty-row">
-                                    <div>
-                                        <div className="seat-panel-title">Số lượng vé</div>
-                                        <div className="seat-panel-desc">
-                                            {selectedTicketType
-                                                ? `Tối đa ${selectedTicketType.max_per_order || 10} vé mỗi đơn hàng.`
-                                                : 'Vui lòng chọn loại vé trước.'}
+                        {/* Quantity - Only show when no seat map (each seat = 1 ticket when seat map exists) */}
+                        {!requiresSeatSelection && (
+                            <Card className="seat-panel mb-4">
+                                <Card.Body className="seat-panel-body">
+                                    <div className="seat-qty-row">
+                                        <div>
+                                            <div className="seat-panel-title">Số lượng vé</div>
+                                            <div className="seat-panel-desc">
+                                                {selectedTicketType
+                                                    ? `Tối đa ${selectedTicketType.max_per_order || 10} vé mỗi đơn hàng.`
+                                                    : 'Vui lòng chọn loại vé trước.'}
+                                            </div>
+                                        </div>
+                                        <div className="seat-qty-control" aria-label="Chọn số lượng vé">
+                                            <button
+                                                type="button"
+                                                className="seat-qty-btn"
+                                                onClick={() =>
+                                                    selectedTicketType
+                                                        ? handleTicketQuantityChange(selectedTicketType.ticket_type_id, quantity - 1)
+                                                        : null
+                                                }
+                                                disabled={!selectedTicketType || quantity <= 1}
+                                                aria-label="Giảm số lượng"
+                                            >
+                                                −
+                                            </button>
+                                            <div className="seat-qty-value" aria-label={`Số lượng hiện tại ${quantity}`}>
+                                                {quantity}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="seat-qty-btn"
+                                                onClick={() =>
+                                                    selectedTicketType
+                                                        ? handleTicketQuantityChange(selectedTicketType.ticket_type_id, quantity + 1)
+                                                        : null
+                                                }
+                                                disabled={
+                                                    !selectedTicketType ||
+                                                    quantity >= (selectedTicketType?.max_per_order || 10)
+                                                }
+                                                aria-label="Tăng số lượng"
+                                            >
+                                                +
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="seat-qty-control" aria-label="Chọn số lượng vé">
-                                        <button
-                                            type="button"
-                                            className="seat-qty-btn"
-                                            onClick={() =>
-                                                selectedTicketType
-                                                    ? handleTicketQuantityChange(selectedTicketType.ticket_type_id, quantity - 1)
-                                                    : null
-                                            }
-                                            disabled={!selectedTicketType || quantity <= 1}
-                                            aria-label="Giảm số lượng"
-                                        >
-                                            −
-                                        </button>
-                                        <div className="seat-qty-value" aria-label={`Số lượng hiện tại ${quantity}`}>
-                                            {quantity}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            className="seat-qty-btn"
-                                            onClick={() =>
-                                                selectedTicketType
-                                                    ? handleTicketQuantityChange(selectedTicketType.ticket_type_id, quantity + 1)
-                                                    : null
-                                            }
-                                            disabled={
-                                                !selectedTicketType ||
-                                                quantity >= (selectedTicketType?.max_per_order || 10)
-                                            }
-                                            aria-label="Tăng số lượng"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                            </Card.Body>
-                        </Card>
+                                </Card.Body>
+                            </Card>
+                        )}
 
                         {/* Seat Map */}
                         <Card className="seat-panel">
@@ -378,13 +379,13 @@ const SeatSelection = () => {
                                             {isSeatMapChecking
                                                 ? 'Đang kiểm tra sơ đồ ghế...'
                                                 : requiresSeatSelection
-                                                    ? `Vui lòng chọn đủ ${quantity} ghế để tiếp tục.`
+                                                    ? 'Chọn ghế ngồi của bạn. Mỗi ghế tương ứng với 1 vé.'
                                                     : 'Loại vé này không yêu cầu chọn số ghế cụ thể.'}
                                         </div>
                                     </div>
                                     {requiresSeatSelection ? (
-                                        <div className="seat-progress-chip" aria-label="Tiến độ chọn ghế">
-                                            {selectedSeats.length}/{quantity}
+                                        <div className="seat-progress-chip" aria-label="Số ghế đã chọn">
+                                            {selectedSeats.length} ghế
                                         </div>
                                     ) : (
                                         <div className="seat-progress-chip success" aria-label="Trạng thái chọn ghế">
@@ -443,7 +444,7 @@ const SeatSelection = () => {
                                         <div className="seat-summary-title">Tóm tắt</div>
                                         <div className="seat-summary-subtitle">
                                             {requiresSeatSelection
-                                                ? `Đã chọn ${selectedSeats.length}/${quantity} ghế`
+                                                ? `Đã chọn ${selectedSeats.length} ghế`
                                                 : 'Không cần chọn ghế'}
                                         </div>
                                     </div>

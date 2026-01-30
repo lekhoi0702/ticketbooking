@@ -161,7 +161,7 @@ const AdminOrdersManagement = () => {
             title: 'MÃ ĐƠN / NGÀY',
             key: 'order',
             render: (_, record) => (
-                <Space direction="vertical" size={0}>
+                <Space orientation="vertical" size={0}>
                     <Text strong style={{ color: '#2DC275' }}>{record.order_code}</Text>
                     <Text type="secondary" style={{ fontSize: 16 }}>
                         <HistoryOutlined /> {new Date(record.created_at).toLocaleString('vi-VN')}
@@ -173,7 +173,7 @@ const AdminOrdersManagement = () => {
             title: 'KHÁCH HÀNG',
             key: 'customer',
             render: (_, record) => (
-                <Space direction="vertical" size={0}>
+                <Space orientation="vertical" size={0}>
                     <Text strong style={{ fontSize: 16 }}>{record.customer_name}</Text>
                     <Text type="secondary" style={{ fontSize: 16 }}>SĐT: {record.customer_phone || 'N/A'}</Text>
                 </Space>

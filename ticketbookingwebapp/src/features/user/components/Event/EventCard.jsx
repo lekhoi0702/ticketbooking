@@ -20,8 +20,8 @@ const EventCard = ({ event }) => {
     // Handle auto-toggle favorite after login
     useEffect(() => {
         const handlePendingFavorite = async () => {
-            if (isAuthenticated && 
-                redirectIntent?.action === 'favorite' && 
+            if (isAuthenticated &&
+                redirectIntent?.action === 'favorite' &&
                 redirectIntent?.eventId === event.id) {
                 clearRedirectIntent();
                 const result = await toggleFavorite(event.id);
@@ -51,7 +51,7 @@ const EventCard = ({ event }) => {
     return (
         <Link to={`/event/${event.id}`} className="event-card-link">
             <motion.div
-                whileHover={{ 
+                whileHover={{
                     y: -10,
                     transition: { duration: 0.3, ease: "easeOut" }
                 }}
@@ -62,20 +62,20 @@ const EventCard = ({ event }) => {
                     hoverable
                     cover={
                         <div className="event-card-image-wrapper">
-                            <motion.img 
-                                src={event.image} 
-                                alt={event.title} 
+                            <motion.img
+                                src={event.image}
+                                alt={event.title}
                                 className="event-card-img"
                                 whileHover={{ scale: 1.05 }}
                                 transition={{ duration: 0.4 }}
                             />
-                            <motion.div 
+                            <motion.div
                                 className="event-card-overlay"
                                 initial={{ opacity: 0 }}
                                 whileHover={{ opacity: 1 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <motion.span 
+                                <motion.span
                                     className="event-card-buy-btn"
                                     initial={{ y: 10, opacity: 0 }}
                                     whileHover={{ y: 0, opacity: 1 }}
@@ -89,7 +89,7 @@ const EventCard = ({ event }) => {
                                 onClick={handleToggleFavorite}
                                 whileHover={{ scale: 1.15 }}
                                 whileTap={{ scale: 0.9 }}
-                                transition={{ 
+                                transition={{
                                     type: "spring",
                                     stiffness: 400,
                                     damping: 17
@@ -98,7 +98,7 @@ const EventCard = ({ event }) => {
                                 {favorited ? <StarFilled /> : <StarOutlined />}
                             </motion.div>
                             {event.badge && (
-                                <motion.div 
+                                <motion.div
                                     className="event-card-badge-hot"
                                     initial={{ x: -20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
@@ -115,7 +115,7 @@ const EventCard = ({ event }) => {
                             {event.title}
                         </Title>
 
-                        <Space direction="vertical" size={4} className="event-card-info">
+                        <Space orientation="vertical" size={4} className="event-card-info">
                             <Text type="secondary" className="info-item">
                                 <ClockCircleOutlined /> {event.date}
                             </Text>

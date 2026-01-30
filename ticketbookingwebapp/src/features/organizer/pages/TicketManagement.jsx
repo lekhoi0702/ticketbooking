@@ -137,7 +137,7 @@ const TicketManagement = () => {
             title: 'Khách hàng',
             key: 'holder',
             render: (_, record) => (
-                <Space direction="vertical" size={0}>
+                <Space orientation="vertical" size={0}>
                     <Text strong><UserOutlined /> {record.holder_name}</Text>
                     <Text type="secondary" style={{ fontSize: 12 }}>{record.holder_email}</Text>
                 </Space>
@@ -151,7 +151,7 @@ const TicketManagement = () => {
                 const color = status === 'ACTIVE' ? 'green' : status === 'USED' ? 'gold' : 'red';
                 const label = status === 'ACTIVE' ? 'Chưa sử dụng' : status === 'USED' ? 'Đã Check-in' : 'Đã hủy';
                 return (
-                    <Space direction="vertical" size={0}>
+                    <Space orientation="vertical" size={0}>
                         <Tag color={color}>{label}</Tag>
                         {status === 'USED' && record.checked_in_at && (
                             <Text type="secondary" style={{ fontSize: 11 }}>
@@ -183,7 +183,7 @@ const TicketManagement = () => {
 
 
             <Card style={{ marginBottom: 24 }}>
-                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                <Space orientation="vertical" style={{ width: '100%' }} size="large">
                     <div style={{ textAlign: 'center', padding: '20px 0' }}>
                         <Title level={2} style={{ margin: 0 }}>
                             <QrcodeOutlined style={{ color: '#1890ff' }} /> Tra cứu vé

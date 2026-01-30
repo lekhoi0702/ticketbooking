@@ -111,7 +111,7 @@ const Header = () => {
                         </Link>
 
                         <div className="header-search">
-                            <Input.Group compact className="custom-search-input">
+                            <Space.Compact className="custom-search-input" style={{ width: '100%' }}>
                                 <Input
                                     placeholder="Tìm kiếm sự kiện, nghệ sĩ..."
                                     value={searchQuery}
@@ -139,7 +139,7 @@ const Header = () => {
                                 >
                                     Tìm kiếm
                                 </Button>
-                            </Input.Group>
+                            </Space.Compact>
                             {showSuggestions && (
                                 <div className="search-suggestions" ref={suggestionRef}>
                                     <List

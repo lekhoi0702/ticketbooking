@@ -8,10 +8,10 @@ import { FaUser, FaEnvelope, FaPhone } from 'react-icons/fa';
 const CustomerInfoForm = ({ customerInfo, setCustomerInfo }) => {
     return (
         <Card className="mb-4 border-0 shadow-sm rounded-4">
-            <Card.Header className="bg-white py-3 border-bottom">
-                <h5 className="mb-0 fw-bold">Thông Tin Liên Hệ</h5>
+            <Card.Header className="py-3 border-bottom" style={{ backgroundColor: 'rgb(45, 194, 117)' }}>
+                <h5 className="mb-0 fw-bold" style={{ color: '#ffffff' }}>Thông Tin Liên Hệ</h5>
             </Card.Header>
-            <Card.Body className="p-4">
+            <Card.Body className="p-4" style={{ backgroundColor: 'rgba(18, 18, 18, 0.55)' }}>
                 <Row>
                     <Col md={12} className="mb-3">
                         <Form.Group>
@@ -65,32 +65,53 @@ const CustomerInfoForm = ({ customerInfo, setCustomerInfo }) => {
 
                 <style>{`
                     .border-success {
-                        border-color: #28a745 !important;
-                        background-color: rgba(40, 167, 69, 0.05);
+                        border-color: rgba(45, 194, 117, 0.55) !important;
+                        background-color: rgba(45, 194, 117, 0.10);
                     }
                     .border-success:focus {
-                        border-color: #28a745 !important;
-                        box-shadow: 0 0 0 0.1rem rgba(40, 167, 69, 0.25);
+                        border-color: rgba(45, 194, 117, 0.7) !important;
+                        box-shadow: 0 0 0 3px rgba(45, 194, 117, 0.20);
                     }
-                    /* Fix white text on white background */
-                    .card .form-control,
-                    .card .form-control:focus,
-                    .card input,
-                    .card input:focus {
-                        color: rgb(42, 45, 52) !important;
+                    /* Card header - white text on green background */
+                    .card .card-header h5,
+                    .card .card-header label {
+                        color: #ffffff !important;
                     }
-                    .card .form-label,
-                    .card label,
-                    .card h5 {
-                        color: rgb(42, 45, 52) !important;
+                    /* Card body - white text on dark surface */
+                    .card .card-body .form-control,
+                    .card .card-body .form-control:focus,
+                    .card .card-body input,
+                    .card .card-body input:focus {
+                        color: rgba(255, 255, 255, 0.92) !important;
+                        background-color: rgba(0, 0, 0, 0.18);
+                        border-color: rgba(255, 255, 255, 0.14);
+                        border-radius: 14px;
                     }
-                    .card .form-control::placeholder {
-                        color: #6c757d !important;
-                        opacity: 0.7;
+                    .card .card-body .form-label,
+                    .card .card-body label {
+                        color: rgba(255, 255, 255, 0.96) !important;
+                        font-weight: 700;
                     }
-                    /* Reduce default Bootstrap focus shadow */
-                    .card .form-control:focus {
-                        box-shadow: 0 0 0 0.1rem rgba(13, 110, 253, 0.25) !important;
+                    .card .card-body .form-control::placeholder {
+                        color: rgba(255, 255, 255, 0.55) !important;
+                        opacity: 1;
+                    }
+                    .card .card-body .form-control:focus {
+                        border-color: rgba(45, 194, 117, 0.7) !important;
+                        box-shadow: 0 0 0 3px rgba(45, 194, 117, 0.20) !important;
+                        outline: none !important;
+                    }
+                    .card .card-body .text-danger {
+                        color: #ff6b6b !important;
+                    }
+                    .card .card-body .text-primary {
+                        color: #2dc275 !important;
+                    }
+                    .card .card-body .text-info {
+                        color: #60a5fa !important;
+                    }
+                    .card .card-body .text-warning {
+                        color: #fbbf24 !important;
                     }
                 `}</style>
             </Card.Body>

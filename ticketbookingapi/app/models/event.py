@@ -14,14 +14,14 @@ class Event(db.Model):
         index=True,
     )
     venue_id = db.Column(db.BigInteger, db.ForeignKey('Venue.venue_id'), nullable=False, index=True)
-    manager_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=False)
+    organizer_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=False)
     event_name = db.Column(db.String(500), nullable=False)
     description = db.Column(db.Text)
-    start_datetime = db.Column(db.DateTime, nullable=False, index=True)
-    end_datetime = db.Column(db.DateTime, nullable=False)
-    banner_image_url = db.Column(db.String(1000), nullable=True)
-    # DB column is `qr_image_url` (not `vietqr_image_url`)
-    qr_image_url = db.Column(db.String(1000), nullable=True)
+    start_datetime = db.Column('start_time', db.DateTime, nullable=False, index=True)
+    end_datetime = db.Column('end_time', db.DateTime, nullable=False)
+    banner_image_url = db.Column('banner_image', db.String(1000), nullable=True)
+    # DB column is `qr_image` (not `qr_image_url`)
+    qr_image_url = db.Column('qr_image', db.String(1000), nullable=True)
     total_capacity = db.Column(db.Integer, nullable=False)
     sold_tickets = db.Column(db.Integer, default=0)
     status = db.Column(
@@ -36,13 +36,14 @@ class Event(db.Model):
 
     # Relationships
     ticket_types = db.relationship('TicketType', backref='event', lazy=True, cascade='all, delete-orphan')
+    organizer = db.relationship('User', foreign_keys=[organizer_id], backref='organized_events', lazy=True, overlaps="events,manager")
 
     def to_dict(self, include_details=False):
         data = {
             'event_id': self.event_id,
             'category_id': self.category_id,
             'venue_id': self.venue_id,
-            'manager_id': self.manager_id,
+            'organizer_id': self.organizer_id,
             'event_name': self.event_name,
             'description': self.description,
             'start_datetime': self.start_datetime.isoformat() if self.start_datetime else None,
@@ -60,6 +61,6 @@ class Event(db.Model):
             data['category'] = self.category.to_dict() if self.category else None
             data['venue'] = self.venue.to_dict() if self.venue else None
             data['ticket_types'] = [tt.to_dict() for tt in self.ticket_types] if self.ticket_types else []
-            data['organizer_info'] = self.manager.organizer_info.to_dict() if self.manager and self.manager.organizer_info else None
+            data['organizer_info'] = self.organizer.organizer_info.to_dict() if self.organizer and self.organizer.organizer_info else None
         
         return data

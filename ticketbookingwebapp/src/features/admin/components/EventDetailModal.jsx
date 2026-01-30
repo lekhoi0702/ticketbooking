@@ -213,9 +213,9 @@ const EventDetailModal = ({
                                 <Title level={4} style={{ color: 'white', margin: 0 }}>
                                     {selectedEvent.event_name}
                                 </Title>
-                                <Paragraph 
-                                    style={{ 
-                                        color: 'rgba(255,255,255,0.9)', 
+                                <Paragraph
+                                    style={{
+                                        color: 'rgba(255,255,255,0.9)',
                                         marginTop: 12,
                                         marginBottom: 0,
                                         fontSize: 16,
@@ -233,11 +233,11 @@ const EventDetailModal = ({
                             <Col span={24}>
                                 {/* Danh sách các ngày diễn — luôn dựa vào API */}
                                 <Title level={5}>
-                                    {showtimesList.length > 1 
-                                        ? `Các ngày diễn (${showtimesList.length})` 
+                                    {showtimesList.length > 1
+                                        ? `Các ngày diễn (${showtimesList.length})`
                                         : 'Thông tin chi tiết'}
                                 </Title>
-                                
+
                                 {loadingShowtimes ? (
                                     <div style={{ padding: '20px 0', textAlign: 'center' }}>
                                         <Spin size="small" tip="Đang tải danh sách ngày diễn..." />
@@ -328,7 +328,7 @@ const EventDetailModal = ({
                                                     <Row gutter={[24, 16]}>
                                                         {/* Cột trái: Thông tin cơ bản */}
                                                         <Col span={12}>
-                                                            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                                            <Space orientation="vertical" size={16} style={{ width: '100%' }}>
                                                                 <div>
                                                                     <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>
                                                                         Địa điểm
@@ -373,7 +373,7 @@ const EventDetailModal = ({
                                                                     <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 8 }}>
                                                                         Thời gian diễn ra
                                                                     </Text>
-                                                                    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                                                                    <Space orientation="vertical" size={4} style={{ width: '100%' }}>
                                                                         <Space>
                                                                             <CalendarOutlined style={{ color: '#52c41a' }} />
                                                                             <Text style={{ fontSize: 16 }}>
@@ -393,7 +393,7 @@ const EventDetailModal = ({
                                                                     <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 8 }}>
                                                                         Thời gian bán vé
                                                                     </Text>
-                                                                    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                                                                    <Space orientation="vertical" size={4} style={{ width: '100%' }}>
                                                                         <Space>
                                                                             <ClockCircleOutlined style={{ color: '#1890ff' }} />
                                                                             <Text style={{ fontSize: 16 }}>
@@ -418,7 +418,7 @@ const EventDetailModal = ({
                                                                     Loại vé ({showtime.ticket_types?.length || 0})
                                                                 </Text>
                                                                 {showtime.ticket_types && showtime.ticket_types.length > 0 ? (
-                                                                    <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                                                                    <Space orientation="vertical" size={8} style={{ width: '100%' }}>
                                                                         {showtime.ticket_types.map((ticketType) => (
                                                                             <Card
                                                                                 key={ticketType.ticket_type_id}
@@ -430,7 +430,7 @@ const EventDetailModal = ({
                                                                             >
                                                                                 <Row gutter={16} align="middle">
                                                                                     <Col span={12}>
-                                                                                        <Space direction="vertical" size={2}>
+                                                                                        <Space orientation="vertical" size={2}>
                                                                                             <Text strong style={{ fontSize: 16 }}>
                                                                                                 {ticketType.type_name}
                                                                                             </Text>
@@ -518,7 +518,7 @@ const EventDetailModal = ({
                                     >
                                         <Row gutter={[24, 16]}>
                                             <Col span={12}>
-                                                <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
                                                     <div>
                                                         <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>
                                                             Địa điểm
@@ -563,7 +563,7 @@ const EventDetailModal = ({
                                                         <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 8 }}>
                                                             Thời gian diễn ra
                                                         </Text>
-                                                        <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                                                        <Space orientation="vertical" size={4} style={{ width: '100%' }}>
                                                             <Space>
                                                                 <CalendarOutlined style={{ color: '#52c41a' }} />
                                                                 <Text style={{ fontSize: 16 }}>
@@ -601,7 +601,7 @@ const EventDetailModal = ({
                                                         <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 8 }}>
                                                             Thời gian bán vé
                                                         </Text>
-                                                        <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                                                        <Space orientation="vertical" size={4} style={{ width: '100%' }}>
                                                             <Space>
                                                                 <ClockCircleOutlined style={{ color: '#1890ff' }} />
                                                                 <Text style={{ fontSize: 16 }}>
@@ -643,7 +643,7 @@ const EventDetailModal = ({
                                                         Loại vé ({selectedEvent.ticket_types?.length || 0})
                                                     </Text>
                                                     {selectedEvent.ticket_types && selectedEvent.ticket_types.length > 0 ? (
-                                                        <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                                                        <Space orientation="vertical" size={8} style={{ width: '100%' }}>
                                                             {selectedEvent.ticket_types.map((ticketType) => (
                                                                 <Card
                                                                     key={ticketType.ticket_type_id}
@@ -655,7 +655,7 @@ const EventDetailModal = ({
                                                                 >
                                                                     <Row gutter={16} align="middle">
                                                                         <Col span={12}>
-                                                                            <Space direction="vertical" size={2}>
+                                                                            <Space orientation="vertical" size={2}>
                                                                                 <Text strong style={{ fontSize: 16 }}>
                                                                                     {ticketType.type_name}
                                                                                 </Text>
@@ -721,7 +721,7 @@ const EventDetailModal = ({
 
                                 <Divider />
 
-                                <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
                                     <Text strong>
                                         <AppstoreOutlined /> Sơ đồ chỗ ngồi
                                     </Text>
@@ -773,7 +773,7 @@ const EventDetailModal = ({
 
                                 <Divider />
 
-                                <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
                                     <Text strong>
                                         <GiftOutlined /> Mã giảm giá ({eventDiscounts.length})
                                     </Text>
@@ -831,7 +831,7 @@ const EventDetailModal = ({
                                                         </Space>
                                                     }
                                                     description={
-                                                        <Space direction="vertical" size={2}>
+                                                        <Space orientation="vertical" size={2}>
                                                             <Text type="secondary" style={{ fontSize: 16 }}>
                                                                 {discount.discount_name}
                                                             </Text>

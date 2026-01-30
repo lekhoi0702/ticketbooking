@@ -22,16 +22,16 @@ apiClient.interceptors.request.use(
   (config) => {
     // Get token from localStorage
     const token = getToken();
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     // Log request in development
     if (import.meta.env.DEV) {
       console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
     }
-    
+
     return config;
   },
   (error) => {
@@ -47,27 +47,27 @@ apiClient.interceptors.response.use(
     if (import.meta.env.DEV) {
       console.log(`✅ API Response: ${response.config.url}`, response.data);
     }
-    
+
     // Return only data
     return response.data;
   },
   async (error) => {
     const originalRequest = error.config;
-    
+
     // Handle different error scenarios
     if (error.response) {
       // Server responded with error status
       const { status, data } = error.response;
-      
+
       console.error(`❌ API Error [${status}]:`, data);
-      
+
       // Handle 401 Unauthorized
       if (status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
-        
+
         // Try to refresh token
         const refreshed = await refreshToken();
-        
+
         if (refreshed) {
           // Retry original request
           return apiClient(originalRequest);
@@ -77,36 +77,36 @@ apiClient.interceptors.response.use(
           return Promise.reject(createError('SESSION_EXPIRED', 'Your session has expired. Please login again.'));
         }
       }
-      
+
       // Handle 403 Forbidden
       if (status === 403) {
         return Promise.reject(createError('FORBIDDEN', data.error?.message || 'You do not have permission to perform this action.'));
       }
-      
+
       // Handle 404 Not Found
       if (status === 404) {
         return Promise.reject(createError('NOT_FOUND', data.error?.message || 'Resource not found.'));
       }
-      
+
       // Handle 422 Validation Error
       if (status === 422 || status === 400) {
         const validationErrors = data.error?.errors || {};
         return Promise.reject(createError('VALIDATION_ERROR', data.error?.message || 'Validation failed.', validationErrors));
       }
-      
+
       // Handle 500 Server Error
       if (status >= 500) {
-        return Promise.reject(createError('SERVER_ERROR', 'Server error occurred. Please try again later.'));
+        return Promise.reject(createError('SERVER_ERROR', data.message || data.error?.message || 'Server error occurred. Please try again later.'));
       }
-      
+
       // Handle other errors
       return Promise.reject(createError('API_ERROR', data.error?.message || data.message || 'An error occurred.'));
-      
+
     } else if (error.request) {
       // Request made but no response received
       console.error('❌ Network Error:', error.message);
       return Promise.reject(createError('NETWORK_ERROR', 'Network error. Please check your connection.'));
-      
+
     } else {
       // Something else happened
       console.error('❌ Error:', error.message);
@@ -137,7 +137,7 @@ async function refreshToken() {
   try {
     const token = getToken();
     if (!token) return false;
-    
+
     // Call refresh endpoint
     const response = await axios.post(
       `${API_BASE_URL}/auth/refresh-token`,
@@ -146,13 +146,13 @@ async function refreshToken() {
         headers: { Authorization: `Bearer ${token}` }
       }
     );
-    
+
     if (response.data.success && response.data.token) {
       // Update token in localStorage
       updateToken(response.data.token);
       return true;
     }
-    
+
     return false;
   } catch (error) {
     console.error('Failed to refresh token:', error);
@@ -191,7 +191,7 @@ function handleLogout() {
   localStorage.removeItem('user');
   localStorage.removeItem('organizer');
   localStorage.removeItem('admin');
-  
+
   // Redirect to login
   window.location.href = '/login';
 }
@@ -211,28 +211,28 @@ function createError(code, message, details = null) {
  */
 export async function apiRequest(requestFn, options = {}) {
   const { onSuccess, onError, showLoading = true } = options;
-  
+
   try {
     if (showLoading) {
       // You can dispatch loading action here if using Redux
       // or set loading state in Context
     }
-    
+
     const data = await requestFn();
-    
+
     if (onSuccess) {
       onSuccess(data);
     }
-    
+
     return { data, error: null };
-    
+
   } catch (error) {
     if (onError) {
       onError(error);
     }
-    
+
     return { data: null, error };
-    
+
   } finally {
     if (showLoading) {
       // Clear loading state

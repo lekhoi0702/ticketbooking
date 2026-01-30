@@ -14,12 +14,12 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
 
     return (
         <Card className="mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
-            <Card.Header className="bg-white py-3 border-bottom-0">
-                <h5 className="mb-0 fw-bold">Hình Thức Thanh Toán</h5>
+            <Card.Header className="py-3 border-bottom-0" style={{ backgroundColor: 'rgb(45, 194, 117)' }}>
+                <h5 className="mb-0 fw-bold" style={{ color: '#ffffff' }}>Hình Thức Thanh Toán</h5>
             </Card.Header>
-            <Card.Body className="p-4 pt-0">
+            <Card.Body className="p-4" style={{ backgroundColor: 'rgba(18, 18, 18, 0.55)' }}>
                 {/* VNPay Option */}
-                <div 
+                <div
                     className={`p-3 border rounded-4 mb-3 d-flex align-items-center cursor-pointer ${paymentMethod === 'VNPAY' ? 'bg-primary bg-opacity-10 border-primary border-opacity-50' : 'bg-light border-secondary border-opacity-25'}`}
                     onClick={() => handleMethodChange('VNPAY')}
                     style={{ cursor: 'pointer', transition: 'all 0.3s' }}
@@ -54,7 +54,7 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
                 </div>
 
                 {/* PayPal Option */}
-                <div 
+                <div
                     className={`p-3 border rounded-4 mb-3 d-flex align-items-center cursor-pointer ${paymentMethod === 'PAYPAL' ? 'bg-primary bg-opacity-10 border-primary border-opacity-50' : 'bg-light border-secondary border-opacity-25'}`}
                     onClick={() => handleMethodChange('PAYPAL')}
                     style={{ cursor: 'pointer', transition: 'all 0.3s' }}
@@ -85,7 +85,7 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
                 </div>
 
                 {/* VietQR Option */}
-                <div 
+                <div
                     className={`p-3 border rounded-4 d-flex align-items-center cursor-pointer ${paymentMethod === 'VIETQR' ? 'bg-primary bg-opacity-10 border-primary border-opacity-50' : 'bg-light border-secondary border-opacity-25'}`}
                     onClick={() => handleMethodChange('VIETQR')}
                     style={{ cursor: 'pointer', transition: 'all 0.3s' }}
@@ -116,14 +116,37 @@ const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => {
                 </div>
             </Card.Body>
             <style>{`
-                .card h5,
-                .card strong,
-                .card small {
-                    color: rgb(42, 45, 52) !important;
+                /* Card header - white text on green background */
+                .card .card-header h5 {
+                    color: #ffffff !important;
+                }
+                /* Card body - white text on dark surface */
+                .card .card-body strong {
+                    color: rgba(255, 255, 255, 0.95) !important;
+                    font-weight: 700;
+                }
+                .card .card-body small {
+                    color: rgba(255, 255, 255, 0.92) !important;
+                }
+                .card .card-body .text-muted {
+                    color: rgba(255, 255, 255, 0.65) !important;
                 }
                 .cursor-pointer:hover {
                     transform: translateY(-2px);
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                }
+                /* Update payment option backgrounds for dark theme */
+                .card .card-body .bg-light {
+                    background-color: rgba(0, 0, 0, 0.18) !important;
+                }
+                .card .card-body .border-secondary {
+                    border-color: rgba(255, 255, 255, 0.10) !important;
+                }
+                .card .card-body .bg-primary {
+                    background: linear-gradient(180deg, rgba(45, 194, 117, 0.14) 0%, rgba(0, 0, 0, 0.22) 100%) !important;
+                }
+                .card .card-body .border-primary {
+                    border-color: rgba(45, 194, 117, 0.55) !important;
                 }
             `}</style>
         </Card>

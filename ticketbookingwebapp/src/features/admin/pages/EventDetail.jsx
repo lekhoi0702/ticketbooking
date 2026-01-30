@@ -440,7 +440,7 @@ const EventDetail = () => {
                                                     <Row gutter={[32, 20]}>
                                                         {/* Cột trái: Thông tin cơ bản */}
                                                         <Col span={12}>
-                                                            <Space direction="vertical" size={20} style={{ width: '100%' }}>
+                                                            <Space orientation="vertical" size={20} style={{ width: '100%' }}>
                                                                 <div>
                                                                     <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 6 }}>
                                                                         Địa điểm
@@ -485,7 +485,7 @@ const EventDetail = () => {
                                                                     <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 10 }}>
                                                                         Thời gian diễn ra
                                                                     </Text>
-                                                                    <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                                                                    <Space orientation="vertical" size={6} style={{ width: '100%' }}>
                                                                         <Space>
                                                                             <CalendarOutlined style={{ color: '#52c41a', fontSize: 16 }} />
                                                                             <Text style={{ fontSize: 16 }}>
@@ -505,7 +505,7 @@ const EventDetail = () => {
                                                                     <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 10 }}>
                                                                         Thời gian bán vé
                                                                     </Text>
-                                                                    <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                                                                    <Space orientation="vertical" size={6} style={{ width: '100%' }}>
                                                                         <Space>
                                                                             <ClockCircleOutlined style={{ color: '#1890ff', fontSize: 16 }} />
                                                                             <Text style={{ fontSize: 16 }}>
@@ -530,7 +530,7 @@ const EventDetail = () => {
                                                                     Loại vé ({showtime.ticket_types?.length || 0})
                                                                 </Text>
                                                                 {showtime.ticket_types && showtime.ticket_types.length > 0 ? (
-                                                                    <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                                                                    <Space orientation="vertical" size={10} style={{ width: '100%' }}>
                                                                         {showtime.ticket_types.map((ticketType) => (
                                                                             <Card
                                                                                 key={ticketType.ticket_type_id}
@@ -544,7 +544,7 @@ const EventDetail = () => {
                                                                             >
                                                                                 <Row gutter={16} align="middle">
                                                                                     <Col span={12}>
-                                                                                        <Space direction="vertical" size={3}>
+                                                                                        <Space orientation="vertical" size={3}>
                                                                                             <Text strong style={{ fontSize: 16 }}>
                                                                                                 {ticketType.type_name}
                                                                                             </Text>
@@ -633,7 +633,7 @@ const EventDetail = () => {
                                     >
                                         <Row gutter={[32, 20]}>
                                             <Col span={12}>
-                                                <Space direction="vertical" size={20} style={{ width: '100%' }}>
+                                                <Space orientation="vertical" size={20} style={{ width: '100%' }}>
                                                     <div>
                                                         <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 6 }}>
                                                             Địa điểm
@@ -678,7 +678,7 @@ const EventDetail = () => {
                                                         <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 10 }}>
                                                             Thời gian diễn ra
                                                         </Text>
-                                                        <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                                                        <Space orientation="vertical" size={6} style={{ width: '100%' }}>
                                                             <Space>
                                                                 <CalendarOutlined style={{ color: '#52c41a', fontSize: 16 }} />
                                                                 <Text style={{ fontSize: 16 }}>
@@ -716,7 +716,7 @@ const EventDetail = () => {
                                                         <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 10 }}>
                                                             Thời gian bán vé
                                                         </Text>
-                                                        <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                                                        <Space orientation="vertical" size={6} style={{ width: '100%' }}>
                                                             <Space>
                                                                 <ClockCircleOutlined style={{ color: '#1890ff', fontSize: 16 }} />
                                                                 <Text style={{ fontSize: 16 }}>
@@ -758,7 +758,7 @@ const EventDetail = () => {
                                                         Loại vé ({event.ticket_types?.length || 0})
                                                     </Text>
                                                     {event.ticket_types && event.ticket_types.length > 0 ? (
-                                                        <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                                                        <Space orientation="vertical" size={10} style={{ width: '100%' }}>
                                                             {event.ticket_types.map((ticketType) => (
                                                                 <Card
                                                                     key={ticketType.ticket_type_id}
@@ -772,7 +772,7 @@ const EventDetail = () => {
                                                                 >
                                                                     <Row gutter={16} align="middle">
                                                                         <Col span={12}>
-                                                                            <Space direction="vertical" size={3}>
+                                                                            <Space orientation="vertical" size={3}>
                                                                                 <Text strong style={{ fontSize: 16 }}>
                                                                                     {ticketType.type_name}
                                                                                 </Text>

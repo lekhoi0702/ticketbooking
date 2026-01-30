@@ -183,7 +183,7 @@ const EventDetails = () => {
             <Row gutter={24}>
                 {/* Left side */}
                 <Col xs={24} lg={16}>
-                    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
                         {/* Event Banner & Description */}
                         <Card styles={{ body: { padding: 0 } }} overflow="hidden">
                             <div style={{ height: 300, backgroundColor: '#f0f2f5', overflow: 'hidden' }}>
@@ -274,7 +274,7 @@ const EventDetails = () => {
 
                 {/* Right side */}
                 <Col xs={24} lg={8}>
-                    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
                         <Card title="Thông tin chi tiết">
                             <Descriptions column={1} layout="vertical">
                                 <Descriptions.Item label={
@@ -317,7 +317,7 @@ const EventDetails = () => {
                         </Card>
 
                         <Card style={{ backgroundColor: '#262626', borderColor: '#262626' }}>
-                            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                            <Space orientation="vertical" size={16} style={{ width: '100%' }}>
                                 <Space>
                                     <InfoCircleOutlined style={{ color: '#2DC275' }} />
                                     <Text strong style={{ color: 'white', fontSize: 12 }}>THÔNG TIN HỆ THỐNG</Text>

@@ -61,7 +61,7 @@ const AdminEventsManagement = () => {
                 title: 'THÔNG TIN SỰ KIỆN',
                 key: 'info',
                 render: (_, record) => (
-                    <Space direction="vertical" size={2}>
+                    <Space orientation="vertical" size={2}>
                         <Space wrap size={6}>
                             <Text strong style={{ fontSize: 16 }}>
                                 {record.event_name}

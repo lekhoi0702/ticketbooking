@@ -20,7 +20,7 @@ const AdminEmpty = ({
         <Empty
             image={image}
             description={
-                <Space direction="vertical" size={12} align="center" style={{ width: '100%' }}>
+                <Space orientation="vertical" size={12} align="center" style={{ width: '100%' }}>
                     <Text type="secondary">{description}</Text>
                     {(hasAction || hasRetry) && (
                         <Space>

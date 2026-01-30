@@ -92,7 +92,7 @@ const CreateEvent = () => {
                 {/* Form Content Skeleton */}
                 <Row gutter={24}>
                     <Col xs={24} lg={16}>
-                        <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                        <Space orientation="vertical" size={24} style={{ width: '100%' }}>
                             <Card title={<Skeleton.Input active size="small" style={{ width: 150 }} />}>
                                 <Skeleton active paragraph={{ rows: 4 }} />
                             </Card>
@@ -140,7 +140,7 @@ const CreateEvent = () => {
                     <Row gutter={24}>
                         {/* Main Form Content */}
                         <Col xs={24} lg={16}>
-                            <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                            <Space orientation="vertical" size={24} style={{ width: '100%' }}>
                                 {/* Section 1: Basic Info */}
                                 <Card title="1. Thông tin chung" headStyle={{ background: '#fafafa' }}>
                                     <EventBasicInfo
@@ -193,7 +193,7 @@ const CreateEvent = () => {
                                 <Card title="5. Ảnh QR Code VietQR (Tùy chọn)" headStyle={{ background: '#fafafa' }}>
                                     <div style={{ marginBottom: 16 }}>
                                         <Text type="secondary" style={{ fontSize: 12 }}>
-                                            Upload ảnh QR code VietQR của bạn để khách hàng có thể thanh toán qua VietQR. 
+                                            Upload ảnh QR code VietQR của bạn để khách hàng có thể thanh toán qua VietQR.
                                             Nếu không upload, hệ thống sẽ tự động tạo QR code.
                                         </Text>
                                     </div>
@@ -223,7 +223,7 @@ const CreateEvent = () => {
                                         Bằng cách nhấn xác nhận, bạn đồng ý với các điều khoản dành cho nhà tổ chức. Sự kiện sẽ ở trạng thái chờ duyệt.
                                     </Text>
 
-                                    <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                                    <Space orientation="vertical" style={{ width: '100%' }} size={12}>
                                         <Button
                                             type="primary"
                                             htmlType="submit"

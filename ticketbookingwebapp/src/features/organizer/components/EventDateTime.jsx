@@ -89,7 +89,7 @@ const EventDateTime = ({
 
     return (
         <div style={{ marginTop: 16 }}>
-            <Space direction="vertical" size={32} style={{ width: '100%' }}>
+            <Space orientation="vertical" size={32} style={{ width: '100%' }}>
                 <div>
                     <div style={{ marginBottom: 16 }}>
                         <Text strong style={{ fontSize: 13, color: '#8c8c8c' }}>THỜI GIAN DIỄN RA SỰ KIỆN</Text>

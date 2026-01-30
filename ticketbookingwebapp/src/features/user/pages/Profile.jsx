@@ -100,7 +100,7 @@ const Profile = () => {
                                     }}
                                 />
                             </Avatar>
-                            <Space direction="vertical" size={0}>
+                            <Space orientation="vertical" size={0}>
                                 <Title level={3} style={{ margin: 0, color: '#ffffff' }}>
                                     {user?.full_name || 'Người dùng'}
                                 </Title>

@@ -26,7 +26,7 @@ const TicketTypeSidebar = ({
     venueName
 }) => {
     return (
-        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             <Card
                 title={<span style={{ fontSize: 11, color: '#8c8c8c', fontWeight: 600 }}>HẠNG VÉ SỰ KIỆN</span>}
                 styles={{ body: { padding: 0 } }}
@@ -80,7 +80,7 @@ const TicketTypeSidebar = ({
             </Card>
 
             <Card size="small" style={{ background: '#f5f5f5', borderStyle: 'dashed' }}>
-                <Space direction="vertical" size={8}>
+                <Space orientation="vertical" size={8}>
                     <Space>
                         <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
                         <Text strong style={{ fontSize: 11, color: '#595959' }}>HƯỚNG DẪN THIẾT LẬP</Text>

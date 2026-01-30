@@ -178,7 +178,7 @@ const ExtraShowtimesConfig = ({
 
                     <div style={{ marginTop: 16, padding: '16px', background: '#f9f9f9', borderRadius: '8px', border: '1px solid #f0f0f0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Space direction="vertical" size={2}>
+                            <Space orientation="vertical" size={2}>
                                 <Text type="secondary" style={{ fontSize: 11, letterSpacing: '0.5px' }}>ĐỊA ĐIỂM & VÉ</Text>
                                 <Text strong style={{ fontSize: 14 }}>
                                     {venues.find(v => String(v.venue_id) === String(st.venue_id))?.venue_name || 'Kế thừa suất chính'}

@@ -65,7 +65,7 @@ const Footer = () => {
                             {/* Column 3: About Company */}
                             <Col xs={24} md={8}>
                                 <Title level={5} className="footer-heading">Về công ty chúng tôi</Title>
-                                <Space direction="vertical" size={8} className="footer-links-list">
+                                <Space orientation="vertical" size={8} className="footer-links-list">
                                     <Link to="/about" className="footer-link">Quy chế hoạt động</Link>
                                     <Link to="/privacy" className="footer-link">Chính sách bảo mật thông tin</Link>
                                     <Link to="/dispute" className="footer-link">Cơ chế giải quyết tranh chấp/ khiếu nại</Link>
@@ -79,7 +79,7 @@ const Footer = () => {
                             {/* Ticketbooking App */}
                             <Col xs={24} md={8}>
                                 <Title level={5} className="footer-heading">Ứng dụng Ticketbooking</Title>
-                                <Space direction="horizontal" size={16} wrap>
+                                <Space orientation="horizontal" size={16} wrap>
                                     <a href="#" className="app-download-btn">
                                         <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" />
                                     </a>
@@ -92,7 +92,7 @@ const Footer = () => {
                             {/* Organizer App */}
                             <Col xs={24} md={8}>
                                 <Title level={5} className="footer-heading">Ứng dụng check-in cho Ban tổ chức</Title>
-                                <Space direction="horizontal" size={16} wrap>
+                                <Space orientation="horizontal" size={16} wrap>
                                     <a href="#" className="app-download-btn">
                                         <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" />
                                     </a>

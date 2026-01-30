@@ -169,8 +169,8 @@ def get_all_events():
             try:
                 edata = event.to_dict(include_details=True)
                 # Lấy tên nhà tổ chức (User)
-                if event.manager_id:
-                    organizer = User.query.get(event.manager_id)
+                if event.organizer_id:
+                    organizer = User.query.get(event.organizer_id)
                     edata['organizer_name'] = organizer.full_name if organizer else "Hệ thống"
                 else:
                     edata['organizer_name'] = "Hệ thống"
@@ -199,8 +199,8 @@ def get_event_showtimes(event_id):
         
         if not event.group_id:
             edata = event.to_dict(include_details=True)
-            if event.manager_id:
-                organizer = User.query.get(event.manager_id)
+            if event.organizer_id:
+                organizer = User.query.get(event.organizer_id)
                 edata['organizer_name'] = organizer.full_name if organizer else "Hệ thống"
             else:
                 edata['organizer_name'] = "Hệ thống"
@@ -214,8 +214,8 @@ def get_event_showtimes(event_id):
         for st in showtimes:
             try:
                 st_data = st.to_dict(include_details=True)
-                if st.manager_id:
-                    organizer = User.query.get(st.manager_id)
+                if st.organizer_id:
+                    organizer = User.query.get(st.organizer_id)
                     st_data['organizer_name'] = organizer.full_name if organizer else "Hệ thống"
                 else:
                     st_data['organizer_name'] = "Hệ thống"

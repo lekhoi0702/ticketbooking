@@ -65,7 +65,7 @@ const EventTable = ({
                         fallback="/placeholder-event.png"
                         style={{ borderRadius: 4, objectFit: 'cover', border: '1px solid #f0f0f0' }}
                     />
-                    <Space direction="vertical" size={0}>
+                    <Space orientation="vertical" size={0}>
                         <Text strong style={{ fontSize: 14, color: '#303133' }}>{record.event_name}</Text>
                         <Text type="secondary" style={{ fontSize: 12 }}>
                             ID: #{record.event_id} • {record.category?.category_name}
@@ -78,7 +78,7 @@ const EventTable = ({
             title: 'THỜI GIAN / ĐỊA ĐIỂM',
             key: 'info',
             render: (_, record) => (
-                <Space direction="vertical" size={0}>
+                <Space orientation="vertical" size={0}>
                     <Text style={{ fontSize: 13 }}>{formatLocaleDate(record.start_datetime)}</Text>
                     <Text type="secondary" style={{ fontSize: 12, maxWidth: 200 }} ellipsis>
                         {record.venue?.venue_name}

@@ -133,7 +133,10 @@ def get_events():
         }), 200
         
     except Exception as e:
-        print(f"Error in get_events: {str(e)}")
+        import traceback
+        from flask import current_app
+        current_app.logger.error(f"Error in get_events: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
         return jsonify({
             'success': False,
             'message': str(e)
@@ -212,7 +215,15 @@ def get_featured_events():
         }), 200
         
     except Exception as e:
-        print(f"Error in get_featured_events: {str(e)}")
+        import traceback
+        import sys
+        from flask import current_app
+        error_msg = f"Error in get_featured_events: {str(e)}"
+        trace_msg = traceback.format_exc()
+        current_app.logger.error(error_msg)
+        current_app.logger.error(trace_msg)
+        print(error_msg, file=sys.stderr)
+        print(trace_msg, file=sys.stderr)
         return jsonify({
             'success': False,
             'message': str(e)
@@ -253,7 +264,10 @@ def search_events():
         }), 200
         
     except Exception as e:
-        print(f"Error in search_events: {str(e)}")
+        import traceback
+        from flask import current_app
+        current_app.logger.error(f"Error in search_events: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
         return jsonify({
             'success': False,
             'message': str(e)
