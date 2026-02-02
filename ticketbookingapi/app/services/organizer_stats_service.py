@@ -14,7 +14,7 @@ class OrganizerStatsService:
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
             JOIN `Order` o ON t.order_id = o.order_id
-            WHERE e.manager_id = :mid
+            WHERE e.organizer_id = :mid
             AND o.order_status = 'PAID'
             AND t.ticket_status IN ('ACTIVE', 'USED')
         """)
@@ -23,14 +23,14 @@ class OrganizerStatsService:
         # 2. Total Ticket Sold
         sold_sql = text("""
             SELECT COALESCE(SUM(sold_tickets), 0) 
-            FROM Event WHERE manager_id = :mid
+            FROM Event WHERE organizer_id = :mid
         """)
         total_tickets_sold = db.session.execute(sold_sql, {"mid": manager_id}).scalar()
         
         # 3. Ongoing Event
         ongoing_sql = text("""
             SELECT COUNT(*) FROM Event 
-            WHERE manager_id = :mid AND status IN ('PUBLISHED', 'ONGOING')
+            WHERE organizer_id = :mid AND status IN ('PUBLISHED', 'ONGOING')
         """)
         ongoing_events = db.session.execute(ongoing_sql, {"mid": manager_id}).scalar()
         
@@ -47,7 +47,7 @@ class OrganizerStatsService:
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
             LEFT JOIN Payment p ON o.order_id = p.order_id
-            WHERE e.manager_id = :mid
+            WHERE e.organizer_id = :mid
             ORDER BY o.created_at DESC
             LIMIT 10
         """)
@@ -84,7 +84,7 @@ class OrganizerStatsService:
             FROM Ticket t
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
-            WHERE e.manager_id = :mid
+            WHERE e.organizer_id = :mid
             AND t.ticket_status IN ('ACTIVE', 'USED')
         """)
         total_revenue = db.session.execute(rev_sql, {"mid": manager_id}).scalar()
@@ -95,7 +95,7 @@ class OrganizerStatsService:
             FROM Ticket t
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
-            WHERE e.manager_id = :mid
+            WHERE e.organizer_id = :mid
             AND t.ticket_status IN ('ACTIVE', 'USED')
         """)
         total_tickets_sold = db.session.execute(sold_sql, {"mid": manager_id}).scalar()
@@ -106,13 +106,13 @@ class OrganizerStatsService:
             FROM Ticket t
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
-            WHERE e.manager_id = :mid
+            WHERE e.organizer_id = :mid
             AND t.ticket_status IN ('REFUNDED', 'CANCELLED')
         """)
         refunded_tickets = db.session.execute(ref_sql, {"mid": manager_id}).scalar()
             
         # Total Event
-        evt_sql = text("SELECT COUNT(*) FROM Event WHERE manager_id = :mid")
+        evt_sql = text("SELECT COUNT(*) FROM Event WHERE organizer_id = :mid")
         total_events = db.session.execute(evt_sql, {"mid": manager_id}).scalar()
 
         # Best Selling
@@ -121,7 +121,7 @@ class OrganizerStatsService:
             FROM Event e
             JOIN TicketType tt ON e.event_id = tt.event_id
             JOIN Ticket t ON tt.ticket_type_id = t.ticket_type_id
-            WHERE e.manager_id = :mid
+            WHERE e.organizer_id = :mid
             AND t.ticket_status IN ('ACTIVE', 'USED')
             GROUP BY e.event_id
             ORDER BY sold_count DESC
@@ -143,7 +143,7 @@ class OrganizerStatsService:
             FROM Event e
             JOIN TicketType tt ON e.event_id = tt.event_id
             JOIN Ticket t ON tt.ticket_type_id = t.ticket_type_id
-            WHERE e.manager_id = :mid
+            WHERE e.organizer_id = :mid
             AND t.ticket_status IN ('ACTIVE', 'USED')
             GROUP BY e.event_id
             ORDER BY revenue DESC
@@ -178,7 +178,7 @@ class OrganizerStatsService:
             JOIN Ticket t ON o.order_id = t.order_id
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
-            WHERE e.manager_id = :mid
+            WHERE e.organizer_id = :mid
         """
         
         params = {"mid": manager_id}
@@ -205,7 +205,7 @@ class OrganizerStatsService:
             JOIN Ticket t ON o.order_id = t.order_id
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
-            WHERE e.manager_id = :mid
+            WHERE e.organizer_id = :mid
         """
         
         if search:
@@ -240,11 +240,11 @@ class OrganizerStatsService:
                     t.ticket_id, t.order_id, t.ticket_type_id, t.ticket_code, t.ticket_status,
                     t.seat_id, t.price, t.qr_code_url, t.holder_name, t.holder_email,
                     t.checked_in_at, t.created_at, t.deleted_at,
-                    tt.type_name, e.event_name, e.end_datetime
+                    tt.type_name, e.event_name, e.end_time as end_datetime
                 FROM Ticket t
                 JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
                 JOIN Event e ON tt.event_id = e.event_id
-                WHERE t.order_id = :oid AND e.manager_id = :mid
+                WHERE t.order_id = :oid AND e.organizer_id = :mid
             """)
             
             t_rows = db.session.execute(t_sql, {"oid": oid, "mid": manager_id}).fetchall()

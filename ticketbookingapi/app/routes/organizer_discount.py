@@ -54,7 +54,7 @@ def get_discounts():
         if not manager_id:
              return jsonify({'success': False, 'message': 'Missing manager_id'}), 400
              
-        discounts = Discount.query.filter_by(manager_id=manager_id).order_by(Discount.created_at.desc()).all()
+        discounts = Discount.query.filter_by(manager_id=manager_id).order_by(Discount.discount_id.desc()).all()
         
         result = []
         for d in discounts:

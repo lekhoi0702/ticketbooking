@@ -22,10 +22,16 @@ class Discount(db.Model):
     def to_dict(self):
         return {
             'discount_id': self.discount_id,
+            'manager_id': self.manager_id,
+            'event_id': self.event_id,
             'discount_code': self.discount_code,
             'discount_name': self.discount_name,
             'discount_type': self.discount_type,
             'discount_value': float(self.discount_value) if self.discount_value else 0,
             'min_order_amount': float(self.min_order_amount) if self.min_order_amount else 0,
+            'usage_limit': self.usage_limit,
+            'used_count': self.used_count,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
             'is_active': self.is_active
         }

@@ -87,13 +87,13 @@ export const useCreateEvent = () => {
             }
             if (venuesRes.success) {
                 // Filter out venues that are in maintenance or inactive
-                const availableVenues = venuesRes.data.filter(venue => 
-                    venue.status !== 'MAINTENANCE' && 
+                const availableVenues = venuesRes.data.filter(venue =>
+                    venue.status !== 'MAINTENANCE' &&
                     venue.is_active !== false &&
                     venue.status !== 'INACTIVE'
                 );
                 setVenues(availableVenues);
-                
+
                 // Only auto-select venue if no venue_id is currently set (new event)
                 if (availableVenues.length > 0 && !formData.venue_id) {
                     const firstVenueId = availableVenues[0].venue_id;
@@ -123,12 +123,12 @@ export const useCreateEvent = () => {
         try {
             const res = await api.getVenue(venueId);
             if (res.success) {
-                let template = res.data.seat_map_template;
+                let template = res.data.seat_map;
                 if (typeof template === 'string') {
                     try {
                         template = JSON.parse(template);
                     } catch (e) {
-                        console.error('Error parsing seat_map_template', e);
+                        console.error('Error parsing seat_map', e);
                         template = null;
                     }
                 }
@@ -394,8 +394,12 @@ export const useCreateEvent = () => {
                 if (!st.end_datetime) {
                     errors[`extra_showtime_${idx}_end`] = 'Vui lòng chọn thời gian kết thúc';
                 }
-                if (s && e && e.isBefore(s)) {
+                if (s && e && (e.isBefore(s) || e.isSame(s))) {
                     errors[`extra_showtime_${idx}_end`] = 'Thời gian kết thúc phải sau bắt đầu';
+                }
+
+                if (s && start && s.isBefore(start)) {
+                    errors[`extra_showtime_${idx}_start`] = 'Suất diễn phụ phải bắt đầu sau suất diễn chính';
                 }
 
                 // Optional sale times validation
@@ -441,7 +445,13 @@ export const useCreateEvent = () => {
             });
         }
 
+        // Determine if this is an edit operation
         const isEdit = !!eventId;
+
+        // Validate banner image
+        if (!isEdit && !bannerImage) {
+            errors.banner_image = 'Vui lòng tải lên ảnh bìa sự kiện';
+        }
         const djs = dayjs;
         const now = djs();
         const start = formData.start_datetime ? djs(formData.start_datetime) : null;
@@ -462,22 +472,28 @@ export const useCreateEvent = () => {
         }
 
         // Event end must always be after start
-        if (end && start && end.isBefore(start)) {
+        if (end && start && (end.isBefore(start) || end.isSame(start))) {
             errors.end_datetime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
         }
 
-        // Sale end must always be before event start and after sale start
-        if (saleEnd && saleStart && saleEnd.isBefore(saleStart)) {
+        // Sale start must be before event start
+        if (saleStart && start && (saleStart.isAfter(start) || saleStart.isSame(start))) {
+            errors.sale_start_datetime = 'Thời gian mở bán phải trước khi sự kiện bắt đầu';
+        }
+
+        // Sale end must be after sale start
+        if (saleEnd && saleStart && (saleEnd.isBefore(saleStart) || saleEnd.isSame(saleStart))) {
             errors.sale_end_datetime = 'Thời gian kết thúc bán phải sau thời gian mở bán';
         }
-        if (saleEnd && start && saleEnd.isAfter(start)) {
+
+        // Sale end must be before event start
+        if (saleEnd && start && (saleEnd.isAfter(start) || saleEnd.isSame(start))) {
             errors.sale_end_datetime = 'Thời gian kết thúc bán phải trước khi sự kiện bắt đầu';
         }
 
         // If there are errors, set them and return
         if (Object.keys(errors).length > 0) {
             setFieldErrors(errors);
-            setError('Vui lòng điền đầy đủ thông tin bắt buộc và hợp lệ');
             return;
         }
 

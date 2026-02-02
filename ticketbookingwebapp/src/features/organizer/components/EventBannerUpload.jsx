@@ -10,12 +10,13 @@ import {
 import {
     CloudUploadOutlined,
     DeleteOutlined,
-    PictureOutlined
+    PictureOutlined,
+    WarningOutlined
 } from '@ant-design/icons';
 
 const { Text } = Typography;
 
-const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner }) => {
+const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner, fieldErrors = {} }) => {
     return (
         <div>
             <div
@@ -26,7 +27,7 @@ const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner }) =
                     alignItems: 'center',
                     justifyContent: 'center',
                     padding: 24,
-                    border: '1px dashed #d9d9d9',
+                    border: fieldErrors.banner_image ? '1px dashed #ff4d4f' : '1px dashed #d9d9d9',
                     borderRadius: 8,
                     backgroundColor: '#fafafa',
                     transition: 'all 0.3s',
@@ -98,6 +99,11 @@ const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner }) =
                     </div>
                 )}
             </div>
+            {fieldErrors.banner_image && (
+                <Text type="danger" style={{ fontSize: 12, display: 'block', marginTop: 8, textAlign: 'center' }}>
+                    <WarningOutlined /> {fieldErrors.banner_image}
+                </Text>
+            )}
         </div>
     );
 };

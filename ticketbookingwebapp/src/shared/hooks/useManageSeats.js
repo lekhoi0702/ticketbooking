@@ -229,12 +229,12 @@ export const useManageSeats = (eventId) => {
     }, [activeTicketType, allOccupiedSeats, selectedTemplateSeats]);
 
     const venueTemplate = useMemo(() => {
-        const template = event?.venue?.seat_map_template;
+        const template = event?.venue?.seat_map;
         if (typeof template === 'string') {
             try {
                 return JSON.parse(template);
             } catch (e) {
-                console.error("Failed to parse seat_map_template", e);
+                console.error("Failed to parse seat_map", e);
                 return null;
             }
         }

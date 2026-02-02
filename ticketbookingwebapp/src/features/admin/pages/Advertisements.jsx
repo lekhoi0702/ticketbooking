@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, Input, Card, Space, Typography, Tooltip, Switch, App, InputNumber, Select, DatePicker, Tag, Statistic, Row, Col, Upload } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, WarningOutlined, LinkOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, WarningOutlined, LinkOutlined, UploadOutlined } from '@ant-design/icons';
 import { advertisementAPI } from '@services/advertisementService';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
 import AdminToolbar from '@features/admin/components/AdminToolbar';
@@ -334,7 +334,7 @@ const Advertisements = () => {
         <div style={{ paddingTop: 0 }}>
             {/* Statistics Cards */}
             <Row gutter={16} style={{ marginBottom: 24 }}>
-                <Col span={6}>
+                <Col span={12}>
                     <Card>
                         <Statistic
                             title="Tổng quảng cáo"
@@ -343,21 +343,12 @@ const Advertisements = () => {
                         />
                     </Card>
                 </Col>
-                <Col span={6}>
+                <Col span={12}>
                     <Card>
                         <Statistic
                             title="Đang hoạt động"
                             value={activeAds}
                             valueStyle={{ color: '#3f8600' }}
-                        />
-                    </Card>
-                </Col>
-                <Col span={12}>
-                    <Card>
-                        <Statistic
-                            title="Ghi chú"
-                            value="Tracking (view/click) đã được loại bỏ để khớp DB"
-                            prefix={<EyeOutlined />}
                         />
                     </Card>
                 </Col>

@@ -31,30 +31,36 @@ class EventWrapper:
         return self._mapping['group_id']
 
     @property
-    def manager_id(self):
-        return self._mapping['manager_id']
+    def organizer_id(self):
+        return self._mapping['organizer_id']
         
     @property
     def start_datetime(self):
-        val = self._mapping['start_datetime']
+        val = self._mapping.get('start_time') or self._mapping.get('start_datetime')
         if isinstance(val, str): return datetime.fromisoformat(val)
         return val
 
     @property
     def end_datetime(self):
-        val = self._mapping['end_datetime']
+        val = self._mapping.get('end_time') or self._mapping.get('end_datetime')
         if isinstance(val, str): return datetime.fromisoformat(val)
         return val
 
     def to_dict(self, include_details=False):
         d = dict(self._mapping)
-        # Convert datetime objects to string
-        for k, v in d.items():
+        # Convert datetime objects to string and handle aliasing
+        for k, v in list(d.items()):
             if isinstance(v, datetime):
                 d[k] = v.isoformat()
         
+        # Alias DB columns to model attribute names for frontend consistency
+        if 'start_time' in d and 'start_datetime' not in d: d['start_datetime'] = d['start_time']
+        if 'end_time' in d and 'end_datetime' not in d: d['end_datetime'] = d['end_time']
+        if 'banner_image' in d and 'banner_image_url' not in d: d['banner_image_url'] = d['banner_image']
+        if 'qr_image' in d and 'qr_image_url' not in d: d['qr_image_url'] = d['qr_image']
+        
         # Ensure qr_image_url exists (DB field). Fallback from legacy vietqr_image_url if present.
-        if 'qr_image_url' not in d:
+        if d.get('qr_image_url') is None:
             d['qr_image_url'] = d.get('vietqr_image_url')
         
         if include_details:
@@ -92,8 +98,8 @@ class OrganizerEventService:
 
     @staticmethod
     def get_events(manager_id, status=None, include_deleted=False):
-        sql = "SELECT * FROM Event WHERE manager_id = :manager_id"
-        params = {"manager_id": manager_id}
+        sql = "SELECT * FROM Event WHERE organizer_id = :organizer_id"
+        params = {"organizer_id": manager_id}
         
         # Exclude deleted events unless explicitly requested
         if not include_deleted:
@@ -168,12 +174,12 @@ class OrganizerEventService:
         # Helper to check overlap with DB
         def check_overlap(venue_id, start, end, exclude_event_id=None):
             sql = """
-                SELECT event_name, start_datetime, end_datetime 
+                SELECT event_name, start_time, end_time 
                 FROM Event 
                 WHERE venue_id = :vid 
                 AND status NOT IN ('CANCELLED', 'REJECTED')
                 AND (
-                    (start_datetime < :end AND end_datetime > :start)
+                    (start_time < :end AND end_time > :start)
                 )
             """
             params = {"vid": venue_id, "start": start, "end": end}
@@ -202,6 +208,9 @@ class OrganizerEventService:
         end_datetime = parse_to_gmt7(data.get('end_datetime'))
         if not start_datetime or not end_datetime:
             raise ValueError('start_datetime và end_datetime không hợp lệ')
+            
+        if start_datetime >= end_datetime:
+            raise ValueError('Thời gian bắt đầu sự kiện chính phải trước thời gian kết thúc')
         
         all_new_times = [{'start': start_datetime, 'end': end_datetime, 'label': 'Sự kiện chính'}]
         
@@ -213,6 +222,10 @@ class OrganizerEventService:
                     s_dt = parse_to_gmt7(st_data['start_datetime'])
                     e_dt = parse_to_gmt7(st_data['end_datetime'])
                     if s_dt and e_dt:
+                        if s_dt >= e_dt:
+                            raise ValueError(f'Thời gian bắt đầu của suất diễn phụ #{idx+1} phải trước thời gian kết thúc')
+                        if s_dt < start_datetime:
+                            raise ValueError(f'Suất diễn phụ #{idx+1} phải bắt đầu sau suất diễn chính')
                         all_new_times.append({'start': s_dt, 'end': e_dt, 'label': f'Suất diễn phụ #{idx+1}'})
 
         # 2. Check internal overlap
@@ -230,14 +243,14 @@ class OrganizerEventService:
         # Insert Event
         insert_sql = text("""
             INSERT INTO Event (
-                category_id, venue_id, manager_id, event_name, description,
-                start_datetime, end_datetime,
-                banner_image_url, qr_image_url, total_capacity, status, is_featured,
+                category_id, venue_id, organizer_id, event_name, description,
+                start_time, end_time,
+                banner_image, qr_image, total_capacity, status, is_featured,
                 sold_tickets, created_at, updated_at
             ) VALUES (
-                :category_id, :venue_id, :manager_id, :event_name, :description,
-                :start_datetime, :end_datetime,
-                :banner_image_url, :qr_image_url, :total_capacity, :status, :is_featured,
+                :category_id, :venue_id, :organizer_id, :event_name, :description,
+                :start_time, :end_time,
+                :banner_image, :qr_image, :total_capacity, :status, :is_featured,
                 0, :now, :now
             )
         """)
@@ -248,13 +261,13 @@ class OrganizerEventService:
         params = {
             "category_id": int(data.get('category_id')),
             "venue_id": venue_id,
-            "manager_id": manager_id,
+            "organizer_id": manager_id,
             "event_name": data.get('event_name'),
             "description": data.get('description'),
-            "start_datetime": parse_to_gmt7(data.get('start_datetime')),
-            "end_datetime": parse_to_gmt7(data.get('end_datetime')),
-            "banner_image_url": banner_image_url,
-            "qr_image_url": qr_image_url,
+            "start_time": parse_to_gmt7(data.get('start_datetime')),
+            "end_time": parse_to_gmt7(data.get('end_datetime')),
+            "banner_image": banner_image_url,
+            "qr_image": qr_image_url,
             "total_capacity": int(data.get('total_capacity', 0)),
             "status": 'PENDING_APPROVAL',
             "is_featured": is_featured,
@@ -270,7 +283,7 @@ class OrganizerEventService:
         # Fallback if not supported
         if not event_id:
              # This assumes event_name + manager_id + created_at is unique enough within seconds
-             fetch_id = text("SELECT event_id FROM Event WHERE manager_id=:m AND event_name=:n ORDER BY created_at DESC LIMIT 1")
+             fetch_id = text("SELECT event_id FROM Event WHERE organizer_id=:m AND event_name=:n ORDER BY created_at DESC LIMIT 1")
              row = db.session.execute(fetch_id, {"m": manager_id, "n": params['event_name']}).fetchone()
              event_id = row.event_id
              
@@ -328,37 +341,37 @@ class OrganizerEventService:
         # Save event banner image using upload helper
         if 'banner_image' in files:
             file = files['banner_image']
-            manager_id = event_row.manager_id
+            manager_id = event_row.organizer_id
             banner_url = save_event_image(file, manager_id, event_id)
             if banner_url:
-                update_fields.append("banner_image_url = :banner_image_url")
-                params['banner_image_url'] = banner_url
+                update_fields.append("banner_image = :banner_image")
+                params['banner_image'] = banner_url
         
         # Save QR image (file upload or URL). Legacy keys are accepted.
         if 'qr_image' in files:
             file = files['qr_image']
-            manager_id = event_row.manager_id
+            manager_id = event_row.organizer_id
             qr_url = save_vietqr_image(file, manager_id, event_id)
             if qr_url:
-                update_fields.append("qr_image_url = :qr_image_url")
-                params['qr_image_url'] = qr_url
+                update_fields.append("qr_image = :qr_image")
+                params['qr_image'] = qr_url
         elif 'vietqr_image' in files:
             file = files['vietqr_image']
-            manager_id = event_row.manager_id
+            manager_id = event_row.organizer_id
             qr_url = save_vietqr_image(file, manager_id, event_id)
             if qr_url:
-                update_fields.append("qr_image_url = :qr_image_url")
-                params['qr_image_url'] = qr_url
+                update_fields.append("qr_image = :qr_image")
+                params['qr_image'] = qr_url
         elif 'qr_image_url' in data:
             qr_url = data.get('qr_image_url')
             if qr_url:
-                update_fields.append("qr_image_url = :qr_image_url")
-                params['qr_image_url'] = qr_url
+                update_fields.append("qr_image = :qr_image")
+                params['qr_image'] = qr_url
         elif 'vietqr_image_url' in data:
             qr_url = data.get('vietqr_image_url')
             if qr_url:
-                update_fields.append("qr_image_url = :qr_image_url")
-                params['qr_image_url'] = qr_url
+                update_fields.append("qr_image = :qr_image")
+                params['qr_image'] = qr_url
         
         mapping = {
             'event_name': 'event_name',
@@ -376,17 +389,29 @@ class OrganizerEventService:
                 update_fields.append(f"{col} = :{col}")
                 params[col] = val
 
-        date_fields = ['start_datetime', 'end_datetime']
-        for df in date_fields:
-            if data.get(df):
-                val = data.get(df)
-                parsed = parse_to_gmt7(val)
-                if parsed:
-                    params[df] = parsed
-                    update_fields.append(f"{df} = :{df}")
-                else:
-                    print(f"Warning: Failed to parse date {df}: {val}")
-                    # Skip this field instead of failing the whole update
+        # Updated date fields validation
+        new_start = parse_to_gmt7(data.get('start_datetime')) if data.get('start_datetime') else None
+        new_end = parse_to_gmt7(data.get('end_datetime')) if data.get('end_datetime') else None
+        
+        if new_start or new_end:
+            # Get existing values if not provided in update
+            curr_start = new_start or event_row.start_time
+            curr_end = new_end or event_row.end_time
+            
+            # Ensure they are datetime objects for comparison
+            if isinstance(curr_start, str): curr_start = datetime.fromisoformat(curr_start)
+            if isinstance(curr_end, str): curr_end = datetime.fromisoformat(curr_end)
+            
+            if curr_start >= curr_end:
+                raise ValueError('Thời gian bắt đầu phải bé hơn thời gian kết thúc')
+                
+            if new_start:
+                params['start_datetime'] = new_start
+                update_fields.append("start_time = :start_datetime")
+                
+            if new_end:
+                params['end_datetime'] = new_end
+                update_fields.append("end_time = :end_datetime")
                 
         # Handle status changes with new workflow rules (bỏ APPROVED: nháp, chờ duyệt, công khai, từ chối duyệt, hủy)
         current_status = event_row.status
@@ -504,19 +529,28 @@ class OrganizerEventService:
         end_datetime = parse_to_gmt7(end_str)
         if not start_datetime or not end_datetime:
             raise ValueError('start_datetime và end_datetime không hợp lệ')
+            
+        if start_datetime >= end_datetime:
+            raise ValueError('Thời gian bắt đầu suất diễn phải trước thời gian kết thúc')
+            
+        source_start = source_event.start_time
+        if isinstance(source_start, str): source_start = datetime.fromisoformat(source_start)
+        
+        if start_datetime < source_start:
+            raise ValueError('Suất diễn mới phải bắt đầu sau suất diễn chính')
         now = now_gmt7()
         
         # Insert New Event (Clone)
         insert_sql = text("""
             INSERT INTO Event (
-                group_id, category_id, venue_id, manager_id, event_name, description,
-                start_datetime, end_datetime,
-                banner_image_url, qr_image_url, total_capacity, sold_tickets, status, is_featured,
+                group_id, category_id, venue_id, organizer_id, event_name, description,
+                start_time, end_time,
+                banner_image, qr_image, total_capacity, sold_tickets, status, is_featured,
                 created_at, updated_at
             ) VALUES (
-                :group_id, :category_id, :venue_id, :manager_id, :event_name, :description,
-                :start_datetime, :end_datetime,
-                :banner_image_url, :qr_image_url, :total_capacity, 0, 'PENDING_APPROVAL', 0,
+                :group_id, :category_id, :venue_id, :organizer_id, :event_name, :description,
+                :start_time, :end_time,
+                :banner_image, :qr_image, :total_capacity, 0, 'PENDING_APPROVAL', 0,
                 :now, :now
             )
         """)
@@ -529,13 +563,13 @@ class OrganizerEventService:
             "group_id": source_event.group_id,
             "category_id": source_event.category_id,
             "venue_id": int(show_venue_id),
-            "manager_id": source_event.manager_id,
+            "organizer_id": source_event.organizer_id,
             "event_name": source_event.event_name,
             "description": source_event.description,
-            "start_datetime": start_datetime,
-            "end_datetime": end_datetime,
-            "banner_image_url": source_event.banner_image_url,
-            "qr_image_url": getattr(source_event, "qr_image_url", None),
+            "start_time": start_datetime,
+            "end_time": end_datetime,
+            "banner_image": source_event.banner_image_url,
+            "qr_image": getattr(source_event, "qr_image_url", None),
             "total_capacity": int(show_capacity),
             "now": now
         }
@@ -546,8 +580,8 @@ class OrganizerEventService:
         new_event_id = result.lastrowid
         # Fallback ID fetch
         if not new_event_id:
-             fetch_id = text("SELECT event_id FROM Event WHERE manager_id=:m AND event_name=:n AND start_datetime=:sd ORDER BY created_at DESC LIMIT 1")
-             row = db.session.execute(fetch_id, {"m": source_event.manager_id, "n": source_event.event_name, "sd": start_datetime}).fetchone()
+             fetch_id = text("SELECT event_id FROM Event WHERE organizer_id=:m AND event_name=:n AND start_time=:sd ORDER BY created_at DESC LIMIT 1")
+             row = db.session.execute(fetch_id, {"m": source_event.organizer_id, "n": source_event.event_name, "sd": start_datetime}).fetchone()
              new_event_id = row.event_id
         
         # Clone OR Create Ticket Types
@@ -687,7 +721,7 @@ class OrganizerEventService:
         for event_id in event_ids:
             try:
                 # Check if event exists and belongs to manager
-                check_query = text("SELECT * FROM Event WHERE event_id = :id AND manager_id = :mid")
+                check_query = text("SELECT * FROM Event WHERE event_id = :id AND organizer_id = :mid")
                 event = db.session.execute(check_query, {"id": event_id, "mid": manager_id}).fetchone()
                 
                 if not event:

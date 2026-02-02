@@ -100,7 +100,7 @@ const EventDetail = () => {
                 api.getVenueById(event.venue_id),
                 api.getAllEventSeats(event.event_id),
             ]);
-            if (venueRes?.success) setVenueTemplate(venueRes.data?.seat_map_template ?? null);
+            if (venueRes?.success) setVenueTemplate(venueRes.data?.seat_map ?? null);
             if (seatsRes?.success) {
                 const mapped = (seatsRes.data ?? []).map((s) => ({
                     row_name: s.row_name,
@@ -169,6 +169,19 @@ const EventDetail = () => {
         }
     }, [event?.event_id, fetchEvent]);
 
+    const handleCancelEvent = useCallback(() => {
+        Modal.confirm({
+            title: 'Hủy sự kiện',
+            content: 'Bạn có chắc muốn hủy sự kiện này? Hành động không thể hoàn tác.',
+            okText: 'Hủy sự kiện',
+            okType: 'danger',
+            cancelText: 'Không',
+            onOk: async () => {
+                await handleUpdateStatus('CANCELLED');
+            },
+        });
+    }, [handleUpdateStatus]);
+
     useEffect(() => {
         fetchEvent();
     }, [fetchEvent]);
@@ -198,19 +211,6 @@ const EventDetail = () => {
 
     const showApproveActions = event.status === 'PENDING_APPROVAL';
     const showCancelAction = event.status === 'PUBLISHED';
-
-    const handleCancelEvent = useCallback(() => {
-        Modal.confirm({
-            title: 'Hủy sự kiện',
-            content: 'Bạn có chắc muốn hủy sự kiện này? Hành động không thể hoàn tác.',
-            okText: 'Hủy sự kiện',
-            okType: 'danger',
-            cancelText: 'Không',
-            onOk: async () => {
-                await handleUpdateStatus('CANCELLED');
-            },
-        });
-    }, [handleUpdateStatus]);
 
     return (
         <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>

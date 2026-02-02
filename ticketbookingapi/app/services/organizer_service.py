@@ -111,7 +111,7 @@ class OrganizerService:
                 o.created_at,
                 e.event_id,
                 e.event_name,
-                e.start_datetime as event_date,
+                e.start_time as event_date,
                 u.full_name as user_name,
                 u.email as user_email
             FROM `Order` o
@@ -119,7 +119,7 @@ class OrganizerService:
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
             LEFT JOIN User u ON o.user_id = u.user_id
-            WHERE e.manager_id = :mid AND o.order_status = 'REFUND_PENDING'
+            WHERE e.organizer_id = :mid AND o.order_status = 'REFUND_PENDING'
             ORDER BY o.created_at DESC
         """)
         
@@ -238,7 +238,7 @@ class OrganizerService:
     @staticmethod
     def search_tickets(manager_id, query_text, event_id, status):
         # Get organizer event IDs
-        ev_res = db.session.execute(text("SELECT event_id FROM Event WHERE manager_id = :mid"), {"mid": manager_id})
+        ev_res = db.session.execute(text("SELECT event_id FROM Event WHERE organizer_id = :mid"), {"mid": manager_id})
         org_event_ids = [r.event_id for r in ev_res]
         
         if not org_event_ids:
@@ -306,7 +306,7 @@ class OrganizerService:
                 t.ticket_id, t.order_id, t.ticket_type_id, t.ticket_code, t.ticket_status,
                 t.seat_id, t.price, t.qr_code_url, t.holder_name, t.holder_email,
                 t.checked_in_at, t.created_at, t.deleted_at,
-                tt.event_id, e.manager_id, e.event_name
+                tt.event_id, e.organizer_id, e.event_name
             FROM Ticket t
             JOIN TicketType tt ON t.ticket_type_id = tt.ticket_type_id
             JOIN Event e ON tt.event_id = e.event_id
@@ -318,7 +318,7 @@ class OrganizerService:
         if not ticket:
             raise ValueError('Ticket not found')
             
-        if ticket.manager_id != manager_id:
+        if ticket.organizer_id != manager_id:
              raise ValueError('Unauthorized access to this ticket')
              
         if ticket.ticket_status == 'USED':

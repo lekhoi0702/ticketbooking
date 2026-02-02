@@ -380,16 +380,18 @@ def admin_update_venue_seats(venue_id):
         if not venue:
             return jsonify({'success': False, 'message': 'Không tìm thấy địa điểm'}), 404
             
-        # Update seat map template if provided
+        # Update seat map template if provided (use correct column name)
         if 'seat_map_template' in data:
-            venue.seat_map_template = data['seat_map_template']
+            venue.seat_map = data['seat_map_template']
+        elif 'seat_map' in data:
+            venue.seat_map = data['seat_map']
             
         # Update capacity if provided
         if 'capacity' in data:
             venue.capacity = data['capacity']
         
         # Backward compatibility for fixed columns if needed based on template
-        if venue.seat_map_template and 'areas' in venue.seat_map_template:
+        if venue.seat_map and 'areas' in venue.seat_map:
             # We can optionally sync the first few areas to the legacy columns
             # But normally we just rely on the JSON now.
             pass

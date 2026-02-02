@@ -92,7 +92,7 @@ const OrganizerVenues = () => {
     // --- SEAT MAP EDITOR Handlers ---
     const handleEditLayout = (venue) => {
         setSelectedVenue(venue);
-        const template = venue.seat_map_template || { areas: [] };
+        const template = venue.seat_map || { areas: [] };
         setEditorInitialAreas(template.areas || []);
         setShowEditModal(true);
     };
@@ -251,7 +251,7 @@ const OrganizerVenues = () => {
             width: 90,
             align: 'center',
             render: (_, record) => {
-                const template = record.seat_map_template || { areas: [] };
+                const template = record.seat_map || { areas: [] };
                 const areaCount = template.areas?.length || 0;
                 return <span style={{ fontWeight: 600 }}>{areaCount}</span>;
             },
@@ -262,7 +262,7 @@ const OrganizerVenues = () => {
             width: 100,
             align: 'center',
             render: (_, record) => {
-                const template = record.seat_map_template || { areas: [] };
+                const template = record.seat_map || { areas: [] };
                 const totalSeats = template.areas?.reduce((sum, a) => sum + (a.rows * a.cols), 0) || record.capacity || 0;
                 return <span style={{ fontWeight: 600 }}>{totalSeats}</span>;
             },
@@ -273,7 +273,7 @@ const OrganizerVenues = () => {
             width: 100,
             align: 'center',
             render: (_, record) => {
-                const template = record.seat_map_template || { areas: [] };
+                const template = record.seat_map || { areas: [] };
                 const lockedCount = template.areas?.reduce((sum, a) => sum + (a.locked_seats?.length || 0), 0) || 0;
                 return (
                     <span style={{ fontWeight: 600, color: lockedCount > 0 ? '#ff4d4f' : '#2DC275' }}>

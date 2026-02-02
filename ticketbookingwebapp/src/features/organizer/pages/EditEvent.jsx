@@ -221,18 +221,6 @@ const EditEvent = () => {
                     />
                 )}
 
-                {error && (
-                    <Alert
-                        message="Lỗi validation"
-                        description={error}
-                        type="error"
-                        showIcon
-                        closable
-                        onClose={() => setError(null)}
-                        style={{ marginBottom: 24 }}
-                    />
-                )}
-
                 <form onSubmit={handleUpdate}>
                     <Row gutter={24}>
                         <Col xs={24} lg={16}>
@@ -301,6 +289,7 @@ const EditEvent = () => {
                                         handleImageChange={handleImageChange}
                                         removeBanner={removeBanner}
                                         disabled={isReadOnly || loading}
+                                        fieldErrors={fieldErrors}
                                     />
 
                                     <Divider style={{ margin: '24px 0' }} />

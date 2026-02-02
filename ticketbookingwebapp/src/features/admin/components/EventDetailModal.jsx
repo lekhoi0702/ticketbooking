@@ -72,7 +72,7 @@ const EventDetailModal = ({
                 api.getVenueById(selectedEvent.venue_id),
                 api.getAllEventSeats(selectedEvent.event_id),
             ]);
-            if (venueRes?.success) setVenueTemplate(venueRes.data?.seat_map_template ?? null);
+            if (venueRes?.success) setVenueTemplate(venueRes.data?.seat_map ?? null);
             if (seatsRes?.success) {
                 const mapped = (seatsRes.data ?? []).map((s) => ({
                     row_name: s.row_name,

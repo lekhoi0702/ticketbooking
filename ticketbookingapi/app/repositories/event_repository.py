@@ -145,7 +145,7 @@ class EventRepository(BaseRepository[Event]):
         Returns:
             List of manager's events
         """
-        query = self.session.query(Event).filter(Event.manager_id == manager_id)
+        query = self.session.query(Event).filter(Event.organizer_id == manager_id)
         
         if not include_deleted:
             query = query.filter(Event.deleted_at.is_(None))

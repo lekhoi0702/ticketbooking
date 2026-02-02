@@ -14,7 +14,8 @@ import {
     Divider,
     message,
     Affix,
-    Skeleton
+    Skeleton,
+    Alert
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -215,6 +216,7 @@ const CreateEvent = () => {
                                         handleImageChange={handleImageChange}
                                         removeBanner={removeBanner}
                                         disabled={loading}
+                                        fieldErrors={fieldErrors}
                                     />
 
                                     <Divider style={{ margin: '24px 0' }} />

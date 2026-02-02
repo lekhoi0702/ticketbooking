@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import dayjs from 'dayjs';
 import {
     Modal,
     Button,
@@ -31,6 +32,7 @@ const AddShowtimeModal = ({ visible, onCancel, onSuccess, eventId, eventData }) 
         end_datetime: '',
         extra_showtimes: []
     });
+    const [fieldErrors, setFieldErrors] = useState({});
 
     useEffect(() => {
         if (visible && eventData) {
@@ -78,6 +80,8 @@ const AddShowtimeModal = ({ visible, onCancel, onSuccess, eventId, eventData }) 
             ...prev,
             [name]: value
         }));
+        // Clear field error on change
+        setFieldErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleTicketTypeChange = (index, field, value) => {
@@ -189,11 +193,36 @@ const AddShowtimeModal = ({ visible, onCancel, onSuccess, eventId, eventData }) 
 
     const handleNext = () => {
         if (currentStep === 0) {
+            const errors = {};
             // Validate datetime
-            if (!formData.start_datetime || !formData.end_datetime) {
-                message.error('Vui lòng chọn thời gian bắt đầu và kết thúc');
+            if (!formData.start_datetime) {
+                errors.start_datetime = 'Vui lòng chọn thời gian bắt đầu';
+            }
+            if (!formData.end_datetime) {
+                errors.end_datetime = 'Vui lòng chọn thời gian kết thúc';
+            }
+
+            if (formData.start_datetime && formData.end_datetime) {
+                const s = dayjs(formData.start_datetime);
+                const e = dayjs(formData.end_datetime);
+                if (e.isBefore(s) || e.isSame(s)) {
+                    errors.end_datetime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
+                }
+
+                if (eventData?.start_datetime) {
+                    const mainStart = dayjs(eventData.start_datetime);
+                    if (s.isBefore(mainStart)) {
+                        errors.start_datetime = 'Suất diễn mới phải bắt đầu sau suất diễn chính';
+                    }
+                }
+            }
+
+            if (Object.keys(errors).length > 0) {
+                setFieldErrors(errors);
                 return;
             }
+
+            setFieldErrors({});
             setCurrentStep(1);
         }
     };
@@ -281,6 +310,7 @@ const AddShowtimeModal = ({ visible, onCancel, onSuccess, eventId, eventData }) 
                     formData={formData}
                     handleInputChange={handleInputChange}
                     existingSchedule={[]}
+                    fieldErrors={fieldErrors}
                 />
             )
         },
@@ -300,6 +330,7 @@ const AddShowtimeModal = ({ visible, onCancel, onSuccess, eventId, eventData }) 
                     toggleAreaSelection={toggleAreaSelection}
                     addTicketType={addTicketType}
                     removeTicketType={removeTicketType}
+                    fieldErrors={fieldErrors}
                 />
             )
         }
