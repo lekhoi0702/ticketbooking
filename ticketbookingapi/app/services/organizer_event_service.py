@@ -872,14 +872,14 @@ class OrganizerEventService:
         # Use subquery for min price to avoid GROUP BY issues
         # Filter to group showtimes: Only show one record per group_id
         sql = text("""
-            SELECT e.event_id, e.event_name, e.banner_image_url, e.start_datetime,
+            SELECT e.event_id, e.event_name, e.banner_image, e.start_time,
                    (SELECT MIN(tt.price) FROM TicketType tt WHERE tt.event_id = e.event_id) as min_price
             FROM Event e
             WHERE e.category_id = :cat_id
               AND e.event_id != :eid
               AND e.status = 'PUBLISHED'
               AND (e.group_id IS NULL OR e.event_id = (SELECT MIN(event_id) FROM Event WHERE group_id = e.group_id))
-            ORDER BY e.start_datetime ASC
+            ORDER BY e.start_time ASC
             LIMIT :limit
         """)
         
@@ -890,13 +890,10 @@ class OrganizerEventService:
             results.append({
                 "event_id": row.event_id,
                 "event_name": row.event_name,
-                "banner_image_url": row.banner_image_url,
-                "start_datetime": row.start_datetime.isoformat() if row.start_datetime else None,
+                "banner_image_url": row.banner_image,
+                "start_datetime": row.start_time.isoformat() if row.start_time else None,
                 "min_price": float(row.min_price) if row.min_price is not None else 0
             })
             
-        return results
-
-
 
 

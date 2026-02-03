@@ -86,7 +86,7 @@ const EventHero = ({ event, onToggleFavorite }) => {
                         </div>
                         <Button
                             className="ticket-buy-btn"
-                            onClick={() => document.getElementById('tickets')?.scrollIntoView({ behavior: 'smooth' })}
+                            onClick={() => document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' })}
                         >
                             Mua vé ngay
                         </Button>
