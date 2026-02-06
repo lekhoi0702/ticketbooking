@@ -91,7 +91,6 @@ const OrderSummary = ({
     };
 
     const finalTotal = calculateTotal();
-    const subTotal = finalTotal + (discountAmount || 0);
 
     return (
         <Card className={`h-100 w-100 d-flex flex-column border-0 shadow-sm rounded-4 order-summary-sidebar ${readonly && qrData && paymentMethod === 'VIETQR' ? 'overflow-visible' : 'overflow-hidden'}`}>
@@ -234,6 +233,39 @@ const OrderSummary = ({
                                 />
                             )}
                         </div>
+
+                        {/* Thông tin chuyển khoản */}
+                        {(() => {
+                            const rd = qrData.qr_data || qrData;
+                            // Fallback: parse Sepay URL nếu backend chưa trả bank/account
+                            let bankName = (rd.bankName ?? rd.bank_name ?? '').toString().trim();
+                            let accountNo = (rd.accountNo ?? rd.account_no ?? '').toString().trim();
+                            if ((!bankName || !accountNo) && qrData.qr_image_url && qrData.qr_image_url.includes('qr.sepay.vn')) {
+                                try {
+                                    const url = new URL(qrData.qr_image_url);
+                                    url.searchParams.get('acc') && (accountNo = accountNo || url.searchParams.get('acc'));
+                                    url.searchParams.get('bank') && (bankName = bankName || url.searchParams.get('bank'));
+                                } catch (_) {}
+                            }
+                            const amount = qrData.amount != null ? qrData.amount : finalTotal;
+                            const transferContent = (rd.addInfo ?? qrData.order_code ?? '—').toString().trim() || '—';
+                            const rows = [
+                                { label: 'Ngân hàng', value: bankName || '—' },
+                                { label: 'Số tài khoản', value: accountNo || '—' },
+                                { label: 'Số tiền', value: formatCurrency(amount) },
+                                { label: 'Nội dung chuyển khoản', value: transferContent }
+                            ];
+                            return (
+                                <div className="text-start mt-3 p-3 rounded-3 bg-light border" style={{ maxWidth: '320px', margin: '0 auto' }}>
+                                    {rows.map(({ label, value }) => (
+                                        <div key={label} className="d-flex justify-content-between align-items-start gap-2 mb-2 small">
+                                            <span className="text-muted fw-semibold flex-shrink-0">{label}:</span>
+                                            <span className="fw-bold text-break text-end">{value}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
                     </div>
                 )}
                 
@@ -249,23 +281,6 @@ const OrderSummary = ({
                 </div>
 
                 <div className="mt-auto flex-shrink-0">
-                <div className="bg-light p-3 rounded-4 mb-4 mt-2">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                        <span className="text-muted small">Tạm tính:</span>
-                        <span className="fw-bold text-muted">{formatCurrency(subTotal)}</span>
-                    </div>
-                    {discountAmount > 0 && (
-                        <div className="d-flex justify-content-between align-items-center mb-1 text-success">
-                            <span className="small fw-bold"><FaTag className="me-1" />Giảm giá:</span>
-                            <span className="fw-bold">-{formatCurrency(discountAmount)}</span>
-                        </div>
-                    )}
-                    <div className="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
-                        <h5 className="mb-0 fw-bold">Tổng thanh toán</h5>
-                        <h4 className="mb-0 fw-bold" style={{ color: '#2DC275' }}>{formatCurrency(finalTotal)}</h4>
-                    </div>
-                </div>
-
                 {!readonly && (
                     <>
                         <Button

@@ -869,18 +869,29 @@ def create_vietqr_qr():
                     parsed.fragment
                 ))
                 
+                # Trích xuất acc, bank từ URL để hiển thị cho khách (Ngân hàng, Số tài khoản)
+                acc = (params.get('acc') or [None])[0]
+                bank = (params.get('bank') or [None])[0]
+                qr_data = {
+                    'accountNo': acc or '',
+                    'bankName': bank or '',
+                    'addInfo': order.order_code,
+                    'amount': float(order.final_amount)
+                }
+                
                 return jsonify({
                     'success': True,
                     'data': {
                         'payment_code': payment.payment_code,
                         'qr_image_url': dynamic_qr_url,
+                        'qr_data': qr_data,
                         'amount': float(order.final_amount),
                         'order_code': order.order_code,
                         'expires_in': 900  # 15 minutes
                     }
                 }), 200
             else:
-                # Use organizer's uploaded QR image as-is (static QR)
+                # Use organizer's uploaded QR image as-is (static QR) - không có acc/bank từ ảnh
                 return jsonify({
                     'success': True,
                     'data': {
@@ -894,15 +905,17 @@ def create_vietqr_qr():
         else:
             # Generate mock QR code data (fallback)
             qr_data = {
+                'bankName': 'Ngân hàng NCB',
                 'accountNo': '970422',  # Mock account number
                 'accountName': 'TICKET BOOKING',
                 'amount': float(order.final_amount),
-                'addInfo': f'Thanh toan don hang {order.order_code}',
+                'addInfo': order.order_code,
                 'template': 'compact2'
             }
             
-            # Generate QR code string (mock format)
-            qr_content = f"00020101021238570010A00000072701270006{qr_data['accountNo']}0208QRIBFTTA53037045406{int(qr_data['amount'] * 100):08d}5802VN62{len(qr_data['addInfo']):02d}{qr_data['addInfo']}6304"
+            # Generate QR code string (mock format); addInfo length in payload
+            add_info_str = str(qr_data['addInfo'])
+            qr_content = f"00020101021238570010A00000072701270006{qr_data['accountNo']}0208QRIBFTTA53037045406{int(qr_data['amount'] * 100):08d}5802VN62{len(add_info_str):02d}{add_info_str}6304"
             
             return jsonify({
                 'success': True,

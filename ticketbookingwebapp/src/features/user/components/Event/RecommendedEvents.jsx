@@ -13,8 +13,8 @@ const RecommendedEvents = ({ eventId }) => {
         const fetchRecommended = async () => {
             try {
                 const response = await api.getRecommendedEvents(eventId, 12);
-                if (response.success) {
-                    setEvents(response.data);
+                if (response.success && response.data != null) {
+                    setEvents(Array.isArray(response.data) ? response.data : []);
                 }
             } catch (error) {
                 console.error('Error fetching recommended events:', error);
@@ -32,7 +32,7 @@ const RecommendedEvents = ({ eventId }) => {
         setVisibleCount(prev => prev + 4);
     };
 
-    if (loading || events.length === 0) {
+    if (loading || !events?.length) {
         return null;
     }
 

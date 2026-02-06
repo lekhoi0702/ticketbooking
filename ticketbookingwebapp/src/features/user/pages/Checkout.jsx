@@ -42,7 +42,8 @@ const Checkout = () => {
         discountAmount,
         isValidDiscount,
         discountMsg,
-        handlePaymentSuccess
+        handlePaymentSuccess,
+        handleSeatHoldExpired
     } = useCheckout();
 
     // Scroll to top when component mounts
@@ -104,9 +105,7 @@ const Checkout = () => {
                     <CountdownTimer 
                         hasSelectedSeats={hasSelectedSeats}
                         eventId={event?.event_id}
-                        onExpired={() => {
-                            setError('Thời gian giữ ghế đã hết. Vui lòng quay lại trang sự kiện để chọn lại ghế.');
-                        }}
+                        onExpired={handleSeatHoldExpired}
                     />
                 );
             })()}

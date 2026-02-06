@@ -26,7 +26,7 @@ class RedisTokenManager:
         self,
         user_id: int,
         role: str,
-        expires_in_hours: int = 24
+        expires_in_hours: float = 24
     ) -> str:
         """
         Generate JWT access token

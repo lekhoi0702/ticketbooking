@@ -2,74 +2,66 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Alert } from 'react-bootstrap';
 import { ClockCircleOutlined } from '@ant-design/icons';
 
+/** Thời gian giữ ghế (giây) - phải khớp với backend (duration_minutes=5) */
+const HOLD_DURATION_SECONDS = 5 * 60;
+
 /**
  * Countdown Timer Component
- * Displays a 10-minute countdown when user has selected seats
+ * Hiển thị đếm ngược thời gian giữ ghế. Không reset khi đã hết giờ (tránh reset lúc đang ở checkout).
  */
 const CountdownTimer = ({ hasSelectedSeats, onExpired, eventId }) => {
-    const [timeLeft, setTimeLeft] = useState(10 * 60); // 10 minutes in seconds
+    const [timeLeft, setTimeLeft] = useState(HOLD_DURATION_SECONDS);
     const intervalRef = useRef(null);
+    const expiredTriggeredRef = useRef(false);
     const STORAGE_KEY = eventId ? `seat_timer_start_${eventId}` : null;
 
-    // Initialize timer from sessionStorage or start new
+    // Initialize timer from sessionStorage or start new. Khi đã hết giờ thì KHÔNG ghi lại startTime mới.
     useEffect(() => {
-        // Clear any existing interval first
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
 
         if (!hasSelectedSeats || !STORAGE_KEY) {
-            // Clear timer if no seats selected
             if (STORAGE_KEY) {
                 sessionStorage.removeItem(STORAGE_KEY);
             }
-            setTimeLeft(10 * 60);
+            expiredTriggeredRef.current = false;
+            setTimeLeft(HOLD_DURATION_SECONDS);
             return;
         }
 
-        // Get stored start time
         let storedStartTime = sessionStorage.getItem(STORAGE_KEY);
         let startTime;
-        
+
         if (storedStartTime) {
-            // Continue from stored time (user navigated between pages or component remounted)
             startTime = parseInt(storedStartTime, 10);
         } else {
-            // Start new timer (first time selecting seats)
             startTime = Date.now();
             sessionStorage.setItem(STORAGE_KEY, startTime.toString());
         }
 
-        // Calculate initial time left
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const initialRemaining = Math.max(0, 10 * 60 - elapsed);
+        const initialRemaining = Math.max(0, HOLD_DURATION_SECONDS - elapsed);
         setTimeLeft(initialRemaining);
 
-        // If already expired, trigger callback immediately
         if (initialRemaining === 0) {
-            if (STORAGE_KEY) {
-                sessionStorage.removeItem(STORAGE_KEY);
-            }
-            if (onExpired) {
+            if (!expiredTriggeredRef.current && onExpired) {
+                expiredTriggeredRef.current = true;
                 onExpired();
             }
             return;
         }
 
-        // Start countdown
         intervalRef.current = setInterval(() => {
             const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const remaining = Math.max(0, 10 * 60 - elapsed);
-            
+            const remaining = Math.max(0, HOLD_DURATION_SECONDS - elapsed);
             setTimeLeft(remaining);
 
             if (remaining === 0) {
                 clearInterval(intervalRef.current);
-                if (STORAGE_KEY) {
-                    sessionStorage.removeItem(STORAGE_KEY);
-                }
-                if (onExpired) {
+                if (!expiredTriggeredRef.current && onExpired) {
+                    expiredTriggeredRef.current = true;
                     onExpired();
                 }
             }

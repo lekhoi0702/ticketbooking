@@ -148,10 +148,19 @@ const VietQRPayment = () => {
         );
     }
 
-    const accountNo = qrData.qr_data?.accountNo || '970422';
-    const accountName = qrData.qr_data?.accountName || 'TICKET BOOKING';
-    const addInfo = qrData.qr_data?.addInfo || `Thanh toan don hang ${qrData.order_code}`;
-    const bankName = qrData.qr_data?.bankName || 'Ngân hàng';
+    const rd = qrData.qr_data || qrData;
+    let accountNo = (rd.accountNo ?? rd.account_no ?? '').toString().trim();
+    let bankName = (rd.bankName ?? rd.bank_name ?? '').toString().trim();
+    if ((!accountNo || !bankName) && qrData.qr_image_url && qrData.qr_image_url.includes('qr.sepay.vn')) {
+        try {
+            const url = new URL(qrData.qr_image_url);
+            if (!accountNo) accountNo = url.searchParams.get('acc') || '';
+            if (!bankName) bankName = url.searchParams.get('bank') || '';
+        } catch (_) {}
+    }
+    if (!accountNo) accountNo = '—';
+    if (!bankName) bankName = '—';
+    const addInfo = (rd.addInfo ?? `Thanh toan don hang ${qrData.order_code}`).toString().trim() || '—';
 
     return (
         <div style={{ 
@@ -410,50 +419,6 @@ const VietQRPayment = () => {
                                                 letterSpacing: '0.5px'
                                             }}>
                                                 {accountNo}
-                                            </div>
-                                        </div>
-
-                                        {/* Account Name */}
-                                        <div style={{ marginBottom: '14px' }}>
-                                            <div style={{
-                                                fontSize: '11px',
-                                                color: '#757575',
-                                                marginBottom: '4px',
-                                                fontWeight: '500',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between'
-                                            }}>
-                                                <span>Tên chủ tài khoản</span>
-                                                <Button
-                                                    variant="link"
-                                                    size="sm"
-                                                    onClick={() => handleCopy(accountName, 'accountName')}
-                                                    style={{
-                                                        padding: 0,
-                                                        fontSize: '11px',
-                                                        color: '#005AAA',
-                                                        textDecoration: 'none',
-                                                        height: 'auto',
-                                                        minWidth: 'auto',
-                                                        border: 'none',
-                                                        fontWeight: '500'
-                                                    }}
-                                                >
-                                                    {copiedField === 'accountName' ? (
-                                                        <><FaCheckCircle style={{ marginRight: '4px', fontSize: '10px' }} />Đã copy</>
-                                                    ) : (
-                                                        <><FaCopy style={{ marginRight: '4px', fontSize: '10px' }} />Copy</>
-                                                    )}
-                                                </Button>
-                                            </div>
-                                            <div style={{
-                                                fontSize: '15px',
-                                                fontWeight: '600',
-                                                color: '#212121',
-                                                wordBreak: 'break-word'
-                                            }}>
-                                                {accountName}
                                             </div>
                                         </div>
 

@@ -33,6 +33,18 @@ const { Header, Sider, Content } = Layout;
 const { Text, Title } = Typography;
 const { useBreakpoint } = Grid;
 
+const getActiveMenuKey = (pathname = '') => {
+    const cleanPath = pathname.split('?')[0].replace(/\/+$/, '');
+    const segments = cleanPath.split('/').filter(Boolean);
+    if (segments[0] !== 'admin' || segments.length < 2) {
+        return ADMIN_HOME_PATH;
+    }
+
+    const candidate = `/admin/${segments[1]}`;
+    const exists = ADMIN_MENU_ITEMS.some((item) => item.key === candidate);
+    return exists ? candidate : ADMIN_HOME_PATH;
+};
+
 const AdminLayout = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
@@ -55,6 +67,8 @@ const AdminLayout = () => {
             })),
         [navigate]
     );
+
+    const activeMenuKey = useMemo(() => getActiveMenuKey(location.pathname), [location.pathname]);
 
     const breadcrumbItems = useMemo(() => {
         const pathSnippets = location.pathname.split('/').filter(Boolean);
@@ -196,7 +210,7 @@ const AdminLayout = () => {
                 <Menu
                     theme="dark"
                     mode="inline"
-                    selectedKeys={[location.pathname]}
+                    selectedKeys={[activeMenuKey]}
                     items={menuItems}
                 />
             </Sider>

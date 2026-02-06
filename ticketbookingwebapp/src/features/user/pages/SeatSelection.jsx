@@ -22,7 +22,7 @@ const SeatSelection = () => {
     const { eventId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { isAuthenticated, triggerLogin } = useAuth();
+    const { user, isAuthenticated, triggerLogin } = useAuth();
 
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -399,8 +399,17 @@ const SeatSelection = () => {
                                     <CountdownTimer
                                         hasSelectedSeats={selectedSeats.length > 0}
                                         eventId={event.event_id}
-                                        onExpired={() => {
+                                        onExpired={async () => {
                                             message.warning('Thời gian giữ ghế đã hết. Vui lòng chọn lại ghế.');
+                                            if (user && event?.event_id) {
+                                                try {
+                                                    await seatApi.unlockAllSeats(user.user_id, event.event_id);
+                                                } catch (e) {
+                                                    console.error('Unlock seats on expiry:', e);
+                                                }
+                                                localStorage.removeItem(`seat_reservations_${event.event_id}_${user.user_id}`);
+                                                sessionStorage.removeItem(`seat_timer_start_${event.event_id}`);
+                                            }
                                             setSelectedSeats([]);
                                         }}
                                     />

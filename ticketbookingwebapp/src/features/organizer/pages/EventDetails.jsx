@@ -26,7 +26,10 @@ import {
     CloseCircleOutlined,
     AppstoreOutlined,
     InfoCircleOutlined,
-    HomeOutlined
+    HomeOutlined,
+    CreditCardOutlined,
+    CheckCircleOutlined,
+    MinusCircleOutlined
 } from '@ant-design/icons';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { api } from '@services/api';
@@ -314,6 +317,99 @@ const EventDetails = () => {
                                     Đóng: {event.sale_end_datetime ? formatLocaleDateTime(event.sale_end_datetime) : 'N/A'}
                                 </Text>
                             </div>
+                        </Card>
+
+                        {/* Chi tiết VietQR - layout giống trang khách */}
+                        <Card
+                            title={
+                                <Space>
+                                    <CreditCardOutlined style={{ color: '#8c8c8c' }} />
+                                    <Text strong>VietQR</Text>
+                                </Space>
+                            }
+                        >
+                            {event.qr_image_url ? (
+                                (() => {
+                                    let bank = '';
+                                    let acc = '';
+                                    if (event.qr_image_url.includes('qr.sepay.vn')) {
+                                        try {
+                                            const url = new URL(event.qr_image_url);
+                                            acc = url.searchParams.get('acc') || '';
+                                            bank = url.searchParams.get('bank') || '';
+                                        } catch (_) {}
+                                    }
+                                    const qrSrc = event.qr_image_url.startsWith('http') ? event.qr_image_url : getImageUrl(event.qr_image_url);
+                                    return (
+                                        <div style={{ textAlign: 'center', width: '100%' }}>
+                                            <Text type="secondary" strong style={{ display: 'block', marginBottom: 8, fontSize: 13, letterSpacing: '0.5px' }}>
+                                                Quét mã QR để thanh toán
+                                            </Text>
+                                            <div style={{
+                                                display: 'inline-block',
+                                                padding: 20,
+                                                backgroundColor: '#ffffff',
+                                                border: '2px solid #E0E0E0',
+                                                borderRadius: 12,
+                                                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                                                marginBottom: 12
+                                            }}>
+                                                <img
+                                                    src={qrSrc}
+                                                    alt="VietQR Code"
+                                                    style={{
+                                                        width: 220,
+                                                        height: 220,
+                                                        objectFit: 'contain',
+                                                        display: 'block',
+                                                        maxWidth: '100%'
+                                                    }}
+                                                />
+                                            </div>
+                                            <div style={{
+                                                textAlign: 'left',
+                                                marginTop: 12,
+                                                padding: 12,
+                                                borderRadius: 12,
+                                                backgroundColor: '#f5f5f5',
+                                                border: '1px solid #e8e8e8',
+                                                maxWidth: 320,
+                                                margin: '0 auto'
+                                            }}>
+                                                {(bank || acc) ? (
+                                                    <>
+                                                        {bank ? (
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8, fontSize: 13 }}>
+                                                                <Text type="secondary" strong>Ngân hàng:</Text>
+                                                                <Text strong style={{ wordBreak: 'break-word', textAlign: 'right' }}>{bank}</Text>
+                                                            </div>
+                                                        ) : null}
+                                                        {acc ? (
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, fontSize: 13 }}>
+                                                                <Text type="secondary" strong>Số tài khoản:</Text>
+                                                                <Text strong copyable style={{ fontFamily: 'monospace', wordBreak: 'break-word', textAlign: 'right' }}>{acc}</Text>
+                                                            </div>
+                                                        ) : null}
+                                                    </>
+                                                ) : (
+                                                    <Text type="secondary" style={{ fontSize: 13 }}>
+                                                        QR đã cấu hình (ảnh hoặc link tùy chỉnh).
+                                                    </Text>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()
+                            ) : (
+                                <>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                        <Tag icon={<MinusCircleOutlined />} color="default">Chưa cấu hình</Tag>
+                                    </div>
+                                    <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
+                                        Cấu hình VietQR trong mục Chỉnh sửa sự kiện để khách thanh toán chuyển khoản qua QR.
+                                    </Text>
+                                </>
+                            )}
                         </Card>
 
                         <Card style={{ backgroundColor: '#262626', borderColor: '#262626' }}>

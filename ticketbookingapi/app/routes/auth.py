@@ -31,6 +31,11 @@ from typing import Dict, Any, Optional, Tuple
 auth_bp = Blueprint("auth", __name__)
 logger = get_logger('ticketbooking.auth')
 
+def _get_access_token_expiry_hours(role: Optional[str]) -> float:
+    if role in ('ADMIN', 'ORGANIZER'):
+        return 0.5  # 30 minutes
+    return 24
+
 
 @auth_bp.route("/auth/login", methods=["POST"])
 def login() -> Tuple[Dict[str, Any], int]:
@@ -93,13 +98,19 @@ def login() -> Tuple[Dict[str, Any], int]:
             token_manager = FallbackTokenManager()
         
         # Generate tokens
-        access_token = token_manager.generate_access_token(user.user_id, user_data['role'])
+        access_token_hours = _get_access_token_expiry_hours(user_data['role'])
+        access_token = token_manager.generate_access_token(
+            user.user_id,
+            user_data['role'],
+            expires_in_hours=access_token_hours
+        )
         refresh_token_str = token_manager.generate_refresh_token(
             user_id=user.user_id,
             expires_in_days=30,
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string if request.user_agent else None
         )
+        expires_in_seconds = int(access_token_hours * 3600)
         
         logger.info(f"User logged in successfully: {user.user_id}", extra={'user_id': user.user_id})
         
@@ -110,7 +121,7 @@ def login() -> Tuple[Dict[str, Any], int]:
                 'access_token': access_token,
                 'refresh_token': refresh_token_str,
                 'token_type': 'Bearer',
-                'expires_in': 24 * 3600,  # 24 hours in seconds
+                'expires_in': expires_in_seconds,
                 'user': user_data
             }
         }), 200
@@ -161,7 +172,13 @@ def refresh_token() -> Tuple[Dict[str, Any], int]:
         
         # Generate new access token
         user_data = user.to_dict()
-        access_token = token_manager.generate_access_token(user.user_id, user_data['role'])
+        access_token_hours = _get_access_token_expiry_hours(user_data['role'])
+        access_token = token_manager.generate_access_token(
+            user.user_id,
+            user_data['role'],
+            expires_in_hours=access_token_hours
+        )
+        expires_in_seconds = int(access_token_hours * 3600)
         
         logger.info(f"Token refreshed for user: {user.user_id}", extra={'user_id': user.user_id})
         
@@ -171,7 +188,7 @@ def refresh_token() -> Tuple[Dict[str, Any], int]:
             'data': {
                 'access_token': access_token,
                 'token_type': 'Bearer',
-                'expires_in': 24 * 3600
+                'expires_in': expires_in_seconds
             }
         }), 200
         

@@ -4,6 +4,7 @@ import { FaArrowRight } from 'react-icons/fa';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
+import '../Auth/AuthModal.css';
 import './ChangePasswordModal.css';
 
 const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) => {
@@ -102,14 +103,14 @@ const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) =
             keyboard={!forceChange}
             centered
             size="sm"
-            className="change-password-modal"
+            className="auth-modal change-password-modal"
         >
-            <Modal.Header closeButton={!forceChange} className="change-password-modal-header border-0">
-                <div className="change-password-header-content">
-                    <h3 className="change-password-header-title">
+            <Modal.Header closeButton={!forceChange} className="auth-modal-header border-0">
+                <div className="auth-header-content">
+                    <h3 className="auth-header-title">
                         {forceChange ? 'Bạn cần đổi mật khẩu' : 'Đổi mật khẩu'}
                     </h3>
-                    <div className="change-password-mascot">
+                    <div className="auth-mascot">
                         <img src="/mascot.svg" alt="Mascot" />
                     </div>
                 </div>
@@ -132,7 +133,7 @@ const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) =
                                     if (fieldErrors.oldPassword) setFieldErrors({ ...fieldErrors, oldPassword: null });
                                 }}
                                 placeholder="Mật khẩu hiện tại"
-                                className={`change-password-input ${fieldErrors.oldPassword ? 'is-invalid' : ''}`}
+                                className={`auth-input ${fieldErrors.oldPassword ? 'is-invalid' : ''}`}
                             />
                             {fieldErrors.oldPassword && <div className="text-danger small mt-1">{fieldErrors.oldPassword}</div>}
                         </Form.Group>
@@ -147,7 +148,7 @@ const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) =
                                 if (fieldErrors.newPassword) setFieldErrors({ ...fieldErrors, newPassword: null });
                             }}
                             placeholder="Mật khẩu mới"
-                            className={`change-password-input ${fieldErrors.newPassword ? 'is-invalid' : ''}`}
+                            className={`auth-input ${fieldErrors.newPassword ? 'is-invalid' : ''}`}
                         />
                         {fieldErrors.newPassword && <div className="text-danger small mt-1">{fieldErrors.newPassword}</div>}
                     </Form.Group>
@@ -161,7 +162,7 @@ const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) =
                                 if (fieldErrors.confirmPassword) setFieldErrors({ ...fieldErrors, confirmPassword: null });
                             }}
                             placeholder="Xác nhận mật khẩu mới"
-                            className={`change-password-input ${fieldErrors.confirmPassword ? 'is-invalid' : ''}`}
+                            className={`auth-input ${fieldErrors.confirmPassword ? 'is-invalid' : ''}`}
                         />
                         {fieldErrors.confirmPassword && <div className="text-danger small mt-1">{fieldErrors.confirmPassword}</div>}
                     </Form.Group>
@@ -169,7 +170,7 @@ const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) =
                     <Button
                         variant="primary"
                         type="submit"
-                        className="w-100 change-password-submit-btn"
+                        className="w-100 auth-submit-btn"
                         disabled={loading}
                     >
                         {loading ? <LoadingOutlined spin className="me-2" /> : null}

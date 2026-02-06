@@ -1,6 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
 const AuthContext = createContext(null);
+
+const decodeTokenPayload = (token) => {
+    if (!token) return null;
+    try {
+        const payload = token.split('.')[1];
+        if (!payload) return null;
+        return JSON.parse(atob(payload));
+    } catch (_) {
+        return null;
+    }
+};
 
 // Helper to get storage key prefix based on current URL or user role
 const getScopePrefix = (role) => {
@@ -20,6 +31,7 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const logoutTimerRef = useRef(null);
     
     // Redirect intent: stores where user wants to go after login
     // { path: string, state?: object, action?: string }
@@ -50,13 +62,42 @@ export const AuthProvider = ({ children }) => {
         setShowLoginModal(false);
     };
 
-    const logout = () => {
+    const clearLogoutTimer = () => {
+        if (logoutTimerRef.current) {
+            clearTimeout(logoutTimerRef.current);
+            logoutTimerRef.current = null;
+        }
+    };
+
+    const logout = useCallback(() => {
         const prefix = getScopePrefix(user?.role);
         setUser(null);
         setToken(null);
         localStorage.removeItem(`${prefix}token`);
         localStorage.removeItem(`${prefix}user`);
-    };
+        clearLogoutTimer();
+    }, [user?.role]);
+
+    const scheduleRoleBasedLogout = useCallback((currentToken, role) => {
+        clearLogoutTimer();
+        if (!currentToken || !role) return;
+        if (role !== 'ADMIN' && role !== 'ORGANIZER') return;
+        const payload = decodeTokenPayload(currentToken);
+        const expSeconds = payload?.exp;
+        if (!expSeconds) {
+            logout();
+            return;
+        }
+        const expiresAtMs = expSeconds * 1000;
+        const remainingMs = expiresAtMs - Date.now();
+        if (remainingMs <= 0) {
+            logout();
+            return;
+        }
+        logoutTimerRef.current = setTimeout(() => {
+            logout();
+        }, remainingMs);
+    }, [logout]);
 
     const updateUser = useCallback((patches) => {
         setUser((prev) => {
@@ -85,6 +126,13 @@ export const AuthProvider = ({ children }) => {
     const clearRedirectIntent = useCallback(() => {
         setRedirectIntent(null);
     }, []);
+
+    useEffect(() => {
+        scheduleRoleBasedLogout(token, user?.role);
+        return () => {
+            clearLogoutTimer();
+        };
+    }, [token, user?.role, scheduleRoleBasedLogout]);
 
     return (
         <AuthContext.Provider value={{

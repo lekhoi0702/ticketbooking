@@ -547,6 +547,27 @@ export const useCheckout = () => {
         navigate(`/order-success/${orderCode}`);
     };
 
+    /**
+     * Khi thời gian giữ ghế hết: hủy ghế trên server, xóa storage, báo lỗi, chuyển về trang sự kiện.
+     * Không reset timer (xử lý trong CountdownTimer).
+     */
+    const handleSeatHoldExpired = useCallback(async () => {
+        setError('Thời gian giữ ghế đã hết. Thanh toán thất bại. Vui lòng quay lại trang sự kiện để chọn lại ghế.');
+        if (user && eventId) {
+            try {
+                await seatApi.unlockAllSeats(user.user_id, eventId);
+            } catch (err) {
+                console.error('Error unlocking seats on hold expiry:', err);
+            }
+            const storageKey = `seat_reservations_${eventId}_${user.user_id}`;
+            localStorage.removeItem(storageKey);
+            sessionStorage.removeItem(`seat_timer_start_${eventId}`);
+        }
+        setTimeout(() => {
+            navigate(`/event/${eventId}`, { replace: true });
+        }, 2500);
+    }, [user, eventId, navigate, setError]);
+
     return {
         loading,
         processing,
@@ -575,6 +596,7 @@ export const useCheckout = () => {
         applyDiscount,
         setDiscountCode, // Expose setter if needed
         handlePaymentSuccess,
+        handleSeatHoldExpired,
         navigate
     };
 };
