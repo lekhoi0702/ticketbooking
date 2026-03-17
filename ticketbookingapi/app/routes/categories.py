@@ -9,6 +9,9 @@ def get_categories():
     try:
         categories = EventCategory.query.filter(
             EventCategory.is_active == True
+        ).order_by(
+            EventCategory.display_order.asc(),
+            EventCategory.category_id.asc()
         ).all()
         
         return jsonify({

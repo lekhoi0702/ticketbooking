@@ -1,5 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form, Input, Card, Space, Typography, Tooltip, Switch, App } from 'antd';
+﻿import React, { useEffect, useState } from 'react';
+import {
+    Button,
+    Modal,
+    Form,
+    Input,
+    Card,
+    Space,
+    Typography,
+    Tooltip,
+    Switch,
+    App,
+    InputNumber,
+} from 'antd';
 import { EditOutlined, TagsOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
@@ -8,6 +20,14 @@ import AdminToolbar from '@features/admin/components/AdminToolbar';
 import useAdminUndo from '@features/admin/hooks/useAdminUndo';
 
 const { Text } = Typography;
+
+const normalizeCategories = (items = []) =>
+    [...items].sort((a, b) => {
+        const orderA = Number.isFinite(Number(a.display_order)) ? Number(a.display_order) : Number.MAX_SAFE_INTEGER;
+        const orderB = Number.isFinite(Number(b.display_order)) ? Number(b.display_order) : Number.MAX_SAFE_INTEGER;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.category_id || 0) - (b.category_id || 0);
+    });
 
 const Categories = () => {
     const { message, modal } = App.useApp();
@@ -24,14 +44,15 @@ const Categories = () => {
     const fetchCategories = async () => {
         try {
             setLoading(true);
-            setSelectedRowKeys([]); // Clear selection when refreshing
+            setSelectedRowKeys([]);
             const response = await api.getAdminCategories();
             if (response.success) {
-                setCategories(response.data);
+                const normalized = normalizeCategories(response.data || []);
+                setCategories(normalized);
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
-            message.error('Không thể tải danh sách danh mục');
+            message.error('Khong the tai danh sach the loai');
         } finally {
             setLoading(false);
         }
@@ -40,8 +61,8 @@ const Categories = () => {
     const { canUndo, undo, recordCreate, clear: clearUndo, undoing } = useAdminUndo({
         onDelete: (id) => api.deleteCategory(id),
         onRefetch: fetchCategories,
-        onSuccess: () => message.success('Đã hoàn tác'),
-        onError: () => message.error('Không thể hoàn tác'),
+        onSuccess: () => message.success('Da hoan tac'),
+        onError: () => message.error('Khong the hoan tac'),
     });
 
     useEffect(() => {
@@ -54,18 +75,29 @@ const Categories = () => {
         setSelectedRowKeys([]);
         clearUndo();
         form.resetFields();
+
+        const maxOrder = categories.reduce((max, item) => {
+            const value = Number.isFinite(Number(item.display_order)) ? Number(item.display_order) : 1;
+            return Math.max(max, value);
+        }, 1);
+
+        form.setFieldsValue({
+            display_order: maxOrder + 1,
+        });
+
         setModalVisible(true);
     };
 
     const handleEdit = (category = null) => {
-        const categoryToEdit = category || categories.find(c => c.category_id === selectedRowKeys[0]);
+        const categoryToEdit = category || categories.find((c) => c.category_id === selectedRowKeys[0]);
         if (!categoryToEdit) return;
-        
+
         setIsEditing(true);
         setCurrentCategory(categoryToEdit);
         clearUndo();
         form.setFieldsValue({
-            category_name: categoryToEdit.category_name
+            category_name: categoryToEdit.category_name,
+            display_order: Number.isFinite(Number(categoryToEdit.display_order)) ? Number(categoryToEdit.display_order) : 1,
         });
         setModalVisible(true);
     };
@@ -78,16 +110,23 @@ const Categories = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
+            const payload = {
+                ...values,
+                display_order: Number.isFinite(Number(values.display_order))
+                    ? Math.max(1, Math.trunc(Number(values.display_order)))
+                    : 1,
+            };
+
             setSubmitting(true);
 
             if (isEditing) {
-                await api.updateCategory(currentCategory.category_id, values);
-                message.success('Cập nhật danh mục thành công');
+                await api.updateCategory(currentCategory.category_id, payload);
+                message.success('Cap nhat the loai thanh cong');
                 clearUndo();
                 setSelectedRowKeys([]);
             } else {
-                const res = await api.createCategory(values);
-                message.success('Tạo danh mục mới thành công');
+                const res = await api.createCategory(payload);
+                message.success('Tao the loai moi thanh cong');
                 if (res?.data?.category_id) recordCreate(res.data.category_id);
             }
 
@@ -96,7 +135,7 @@ const Categories = () => {
         } catch (error) {
             console.error('Submit error:', error);
             if (error instanceof Error) {
-                message.error(error.message || 'Có lỗi xảy ra');
+                message.error(error.message || 'Co loi xay ra');
             }
         } finally {
             setSubmitting(false);
@@ -104,26 +143,26 @@ const Categories = () => {
     };
 
     const handleDelete = (category = null) => {
-        const categoryToDelete = category || categories.find(c => c.category_id === selectedRowKeys[0]);
+        const categoryToDelete = category || categories.find((c) => c.category_id === selectedRowKeys[0]);
         if (!categoryToDelete) return;
 
         modal.confirm({
-            title: 'Xác nhận xóa danh mục',
+            title: 'Xac nhan xoa the loai',
             icon: <WarningOutlined style={{ color: '#ff4d4f' }} />,
-            content: `Bạn có chắc chắn muốn xóa danh mục "${categoryToDelete.category_name}"? Hành động này không thể hoàn tác.`,
-            okText: 'Xóa danh mục',
+            content: `Ban co chac chan muon xoa the loai "${categoryToDelete.category_name}"? Hanh dong nay khong the hoan tac.`,
+            okText: 'Xoa the loai',
             okType: 'danger',
-            cancelText: 'Hủy',
+            cancelText: 'Huy',
             onOk: async () => {
                 try {
                     await api.deleteCategory(categoryToDelete.category_id);
-                    message.success('Xóa danh mục thành công');
+                    message.success('Xoa the loai thanh cong');
                     setSelectedRowKeys([]);
                     fetchCategories();
                 } catch (error) {
-                    message.error('Không thể xóa danh mục này');
+                    message.error('Khong the xoa the loai nay');
                 }
-            }
+            },
         });
     };
 
@@ -133,55 +172,69 @@ const Categories = () => {
     };
 
     const handleToggleStatus = async (category, checked) => {
-        // Optimistic UI Update
         const originalStatus = category.is_active;
         const newStatusKey = checked ? 'ACTIVE' : 'HIDDEN';
 
-        // Update local state immediately
-        setCategories(prev => prev.map(c =>
-            c.category_id === category.category_id
-                ? { ...c, is_active: checked }
-                : c
-        ));
+        setCategories((prev) =>
+            prev.map((c) =>
+                c.category_id === category.category_id
+                    ? { ...c, is_active: checked }
+                    : c
+            )
+        );
 
         try {
             await api.updateCategory(category.category_id, { status: newStatusKey });
-            message.success(`Đã ${checked ? 'hiện' : 'ẩn'} danh mục`);
+            message.success(`Da ${checked ? 'hien' : 'an'} the loai`);
         } catch (error) {
-            // Revert on error
-            setCategories(prev => prev.map(c =>
-                c.category_id === category.category_id
-                    ? { ...c, is_active: originalStatus }
-                    : c
-            ));
-            message.error('Lỗi khi cập nhật trạng thái');
+            setCategories((prev) =>
+                prev.map((c) =>
+                    c.category_id === category.category_id
+                        ? { ...c, is_active: originalStatus }
+                        : c
+                )
+            );
+            message.error('Loi khi cap nhat trang thai');
         }
     };
 
     const columns = [
         {
-            title: 'Tên danh mục',
+            title: 'Ten the loai',
             dataIndex: 'category_name',
             key: 'category_name',
-            render: (text) => <Space><TagsOutlined style={{ color: '#2DC275' }} /> <b>{text}</b></Space>
+            render: (text) => (
+                <Space>
+                    <TagsOutlined style={{ color: '#2DC275' }} />
+                    <b>{text}</b>
+                </Space>
+            ),
         },
         {
-            title: 'Trạng thái',
+            title: 'Order',
+            dataIndex: 'display_order',
+            key: 'display_order',
+            width: 120,
+            align: 'center',
+            render: (value) => (Number.isFinite(Number(value)) ? Math.max(1, Number(value)) : 1),
+        },
+        {
+            title: 'Trang thai',
             dataIndex: 'is_active',
             key: 'is_active',
             width: 120,
             render: (isActive, record) => (
                 <Switch
-                    checkedChildren="Hiện"
-                    unCheckedChildren="Ẩn"
+                    checkedChildren="Hien"
+                    unCheckedChildren="An"
                     checked={isActive}
                     onChange={(checked) => handleToggleStatus(record, checked)}
                 />
-            )
+            ),
         },
     ];
 
-    if (loading) return <AdminLoadingScreen tip="Đang tải danh mục..." />;
+    if (loading) return <AdminLoadingScreen tip="Dang tai the loai..." />;
 
     return (
         <div style={{ paddingTop: 0 }}>
@@ -190,12 +243,12 @@ const Categories = () => {
                     onUndo={undo}
                     onAdd={handleAdd}
                     onRefresh={fetchCategories}
-                    addLabel="Thêm thể loại"
+                    addLabel="Them the loai"
                     undoDisabled={!canUndo}
                     undoLoading={undoing}
                     refreshLoading={loading}
                     extraActions={[
-                        <Tooltip key="edit" title="Chỉnh sửa">
+                        <Tooltip key="edit" title="Chinh sua">
                             <Button
                                 type="primary"
                                 ghost
@@ -204,10 +257,10 @@ const Categories = () => {
                                 disabled={selectedRowKeys.length === 0}
                                 size="middle"
                             >
-                                Chỉnh sửa
+                                Chinh sua
                             </Button>
                         </Tooltip>,
-                        <Tooltip key="delete" title="Xóa">
+                        <Tooltip key="delete" title="Xoa">
                             <Button
                                 danger
                                 icon={<DeleteOutlined />}
@@ -215,9 +268,9 @@ const Categories = () => {
                                 disabled={selectedRowKeys.length === 0}
                                 size="middle"
                             >
-                                Xóa
+                                Xoa
                             </Button>
-                        </Tooltip>
+                        </Tooltip>,
                     ]}
                 />
             </div>
@@ -231,30 +284,48 @@ const Categories = () => {
                     setSelectedRowKeys={setSelectedRowKeys}
                     selectionType="single"
                     pagination={{ pageSize: 50 }}
-                    emptyText="Không có thể loại"
+                    emptyText="Khong co the loai"
                 />
             </Card>
 
             <Modal
-                title={<Text strong style={{ fontSize: 16 }}>{isEditing ? `Chỉnh sửa: ${currentCategory?.category_name}` : "Thêm thể loại mới"}</Text>}
+                title={
+                    <Text strong style={{ fontSize: 16 }}>
+                        {isEditing ? `Chinh sua: ${currentCategory?.category_name}` : 'Them the loai moi'}
+                    </Text>
+                }
                 open={modalVisible}
                 onOk={handleSubmit}
                 onCancel={() => setModalVisible(false)}
                 confirmLoading={submitting}
-                okText={isEditing ? "Lưu thay đổi" : "Tạo mới"}
-                cancelText="Hủy"
+                okText={isEditing ? 'Luu thay doi' : 'Tao moi'}
+                cancelText="Huy"
             >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    name="category_form"
-                >
+                <Form form={form} layout="vertical" name="category_form">
                     <Form.Item
                         name="category_name"
-                        label="Tên thể loại"
-                        rules={[{ required: true, message: 'Vui lòng nhập tên thể loại!' }]}
+                        label="Ten the loai"
+                        rules={[{ required: true, message: 'Vui long nhap ten the loai!' }]}
                     >
-                        <Input placeholder="Ví dụ: Nhạc kịch" />
+                        <Input placeholder="Vi du: Nhac kich" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="display_order"
+                        label="Order hien thi"
+                        rules={[
+                            { required: true, message: 'Vui long nhap thu tu hien thi!' },
+                            {
+                                validator: (_, value) => {
+                                    if (value == null || Number.isNaN(Number(value)) || Number(value) < 1) {
+                                        return Promise.reject(new Error('Order phai la so nguyen >= 1'));
+                                    }
+                                    return Promise.resolve();
+                                },
+                            },
+                        ]}
+                    >
+                        <InputNumber min={1} precision={0} style={{ width: '100%' }} />
                     </Form.Item>
                 </Form>
             </Modal>

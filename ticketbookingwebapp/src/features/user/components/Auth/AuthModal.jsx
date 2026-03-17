@@ -92,7 +92,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                             password: formData.password
                         });
                         if (loginRes.success && loginRes.data) {
-                            login(loginRes.data.user, loginRes.data.access_token);
+                            login(loginRes.data.user, loginRes.data.access_token, loginRes.data.refresh_token);
                             onHide();
                             if (onSuccess) onSuccess();
                         } else {
@@ -122,7 +122,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                         password: formData.password
                     });
                     if (res.success && res.data) {
-                        login(res.data.user, res.data.access_token);
+                        login(res.data.user, res.data.access_token, res.data.refresh_token);
                         onHide();
                         if (onSuccess) onSuccess();
                     } else {

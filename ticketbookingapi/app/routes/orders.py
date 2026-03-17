@@ -118,7 +118,7 @@ def cancel_refund_request(order_id):
 
 @orders_bp.route("/tickets/user/<int:user_id>", methods=["GET"])
 def get_user_tickets(user_id):
-    """Get all tickets for a user (for MyTickets page)"""
+    """Get paid tickets for a user (for MyTickets page)"""
     try:
         data = OrderService.get_user_tickets_details(user_id)
         return jsonify({'success': True, 'data': data}), 200

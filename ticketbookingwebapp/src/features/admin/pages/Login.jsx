@@ -76,7 +76,7 @@ const AdminLogin = () => {
 
             if (res.success && res.data) {
 
-                login(res.data.user, res.data.access_token);
+                login(res.data.user, res.data.access_token, res.data.refresh_token);
 
                 message.success('Đăng nhập quản trị viên thành công!');
 

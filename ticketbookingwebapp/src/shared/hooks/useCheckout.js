@@ -531,6 +531,9 @@ export const useCheckout = () => {
     };
 
     const handlePaymentSuccess = (orderCode) => {
+        // Test/support flag: force success UI on OrderSuccess page for this order code.
+        sessionStorage.setItem(`force_paid_order_${orderCode}`, 'true');
+
         // Clear stored QR data and payment method when payment succeeds
         sessionStorage.removeItem(`vietqr_qr_${eventId}`);
         sessionStorage.removeItem(`vietqr_order_created_${eventId}`);

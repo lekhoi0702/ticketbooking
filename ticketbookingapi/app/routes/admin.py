@@ -524,7 +524,10 @@ def process_order_cancellation(order_id):
 def admin_get_categories():
     """Get all event categories (admin: includes inactive, created_by, created_at)"""
     try:
-        categories = EventCategory.query.order_by(EventCategory.category_id).all()
+        categories = EventCategory.query.order_by(
+            EventCategory.display_order.asc(),
+            EventCategory.category_id.asc()
+        ).all()
         return jsonify({
             'success': True,
             'data': [c.to_dict() for c in categories]
@@ -546,12 +549,25 @@ def admin_create_category():
         if EventCategory.query.filter_by(category_name=data['category_name']).first():
             return jsonify({'success': False, 'message': 'Category name already exists'}), 400
 
+        display_order = data.get('display_order')
+        if display_order is None:
+            current_max = db.session.query(func.max(EventCategory.display_order)).scalar()
+            display_order = (current_max or 0) + 1
+        else:
+            try:
+                display_order = int(display_order)
+            except (TypeError, ValueError):
+                return jsonify({'success': False, 'message': 'Display order must be an integer'}), 400
+            if display_order < 1:
+                return jsonify({'success': False, 'message': 'Display order must be >= 1'}), 400
+
         created_by = None
         if hasattr(g, 'current_user') and g.current_user:
             created_by = g.current_user.user_id
             
         category = EventCategory(
             category_name=data['category_name'],
+            display_order=display_order,
             is_active=True,
             created_by=created_by,
         )
@@ -586,6 +602,15 @@ def admin_update_category(category_id):
             
         if 'status' in data:
             category.is_active = (data['status'] == 'ACTIVE')
+
+        if 'display_order' in data:
+            try:
+                display_order = int(data['display_order'])
+            except (TypeError, ValueError):
+                return jsonify({'success': False, 'message': 'Display order must be an integer'}), 400
+            if display_order < 1:
+                return jsonify({'success': False, 'message': 'Display order must be >= 1'}), 400
+            category.display_order = display_order
             
         db.session.commit()
         

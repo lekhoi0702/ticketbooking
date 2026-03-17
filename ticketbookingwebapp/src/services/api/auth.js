@@ -245,4 +245,27 @@ export const authApi = {
         }
         return await response.json();
     },
+
+    async logout(refreshToken) {
+        const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshToken })
+        });
+
+        if (!response.ok) {
+            let errorMessage = 'Đăng xuất không thành công';
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const err = await response.json();
+                    const raw = err?.error?.message || err?.message || errorMessage;
+                    errorMessage = mapToVietnamese(raw) || raw;
+                }
+            } catch (_) {}
+            throw new Error(errorMessage);
+        }
+
+        return await response.json();
+    },
 };

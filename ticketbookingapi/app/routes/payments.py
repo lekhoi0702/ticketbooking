@@ -16,8 +16,8 @@ import base64
 payments_bp = Blueprint("payments", __name__)
 
 # VNPay Configuration
-VNPAY_TMN_CODE = "53A85ZOT"  
-VNPAY_HASH_SECRET = "4QL0OQ8BXVB0SLF5KK7Y42AXDPJNOJ37"
+VNPAY_TMN_CODE = "OGFNNM8K"  
+VNPAY_HASH_SECRET = "TAB4NJGUVXQ0J8VREDDJLXVLRVXK3BZV"
 VNPAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"  
 VNPAY_RETURN_URL = "http://localhost:5173/payment/vnpay-return"  
 VNPAY_API_URL = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"

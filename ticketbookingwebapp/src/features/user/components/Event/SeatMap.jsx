@@ -8,7 +8,7 @@ import { seatApi } from '@services/api/seat';
 import { useAuth } from '@context/AuthContext';
 import './SeatMap.css';
 
-const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = 10, onSeatsLoaded }) => {
+const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number.MAX_SAFE_INTEGER, onSeatsLoaded }) => {
     const { user, triggerLogin, isAuthenticated, redirectIntent, clearRedirectIntent } = useAuth();
     const [loading, setLoading] = useState(true);
     const [seats, setSeats] = useState([]);

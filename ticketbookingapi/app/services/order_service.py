@@ -345,9 +345,10 @@ class OrderService:
                         # Check if any ticket type has sales ended
                         min_sale_end = None
                         for tt in event.ticket_types:
-                            if tt.sale_end:
-                                if min_sale_end is None or tt.sale_end < min_sale_end:
-                                    min_sale_end = tt.sale_end
+                            sale_end = getattr(tt, 'sale_end', None)
+                            if sale_end:
+                                if min_sale_end is None or sale_end < min_sale_end:
+                                    min_sale_end = sale_end
                         
                         event_info = {
                             'event_id': event.event_id,
@@ -422,8 +423,9 @@ class OrderService:
         if order.order_status == 'PAID':
             for ticket in tickets:
                 ticket_type = TicketType.query.get(ticket.ticket_type_id)
-                if ticket_type and ticket_type.sale_end:
-                    if now_gmt7() > ticket_type.sale_end:
+                sale_end = getattr(ticket_type, 'sale_end', None) if ticket_type else None
+                if sale_end:
+                    if now_gmt7() > sale_end:
                          raise ValueError(f'Rất tiếc, vé {ticket_type.type_name} đã qua thời hạn hỗ trợ hủy (kết thúc bán vé).')
             
             # Set to PENDING instead of immediate cancellation
@@ -561,8 +563,11 @@ class OrderService:
 
     @staticmethod
     def get_user_tickets_details(user_id):
-        # Get all orders for user
-        orders = Order.query.filter_by(user_id=user_id).all()
+        # Only include successfully paid purchases
+        orders = Order.query.filter(
+            Order.user_id == user_id,
+            Order.order_status == 'PAID'
+        ).order_by(Order.created_at.desc()).all()
         
         all_tickets = []
         
@@ -603,5 +608,6 @@ class OrderService:
         # Sort by created_at descending
         all_tickets.sort(key=lambda x: x.get('order_date', ''), reverse=True)
         return all_tickets
+
 
 

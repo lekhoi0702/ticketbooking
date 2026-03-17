@@ -8,6 +8,7 @@ class EventCategory(db.Model):
 
     category_id = db.Column(db.BigInteger, primary_key=True)
     category_name = db.Column(db.String(100), unique=True, nullable=False)
+    display_order = db.Column(db.Integer, default=1, nullable=False, index=True)
     is_active = db.Column(db.Boolean, default=True, index=True, nullable=True)
     created_at = db.Column(db.DateTime, default=now_gmt7)
     created_by = db.Column(
@@ -25,6 +26,7 @@ class EventCategory(db.Model):
         d = {
             'category_id': self.category_id,
             'category_name': self.category_name,
+            'display_order': self.display_order,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'created_by': self.created_by,

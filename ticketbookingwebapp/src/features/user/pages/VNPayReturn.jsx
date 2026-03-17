@@ -1,60 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container, Card, Alert } from 'react-bootstrap';
-import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 
 const VNPayReturn = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [processing, setProcessing] = useState(true);
-    const [success, setSuccess] = useState(false);
-    const [message, setMessage] = useState('');
-    const [orderCode, setOrderCode] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         processPaymentResult();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const processPaymentResult = async () => {
         try {
-            // Get all VNPay response parameters
-            const vnpParams = {};
-            for (const [key, value] of searchParams.entries()) {
-                vnpParams[key] = value;
-            }
-
             const responseCode = searchParams.get('vnp_ResponseCode');
 
-            // Call backend to verify and update payment/order status
-            const verifyResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/payments/vnpay/return?${searchParams.toString()}`);
+            const verifyResponse = await fetch(
+                `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/payments/vnpay/return?${searchParams.toString()}`
+            );
             const verifyData = await verifyResponse.json();
 
-            if (verifyResponse.ok && verifyData.success) {
-                setSuccess(true);
-                setMessage('Thanh toán thành công!');
-                setOrderCode(verifyData.data.order_code);
-
-                // Redirect to order success page
-                setTimeout(() => {
-                    navigate(`/order-success/${verifyData.data.order_code}`);
-                }, 2000);
-            } else {
-                setSuccess(false);
-                setMessage(verifyData.message || getErrorMessage(responseCode));
-
-                setTimeout(() => {
-                    navigate('/');
-                }, 5000);
+            if (verifyResponse.ok && verifyData.success && verifyData?.data?.order_code) {
+                // Keep VNPay return page as a verification step only,
+                // then route to the unified success UI.
+                navigate(`/order-success/${verifyData.data.order_code}`, { replace: true });
+                return;
             }
-        } catch (err) {
-            console.error('Error processing payment result:', err);
-            setSuccess(false);
-            setMessage('Có lỗi xảy ra khi xử lý kết quả thanh toán');
 
-            setTimeout(() => {
-                navigate('/');
-            }, 5000);
+            setErrorMessage(verifyData.message || getErrorMessage(responseCode));
+            setTimeout(() => navigate('/', { replace: true }), 5000);
+        } catch (err) {
+            console.error('Error processing VNPay result:', err);
+            setErrorMessage('Co loi xay ra khi xu ly ket qua thanh toan');
+            setTimeout(() => navigate('/', { replace: true }), 5000);
         } finally {
             setProcessing(false);
         }
@@ -62,73 +43,39 @@ const VNPayReturn = () => {
 
     const getErrorMessage = (code) => {
         const errorMessages = {
-            '07': 'Giao dịch bị nghi ngờ gian lận',
-            '09': 'Thẻ/Tài khoản chưa đăng ký dịch vụ InternetBanking',
-            '10': 'Xác thực thông tin thẻ/tài khoản không đúng quá 3 lần',
-            '11': 'Đã hết hạn chờ thanh toán',
-            '12': 'Thẻ/Tài khoản bị khóa',
-            '13': 'Mật khẩu xác thực giao dịch không đúng',
-            '24': 'Giao dịch bị hủy',
-            '51': 'Tài khoản không đủ số dư',
-            '65': 'Tài khoản đã vượt quá hạn mức giao dịch trong ngày',
-            '75': 'Ngân hàng thanh toán đang bảo trì',
-            '79': 'Giao dịch vượt quá số lần nhập sai mật khẩu',
-            '99': 'Lỗi không xác định'
+            '07': 'Giao dich bi nghi ngo gian lan',
+            '09': 'The/Tai khoan chua dang ky InternetBanking',
+            '10': 'Xac thuc thong tin the/tai khoan khong dung qua 3 lan',
+            '11': 'Da het han cho thanh toan',
+            '12': 'The/Tai khoan bi khoa',
+            '13': 'Mat khau xac thuc giao dich khong dung',
+            '24': 'Giao dich bi huy',
+            '51': 'Tai khoan khong du so du',
+            '65': 'Tai khoan da vuot qua han muc giao dich trong ngay',
+            '75': 'Ngan hang thanh toan dang bao tri',
+            '79': 'Giao dich vuot qua so lan nhap sai mat khau',
+            '99': 'Loi khong xac dinh'
         };
-        return errorMessages[code] || 'Thanh toán không thành công';
+        return errorMessages[code] || 'Thanh toan khong thanh cong';
     };
 
+    if (processing) {
+        return <LoadingSpinner fullScreen tip="Dang xac thuc ket qua thanh toan..." />;
+    }
+
     return (
-        <Container className="py-5 payment-return-page">
+        <Container className="py-5">
             <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-                <Card className="border-0 shadow-sm text-center" style={{ maxWidth: '500px', width: '100%', backgroundColor: '#ffffff' }}>
-                    <Card.Body className="py-5 px-4" style={{ backgroundColor: '#ffffff' }}>
-                        {processing ? (
-                            <LoadingSpinner fullScreen tip="Đang xử lý kết quả thanh toán..." />
-                        ) : (
-                            <>
-                                {success ? (
-                                    <>
-                                        <FaCheckCircle className="text-success" size={80} />
-                                        <h3 className="mt-4 mb-3 text-success fw-bold" style={{ color: '#28a745' }}>{message}</h3>
-                                        <p style={{ color: '#6c757d' }}>Đang chuyển hướng đến trang xác nhận...</p>
-                                    </>
-                                ) : (
-                                    <>
-                                        <FaTimesCircle className="text-danger" size={80} />
-                                        <h3 className="mt-4 mb-3 text-danger fw-bold" style={{ color: '#dc3545' }}>Thanh Toán Thất Bại</h3>
-                                        <p className="mb-4" style={{ color: '#6c757d' }}>{message}</p>
-                                        <Alert variant="warning">
-                                            Bạn sẽ được chuyển về trang chủ sau 5 giây...
-                                        </Alert>
-                                    </>
-                                )}
-                            </>
-                        )}
+                <Card className="border-0 shadow-sm text-center" style={{ maxWidth: '520px', width: '100%' }}>
+                    <Card.Body className="py-5 px-4">
+                        <h3 className="mb-3 text-danger fw-bold">Thanh toan that bai</h3>
+                        <p className="mb-3">{errorMessage}</p>
+                        <Alert variant="warning" className="mb-0">
+                            Ban se duoc chuyen ve trang chu sau 5 giay...
+                        </Alert>
                     </Card.Body>
                 </Card>
             </div>
-            <style>{`
-                .payment-return-page .card,
-                .payment-return-page .card-body {
-                    background-color: #ffffff !important;
-                }
-                .payment-return-page .card h3,
-                .payment-return-page .card p,
-                .payment-return-page .card span,
-                .payment-return-page .card strong {
-                    color: #212529 !important;
-                }
-                .payment-return-page .text-success {
-                    color: #28a745 !important;
-                }
-                .payment-return-page .text-danger {
-                    color: #dc3545 !important;
-                }
-                .payment-return-page .text-muted {
-                    color: #6c757d !important;
-                }
-            `}</style>
         </Container>
     );
 };

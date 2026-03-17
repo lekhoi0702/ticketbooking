@@ -27,7 +27,8 @@ const MyTicketsTab = () => {
             setLoading(true);
             const res = await api.getUserTickets(user.user_id);
             if (res.success) {
-                setTickets(res.data);
+                const paidTickets = (res.data || []).filter((ticket) => ticket.order_status === 'PAID');
+                setTickets(paidTickets);
             }
         } catch (error) {
             console.error('Error fetching tickets:', error);

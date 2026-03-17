@@ -111,7 +111,13 @@ const SeatSelection = () => {
     };
 
     const handleTicketQuantityChange = (ticketTypeId, newQuantity) => {
-        const qty = Math.max(1, Math.min(newQuantity, selectedTicketType?.max_per_order || 10));
+        const maxQuantityByStock = Math.max(
+            1,
+            selectedTicketType?.available_quantity
+                ?? selectedTicketType?.quantity
+                ?? 1
+        );
+        const qty = Math.max(1, Math.min(newQuantity, maxQuantityByStock));
         setQuantity(qty);
         // Clear seats if quantity decreases
         if (selectedSeats.length > qty) {
@@ -220,6 +226,12 @@ const SeatSelection = () => {
             : quantity > 0;  // For non-seat-map tickets, need quantity > 0
 
     const totalPrice = selectedTicketType ? selectedTicketType.price * quantity : 0;
+    const selectedTicketTypeStock = Math.max(
+        1,
+        selectedTicketType?.available_quantity
+            ?? selectedTicketType?.quantity
+            ?? 1
+    );
 
     return (
         <div className="seat-selection-page">
@@ -300,7 +312,7 @@ const SeatSelection = () => {
                                                 </div>
                                                 <div className="seat-ticket-meta">
                                                     <span className="seat-meta-chip">
-                                                        Tối đa {tt.max_per_order || 10} vé/đơn
+                                                        Còn lại {tt.available_quantity ?? tt.quantity ?? 0} vé
                                                     </span>
                                                     <span className={`seat-meta-chip ${ttSeatMapState === true ? 'chip-green' : ''}`}>
                                                         {ttSeatMapState === undefined
@@ -326,7 +338,7 @@ const SeatSelection = () => {
                                             <div className="seat-panel-title">Số lượng vé</div>
                                             <div className="seat-panel-desc">
                                                 {selectedTicketType
-                                                    ? `Tối đa ${selectedTicketType.max_per_order || 10} vé mỗi đơn hàng.`
+                                                    ? 'Bạn có thể chọn theo số lượng vé còn lại.'
                                                     : 'Vui lòng chọn loại vé trước.'}
                                             </div>
                                         </div>
@@ -357,7 +369,7 @@ const SeatSelection = () => {
                                                 }
                                                 disabled={
                                                     !selectedTicketType ||
-                                                    quantity >= (selectedTicketType?.max_per_order || 10)
+                                                    quantity >= selectedTicketTypeStock
                                                 }
                                                 aria-label="Tăng số lượng"
                                             >
@@ -422,7 +434,7 @@ const SeatSelection = () => {
                                                 ticketType={selectedTicketType}
                                                 eventId={event.event_id}
                                                 onSelectionChange={handleSeatSelection}
-                                                maxSelection={quantity}
+                                                maxSelection={selectedTicketTypeStock}
                                                 onSeatsLoaded={(exists) => handleSeatsLoaded(selectedTicketType.ticket_type_id, exists)}
                                             />
                                         ) : (

@@ -71,7 +71,7 @@ const Login = () => {
                         required_role: 'USER'
                     });
                     if (loginRes.success && loginRes.data) {
-                        login(loginRes.data.user, loginRes.data.access_token);
+                        login(loginRes.data.user, loginRes.data.access_token, loginRes.data.refresh_token);
                         const from = location.state?.from?.pathname || "/";
                         const fromState = location.state?.from?.state || {};
                         navigate(from, { state: fromState, replace: true });
@@ -95,7 +95,7 @@ const Login = () => {
                         required_role: 'USER'
                     });
                     if (res.success && res.data) {
-                        login(res.data.user, res.data.access_token);
+                        login(res.data.user, res.data.access_token, res.data.refresh_token);
                         const from = location.state?.from?.pathname || "/";
                         const fromState = location.state?.from?.state || {};
                         navigate(from, { state: fromState, replace: true });

@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "ui:contract": "node ./scripts/check-ui-contract.mjs",
+    "ui:guard": "npm run lint && npm run ui:contract"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",

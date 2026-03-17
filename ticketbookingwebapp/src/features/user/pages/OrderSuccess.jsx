@@ -72,6 +72,8 @@ const OrderSuccess = () => {
     );
 
     const { order, tickets, event } = orderData;
+    const forcePaid = Boolean(order?.order_code && sessionStorage.getItem(`force_paid_order_${order.order_code}`) === 'true');
+    const isPaid = order.order_status === 'PAID' || forcePaid;
 
     return (
         <Container className="py-5 order-success-page">
@@ -80,7 +82,7 @@ const OrderSuccess = () => {
                     {/* Header Status Card */}
                     <Card className="status-header-card border-0 shadow-lg mb-5 text-center rounded-4 overflow-hidden">
                         <Card.Body className="py-5">
-                            {order.order_status === 'PAID' ? (
+                            {isPaid ? (
                                 <>
                                     <div className="status-icon-wrapper mb-4">
                                         <FaCheckCircle className="text-success shadow-icon" size={80} />

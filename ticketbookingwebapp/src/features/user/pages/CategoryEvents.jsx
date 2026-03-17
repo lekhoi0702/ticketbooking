@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Container, Row, Col } from 'react-bootstrap';
 import { FaHome } from 'react-icons/fa';
@@ -11,7 +11,6 @@ import { transformEvent } from '@shared/utils/eventUtils';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import './CategoryEvents.css';
 
-const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const CategoryEvents = () => {
@@ -19,17 +18,15 @@ const CategoryEvents = () => {
     const [events, setEvents] = useState([]);
     const [categoryName, setCategoryName] = useState('');
     const [loading, setLoading] = useState(true);
-    const [category, setCategory] = useState(null);
-    
+
     // Filter states
     const [venues, setVenues] = useState([]);
-    const [categories, setCategories] = useState([]);
     const [filters, setFilters] = useState({
-        dateRange: null,
+        fromDate: null,
+        toDate: null,
         venueId: undefined,
-        categoryId: parseInt(id) || undefined,
         minPrice: undefined,
-        maxPrice: undefined
+        maxPrice: undefined,
     });
 
     useEffect(() => {
@@ -39,25 +36,20 @@ const CategoryEvents = () => {
     const loadInitialData = async () => {
         try {
             setLoading(true);
-            const [eventsRes, categoryRes, venuesRes, categoriesRes] = await Promise.all([
+            const [eventsRes, categoryRes, venuesRes] = await Promise.all([
                 api.getEvents({ category_id: id, limit: 100 }),
                 api.getCategory(id),
                 api.getVenues(),
-                api.getCategories()
             ]);
 
             if (eventsRes.success) {
                 setEvents(eventsRes.data);
             }
             if (categoryRes.success) {
-                setCategory(categoryRes.data);
                 setCategoryName(categoryRes.data.category_name);
             }
             if (venuesRes.success) {
                 setVenues(venuesRes.data);
-            }
-            if (categoriesRes.success) {
-                setCategories(categoriesRes.data);
             }
         } catch (error) {
             console.error('Error loading category data:', error);
@@ -72,26 +64,20 @@ const CategoryEvents = () => {
             const params = {
                 category_id: id,
                 limit: 100,
-                ...filterParams
+                ...filterParams,
             };
 
-            // Add date filters
-            if (filters.dateRange && filters.dateRange.length === 2) {
-                params.date_from = filters.dateRange[0].toISOString();
-                params.date_to = filters.dateRange[1].toISOString();
+            if (filters.fromDate) {
+                params.date_from = filters.fromDate.toISOString();
+            }
+            if (filters.toDate) {
+                params.date_to = filters.toDate.toISOString();
             }
 
-            // Add venue filter
             if (filters.venueId) {
                 params.venue_id = filters.venueId;
             }
 
-            // Add category filter (if changed from URL)
-            if (filters.categoryId && filters.categoryId !== parseInt(id)) {
-                params.category_id = filters.categoryId;
-            }
-
-            // Add price filters
             if (filters.minPrice !== undefined && filters.minPrice !== null) {
                 params.min_price = filters.minPrice;
             }
@@ -116,20 +102,19 @@ const CategoryEvents = () => {
 
     const handleResetFilters = async () => {
         const resetFilters = {
-            dateRange: null,
+            fromDate: null,
+            toDate: null,
             venueId: undefined,
-            categoryId: parseInt(id) || undefined,
             minPrice: undefined,
-            maxPrice: undefined
+            maxPrice: undefined,
         };
         setFilters(resetFilters);
-        
-        // Load with reset filters
+
         try {
             setLoading(true);
             const params = {
                 category_id: id,
-                limit: 100
+                limit: 100,
             };
             const eventsRes = await api.getEvents(params);
             if (eventsRes.success) {
@@ -142,22 +127,14 @@ const CategoryEvents = () => {
         }
     };
 
-    // Breadcrumb: use filtered category when user has applied category filter
-    const breadcrumbCategoryId = filters.categoryId ?? (id ? parseInt(id) : undefined);
-    const breadcrumbCategoryName = breadcrumbCategoryId != null
-        ? (categories.find((c) => c.category_id === breadcrumbCategoryId)?.category_name ?? categoryName)
-        : categoryName;
-
-    const baseCategoryId = id ? parseInt(id) : undefined;
     const hasActiveFilters = Boolean(
-        (filters.dateRange && filters.dateRange.length === 2) ||
+        filters.fromDate ||
+        filters.toDate ||
         filters.venueId ||
-        (filters.categoryId && baseCategoryId && filters.categoryId !== baseCategoryId) ||
         filters.minPrice !== undefined ||
         filters.maxPrice !== undefined
     );
 
-    // Show fullscreen loading only on initial load (when no events yet)
     if (loading && events.length === 0) {
         return <LoadingSpinner fullScreen tip={`Đang tải sự kiện ${categoryName || ''}...`} />;
     }
@@ -169,16 +146,13 @@ const CategoryEvents = () => {
                     items={[
                         { label: 'Trang chủ', path: '/', icon: <FaHome /> },
                         {
-                            label: breadcrumbCategoryName || 'Đang tải...',
-                            path: breadcrumbCategoryId != null ? `/category/${breadcrumbCategoryId}` : '/events'
-                        }
+                            label: categoryName || 'Đang tải...',
+                            path: id ? `/category/${id}` : '/events',
+                        },
                     ]}
                 />
 
-                {/* Filter Section */}
-                <AntCard 
-                    className="category-filters-card mb-4"
-                >
+                <AntCard className="category-filters-card mb-4">
                     <div className="category-filters-header">
                         <div className="category-filters-title">
                             <span className="category-filters-icon" aria-hidden="true">
@@ -189,7 +163,7 @@ const CategoryEvents = () => {
                                     <span className="category-filters-title-main">Bộ lọc</span>
                                     {hasActiveFilters ? <span className="category-filters-badge">Đang áp dụng</span> : null}
                                 </div>
-                                <div className="category-filters-subtitle">Lọc theo ngày, địa điểm, giá và thể loại.</div>
+                                <div className="category-filters-subtitle">Lọc theo ngày, địa điểm và giá.</div>
                             </div>
                         </div>
 
@@ -218,105 +192,111 @@ const CategoryEvents = () => {
 
                     <AntRow gutter={[16, 16]} className="category-filters-grid">
                         <AntCol xs={24} sm={12} md={8} lg={7}>
-                            <div className="filter-field">
-                                <div className="filter-label">Ngày diễn ra</div>
-                            <RangePicker
-                                size="large"
-                                style={{ width: '100%' }}
-                                value={filters.dateRange}
-                                onChange={(dates) => setFilters({ ...filters, dateRange: dates })}
-                                format="DD/MM/YYYY"
-                                placeholder={['Từ ngày', 'Đến ngày']}
-                            />
+                            <div className="filter-field filter-field-date">
+                                <div className="filter-head">
+                                    <div className="filter-label">Ngày diễn ra</div>
+                                    <div className="date-guide-row">
+                                        <span className="date-guide-item">Từ ngày</span>
+                                        <span className="date-guide-item">Đến ngày</span>
+                                    </div>
+                                </div>
+                                <div className="date-filter-row">
+                                    <div className="date-filter-item">
+                                        <DatePicker
+                                            size="large"
+                                            style={{ width: '100%' }}
+                                            value={filters.fromDate}
+                                            onChange={(date) => setFilters({ ...filters, fromDate: date })}
+                                            format="DD/MM/YYYY"
+                                            placeholder=""
+                                        />
+                                    </div>
+                                    <div className="date-filter-item">
+                                        <DatePicker
+                                            size="large"
+                                            style={{ width: '100%' }}
+                                            value={filters.toDate}
+                                            onChange={(date) => setFilters({ ...filters, toDate: date })}
+                                            format="DD/MM/YYYY"
+                                            placeholder=""
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </AntCol>
 
                         <AntCol xs={24} sm={12} md={8} lg={7}>
-                            <div className="filter-field">
-                                <div className="filter-label">Vị trí</div>
-                            <Select
-                                size="large"
-                                style={{ width: '100%' }}
-                                placeholder="Chọn địa điểm"
-                                value={filters.venueId}
-                                onChange={(value) => setFilters({ ...filters, venueId: value })}
-                                allowClear
-                                showSearch
-                                optionFilterProp="children"
-                            >
-                                {venues.map(venue => (
-                                    <Option key={venue.venue_id} value={venue.venue_id}>
-                                        {venue.venue_name}
-                                    </Option>
-                                ))}
-                            </Select>
+                            <div className="filter-field filter-field-standard">
+                                <div className="filter-head">
+                                    <div className="filter-label">Vị trí</div>
+                                    <div className="filter-head-spacer" aria-hidden="true" />
+                                </div>
+                                <Select
+                                    size="large"
+                                    style={{ width: '100%' }}
+                                    placeholder="Chọn địa điểm"
+                                    value={filters.venueId}
+                                    onChange={(value) => setFilters({ ...filters, venueId: value })}
+                                    allowClear
+                                    showSearch
+                                    optionFilterProp="children"
+                                >
+                                    {venues.map((venue) => (
+                                        <Option key={venue.venue_id} value={venue.venue_id}>
+                                            {venue.venue_name}
+                                        </Option>
+                                    ))}
+                                </Select>
                             </div>
                         </AntCol>
 
                         <AntCol xs={24} sm={12} md={8} lg={5}>
-                            <div className="filter-field">
-                                <div className="filter-label">Giá từ (VNĐ)</div>
-                            <InputNumber
-                                size="large"
-                                style={{ width: '100%' }}
-                                placeholder="Tối thiểu"
-                                value={filters.minPrice}
-                                onChange={(value) => setFilters({ ...filters, minPrice: value })}
-                                min={0}
-                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
-                            />
+                            <div className="filter-field filter-field-standard">
+                                <div className="filter-head">
+                                    <div className="filter-label">Giá từ (VNĐ)</div>
+                                    <div className="filter-head-spacer" aria-hidden="true" />
+                                </div>
+                                <InputNumber
+                                    size="large"
+                                    style={{ width: '100%' }}
+                                    placeholder="Tối thiểu"
+                                    value={filters.minPrice}
+                                    onChange={(value) => setFilters({ ...filters, minPrice: value })}
+                                    min={0}
+                                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </div>
                         </AntCol>
 
                         <AntCol xs={24} sm={12} md={8} lg={5}>
-                            <div className="filter-field">
-                                <div className="filter-label">Giá đến (VNĐ)</div>
-                            <InputNumber
-                                size="large"
-                                style={{ width: '100%' }}
-                                placeholder="Tối đa"
-                                value={filters.maxPrice}
-                                onChange={(value) => setFilters({ ...filters, maxPrice: value })}
-                                min={0}
-                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
-                            />
-                            </div>
-                        </AntCol>
-
-                        <AntCol xs={24} sm={12} md={8} lg={6}>
-                            <div className="filter-field">
-                                <div className="filter-label">Thể loại</div>
-                            <Select
-                                size="large"
-                                style={{ width: '100%' }}
-                                placeholder="Chọn thể loại"
-                                value={filters.categoryId}
-                                onChange={(value) => setFilters({ ...filters, categoryId: value })}
-                                allowClear
-                                showSearch
-                                optionFilterProp="children"
-                            >
-                                {categories.map(cat => (
-                                    <Option key={cat.category_id} value={cat.category_id}>
-                                        {cat.category_name}
-                                    </Option>
-                                ))}
-                            </Select>
+                            <div className="filter-field filter-field-standard">
+                                <div className="filter-head">
+                                    <div className="filter-label">Giá đến (VNĐ)</div>
+                                    <div className="filter-head-spacer" aria-hidden="true" />
+                                </div>
+                                <InputNumber
+                                    size="large"
+                                    style={{ width: '100%' }}
+                                    placeholder="Tối đa"
+                                    value={filters.maxPrice}
+                                    onChange={(value) => setFilters({ ...filters, maxPrice: value })}
+                                    min={0}
+                                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </div>
                         </AntCol>
                     </AntRow>
                 </AntCard>
 
-                {/* Events List Section */}
                 {loading && events.length > 0 ? (
                     <div className="category-events-loading-wrapper">
                         <div className="category-events-loading-overlay">
                             <LoadingSpinner tip="Đang tải..." />
                         </div>
                         <Row className="g-4 events-row-loading">
-                            {events.map(event => (
+                            {events.map((event) => (
                                 <Col key={event.event_id} xs={12} sm={6} md={4} lg={3}>
                                     <EventCard event={transformEvent(event)} />
                                 </Col>
@@ -325,7 +305,7 @@ const CategoryEvents = () => {
                     </div>
                 ) : events.length > 0 ? (
                     <Row className="g-4">
-                        {events.map(event => (
+                        {events.map((event) => (
                             <Col key={event.event_id} xs={12} sm={6} md={4} lg={3}>
                                 <EventCard event={transformEvent(event)} />
                             </Col>

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { api } from '@services/api';
 
 const AuthContext = createContext(null);
 
@@ -29,6 +30,7 @@ const getScopePrefix = (role) => {
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
+    const [refreshToken, setRefreshToken] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const logoutTimerRef = useRef(null);
@@ -40,16 +42,18 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const prefix = getScopePrefix();
         const savedToken = localStorage.getItem(`${prefix}token`);
+        const savedRefreshToken = localStorage.getItem(`${prefix}refresh_token`);
         const savedUser = localStorage.getItem(`${prefix}user`);
 
         if (savedToken && savedUser) {
             setToken(savedToken);
             setUser(JSON.parse(savedUser));
+            setRefreshToken(savedRefreshToken || null);
         }
         setLoading(false);
     }, []);
 
-    const login = (userData, userToken) => {
+    const login = (userData, userToken, userRefreshToken = null) => {
         if (!userData || !userToken) {
             console.error('Login failed: userData or userToken is missing');
             return;
@@ -57,8 +61,14 @@ export const AuthProvider = ({ children }) => {
         const prefix = getScopePrefix(userData?.role);
         setUser(userData);
         setToken(userToken);
+        setRefreshToken(userRefreshToken);
         localStorage.setItem(`${prefix}token`, userToken);
         localStorage.setItem(`${prefix}user`, JSON.stringify(userData));
+        if (userRefreshToken) {
+            localStorage.setItem(`${prefix}refresh_token`, userRefreshToken);
+        } else {
+            localStorage.removeItem(`${prefix}refresh_token`);
+        }
         setShowLoginModal(false);
     };
 
@@ -69,14 +79,24 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = useCallback(() => {
+    const logout = useCallback(async () => {
         const prefix = getScopePrefix(user?.role);
+        const scopedRefreshToken = localStorage.getItem(`${prefix}refresh_token`) || refreshToken;
+        if (scopedRefreshToken) {
+            try {
+                await api.logout(scopedRefreshToken);
+            } catch (error) {
+                console.warn('Logout API failed, clearing local session anyway.', error);
+            }
+        }
         setUser(null);
         setToken(null);
+        setRefreshToken(null);
         localStorage.removeItem(`${prefix}token`);
         localStorage.removeItem(`${prefix}user`);
+        localStorage.removeItem(`${prefix}refresh_token`);
         clearLogoutTimer();
-    }, [user?.role]);
+    }, [refreshToken, user?.role]);
 
     const scheduleRoleBasedLogout = useCallback((currentToken, role) => {
         clearLogoutTimer();

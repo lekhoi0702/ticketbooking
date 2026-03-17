@@ -8,7 +8,7 @@ from marshmallow import Schema, fields, validates, ValidationError, validate, va
 class OrderItemSchema(Schema):
     """Order item (ticket type and quantity) schema"""
     ticket_type_id = fields.Int(required=True)
-    quantity = fields.Int(required=True, validate=validate.Range(min=1, max=50))
+    quantity = fields.Int(required=True, validate=validate.Range(min=1))
     seat_ids = fields.List(fields.Int(), allow_none=True)
 
 

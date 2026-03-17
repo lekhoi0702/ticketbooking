@@ -147,7 +147,15 @@
 .filter-field {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
+}
+
+.filter-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 44px;
+    margin-bottom: 8px;
 }
 
 .filter-label {
@@ -156,6 +164,34 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: rgba(255, 255, 255, 0.7);
+}
+
+.date-guide-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.date-guide-item {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.filter-head-spacer {
+    height: 17px;
+}
+
+.date-filter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.date-filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 /* Đảm bảo EventCard không bị override */
@@ -260,6 +296,23 @@
     .category-filters-actions {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    .date-filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-head {
+        min-height: auto;
+    }
+
+    .date-guide-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .filter-head-spacer {
+        display: none;
     }
 }
 

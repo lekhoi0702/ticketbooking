@@ -97,7 +97,7 @@ const TicketSelection = ({
                                         <div className="d-flex align-items-center justify-content-between">
                                             <div className="quantity-selector-label">
                                                 <h6 className="mb-0 fw-bold">Số lượng vé</h6>
-                                                <small className="text-muted">Tối đa {tt.max_per_order} vé mỗi đơn hàng</small>
+                                                <small className="text-muted">Còn lại {tt.available_quantity ?? tt.quantity ?? 0} vé</small>
                                             </div>
                                             <div className="quantity-selector">
                                                 <button
@@ -109,7 +109,7 @@ const TicketSelection = ({
                                                 <button
                                                     className="qty-btn"
                                                     onClick={() => handleTicketQuantityChange(tt.ticket_type_id, (selectedTickets[tt.ticket_type_id] || 0) + 1)}
-                                                    disabled={(selectedTickets[tt.ticket_type_id] || 0) >= tt.max_per_order}
+                                                    disabled={(selectedTickets[tt.ticket_type_id] || 0) >= (tt.available_quantity ?? tt.quantity ?? 0)}
                                                 >+</button>
                                             </div>
                                         </div>
