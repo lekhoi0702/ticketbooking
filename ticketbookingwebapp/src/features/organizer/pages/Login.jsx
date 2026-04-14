@@ -6,7 +6,6 @@ import {
     Form,
     Input,
     Button,
-    Alert,
     Divider,
     Space,
     ConfigProvider
@@ -23,6 +22,7 @@ import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
 import { AntdThemeConfig } from '@theme/AntdThemeConfig';
 import { message } from 'antd';
+import AuthErrorNotice from '@shared/components/AuthErrorNotice';
 
 const { Title, Text } = Typography;
 
@@ -39,7 +39,7 @@ const OrganizerLogin = () => {
         try {
             const res = await api.login({ ...values, required_role: 'ORGANIZER' });
             if (res.success && res.data) {
-                login(res.data.user, res.data.access_token, res.data.refresh_token);
+                login(res.data.user);
                 message.success('Đăng nhập thành công!');
                 setTimeout(() => {
                     navigate('/organizer/events');
@@ -104,16 +104,7 @@ const OrganizerLogin = () => {
 
                     {/* Form */}
                     <div style={{ padding: 32 }}>
-                        {error && (
-                            <Alert
-                                message={error}
-                                type="error"
-                                showIcon
-                                closable
-                                onClose={() => setError(null)}
-                                style={{ marginBottom: 24 }}
-                            />
-                        )}
+                        {error && <AuthErrorNotice message={error} style={{ marginBottom: 24 }} />}
 
                         <Form
                             name="organizer_auth"

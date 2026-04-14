@@ -1,45 +1,30 @@
 from app.extensions import db
-from datetime import datetime
-from app.utils.datetime_utils import now_gmt7
+
 
 class Ticket(db.Model):
-    __tablename__ = "Ticket"
+    __tablename__ = "ticket"
 
-    ticket_id = db.Column(db.BigInteger, primary_key=True)
-    order_id = db.Column(db.BigInteger, db.ForeignKey('Order.order_id', ondelete='CASCADE'), nullable=False, index=True)
-    ticket_type_id = db.Column(db.BigInteger, db.ForeignKey('TicketType.ticket_type_id'), nullable=False)
-    ticket_code = db.Column(db.String(100), unique=True, nullable=False, index=True)
-    ticket_status = db.Column(db.Enum('ACTIVE', 'USED', 'CANCELLED', 'REFUNDED'), default='ACTIVE', index=True)
-    seat_id = db.Column(db.BigInteger, db.ForeignKey('Seat.seat_id'), nullable=True)
-    price = db.Column(db.Numeric(15, 2), nullable=False)
-    qr_code_url = db.Column(db.String(1000))
-    holder_name = db.Column(db.String(255))
-    holder_email = db.Column(db.String(255))
-    checked_in_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=now_gmt7)
-    deleted_at = db.Column(db.DateTime, nullable=True)
-
-    # Relationships
-    seat = db.relationship('Seat', backref='tickets', lazy=True)
+    ticket_id = db.Column("TicketID", db.Integer, primary_key=True, autoincrement=True)
+    order_id = db.Column("OrderID", db.Integer, db.ForeignKey("orders.OrderID"), nullable=False)
+    seat_id = db.Column("SeatID", db.Integer, db.ForeignKey("seat.SeatID"), nullable=False)
+    ticket_type_id = db.Column("TicketTypeID", db.Integer, db.ForeignKey("tickettype.TicketTypeID"), nullable=False)
+    ticket_price = db.Column("TicketPrice", db.Numeric(18, 2), nullable=False)
+    status = db.Column("Status", db.String(50), nullable=False, default="Active")
+    ticket_qrcode = db.Column("TicketQRCode", db.String(255), nullable=False, unique=True)
+    create_id = db.Column("CreateID", db.Integer, nullable=False)
+    create_date = db.Column("CreateDate", db.DateTime, nullable=False)
+    update_date = db.Column("UpdateDate", db.DateTime, nullable=True)
 
     def to_dict(self):
-        data = {
-            'ticket_id': self.ticket_id,
-            'order_id': self.order_id,
-            'ticket_type_id': self.ticket_type_id,
-            'ticket_code': self.ticket_code,
-            'ticket_status': self.ticket_status,
-            'seat_id': self.seat_id,
-            'price': float(self.price) if self.price else 0,
-            'qr_code_url': self.qr_code_url,
-            'holder_name': self.holder_name,
-            'holder_email': self.holder_email,
-            'checked_in_at': self.checked_in_at.isoformat() if self.checked_in_at else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
+        return {
+            "TicketID": self.ticket_id,
+            "OrderID": self.order_id,
+            "SeatID": self.seat_id,
+            "TicketTypeID": self.ticket_type_id,
+            "TicketPrice": float(self.ticket_price) if self.ticket_price is not None else None,
+            "Status": self.status,
+            "TicketQRCode": self.ticket_qrcode,
+            "CreateID": self.create_id,
+            "CreateDate": self.create_date.isoformat() if self.create_date else None,
+            "UpdateDate": self.update_date.isoformat() if self.update_date else None,
         }
-        
-        if self.seat:
-            data['seat'] = self.seat.to_dict()
-            
-        return data

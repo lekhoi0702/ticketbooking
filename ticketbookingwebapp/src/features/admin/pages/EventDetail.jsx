@@ -54,6 +54,70 @@ const STATUS_CONFIG = {
 const getStatusConfig = (status) =>
     STATUS_CONFIG[status] || { color: 'default', label: status };
 
+const pickFirst = (...values) => values.find((v) => v !== undefined && v !== null && v !== '');
+
+const normalizeTicketType = (ticketType) => ({
+    ...ticketType,
+    ticket_type_id: pickFirst(ticketType.ticket_type_id, ticketType.TicketTypeID),
+    type_name: pickFirst(ticketType.type_name, ticketType.TypeName, 'Không rõ'),
+    price: Number(pickFirst(ticketType.price, ticketType.Price, 0)) || 0,
+    quantity: Number(pickFirst(ticketType.quantity, ticketType.Quantity, 0)) || 0,
+    available_quantity: Number(pickFirst(ticketType.available_quantity, ticketType.AvailableQuantity, ticketType.quantity, ticketType.Quantity, 0)) || 0,
+    sold_quantity: Number(pickFirst(ticketType.sold_quantity, ticketType.SoldQuantity, 0)) || 0,
+    max_per_order: Number(pickFirst(ticketType.max_per_order, ticketType.MaxPerOrder, 0)) || 0,
+    sale_start_datetime: pickFirst(ticketType.sale_start_datetime, ticketType.sale_start_date, ticketType.SaleStartDate, null),
+    sale_end_datetime: pickFirst(ticketType.sale_end_datetime, ticketType.sale_end_date, ticketType.SaleEndDate, null),
+    is_active: String(pickFirst(ticketType.status, ticketType.Status, 'ACTIVE')).toUpperCase() !== 'INACTIVE',
+});
+
+const normalizeEventShape = (rawEvent, options = {}) => {
+    const event = rawEvent || {};
+    const eventId = pickFirst(event.event_id, event.EventID);
+    const categoryId = pickFirst(event.category_id, event.CategoryID);
+    const organizerId = pickFirst(event.organizer_id, event.OrganizerID);
+    const ticketTypes = Array.isArray(options.ticketTypes)
+        ? options.ticketTypes.map(normalizeTicketType)
+        : (Array.isArray(event.ticket_types) ? event.ticket_types.map(normalizeTicketType) : []);
+
+    return {
+        ...event,
+        event_id: eventId,
+        event_name: pickFirst(event.event_name, event.EventName, ''),
+        description: pickFirst(event.description, event.Description, ''),
+        status: pickFirst(event.status, event.Status, ''),
+        category_id: categoryId,
+        organizer_id: organizerId,
+        banner_image_url: pickFirst(event.banner_image_url, event.image_url, event.ImageURL, null),
+        start_datetime: pickFirst(event.start_datetime, event.start_date, event.StartDate, null),
+        end_datetime: pickFirst(event.end_datetime, event.end_date, event.EndDate, null),
+        sale_start_datetime: pickFirst(event.sale_start_datetime, event.sale_start_date, event.SaleStartDate, null),
+        sale_end_datetime: pickFirst(event.sale_end_datetime, event.sale_end_date, event.SaleEndDate, null),
+        category: event.category || options.category || null,
+        organizer_name: pickFirst(
+            event.organizer_name,
+            event.organizer?.organizer_name,
+            event.OrganizerName,
+            organizerId ? `Organizer #${organizerId}` : 'N/A'
+        ),
+        ticket_types: ticketTypes,
+    };
+};
+
+const normalizeShowtimeShape = (rawShowtime, fallbackEvent) => {
+    const showtime = rawShowtime || {};
+    return {
+        ...showtime,
+        status: pickFirst(showtime.status, showtime.Status, fallbackEvent?.status, ''),
+        start_datetime: pickFirst(showtime.start_datetime, showtime.start_date, showtime.StartDate, fallbackEvent?.start_datetime, null),
+        end_datetime: pickFirst(showtime.end_datetime, showtime.end_date, showtime.EndDate, fallbackEvent?.end_datetime, null),
+        sale_start_datetime: pickFirst(showtime.sale_start_datetime, showtime.sale_start_date, showtime.SaleStartDate, fallbackEvent?.sale_start_datetime, null),
+        sale_end_datetime: pickFirst(showtime.sale_end_datetime, showtime.sale_end_date, showtime.SaleEndDate, fallbackEvent?.sale_end_datetime, null),
+        ticket_types: Array.isArray(showtime.ticket_types)
+            ? showtime.ticket_types.map(normalizeTicketType)
+            : (fallbackEvent?.ticket_types || []),
+    };
+};
+
 const EventDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -78,9 +142,22 @@ const EventDetail = () => {
         if (!id) return;
         try {
             setLoading(true);
-            const res = await api.getEvent(id);
-            if (res?.success) {
-                setEvent(res.data);
+            const [eventRes, ticketTypeRes, categoriesRes] = await Promise.all([
+                api.getEvent(id),
+                api.getTicketTypes(id),
+                api.getCategories(),
+            ]);
+
+            if (eventRes?.success) {
+                const rawEvent = eventRes.data || {};
+                const categoryId = pickFirst(rawEvent.category_id, rawEvent.CategoryID);
+                const categories = Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
+                const category = categories.find(
+                    (c) => String(pickFirst(c.category_id, c.CategoryID)) === String(categoryId)
+                );
+                const ticketTypes = Array.isArray(ticketTypeRes?.data) ? ticketTypeRes.data : [];
+
+                setEvent(normalizeEventShape(rawEvent, { category, ticketTypes }));
             } else {
                 navigate('/admin/events');
             }
@@ -140,19 +217,20 @@ const EventDetail = () => {
             setLoadingShowtimes(true);
             const res = await api.getEventShowtimes(event.event_id);
             if (!res?.success) {
-                setShowtimes([]);
+                setShowtimes([normalizeShowtimeShape(event, event)]);
                 return;
             }
             const raw = res.data;
             const list = Array.isArray(raw) ? raw : (raw != null ? [raw] : []);
-            setShowtimes(list);
+            const normalizedList = list.map((item) => normalizeShowtimeShape(item, event));
+            setShowtimes(normalizedList.length > 0 ? normalizedList : [normalizeShowtimeShape(event, event)]);
         } catch (err) {
             console.error('[EventDetail] Error fetching showtimes:', err);
-            setShowtimes([]);
+            setShowtimes([normalizeShowtimeShape(event, event)]);
         } finally {
             setLoadingShowtimes(false);
         }
-    }, [event?.event_id]);
+    }, [event]);
 
     const handleUpdateStatus = useCallback(async (status) => {
         if (!event?.event_id) return;
@@ -501,25 +579,6 @@ const EventDetail = () => {
                                                                     </Space>
                                                                 </div>
 
-                                                                <div>
-                                                                    <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 10 }}>
-                                                                        Thời gian bán vé
-                                                                    </Text>
-                                                                    <Space orientation="vertical" size={6} style={{ width: '100%' }}>
-                                                                        <Space>
-                                                                            <ClockCircleOutlined style={{ color: '#1890ff', fontSize: 16 }} />
-                                                                            <Text style={{ fontSize: 16 }}>
-                                                                                <Text strong>Mở bán:</Text> {fmt(showtime.sale_start_datetime)}
-                                                                            </Text>
-                                                                        </Space>
-                                                                        <Space>
-                                                                            <ClockCircleOutlined style={{ color: '#ff4d4f', fontSize: 16 }} />
-                                                                            <Text style={{ fontSize: 16 }}>
-                                                                                <Text strong>Kết thúc:</Text> {fmt(showtime.sale_end_datetime)}
-                                                                            </Text>
-                                                                        </Space>
-                                                                    </Space>
-                                                                </div>
                                                             </Space>
                                                         </Col>
 
@@ -577,7 +636,7 @@ const EventDetail = () => {
                                                                                     </Col>
                                                                                 </Row>
                                                                                 <div style={{ marginTop: 10, fontSize: 16, color: '#8c8c8c', textAlign: 'left' }}>
-                                                                                    <Space split={<Divider type="vertical" />} size={6}>
+                                                                                    <Space split={<Divider type="vertical" />} size={6} wrap>
                                                                                         <Text>
                                                                                             Tổng: {ticketType.quantity || 0}
                                                                                         </Text>
@@ -586,6 +645,17 @@ const EventDetail = () => {
                                                                                         </Text>
                                                                                         <Text>
                                                                                             Tối đa/đơn: {ticketType.max_per_order || 0}
+                                                                                        </Text>
+                                                                                        <Text>
+                                                                                            Mở bán: {ticketType.sale_start_datetime
+                                                                                                ? new Date(ticketType.sale_start_datetime).toLocaleString('vi-VN', {
+                                                                                                    day: '2-digit',
+                                                                                                    month: '2-digit',
+                                                                                                    year: 'numeric',
+                                                                                                    hour: '2-digit',
+                                                                                                    minute: '2-digit'
+                                                                                                })
+                                                                                                : 'N/A'}
                                                                                         </Text>
                                                                                         {ticketType.is_active ? (
                                                                                             <Tag color="success" style={{ margin: 0 }}>Đang bán</Tag>
@@ -712,43 +782,6 @@ const EventDetail = () => {
                                                         </Space>
                                                     </div>
 
-                                                    <div>
-                                                        <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 10 }}>
-                                                            Thời gian bán vé
-                                                        </Text>
-                                                        <Space orientation="vertical" size={6} style={{ width: '100%' }}>
-                                                            <Space>
-                                                                <ClockCircleOutlined style={{ color: '#1890ff', fontSize: 16 }} />
-                                                                <Text style={{ fontSize: 16 }}>
-                                                                    <Text strong>Mở bán:</Text>{' '}
-                                                                    {event.sale_start_datetime
-                                                                        ? new Date(event.sale_start_datetime).toLocaleString('vi-VN', {
-                                                                            day: '2-digit',
-                                                                            month: '2-digit',
-                                                                            year: 'numeric',
-                                                                            hour: '2-digit',
-                                                                            minute: '2-digit'
-                                                                        })
-                                                                        : 'N/A'}
-                                                                </Text>
-                                                            </Space>
-                                                            <Space>
-                                                                <ClockCircleOutlined style={{ color: '#ff4d4f', fontSize: 16 }} />
-                                                                <Text style={{ fontSize: 16 }}>
-                                                                    <Text strong>Kết thúc:</Text>{' '}
-                                                                    {event.sale_end_datetime
-                                                                        ? new Date(event.sale_end_datetime).toLocaleString('vi-VN', {
-                                                                            day: '2-digit',
-                                                                            month: '2-digit',
-                                                                            year: 'numeric',
-                                                                            hour: '2-digit',
-                                                                            minute: '2-digit'
-                                                                        })
-                                                                        : 'N/A'}
-                                                                </Text>
-                                                            </Space>
-                                                        </Space>
-                                                    </div>
                                                 </Space>
                                             </Col>
 
@@ -805,7 +838,7 @@ const EventDetail = () => {
                                                                         </Col>
                                                                     </Row>
                                                                     <div style={{ marginTop: 10, fontSize: 16, color: '#8c8c8c', textAlign: 'left' }}>
-                                                                        <Space split={<Divider type="vertical" />} size={6}>
+                                                                        <Space split={<Divider type="vertical" />} size={6} wrap>
                                                                             <Text>
                                                                                 Tổng: {ticketType.quantity || 0}
                                                                             </Text>
@@ -814,6 +847,17 @@ const EventDetail = () => {
                                                                             </Text>
                                                                             <Text>
                                                                                 Tối đa/đơn: {ticketType.max_per_order || 0}
+                                                                            </Text>
+                                                                            <Text>
+                                                                                Mở bán: {ticketType.sale_start_datetime
+                                                                                    ? new Date(ticketType.sale_start_datetime).toLocaleString('vi-VN', {
+                                                                                        day: '2-digit',
+                                                                                        month: '2-digit',
+                                                                                        year: 'numeric',
+                                                                                        hour: '2-digit',
+                                                                                        minute: '2-digit'
+                                                                                    })
+                                                                                    : 'N/A'}
                                                                             </Text>
                                                                             {ticketType.is_active ? (
                                                                                 <Tag color="success" style={{ margin: 0 }}>Đang bán</Tag>

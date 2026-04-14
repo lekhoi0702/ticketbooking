@@ -1,11 +1,11 @@
 export const BREADCRUMB_MAP = {
-    users: 'Quản lý người dùng',
-    categories: 'Quản lý thể loại',
-    events: 'Quản lý sự kiện',
-    orders: 'Quản lý đơn hàng',
-    statistics: 'Thống kê hệ thống',
-    banners: 'Quản lý Banner',
-    advertisements: 'Quản lý Quảng cáo',
+    users: 'Quan ly nguoi dung',
+    categories: 'Quan ly the loai',
+    events: 'Quan ly su kien',
+    orders: 'Quan ly don hang',
+    statistics: 'Thong ke he thong',
+    discounts: 'Quan ly ma giam gia',
+    banners: 'Quan ly Banner',
 };
 
 export const ADMIN_HOME_PATH = '/admin/statistics';

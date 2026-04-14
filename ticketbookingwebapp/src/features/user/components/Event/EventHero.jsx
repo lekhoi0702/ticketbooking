@@ -1,12 +1,9 @@
 import React from 'react';
 import { Button } from 'react-bootstrap';
 import { FaMapMarkerAlt, FaCalendar } from 'react-icons/fa';
-import { StarOutlined, StarFilled } from '@ant-design/icons';
-import { useFavorites } from '@context/FavoriteContext';
-import { message } from 'antd';
 import { getImageUrl, parseLocalDateTime } from '@shared/utils/eventUtils';
 
-const EventHero = ({ event, onToggleFavorite }) => {
+const EventHero = ({ event }) => {
     const bannerUrl = getImageUrl(event.banner_image_url);
 
     // Date Logic - Use parseLocalDateTime to prevent timezone issues
@@ -38,27 +35,9 @@ const EventHero = ({ event, onToggleFavorite }) => {
         return minPrice > 0 ? `${minPrice.toLocaleString('vi-VN')} đ` : 'Miễn phí';
     };
 
-    const { isFavorited } = useFavorites();
-    const favorited = isFavorited(event.event_id);
-
-    const handleToggleFavorite = async () => {
-        if (onToggleFavorite) {
-            await onToggleFavorite();
-        }
-    };
-
     return (
         <div className="container py-5">
             <div className="ticket-hero-container">
-                <div className="event-hero-favorite-btn-wrapper">
-                    <Button
-                        className={`event-hero-favorite-btn ${favorited ? 'active' : ''}`}
-                        onClick={handleToggleFavorite}
-                    >
-                        {favorited ? <StarFilled style={{ color: '#ffb400' }} /> : <StarOutlined />}
-                        <span className="ms-2">{favorited ? 'Đã yêu thích' : 'Yêu thích'}</span>
-                    </Button>
-                </div>
                 {/* LEFT SIDE: INFO */}
                 <div className="ticket-hero-left">
                     <div className="ticket-content">

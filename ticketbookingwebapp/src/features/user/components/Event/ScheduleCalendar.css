@@ -163,6 +163,7 @@
 
 .schedule-calendar-day.today {
     border: 2px solid #2dc275;
+    box-shadow: inset 0 0 0 1px rgba(45, 194, 117, 0.25);
 }
 
 .schedule-calendar-day.selected {
@@ -170,8 +171,37 @@
     background: rgba(45, 194, 117, 0.15);
 }
 
+.schedule-calendar-day.has-schedules.selected:not(.past) {
+    border: 2px solid #1d4ed8;
+    background: #2563eb;
+    box-shadow:
+        inset 0 0 0 1px rgba(219, 234, 254, 0.65),
+        0 8px 18px rgba(37, 99, 235, 0.42);
+}
+
+.schedule-calendar-day:not(.has-schedules):not(.empty):not(.today):not(.selected):not(.past) {
+    background: #293345;
+    opacity: 0.62;
+}
+
+.schedule-calendar-day.has-schedules:not(.past):not(.selected) {
+    border: 2px solid #2563eb;
+    background: #3b82f6;
+    box-shadow:
+        inset 0 0 0 1px rgba(219, 234, 254, 0.55),
+        0 6px 14px rgba(37, 99, 235, 0.35);
+}
+
+.schedule-calendar-day.today.has-schedules:not(.selected) {
+    border-color: #5b97ff;
+    box-shadow:
+        inset 0 0 0 1px rgba(194, 219, 255, 0.55),
+        0 0 0 1px rgba(45, 194, 117, 0.4);
+}
+
 .schedule-calendar-day.has-schedules:not(.past):hover {
-    background: #374151;
+    background: #2563eb;
+    border-color: #93c5fd;
     transform: scale(1.05);
 }
 
@@ -179,6 +209,12 @@
     font-size: 14px;
     font-weight: 600;
     color: #fff;
+}
+
+.schedule-calendar-day.has-schedules:not(.past):not(.selected) .schedule-day-number {
+    color: #eff6ff;
+    font-weight: 800;
+    font-size: 15px;
 }
 
 .schedule-indicator {
@@ -190,9 +226,21 @@
 }
 
 .schedule-indicator-bar {
-    height: 2px;
-    background: #2dc275;
+    height: 4px;
+    background: #dbeafe;
     border-radius: 2px;
+}
+
+.schedule-calendar-day.has-schedules:not(.past):not(.selected)::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #dbe9ff;
+    box-shadow: 0 0 0 2px rgba(41, 51, 69, 0.45);
 }
 
 /* List View */

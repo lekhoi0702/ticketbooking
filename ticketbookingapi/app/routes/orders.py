@@ -1,211 +1,200 @@
-from flask import Blueprint, jsonify, request
+from datetime import datetime
+
+from flask import Blueprint, request
+
 from app.extensions import db
-from app.services.order_service import OrderService
-from app.models.ticket_type import TicketType
+from app.models import Order, Payment, Ticket, TicketType, Seat, User, Event
+from app.routes.helpers import ApiMethodView, parse_datetime
 
 orders_bp = Blueprint("orders", __name__)
 
-@orders_bp.route("/orders/create", methods=["POST"])
-def create_order():
-    """Create a new order with tickets and seats"""
-    try:
-        data = request.get_json()
-        order, created_tickets, payment_required = OrderService.create_order(data)
-        
-        # Commit the transaction to persist order and tickets
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Order created successfully',
-            'data': {
-                'order': order.to_dict(),
-                'tickets_count': len(created_tickets),
-                'payment_required': payment_required
-            }
-        }), 201
-        
-    except ValueError as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 400
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
 
-@orders_bp.route("/orders/<int:order_id>", methods=["GET"])
-def get_order(order_id):
-    """Get order details"""
-    try:
-        data = OrderService.get_order_details(order_id)
-        if not data:
-            return jsonify({'success': False, 'message': 'Order not found'}), 404
-        
-        return jsonify({'success': True, 'data': data}), 200
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+def _normalize_order_status(status):
+    if not status:
+        return "PENDING"
+    s = str(status).strip().upper()
+    mapping = {
+        "PENDING": "PENDING",
+        "PAID": "PAID",
+        "CANCELLED": "CANCELLED",
+        "CANCELLATION_PENDING": "CANCELLATION_PENDING",
+        "COMPLETED": "COMPLETED",
+    }
+    return mapping.get(s, s)
 
-@orders_bp.route("/orders/<string:order_code>/status", methods=["GET"])
-def get_order_by_code(order_code):
-    """Get order by order code"""
-    try:
-        data = OrderService.get_order_by_code(order_code)
-        if not data:
-            return jsonify({'success': False, 'message': 'Order not found'}), 404
-            
-        return jsonify({'success': True, 'data': data}), 200
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
 
-@orders_bp.route("/orders/user/<int:user_id>", methods=["GET"])
-def get_user_orders(user_id):
-    """Get all orders for a user with full details"""
-    try:
-        data = OrderService.get_user_orders(user_id)
-        return jsonify({'success': True, 'data': data}), 200
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+def _serialize_order_summary(order):
+    user = order.user
+    event = order.event
+    latest_payment = order.payments[0] if order.payments else None
+    status = _normalize_order_status(order.status)
+    tickets = order.tickets or []
+    return {
+        **order.to_dict(),
+        "OrderStatus": status,
+        "CustomerName": user.full_name if user else None,
+        "CustomerEmail": user.email if user else None,
+        "CustomerPhone": user.phone if user else None,
+        "EventName": event.event_name if event else None,
+        "CreatedAt": order.order_date.isoformat() if order.order_date else None,
+        "TicketsCount": len(tickets),
+        "PaymentMethod": latest_payment.payment_method if latest_payment else "CASH",
+    }
 
-@orders_bp.route("/orders/<int:order_id>/cancel", methods=["POST"])
-def cancel_order(order_id):
-    """Request order cancellation or cancel immediately if pending"""
-    try:
-        is_cancelled_now, message = OrderService.cancel_order(order_id)
-        
-        # Commit manually here since service modified objects but service's cancel_order does not explicit commit (it returns status)
-        # Wait, I need to check my service implementation.
-        # My service implementation for cancel_order did NOT commit?
-        # Let's check the service content I wrote.
-        # Line 392 of OrderService: order.order_status = 'CANCELLED' ... return True, msg
-        # It does NOT invoke db.session.commit().
-        
-        db.session.commit()
-        
-        return jsonify({'success': True, 'message': message}), 200
-        
-    except ValueError as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 400
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
 
-@orders_bp.route("/orders/<int:order_id>/cancel-refund-request", methods=["POST"])
-def cancel_refund_request(order_id):
-    """Cancel a pending refund request - revert order status back to PAID"""
-    from app.models.order import Order
-    try:
-        order = Order.query.get(order_id)
-        if not order:
-            return jsonify({'success': False, 'message': 'Đơn hàng không tồn tại'}), 404
-        
-        if order.order_status != 'REFUND_PENDING':
-            return jsonify({'success': False, 'message': 'Đơn hàng không có yêu cầu hoàn tiền đang chờ xử lý'}), 400
-        
-        # Revert status back to PAID
-        order.order_status = 'PAID'
-        db.session.commit()
-        
-        return jsonify({
-            'success': True, 
-            'message': 'Đã hủy yêu cầu hoàn tiền thành công'
-        }), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+def _serialize_ticket_detail(ticket):
+    ticket_type = ticket.ticket_type
+    seat = ticket.seat
+    return {
+        **ticket.to_dict(),
+        "TicketCode": ticket.ticket_qrcode,
+        "TicketTypeName": ticket_type.type_name if ticket_type else None,
+        "SeatName": f"{seat.row_number}{seat.seat_number}" if seat else None,
+        "TicketStatus": ticket.status,
+        "Price": float(ticket.ticket_price) if ticket.ticket_price is not None else 0,
+    }
 
-@orders_bp.route("/tickets/user/<int:user_id>", methods=["GET"])
-def get_user_tickets(user_id):
-    """Get paid tickets for a user (for MyTickets page)"""
-    try:
-        data = OrderService.get_user_tickets_details(user_id)
-        return jsonify({'success': True, 'data': data}), 200
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
 
-@orders_bp.route("/orders/validate-discount", methods=["POST"])
-def check_discount():
-    """Validate discount code before checkout"""
-    try:
-        data = request.get_json()
-        code = data.get('code')
-        items = data.get('items', [])
-        
-        if not code or not items:
-             return jsonify({'success': False, 'message': 'Missing data'}), 400
-             
-        detailed_items = []
-        for it in items:
-            tt = TicketType.query.get(it.get('ticket_type_id'))
-            if tt:
-                detailed_items.append({
-                    'ticket_type': tt,
-                    'quantity': it.get('quantity', 1),
-                    'price': float(tt.price)
-                })
-                
-        is_valid, amount, msg, _ = OrderService.validate_and_calculate_discount(code, detailed_items)
-        
-        return jsonify({
-            'success': is_valid,
-            'message': msg,
-            'discount_amount': amount
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+class OrderListCreateView(ApiMethodView):
+    def get(self):
+        user_id = request.args.get("UserID", type=int)
+        query = Order.query
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        rows = query.order_by(Order.order_date.desc()).all()
+        return self.ok([_serialize_order_summary(row) for row in rows])
 
-@orders_bp.route("/orders/<int:order_id>/release-seats", methods=["POST"])
-def release_seats_for_order(order_id):
-    """Release reserved seats for a pending order (called when user leaves checkout page)"""
-    from app.models.order import Order
-    try:
-        order = Order.query.get(order_id)
-        if not order:
-            return jsonify({'success': False, 'message': 'Order not found'}), 404
-        
-        # Only allow releasing seats for PENDING orders
-        if order.order_status != 'PENDING':
-            return jsonify({
-                'success': False, 
-                'message': f'Cannot release seats for order with status: {order.order_status}'
-            }), 400
-        
-        # Release seats using the existing method
-        OrderService.release_seats_for_failed_order(order_id)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Seats released successfully'
-        }), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@orders_bp.route("/orders/cleanup-expired", methods=["POST"])
-def cleanup_expired_orders():
-    """Cleanup expired pending orders and release reserved seats (system/admin endpoint)"""
-    try:
+    def post(self):
         data = request.get_json() or {}
-        older_than_minutes = data.get('older_than_minutes', 15)
-        
-        cancelled_count, released_seats_count = OrderService.cleanup_expired_pending_orders(
-            older_than_minutes=older_than_minutes
+        required_fields = ["UserID", "EventID", "TotalAmount", "OrderCode", "CreateID"]
+
+        for field in required_fields:
+            if field not in data:
+                return self.fail(f"Missing field: {field}", 400)
+
+        order = Order(
+            user_id=data["UserID"],
+            event_id=data["EventID"],
+            order_date=parse_datetime(data.get("OrderDate")) or datetime.utcnow(),
+            total_amount=data["TotalAmount"],
+            status=_normalize_order_status(data.get("Status", "PENDING")),
+            order_code=data["OrderCode"],
+            create_id=data["CreateID"],
+            update_date=parse_datetime(data.get("UpdateDate")),
         )
-        
-        return jsonify({
-            'success': True,
-            'message': f'Cleaned up {cancelled_count} expired orders and released {released_seats_count} seats',
-            'data': {
-                'cancelled_orders': cancelled_count,
-                'released_seats': released_seats_count
-            }
-        }), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        db.session.add(order)
+        db.session.commit()
+        return self.ok(_serialize_order_summary(order), 201)
+
+
+class OrderDetailView(ApiMethodView):
+    def get(self, order_id):
+        order = Order.query.filter_by(order_id=order_id).first()
+        if not order:
+            return self.fail("Not found", 404)
+
+        data = _serialize_order_summary(order)
+        data["Tickets"] = [_serialize_ticket_detail(ticket) for ticket in order.tickets]
+        data["Payments"] = [payment.to_dict() for payment in order.payments]
+        return self.ok(data)
+
+    def patch(self, order_id):
+        order = Order.query.filter_by(order_id=order_id).first()
+        if not order:
+            return self.fail("Not found", 404)
+
+        data = request.get_json(silent=True) or {}
+        status = data.get("Status") or data.get("status")
+        if status is not None:
+            order.status = _normalize_order_status(status)
+            order.update_date = datetime.utcnow()
+            db.session.commit()
+
+        return self.ok(_serialize_order_summary(order))
+
+
+class OrderCashConfirmView(ApiMethodView):
+    def post(self, order_id):
+        order = Order.query.filter_by(order_id=order_id).first()
+        if not order:
+            return self.fail("Not found", 404)
+        order.status = "PAID"
+        order.update_date = datetime.utcnow()
+        db.session.commit()
+        return self.ok(_serialize_order_summary(order))
+
+
+class OrderRefundRequestView(ApiMethodView):
+    def post(self, order_id):
+        order = Order.query.filter_by(order_id=order_id).first()
+        if not order:
+            return self.fail("Not found", 404)
+        order.status = "CANCELLATION_PENDING"
+        order.update_date = datetime.utcnow()
+        db.session.commit()
+        return self.ok(_serialize_order_summary(order))
+
+
+class OrderRefundCancelView(ApiMethodView):
+    def post(self, order_id):
+        order = Order.query.filter_by(order_id=order_id).first()
+        if not order:
+            return self.fail("Not found", 404)
+        order.status = "PAID"
+        order.update_date = datetime.utcnow()
+        db.session.commit()
+        return self.ok(_serialize_order_summary(order))
+
+
+class OrderRefundProcessView(ApiMethodView):
+    def post(self, order_id):
+        order = Order.query.filter_by(order_id=order_id).first()
+        if not order:
+            return self.fail("Not found", 404)
+
+        data = request.get_json(silent=True) or {}
+        action = (data.get("Action") or data.get("action") or "").strip().lower()
+        if action not in ("approve", "reject"):
+            return self.fail("action must be approve or reject", 400)
+
+        if action == "approve":
+            order.status = "CANCELLED"
+            for ticket in order.tickets:
+                ticket.status = "CANCELLED"
+                ticket.update_date = datetime.utcnow()
+                if ticket.seat:
+                    ticket.seat.status = "AVAILABLE"
+                    ticket.seat.update_date = datetime.utcnow()
+        else:
+            order.status = "PAID"
+
+        order.update_date = datetime.utcnow()
+        db.session.commit()
+        return self.ok(_serialize_order_summary(order))
+
+
+class RefundRequestListView(ApiMethodView):
+    def get(self):
+        manager_id = request.args.get("ManagerID", type=int)
+
+        query = Order.query.filter(Order.status == "CANCELLATION_PENDING")
+        if manager_id:
+            query = query.join(Event, Event.event_id == Order.event_id).filter(Event.organizer_id == manager_id)
+
+        rows = query.order_by(Order.order_date.desc()).all()
+        out = []
+        for order in rows:
+            item = _serialize_order_summary(order)
+            item["Tickets"] = [_serialize_ticket_detail(ticket) for ticket in order.tickets]
+            item["EventDate"] = order.event.start_date.isoformat() if order.event and order.event.start_date else None
+            out.append(item)
+        return self.ok(out)
+
+
+orders_bp.add_url_rule("/orders", view_func=OrderListCreateView.as_view("orders_list_create"), methods=["GET", "POST"])
+orders_bp.add_url_rule("/orders/<int:order_id>", view_func=OrderDetailView.as_view("orders_detail"), methods=["GET", "PATCH"])
+orders_bp.add_url_rule("/orders/<int:order_id>/confirm-cash", view_func=OrderCashConfirmView.as_view("orders_confirm_cash"), methods=["POST"])
+orders_bp.add_url_rule("/orders/<int:order_id>/refund-request", view_func=OrderRefundRequestView.as_view("orders_refund_request"), methods=["POST"])
+orders_bp.add_url_rule("/orders/<int:order_id>/refund-cancel", view_func=OrderRefundCancelView.as_view("orders_refund_cancel"), methods=["POST"])
+orders_bp.add_url_rule("/orders/<int:order_id>/refund-process", view_func=OrderRefundProcessView.as_view("orders_refund_process"), methods=["POST"])
+orders_bp.add_url_rule("/orders/refund-requests", view_func=RefundRequestListView.as_view("orders_refund_requests"), methods=["GET"])

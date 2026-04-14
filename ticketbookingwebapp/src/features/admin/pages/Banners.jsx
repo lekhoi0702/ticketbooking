@@ -1,25 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form, Input, Card, Space, Typography, Tooltip, Switch, App, Upload, InputNumber } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, WarningOutlined, UploadOutlined, LinkOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Alert, Card, Tag, Typography } from 'antd';
+import { LinkOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
-import AdminPortal from '@shared/components/AdminPortal';
-import { getImageUrl } from '@shared/utils/eventUtils';
 import AdminTable from '@features/admin/components/AdminTable';
 import AdminToolbar from '@features/admin/components/AdminToolbar';
+import { getImageUrl } from '@shared/utils/eventUtils';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const Banners = () => {
-    const { message, modal } = App.useApp();
     const [banners, setBanners] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentBanner, setCurrentBanner] = useState(null);
-    const [form] = Form.useForm();
-    const [submitting, setSubmitting] = useState(false);
-    const [fileList, setFileList] = useState([]);
 
     useEffect(() => {
         fetchBanners();
@@ -30,380 +22,84 @@ const Banners = () => {
             setLoading(true);
             const response = await api.getBanners();
             if (response.success) {
-                setBanners(response.data);
+                setBanners(response.data || []);
             }
         } catch (error) {
             console.error('Error fetching banners:', error);
-            message.error('Không thể tải danh sách banner');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleAdd = () => {
-        setIsEditing(false);
-        setCurrentBanner(null);
-        
-        // Tính toán display_order tiếp theo (max + 1)
-        const maxOrder = banners.length > 0
-            ? Math.max(...banners.map(b => b.display_order || 0))
-            : -1;
-        const nextOrder = maxOrder + 1;
-        
-        form.resetFields();
-        form.setFieldsValue({ 
-            display_order: nextOrder, 
-            is_active: true 
-        });
-        setFileList([]);
-        setModalVisible(true);
-    };
-
-    const handleEdit = (banner) => {
-        setIsEditing(true);
-        setCurrentBanner(banner);
-        form.setFieldsValue({
-            title: banner.title,
-            url: banner.url,
-            display_order: banner.display_order,
-            is_active: banner.is_active
-        });
-
-        // Show existing image as file list item if needed, but easier to just show preview
-        setFileList([]);
-        setModalVisible(true);
-    };
-
-    const handleSubmit = async () => {
-        try {
-            const values = await form.validateFields();
-
-            if (!isEditing && fileList.length === 0) {
-                message.error('Vui lòng chọn hình ảnh banner');
-                return;
-            }
-
-            setSubmitting(true);
-            const formData = new FormData();
-            formData.append('title', values.title || '');
-            formData.append('url', values.url || '');
-            formData.append('display_order', values.display_order || 0);
-            formData.append('is_active', values.is_active !== undefined ? values.is_active : true);
-
-            if (fileList.length > 0) {
-                // Get file object - could be originFileObj or the file itself
-                const file = fileList[0].originFileObj || fileList[0];
-                if (file && file instanceof File) {
-                    formData.append('image', file);
-                } else {
-                    console.error('Invalid file object:', file);
-                    message.error('File không hợp lệ. Vui lòng chọn lại ảnh.');
-                    return;
-                }
-            }
-
-            if (isEditing) {
-                await api.updateBanner(currentBanner.banner_id, formData);
-                message.success('Cập nhật banner thành công');
-            } else {
-                await api.createBanner(formData);
-                message.success('Tạo banner mới thành công');
-            }
-
-            setModalVisible(false);
-            fetchBanners();
-        } catch (error) {
-            console.error('Submit error:', error);
-            if (error instanceof Error) {
-                message.error(error.message || 'Có lỗi xảy ra');
-            }
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleDelete = (banner) => {
-        modal.confirm({
-            title: 'Xác nhận xóa banner',
-            icon: <WarningOutlined style={{ color: '#ff4d4f' }} />,
-            content: `Bạn có chắc chắn muốn xóa banner "${banner.title || 'Không tiêu đề'}"?`,
-            okText: 'Xóa banner',
-            okType: 'danger',
-            cancelText: 'Hủy',
-            onOk: async () => {
-                try {
-                    await api.deleteBanner(banner.banner_id);
-                    message.success('Xóa banner thành công');
-                    fetchBanners();
-                } catch (error) {
-                    message.error('Không thể xóa banner này');
-                }
-            }
-        });
-    };
-
-    const handleToggleStatus = async (banner, checked) => {
-        // Optimistic UI Update
-        const originalStatus = banner.is_active;
-
-        setBanners(prev => prev.map(b =>
-            b.banner_id === banner.banner_id
-                ? { ...b, is_active: checked }
-                : b
-        ));
-
-        try {
-            const formData = new FormData();
-            formData.append('is_active', checked);
-            await api.updateBanner(banner.banner_id, formData);
-            message.success(`Đã ${checked ? 'hiện' : 'ẩn'} banner`);
-        } catch (error) {
-            setBanners(prev => prev.map(b =>
-                b.banner_id === banner.banner_id
-                    ? { ...b, is_active: originalStatus }
-                    : b
-            ));
-            message.error('Lỗi khi cập nhật trạng thái');
-        }
-    };
-
-
     const columns = [
         {
-            title: 'Hình ảnh',
+            title: 'Hinh anh',
             dataIndex: 'image',
             key: 'image',
-            width: 150,
+            width: 180,
             render: (url) => (
                 <img
                     src={getImageUrl(url)}
                     alt="banner"
-                    style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '4px' }}
+                    style={{ width: '140px', height: '70px', objectFit: 'cover', borderRadius: '6px' }}
                 />
-            )
+            ),
         },
         {
-            title: 'Tiêu đề',
+            title: 'Tieu de',
             dataIndex: 'title',
             key: 'title',
-            render: (text) => <b>{text || '-'}</b>
+            render: (text) => <Text strong>{text || '-'}</Text>,
         },
         {
-            title: 'Liên kết',
+            title: 'Lien ket',
             dataIndex: 'url',
             key: 'url',
-            render: (text) => text ? <a href={text} target="_blank" rel="noreferrer"><LinkOutlined /> Link</a> : '-'
+            render: (text) => (
+                text ? <a href={text} target="_blank" rel="noreferrer"><LinkOutlined /> Link</a> : '-'
+            ),
         },
         {
-            title: 'Thứ tự',
+            title: 'Thu tu',
             dataIndex: 'display_order',
             key: 'display_order',
-            width: 80,
+            width: 100,
             align: 'center',
         },
         {
-            title: 'Trạng thái',
+            title: 'Trang thai',
             dataIndex: 'is_active',
             key: 'is_active',
             width: 120,
-            render: (isActive, record) => (
-                <Switch
-                    checkedChildren="Hiện"
-                    unCheckedChildren="Ẩn"
-                    checked={isActive}
-                    onChange={(checked) => handleToggleStatus(record, checked)}
-                />
-            )
+            render: (isActive) => <Tag color={isActive ? 'success' : 'default'}>{isActive ? 'HIEN' : 'AN'}</Tag>,
         },
-        {
-            title: 'Hành động',
-            key: 'action',
-            width: 120,
-            align: 'center',
-            render: (_, record) => (
-                <Space>
-                    <Tooltip title="Chỉnh sửa">
-                        <Button
-                            type="primary"
-                            ghost
-                            icon={<EditOutlined />}
-                            onClick={() => handleEdit(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Xóa">
-                        <Button
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleDelete(record)}
-                        />
-                    </Tooltip>
-                </Space>
-            ),
-        }
     ];
 
-    const uploadProps = {
-        onRemove: (file) => {
-            setFileList((prev) => {
-                const index = prev.indexOf(file);
-                const newFileList = prev.slice();
-                newFileList.splice(index, 1);
-                return newFileList;
-            });
-        },
-        beforeUpload: (file) => {
-            const isImage = file.type.startsWith('image/');
-            if (!isImage) {
-                message.error('Chỉ được upload file ảnh!');
-                return Upload.LIST_IGNORE;
-            }
-            setFileList([file]); // Only allow 1 file
-            return false; // Prevent auto upload
-        },
-        fileList,
-        maxCount: 1,
-        listType: 'picture'
-    };
-
-    if (loading) return <AdminLoadingScreen tip="Đang tải banner..." />;
+    if (loading) return <AdminLoadingScreen tip="Dang tai banner..." />;
 
     return (
         <div style={{ paddingTop: 0 }}>
+            <Alert
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+                message="Trang banner hien tai chi de xem. Du lieu quang cao dang duoc lay tu file cau hinh tinh."
+            />
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-                <AdminToolbar
-                    onAdd={handleAdd}
-                    onRefresh={fetchBanners}
-                    addLabel="Thêm banner"
-                    refreshLoading={loading}
-                />
+                <AdminToolbar onRefresh={fetchBanners} refreshLoading={loading} />
             </div>
 
             <Card className="shadow-sm">
                 <AdminTable
                     columns={columns}
                     dataSource={banners}
-                    rowKey="banner_id"
+                    rowKey={(record) => record.banner_id || record.id || record.image}
                     pagination={{ pageSize: 50 }}
-                    emptyText="Không có banner"
+                    emptyText="Khong co banner"
                 />
             </Card>
-
-
-            <Modal
-                title={<Text strong style={{ fontSize: 16 }}>{isEditing ? `Chỉnh sửa: ${currentBanner?.title || 'Banner'}` : "Thêm banner mới"}</Text>}
-                open={modalVisible}
-                onOk={handleSubmit}
-                onCancel={() => setModalVisible(false)}
-                confirmLoading={submitting}
-                okText={isEditing ? "Lưu thay đổi" : "Tạo mới"}
-                cancelText="Hủy"
-            >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    name="banner_form"
-                    initialValues={{ is_active: true }}
-                >
-                    <Form.Item
-                        name="title"
-                        label="Tiêu đề"
-                    >
-                        <Input placeholder="Nhập tiêu đề banner (tùy chọn)" />
-                    </Form.Item>
-
-                    <Form.Item
-                    name="url"
-                        label="Liên kết"
-                        rules={[{ type: 'url', message: 'Vui lòng nhập URL hợp lệ!' }]}
-                    >
-                        <Input prefix={<LinkOutlined />} placeholder="https://example.com" />
-                    </Form.Item>
-
-                    <Form.Item
-                    name="display_order"
-                        label="Thứ tự hiển thị"
-                        help="Số nhỏ hơn sẽ hiển thị trước (0 là đầu tiên)"
-                    >
-                        <InputNumber min={0} style={{ width: '100%' }} />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Hình ảnh"
-                        required={!isEditing}
-                    >
-                        <Upload {...uploadProps}>
-                            <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
-                        </Upload>
-                        
-                        {/* Preview ảnh mới được chọn */}
-                        {fileList.length > 0 && (
-                            <div style={{ marginTop: 16 }}>
-                                <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
-                                    {isEditing ? 'Ảnh mới được chọn:' : 'Xem trước ảnh:'}
-                                </Text>
-                                <div style={{ 
-                                    border: '1px solid #d9d9d9', 
-                                    borderRadius: 4, 
-                                    padding: 8,
-                                    display: 'inline-block',
-                                    background: '#fafafa'
-                                }}>
-                                    <img
-                                        src={URL.createObjectURL(fileList[0].originFileObj || fileList[0])}
-                                        alt="preview"
-                                        style={{ 
-                                            width: '100%', 
-                                            maxWidth: '400px', 
-                                            maxHeight: '300px',
-                                            objectFit: 'contain',
-                                            borderRadius: 4,
-                                            display: 'block'
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* Hiển thị ảnh hiện tại khi edit và chưa chọn ảnh mới */}
-                        {isEditing && currentBanner?.image && fileList.length === 0 && (
-                            <div style={{ marginTop: 16 }}>
-                                <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
-                                    Hình ảnh hiện tại:
-                                </Text>
-                                <div style={{ 
-                                    border: '1px solid #d9d9d9', 
-                                    borderRadius: 4, 
-                                    padding: 8,
-                                    display: 'inline-block',
-                                    background: '#fafafa'
-                                }}>
-                                    <img
-                                        src={getImageUrl(currentBanner.image)}
-                                        alt="current"
-                                        style={{ 
-                                            width: '100%', 
-                                            maxWidth: '400px', 
-                                            maxHeight: '300px',
-                                            objectFit: 'contain',
-                                            borderRadius: 4,
-                                            display: 'block'
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </Form.Item>
-
-                    <Form.Item
-                        name="is_active"
-                        valuePropName="checked"
-                        label="Trạng thái"
-                    >
-                        <Switch checkedChildren="Hiện" unCheckedChildren="Ẩn" />
-                    </Form.Item>
-                </Form>
-            </Modal>
-        </div >
+        </div>
     );
 };
 

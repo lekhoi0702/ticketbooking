@@ -71,7 +71,14 @@ const OrderSuccess = () => {
         </Container>
     );
 
-    const { order, tickets, event } = orderData;
+    const { order, tickets } = orderData;
+    const event = orderData.event || {
+        event_name: order?.event_name || 'Sự kiện',
+        start_datetime: order?.event_date || null,
+        venue: order?.venue_name
+            ? { venue_name: order.venue_name, address: '' }
+            : null,
+    };
     const forcePaid = Boolean(order?.order_code && sessionStorage.getItem(`force_paid_order_${order.order_code}`) === 'true');
     const isPaid = order.order_status === 'PAID' || forcePaid;
 

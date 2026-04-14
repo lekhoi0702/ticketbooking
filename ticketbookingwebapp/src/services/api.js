@@ -16,10 +16,10 @@ import { adminApi } from './api/admin';
  */
 export const api = {
     ...authApi,
-    ...organizerApi,  // Organizer-specific methods (may require auth)
     ...seatApi,
     ...orderApi,
     ...paymentApi,
     ...adminApi,
+    ...organizerApi,  // Keep organizer after admin to prevent admin unsupported methods from overriding organizer ones
     ...eventApi,      // Public event methods - placed last to override organizer methods with same name
 };

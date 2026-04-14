@@ -1,49 +1,72 @@
-from flask import Blueprint, jsonify
-from app.models.event_category import EventCategory
+from datetime import datetime
+
+from flask import Blueprint, request
+
+from app.extensions import db
+from app.models import EventCategory
+from app.routes.helpers import ApiMethodView
 
 categories_bp = Blueprint("categories", __name__)
 
-@categories_bp.route("/categories", methods=["GET"])
-def get_categories():
-    """Get all active event categories"""
-    try:
-        categories = EventCategory.query.filter(
-            EventCategory.is_active == True
-        ).order_by(
-            EventCategory.display_order.asc(),
-            EventCategory.category_id.asc()
-        ).all()
-        
-        return jsonify({
-            'success': True,
-            'data': [category.to_dict() for category in categories]
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': str(e)
-        }), 500
 
-@categories_bp.route("/categories/<int:category_id>", methods=["GET"])
-def get_category(category_id):
-    """Get a single category by ID"""
-    try:
-        category = EventCategory.query.get(category_id)
-        
+class CategoryListView(ApiMethodView):
+    def get(self):
+        return self.ok([row.to_dict() for row in EventCategory.query.all()])
+
+    def post(self):
+        data = request.get_json(silent=True) or {}
+        category_name = data.get("CategoryName") or data.get("category_name")
+        status = data.get("Status") or data.get("status") or "ACTIVE"
+        create_id = data.get("CreateID") or data.get("create_id") or 1
+
+        if not category_name:
+            return self.fail("CategoryName is required", 400)
+
+        try:
+            create_id = int(create_id)
+        except (TypeError, ValueError):
+            create_id = 1
+
+        category = EventCategory(
+            category_name=category_name,
+            status=str(status).upper(),
+            create_id=create_id,
+            create_date=datetime.utcnow(),
+            update_date=None,
+        )
+        db.session.add(category)
+        db.session.commit()
+        return self.ok(category.to_dict(), 201)
+
+
+class CategoryDetailView(ApiMethodView):
+    def put(self, category_id):
+        category = EventCategory.query.filter_by(category_id=category_id).first()
         if not category:
-            return jsonify({
-                'success': False,
-                'message': 'Category not found'
-            }), 404
-        
-        return jsonify({
-            'success': True,
-            'data': category.to_dict()
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': str(e)
-        }), 500
+            return self.fail("Not found", 404)
+
+        data = request.get_json(silent=True) or {}
+        category_name = data.get("CategoryName") or data.get("category_name")
+        status = data.get("Status") or data.get("status")
+
+        if category_name is not None:
+            category.category_name = category_name
+        if status is not None:
+            category.status = str(status).upper()
+
+        category.update_date = datetime.utcnow()
+        db.session.commit()
+        return self.ok(category.to_dict())
+
+    def delete(self, category_id):
+        category = EventCategory.query.filter_by(category_id=category_id).first()
+        if not category:
+            return self.fail("Not found", 404)
+
+        db.session.delete(category)
+        db.session.commit()
+        return self.ok({"Deleted": True})
+
+
+categories_bp.add_url_rule("/categories", view_func=CategoryListView.as_view("categories_list"), methods=["GET", "POST"])
+categories_bp.add_url_rule("/categories/<int:category_id>", view_func=CategoryDetailView.as_view("categories_detail"), methods=["PUT", "DELETE"])

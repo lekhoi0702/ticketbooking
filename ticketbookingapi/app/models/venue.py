@@ -1,39 +1,32 @@
 from app.extensions import db
-from datetime import datetime
-from app.utils.datetime_utils import now_gmt7
+
 
 class Venue(db.Model):
-    __tablename__ = "Venue"
+    __tablename__ = "venue"
 
-    venue_id = db.Column(db.BigInteger, primary_key=True)
-    venue_name = db.Column(db.String(255), nullable=False)
-    address = db.Column(db.String(500), nullable=False)
-    city = db.Column(db.String(100), nullable=False, index=True)
-    capacity = db.Column(db.Integer, nullable=False)
-    # DB columns
-    seat_map = db.Column(db.JSON, nullable=True)
-    contact_phone = db.Column(db.String(30), nullable=True)
-    is_active = db.Column(db.Boolean, default=True, index=True)  # stored as tinyint(1)
-    status = db.Column(db.String(50), default='ACTIVE', index=True)
-    created_at = db.Column(db.DateTime, default=now_gmt7)
-    organizer_id = db.Column(db.BigInteger, nullable=False, default=1, index=True)
-    map_embed = db.Column(db.Text, nullable=True)
+    venue_id = db.Column("VenueID", db.Integer, primary_key=True, autoincrement=True)
+    venue_name = db.Column("VenueName", db.String(255), nullable=False)
+    address = db.Column("Address", db.String(255), nullable=False)
+    city = db.Column("City", db.String(100), nullable=False)
+    status = db.Column("Status", db.String(50), nullable=False, default="Active")
+    capacity = db.Column("Capacity", db.Integer, nullable=False)
+    seat_map = db.Column("SeatMap", db.JSON, nullable=True)
+    create_id = db.Column("CreateID", db.Integer, nullable=False)
+    create_date = db.Column("CreateDate", db.DateTime, nullable=False)
+    update_date = db.Column("UpdateDate", db.DateTime, nullable=True)
 
-    # Relationships
-    events = db.relationship('Event', backref='venue', lazy=True)
+    seats = db.relationship("Seat", backref="venue", lazy=True)
 
     def to_dict(self):
         return {
-            'venue_id': self.venue_id,
-            'venue_name': self.venue_name,
-            'address': self.address,
-            'city': self.city,
-            'capacity': self.capacity,
-            'contact_phone': self.contact_phone,
-            'seat_map': self.seat_map,
-            'map_embed': self.map_embed,
-            'is_active': self.is_active,
-            'status': self.status,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'organizer_id': self.organizer_id,
+            "VenueID": self.venue_id,
+            "VenueName": self.venue_name,
+            "Address": self.address,
+            "City": self.city,
+            "Status": self.status,
+            "Capacity": self.capacity,
+            "SeatMap": self.seat_map,
+            "CreateID": self.create_id,
+            "CreateDate": self.create_date.isoformat() if self.create_date else None,
+            "UpdateDate": self.update_date.isoformat() if self.update_date else None,
         }

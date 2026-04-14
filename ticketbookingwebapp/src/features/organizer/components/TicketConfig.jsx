@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import dayjs from 'dayjs';
 import {
-    Card,
     Input,
     Button,
     Row,
@@ -8,23 +8,23 @@ import {
     Typography,
     Space,
     Collapse,
-    Divider,
     Badge,
     InputNumber,
-    Tooltip
+    Tooltip,
+    DatePicker
 } from 'antd';
 import {
     PlusOutlined,
     DeleteOutlined,
     AppstoreOutlined,
     InfoCircleOutlined,
-    EditOutlined,
     WarningOutlined
 } from '@ant-design/icons';
 import SeatMapTemplateView from './SeatMapTemplateView';
 
 const { Text, Title } = Typography;
 const { Panel } = Collapse;
+const DATE_TIME_DISPLAY_FORMAT = 'DD/MM/YYYY HH:mm';
 
 const TicketConfig = ({
     ticketTypes,
@@ -34,8 +34,11 @@ const TicketConfig = ({
     venueTemplate,
     toggleSeatSelection,
     toggleAreaSelection,
-    selectedVenueId, // Add this prop
-    fieldErrors = {} // Add this prop
+    selectedVenueId,
+    eventStartDate,
+    eventEndDate,
+    fieldErrors = {},
+    disabled = false
 }) => {
     const [expandedKeys, setExpandedKeys] = useState(['0']);
     const [isDragging, setIsDragging] = useState(false);
@@ -75,6 +78,23 @@ const TicketConfig = ({
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
     };
 
+    const eventStart = eventStartDate ? dayjs(eventStartDate) : null;
+    const eventEnd = eventEndDate ? dayjs(eventEndDate) : null;
+
+    const disableSaleStartDate = (current) => {
+        if (!current) return false;
+        if (eventEnd && current.isAfter(eventEnd, 'minute')) return true;
+        return false;
+    };
+
+    const disableSaleEndDate = (current, ticketType) => {
+        if (!current) return false;
+        const saleStart = ticketType?.sale_start_date ? dayjs(ticketType.sale_start_date) : null;
+        if (saleStart && current.isBefore(saleStart, 'minute')) return true;
+        if (eventStart && current.isAfter(eventStart, 'minute')) return true;
+        return false;
+    };
+
     return (
         <div style={{ marginTop: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -102,15 +122,12 @@ const TicketConfig = ({
                 {ticketTypes.map((tt, index) => (
                     <Panel
                         key={String(index)}
-                        header={
+                        header={(
                             <div style={{ display: 'flex', justifyContent: 'space-between', width: '95%', alignItems: 'center' }}>
                                 <Space size={16}>
-                                    <Text strong style={{ fontSize: 14 }}>{tt.type_name || `Hạng vé mới`}</Text>
+                                    <Text strong style={{ fontSize: 14 }}>{tt.type_name || 'Hạng vé mới'}</Text>
                                     <Text type="secondary" style={{ fontSize: 13 }}>{formatCurrency(tt.price)}</Text>
-                                    <Badge
-                                        count={`${tt.selectedSeats?.length || 0} Ghế`}
-                                        style={{ backgroundColor: '#2DC275' }}
-                                    />
+                                    <Badge count={`${tt.selectedSeats?.length || 0} Ghế`} style={{ backgroundColor: '#2DC275' }} />
                                 </Space>
                                 {ticketTypes.length > 1 && (
                                     <Tooltip title="Xóa hạng vé">
@@ -118,12 +135,15 @@ const TicketConfig = ({
                                             type="text"
                                             danger
                                             icon={<DeleteOutlined />}
-                                            onClick={(e) => { e.stopPropagation(); removeTicketType(index); }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeTicketType(index);
+                                            }}
                                         />
                                     </Tooltip>
                                 )}
                             </div>
-                        }
+                        )}
                         style={{
                             background: '#fff',
                             borderRadius: 8,
@@ -136,13 +156,14 @@ const TicketConfig = ({
                             <Row gutter={16} style={{ marginBottom: 24 }}>
                                 <Col xs={24} md={12}>
                                     <div style={{ marginBottom: 8 }}>
-                                        <Text strong style={{ fontSize: 12 }}>TÊN HẠNG VÉ</Text>
+                                        <Text strong style={{ fontSize: 12 }}>TEN HANG VE</Text>
                                         <Text type="danger"> *</Text>
                                     </div>
                                     <Input
                                         value={tt.type_name}
                                         onChange={(e) => handleTicketTypeChange(index, 'type_name', e.target.value)}
                                         size="large"
+                                        disabled={disabled}
                                         status={fieldErrors[`ticket_type_${index}_name`] ? 'error' : ''}
                                         placeholder="Ví dụ: VIP, Standard..."
                                     />
@@ -154,7 +175,7 @@ const TicketConfig = ({
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <div style={{ marginBottom: 8 }}>
-                                        <Text strong style={{ fontSize: 12 }}>GIÁ VÉ (VND)</Text>
+                                        <Text strong style={{ fontSize: 12 }}>GIA VE (VND)</Text>
                                         <Text type="danger"> *</Text>
                                     </div>
                                     <InputNumber
@@ -162,9 +183,10 @@ const TicketConfig = ({
                                         value={tt.price}
                                         onChange={(val) => handleTicketTypeChange(index, 'price', val)}
                                         size="large"
+                                        disabled={disabled}
                                         status={fieldErrors[`ticket_type_${index}_price`] ? 'error' : ''}
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                                         placeholder="Nhập giá vé"
                                     />
                                     {fieldErrors[`ticket_type_${index}_price`] && (
@@ -174,19 +196,71 @@ const TicketConfig = ({
                                     )}
                                 </Col>
                             </Row>
+                            <Row gutter={16} style={{ marginBottom: 24 }}>
+                                <Col xs={24} md={12}>
+                                    <div style={{ marginBottom: 8 }}>
+                                        <Text strong style={{ fontSize: 12 }}>NGÀY MỞ BÁN VÉ</Text>
+                                        <Text type="danger"> *</Text>
+                                    </div>
+                                    <DatePicker
+                                        showTime={{ format: 'HH:mm', minuteStep: 5 }}
+                                        style={{ width: '100%' }}
+                                        size="large"
+                                        value={tt.sale_start_date ? dayjs(tt.sale_start_date) : null}
+                                        onChange={(date) => handleTicketTypeChange(index, 'sale_start_date', date ? date.format('YYYY-MM-DD HH:mm:ss') : '')}
+                                        format={DATE_TIME_DISPLAY_FORMAT}
+                                        disabledDate={disableSaleStartDate}
+                                        disabled={disabled}
+                                        status={fieldErrors[`ticket_type_${index}_sale_start_date`] ? 'error' : ''}
+                                        placeholder="Chọn ngày giờ mở bán vé"
+                                        allowClear
+                                    />
+                                    {fieldErrors[`ticket_type_${index}_sale_start_date`] && (
+                                        <Text type="danger" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                                            <WarningOutlined /> {fieldErrors[`ticket_type_${index}_sale_start_date`]}
+                                        </Text>
+                                    )}
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <div style={{ marginBottom: 8 }}>
+                                        <Text strong style={{ fontSize: 12 }}>NGÀY KẾT THÚC BÁN VÉ</Text>
+                                        <Text type="danger"> *</Text>
+                                    </div>
+                                    <DatePicker
+                                        showTime={{ format: 'HH:mm', minuteStep: 5 }}
+                                        style={{ width: '100%' }}
+                                        size="large"
+                                        value={tt.sale_end_date ? dayjs(tt.sale_end_date) : null}
+                                        onChange={(date) => handleTicketTypeChange(index, 'sale_end_date', date ? date.format('YYYY-MM-DD HH:mm:ss') : '')}
+                                        format={DATE_TIME_DISPLAY_FORMAT}
+                                        disabledDate={(current) => disableSaleEndDate(current, tt)}
+                                        disabled={disabled}
+                                        status={fieldErrors[`ticket_type_${index}_sale_end_date`] ? 'error' : ''}
+                                        placeholder="Chọn ngày giờ kết thúc bán vé"
+                                        allowClear
+                                    />
+                                    {fieldErrors[`ticket_type_${index}_sale_end_date`] && (
+                                        <Text type="danger" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                                            <WarningOutlined /> {fieldErrors[`ticket_type_${index}_sale_end_date`]}
+                                        </Text>
+                                    )}
+                                </Col>
+                            </Row>
 
                             <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, overflow: 'hidden' }}>
-                                <div style={{
-                                    padding: '12px 20px',
-                                    backgroundColor: '#fafafa',
-                                    borderBottom: '1px solid #f0f0f0',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
+                                <div
+                                    style={{
+                                        padding: '12px 20px',
+                                        backgroundColor: '#fafafa',
+                                        borderBottom: '1px solid #f0f0f0',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
                                     <Space>
                                         <AppstoreOutlined style={{ color: '#8c8c8c' }} />
-                                        <Text strong style={{ fontSize: 11, color: '#8c8c8c' }}>CHỌN GHẾ TRÊN SƠ ĐỒ ĐỊA ĐIỂM</Text>
+                                        <Text strong style={{ fontSize: 11, color: '#8c8c8c' }}>CHON GHE TREN SO DO DIA DIEM</Text>
                                     </Space>
                                 </div>
 
@@ -196,7 +270,10 @@ const TicketConfig = ({
                                             <SeatMapTemplateView
                                                 venueTemplate={venueTemplate}
                                                 selectedTemplateSeats={tt.selectedSeats || []}
-                                                allOccupiedSeats={ticketTypes.filter((_, i) => i !== index).flatMap(t => t.selectedSeats || []).map(s => ({ ...s, ticket_type_id: 'other' }))}
+                                                allOccupiedSeats={ticketTypes
+                                                    .filter((_, i) => i !== index)
+                                                    .flatMap(t => t.selectedSeats || [])
+                                                    .map(s => ({ ...s, ticket_type_id: 'other' }))}
                                                 activeTicketType={{ ticket_type_id: 'current' }}
                                                 handleSeatMouseDown={(e, t) => handleSeatMouseDown(e, t, index)}
                                                 handleSeatMouseEnter={(t) => handleSeatMouseEnter(t, index)}
@@ -205,7 +282,8 @@ const TicketConfig = ({
                                         </div>
                                     ) : (
                                         <div style={{ padding: '48px 0', textAlign: 'center' }}>
-                                            <InfoCircleOutlined style={{ fontSize: 32, color: '#ff4d4f', marginBottom: 16, opacity: 0.5 }} /><br />
+                                            <InfoCircleOutlined style={{ fontSize: 32, color: '#ff4d4f', marginBottom: 16, opacity: 0.5 }} />
+                                            <br />
                                             {selectedVenueId ? (
                                                 <Text type="danger" strong>Địa điểm này chưa có sơ đồ ghế</Text>
                                             ) : (
@@ -215,7 +293,6 @@ const TicketConfig = ({
                                     )}
                                 </div>
 
-                                {/* Display error if no seats selected */}
                                 {fieldErrors[`ticket_type_${index}_seats`] && (
                                     <div style={{ padding: '8px 16px', backgroundColor: '#fff2f0', borderTop: '1px solid #ffccc7' }}>
                                         <Text type="danger" style={{ fontSize: 12 }}>

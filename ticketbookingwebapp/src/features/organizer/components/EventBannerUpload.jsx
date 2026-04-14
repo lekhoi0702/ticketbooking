@@ -1,11 +1,9 @@
 import React from 'react';
 import {
-    Card,
     Button,
     Typography,
     Space,
-    Image,
-    message
+    Image
 } from 'antd';
 import {
     CloudUploadOutlined,
@@ -14,7 +12,7 @@ import {
     WarningOutlined
 } from '@ant-design/icons';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner, fieldErrors = {} }) => {
     return (
@@ -33,8 +31,12 @@ const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner, fie
                     transition: 'all 0.3s',
                     textAlign: 'center'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2DC275'}
-                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#d9d9d9'}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#2DC275';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#d9d9d9';
+                }}
             >
                 {bannerPreview ? (
                     <div style={{ width: '100%' }}>
@@ -51,17 +53,10 @@ const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner, fie
                             }}
                         />
                         <Space size={12}>
-                            <Button
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={removeBanner}
-                            >
+                            <Button danger icon={<DeleteOutlined />} onClick={removeBanner}>
                                 Gỡ bỏ
                             </Button>
-                            <Button
-                                icon={<PictureOutlined />}
-                                style={{ color: '#2DC275', borderColor: '#2DC275' }}
-                            >
+                            <Button icon={<PictureOutlined />} style={{ color: '#2DC275', borderColor: '#2DC275' }}>
                                 <label style={{ cursor: 'pointer' }}>
                                     Đổi ảnh
                                     <input
@@ -77,7 +72,9 @@ const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner, fie
                 ) : (
                     <div>
                         <CloudUploadOutlined style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} />
-                        <Title level={5} style={{ margin: '0 0 8px 0', fontSize: 14 }}>Tải lên ảnh bìa sự kiện</Title>
+                        <Title level={5} style={{ margin: '0 0 8px 0', fontSize: 14 }}>
+                            Tải lên ảnh bìa sự kiện
+                        </Title>
                         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 20 }}>
                             Kích thước gợi ý 1200x480px (Tỉ lệ 2.5:1)
                         </Text>
@@ -107,8 +104,5 @@ const EventBannerUpload = ({ bannerPreview, handleImageChange, removeBanner, fie
         </div>
     );
 };
-
-// Need Title for the component
-const { Title } = Typography;
 
 export default EventBannerUpload;

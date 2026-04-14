@@ -5,6 +5,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
+import AuthErrorNotice from '@shared/components/AuthErrorNotice';
 import '@features/user/components/Auth/AuthModal.css';
 
 const Login = () => {
@@ -71,7 +72,7 @@ const Login = () => {
                         required_role: 'USER'
                     });
                     if (loginRes.success && loginRes.data) {
-                        login(loginRes.data.user, loginRes.data.access_token, loginRes.data.refresh_token);
+                        login(loginRes.data.user);
                         const from = location.state?.from?.pathname || "/";
                         const fromState = location.state?.from?.state || {};
                         navigate(from, { state: fromState, replace: true });
@@ -95,7 +96,7 @@ const Login = () => {
                         required_role: 'USER'
                     });
                     if (res.success && res.data) {
-                        login(res.data.user, res.data.access_token, res.data.refresh_token);
+                        login(res.data.user);
                         const from = location.state?.from?.pathname || "/";
                         const fromState = location.state?.from?.state || {};
                         navigate(from, { state: fromState, replace: true });
@@ -263,7 +264,7 @@ const Login = () => {
                                                 <p className="text-muted small">Nhập email đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu về email của bạn.</p>
                                             </div>
                                             {forgotError && (
-                                                <div className="small mb-3 text-danger">{forgotError}</div>
+                                                <AuthErrorNotice message={forgotError} />
                                             )}
                                             <Form onSubmit={handleForgotSubmit} noValidate>
                                                 <Form.Group className="mb-3">
@@ -323,8 +324,9 @@ const Login = () => {
                                         <p className="text-muted small">Đăng nhập để đặt vé và quản lý đơn hàng</p>
                                     </div>
 
-                                    {error && (
-                                        <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : error.type === 'warning' ? 'text-warning' : 'text-danger'}`}>
+                                    {error?.type === 'danger' && <AuthErrorNotice message={error.msg} />}
+                                    {error && error.type !== 'danger' && (
+                                        <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : 'text-warning'}`}>
                                             {error.msg}
                                         </div>
                                     )}
@@ -387,8 +389,9 @@ const Login = () => {
                                         <p className="text-muted small">Đăng ký để bắt đầu trải nghiệm</p>
                                     </div>
 
-                                    {error && (
-                                        <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : error.type === 'warning' ? 'text-warning' : 'text-danger'}`}>
+                                    {error?.type === 'danger' && <AuthErrorNotice message={error.msg} />}
+                                    {error && error.type !== 'danger' && (
+                                        <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : 'text-warning'}`}>
                                             {error.msg}
                                         </div>
                                     )}

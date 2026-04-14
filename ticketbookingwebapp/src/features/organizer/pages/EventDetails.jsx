@@ -34,7 +34,7 @@ import {
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { api } from '@services/api';
 import { getImageUrl } from '@shared/utils/eventUtils';
-import { formatLocale, formatLocaleDateTime } from '@shared/utils/dateUtils';
+import { formatLocale } from '@shared/utils/dateUtils';
 import SeatMapTemplateView from '@features/organizer/components/SeatMapTemplateView';
 
 const { Title, Text, Paragraph } = Typography;
@@ -141,7 +141,7 @@ const EventDetails = () => {
             <div style={{ padding: 24 }}>
                 <Alert
                     type="error"
-                    title="Lỗi"
+                    title="Lá»—i"
                     description={error || 'Đã xảy ra lỗi khi tải thông tin'}
                     showIcon
                 />
@@ -212,7 +212,8 @@ const EventDetails = () => {
                             <Row gutter={[16, 16]}>
                                 {ticketTypes.map((tt, index) => {
                                     const soldInType = (eventSeats || []).filter(s => s.ticket_type_id === tt.ticket_type_id && s.status === 'BOOKED').length;
-                                    const percentageInType = tt.quantity > 0 ? (soldInType / tt.quantity) * 100 : 0;
+                                    const totalInType = (eventSeats || []).filter(s => s.ticket_type_id === tt.ticket_type_id).length;
+                                    const percentageInType = totalInType > 0 ? (soldInType / totalInType) * 100 : 0;
 
                                     return (
                                         <Col xs={24} md={12} key={index}>
@@ -221,12 +222,12 @@ const EventDetails = () => {
                                                     <div>
                                                         <Text strong style={{ fontSize: 14 }}>{tt.type_name}</Text><br />
                                                         <Text strong style={{ fontSize: 16, color: '#2DC275' }}>
-                                                            {parseFloat(tt.price).toLocaleString()}đ
+                                                            {parseFloat(tt.price).toLocaleString()}Ä'
                                                         </Text>
                                                     </div>
                                                     <div style={{ textAlign: 'right' }}>
                                                         <Text type="secondary" style={{ fontSize: 12 }}>
-                                                            {soldInType} / {tt.quantity} vé
+                                                            {soldInType} / {totalInType} vé
                                                         </Text>
                                                     </div>
                                                 </div>
@@ -305,18 +306,6 @@ const EventDetails = () => {
                                     <Text type="secondary" style={{ fontSize: 12 }}>{event.venue?.address}</Text>
                                 </Descriptions.Item>
                             </Descriptions>
-
-                            <Divider style={{ margin: '16px 0' }} />
-
-                            <div>
-                                <Text strong style={{ display: 'block', marginBottom: 8 }}>Kênh bán vé</Text>
-                                <Text type="secondary" style={{ fontSize: 13, display: 'block' }}>
-                                    Mở: {event.sale_start_datetime ? formatLocaleDateTime(event.sale_start_datetime) : 'N/A'}
-                                </Text>
-                                <Text type="secondary" style={{ fontSize: 13, display: 'block' }}>
-                                    Đóng: {event.sale_end_datetime ? formatLocaleDateTime(event.sale_end_datetime) : 'N/A'}
-                                </Text>
-                            </div>
                         </Card>
 
                         {/* Chi tiết VietQR - layout giống trang khách */}
@@ -441,3 +430,8 @@ const EventDetails = () => {
 };
 
 export default EventDetails;
+
+
+
+
+

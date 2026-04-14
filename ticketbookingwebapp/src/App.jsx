@@ -57,13 +57,12 @@ const AdminOrdersManagement = lazy(() => import('@features/admin/pages/Orders'))
 const AdminStatistics = lazy(() => import('@features/admin/pages/Statistics'));
 const AdminCategories = lazy(() => import('@features/admin/pages/Categories'));
 const AdminBanners = lazy(() => import('@features/admin/pages/Banners'));
-const Advertisements = lazy(() => import('@features/admin/pages/Advertisements'));
+const AdminDiscounts = lazy(() => import('@features/admin/pages/Discounts'));
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 import { AuthProvider, useAuth } from '@context/AuthContext';
-import { FavoriteProvider } from '@context/FavoriteContext';
 
 // Protected Route Component with Role Support
 const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/" }) => {
@@ -92,7 +91,6 @@ function App() {
     <ConfigProvider theme={AntdThemeConfig} spin={{ indicator: <LoadingOutlined style={{ fontSize: 24, color: '#2DC275' }} spin /> }}>
       <AntdApp>
         <AuthProvider>
-          <FavoriteProvider>
             <Router>
               <PageTitleUpdater />
               <Routes>
@@ -194,14 +192,6 @@ function App() {
                     }
                   />
                   <Route
-                    path="advertisements"
-                    element={
-                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
-                        <Advertisements />
-                      </Suspense>
-                    }
-                  />
-                  <Route
                     path="events"
                     element={
                       <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
@@ -220,7 +210,7 @@ function App() {
                   <Route
                     path="orders"
                     element={
-                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                      <Suspense fallback={<AdminLoadingScreen tip="Dang tai..." />}>
                         <AdminOrdersManagement />
                       </Suspense>
                     }
@@ -228,8 +218,16 @@ function App() {
                   <Route
                     path="statistics"
                     element={
-                      <Suspense fallback={<AdminLoadingScreen tip="Đang tải..." />}>
+                      <Suspense fallback={<AdminLoadingScreen tip="Dang tai..." />}>
                         <AdminStatistics />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="discounts"
+                    element={
+                      <Suspense fallback={<AdminLoadingScreen tip="Dang tai..." />}>
+                        <AdminDiscounts />
                       </Suspense>
                     }
                   />
@@ -241,7 +239,7 @@ function App() {
                 <Route
                   path="/organizer"
                   element={
-                    <ProtectedRoute allowedRoles={['ORGANIZER', 'ADMIN']} redirectTo="/organizer/home">
+                    <ProtectedRoute allowedRoles={['ORGANIZER']} redirectTo="/organizer/home">
                       <OrganizerLayout />
                     </ProtectedRoute>
                   }
@@ -263,7 +261,6 @@ function App() {
                 </Route>
               </Routes>
             </Router>
-          </FavoriteProvider>
         </AuthProvider>
       </AntdApp>
     </ConfigProvider>
@@ -271,3 +268,6 @@ function App() {
 }
 
 export default App;
+
+
+

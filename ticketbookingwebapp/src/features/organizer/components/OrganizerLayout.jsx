@@ -8,31 +8,25 @@ import {
     Avatar,
     Dropdown,
     Button,
-    ConfigProvider,
     Breadcrumb,
     Space,
     Badge,
     List,
     Empty,
     Spin,
-    Divider
 } from 'antd';
 import {
-    UserOutlined,
-    CalendarOutlined,
-    LogoutOutlined,
     BellOutlined,
     HomeOutlined,
-    AppstoreOutlined,
+    CalendarOutlined,
     EnvironmentOutlined,
     QrcodeOutlined,
-    LoadingOutlined,
     ShoppingOutlined,
     TagsOutlined,
     RollbackOutlined,
-    RightOutlined
+    RightOutlined,
+    ToolOutlined,
 } from '@ant-design/icons';
-import { AntdThemeConfig } from '@theme/AntdThemeConfig';
 import { usePendingRefunds } from '@shared/hooks/usePendingRefunds';
 import { api } from '@services/api';
 import ChangePasswordModal from '@features/user/components/Account/ChangePasswordModal';
@@ -44,7 +38,8 @@ const OrganizerLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout, updateUser } = useAuth();
-    const { pendingCount, refresh: refreshPendingCount } = usePendingRefunds();
+    const { pendingCount } = usePendingRefunds();
+
     const [notifications, setNotifications] = useState([]);
     const [loadingNotifications, setLoadingNotifications] = useState(false);
     const [notificationOpen, setNotificationOpen] = useState(false);
@@ -54,9 +49,7 @@ const OrganizerLayout = () => {
         try {
             setLoadingNotifications(true);
             const res = await api.getRefundRequests(user.user_id);
-            if (res.success) {
-                setNotifications(res.data || []);
-            }
+            if (res.success) setNotifications(res.data || []);
         } catch (error) {
             console.error('Error fetching notifications:', error);
         } finally {
@@ -65,41 +58,14 @@ const OrganizerLayout = () => {
     };
 
     useEffect(() => {
-        if (notificationOpen && user?.user_id) {
-            fetchNotifications();
-        }
+        if (notificationOpen && user?.user_id) fetchNotifications();
     }, [notificationOpen, user?.user_id]);
 
-    const handleLogout = () => {
-        logout();
-        navigate('/');
-    };
-
     const menuItems = [
-        {
-            key: '/organizer/events',
-            icon: <CalendarOutlined />,
-            label: 'Quản lý sự kiện',
-            onClick: () => navigate('/organizer/events'),
-        },
-        {
-            key: '/organizer/venues',
-            icon: <EnvironmentOutlined />,
-            label: 'Quản lý địa điểm',
-            onClick: () => navigate('/organizer/venues'),
-        },
-        {
-            key: '/organizer/tickets',
-            icon: <QrcodeOutlined />,
-            label: 'Quản lý vé & Check-in',
-            onClick: () => navigate('/organizer/tickets'),
-        },
-        {
-            key: '/organizer/orders',
-            icon: <ShoppingOutlined />,
-            label: 'Quản lý đơn hàng',
-            onClick: () => navigate('/organizer/orders'),
-        },
+        { key: '/organizer/events', icon: <CalendarOutlined />, label: 'Quản lý sự kiện', onClick: () => navigate('/organizer/events') },
+        { key: '/organizer/venues', icon: <EnvironmentOutlined />, label: 'Quản lý địa điểm', onClick: () => navigate('/organizer/venues') },
+        { key: '/organizer/tickets', icon: <QrcodeOutlined />, label: 'Quản lý vé & Check-in', onClick: () => navigate('/organizer/tickets') },
+        { key: '/organizer/orders', icon: <ShoppingOutlined />, label: 'Quản lý đơn hàng', onClick: () => navigate('/organizer/orders') },
         {
             key: '/organizer/refund-requests',
             icon: <RollbackOutlined />,
@@ -111,75 +77,68 @@ const OrganizerLayout = () => {
             ),
             onClick: () => navigate('/organizer/refund-requests'),
         },
-        {
-            key: '/organizer/discounts',
-            icon: <TagsOutlined />,
-            label: 'Mã giảm giá',
-            onClick: () => navigate('/organizer/discounts'),
-        },
-        // QR Code management removed (no DB table)
+        { key: '/organizer/discounts', icon: <TagsOutlined />, label: 'Mã giảm giá', onClick: () => navigate('/organizer/discounts') },
     ];
 
-
-
     const getBreadcrumbs = () => {
-        const pathSnippets = location.pathname.split('/').filter(i => i);
-        const breadcrumbs = [];
-
-        // Initial Home item
-        breadcrumbs.push({
-            title: <HomeOutlined />,
-            onClick: (e) => { e.preventDefault(); navigate('/organizer/events'); }
-        });
+        const pathSnippets = location.pathname.split('/').filter(Boolean);
+        const breadcrumbs = [
+            {
+                title: <HomeOutlined />,
+                onClick: (e) => {
+                    e.preventDefault();
+                    navigate('/organizer/events');
+                },
+            },
+        ];
 
         const pathMap = {
-            'events': 'Quản lý sự kiện',
+            events: 'Quản lý sự kiện',
             'create-event': 'Tạo sự kiện',
             'edit-event': 'Chỉnh sửa sự kiện',
-            'event': 'Chi tiết sự kiện',
+            event: 'Chi tiết sự kiện',
             'manage-seats': 'Quản lý sơ đồ ghế',
-            'venues': 'Quản lý địa điểm',
-            'tickets': 'Quản lý vé & Check-in',
-            'profile': 'Trang cá nhân',
-            'edit': 'Chỉnh sửa cá nhân',
-            'orders': 'Quản lý đơn hàng',
+            venues: 'Quản lý địa điểm',
+            tickets: 'Quản lý vé & Check-in',
+            profile: 'Trang cá nhân',
+            edit: 'Chỉnh sửa cá nhân',
+            orders: 'Quản lý đơn hàng',
             'refund-requests': 'Yêu cầu hoàn tiền',
-            'discounts': 'Mã giảm giá',
-            // 'qr-codes': 'Quản lý QR Code'
+            discounts: 'Mã giảm giá',
         };
 
-        let currentPath = '/organizer';
-
-        // Custom logic for event-related subpages to show "Quản lý sự kiện" parent
         const eventSubpages = ['create-event', 'edit-event', 'event', 'manage-seats'];
-        const isEventSubpage = pathSnippets.some(snippet => eventSubpages.includes(snippet)) && !pathSnippets.includes('events');
-
+        const isEventSubpage = pathSnippets.some((s) => eventSubpages.includes(s)) && !pathSnippets.includes('events');
         if (isEventSubpage) {
             breadcrumbs.push({
                 title: 'Quản lý sự kiện',
-                onClick: (e) => { e.preventDefault(); navigate('/organizer/events'); }
+                onClick: (e) => {
+                    e.preventDefault();
+                    navigate('/organizer/events');
+                },
             });
         }
 
+        let currentPath = '/organizer';
         pathSnippets.forEach((snippet, index) => {
             if (snippet === 'organizer') return;
-
             currentPath += `/${snippet}`;
             const title = pathMap[snippet];
+            if (!title) return;
 
-            if (title) {
-                // For 'event' followed by ID, or 'orders' after 'event'
-                let displayTitle = title;
-                if (snippet === 'orders' && pathSnippets[index - 2] === 'event') {
-                    displayTitle = 'Đơn hàng sự kiện';
-                }
+            let displayTitle = title;
+            if (snippet === 'orders' && pathSnippets[index - 2] === 'event') {
+                displayTitle = 'Đơn hàng sự kiện';
+            }
 
-                if (!breadcrumbs.some(b => b.title === displayTitle)) {
-                    breadcrumbs.push({
-                        title: displayTitle,
-                        onClick: (e) => { e.preventDefault(); navigate(currentPath); }
-                    });
-                }
+            if (!breadcrumbs.some((b) => b.title === displayTitle)) {
+                breadcrumbs.push({
+                    title: displayTitle,
+                    onClick: (e) => {
+                        e.preventDefault();
+                        navigate(currentPath);
+                    },
+                });
             }
         });
 
@@ -202,21 +161,37 @@ const OrganizerLayout = () => {
                     zIndex: 100,
                 }}
             >
-                <div style={{ height: 64, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '0 24px', justifyContent: 'center' }}>
-                    <Title level={4} style={{ margin: 0, fontSize: '1.2rem', color: '#303133', fontFamily: "'Outfit', sans-serif", fontWeight: 800, letterSpacing: '-1px', lineHeight: 1 }}>
+                <div
+                    style={{
+                        height: 64,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '0 24px',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <Title
+                        level={4}
+                        style={{
+                            margin: 0,
+                            fontSize: '1.2rem',
+                            color: '#303133',
+                            fontFamily: "'Outfit', sans-serif",
+                            fontWeight: 800,
+                            letterSpacing: '-1px',
+                            lineHeight: 1,
+                        }}
+                    >
                         TICKETBOOKING
                     </Title>
-                    <Text style={{ color: '#909399', fontSize: '11px', marginTop: 4, letterSpacing: '0.5px' }}>
+                    <Text style={{ color: '#909399', fontSize: 11, marginTop: 4, letterSpacing: '0.5px' }}>
                         ORGANIZER DASHBOARD
                     </Text>
                 </div>
-                <Menu
-                    mode="inline"
-                    selectedKeys={[location.pathname]}
-                    items={menuItems}
-                    style={{ borderRight: 0, padding: '8px 0' }}
-                />
+                <Menu mode="inline" selectedKeys={[location.pathname]} items={menuItems} style={{ borderRight: 0, padding: '8px 0' }} />
             </Sider>
+
             <Layout style={{ marginLeft: 220 }}>
                 <Header
                     style={{
@@ -243,27 +218,31 @@ const OrganizerLayout = () => {
                             trigger={['click']}
                             placement="bottomRight"
                             dropdownRender={() => (
-                                <div style={{
-                                    width: 380,
-                                    background: '#fff',
-                                    borderRadius: 8,
-                                    boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
-                                    maxHeight: 450,
-                                    overflow: 'hidden'
-                                }}>
-                                    <div style={{ 
-                                        padding: '12px 16px', 
-                                        borderBottom: '1px solid #f0f0f0',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
-                                    }}>
+                                <div
+                                    style={{
+                                        width: 380,
+                                        background: '#fff',
+                                        borderRadius: 8,
+                                        boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+                                        maxHeight: 450,
+                                        overflow: 'hidden',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            padding: '12px 16px',
+                                            borderBottom: '1px solid #f0f0f0',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                        }}
+                                    >
                                         <Text strong style={{ fontSize: 15 }}>
                                             Thông báo {pendingCount > 0 && <Badge count={pendingCount} style={{ marginLeft: 8 }} />}
                                         </Text>
                                         {pendingCount > 0 && (
-                                            <Button 
-                                                type="link" 
+                                            <Button
+                                                type="link"
                                                 size="small"
                                                 onClick={() => {
                                                     setNotificationOpen(false);
@@ -274,26 +253,23 @@ const OrganizerLayout = () => {
                                             </Button>
                                         )}
                                     </div>
+
                                     <div style={{ maxHeight: 380, overflow: 'auto' }}>
                                         {loadingNotifications ? (
                                             <div style={{ padding: 40, textAlign: 'center' }}>
                                                 <Spin />
                                             </div>
                                         ) : notifications.length === 0 ? (
-                                            <Empty 
-                                                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                                description="Không có thông báo mới"
-                                                style={{ padding: '40px 0' }}
-                                            />
+                                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có thông báo mới" style={{ padding: '40px 0' }} />
                                         ) : (
                                             <List
                                                 dataSource={notifications.slice(0, 5)}
                                                 renderItem={(item) => (
                                                     <List.Item
-                                                        style={{ 
+                                                        style={{
                                                             padding: '12px 16px',
                                                             cursor: 'pointer',
-                                                            transition: 'background 0.2s'
+                                                            transition: 'background 0.2s',
                                                         }}
                                                         className="notification-item-hover"
                                                         onClick={() => {
@@ -303,14 +279,12 @@ const OrganizerLayout = () => {
                                                     >
                                                         <List.Item.Meta
                                                             avatar={
-                                                                <Avatar 
-                                                                    style={{ backgroundColor: '#fff2e8', color: '#fa8c16' }}
-                                                                    icon={<RollbackOutlined />}
-                                                                />
+                                                                <Avatar style={{ backgroundColor: '#fff2e8', color: '#fa8c16' }} icon={<RollbackOutlined />} />
                                                             }
                                                             title={
                                                                 <Text style={{ fontSize: 13 }}>
-                                                                    Yêu cầu hoàn tiền từ <Text strong>{item.customer_name || item.user_name || 'Khách hàng'}</Text>
+                                                                    Yêu cầu hoàn tiền từ{' '}
+                                                                    <Text strong>{item.customer_name || item.user_name || 'Khách hàng'}</Text>
                                                                 </Text>
                                                             }
                                                             description={
@@ -320,7 +294,8 @@ const OrganizerLayout = () => {
                                                                     </Text>
                                                                     <br />
                                                                     <Text type="secondary" style={{ fontSize: 12 }}>
-                                                                        {item.event_name} • <Text style={{ color: '#52c41a' }}>{item.total_amount?.toLocaleString()} ₫</Text>
+                                                                        {item.event_name} •{' '}
+                                                                        <Text style={{ color: '#52c41a' }}>{item.total_amount?.toLocaleString()} ₫</Text>
                                                                     </Text>
                                                                 </div>
                                                             }
@@ -330,13 +305,10 @@ const OrganizerLayout = () => {
                                             />
                                         )}
                                     </div>
+
                                     {notifications.length > 5 && (
-                                        <div style={{ 
-                                            padding: '10px 16px', 
-                                            borderTop: '1px solid #f0f0f0',
-                                            textAlign: 'center'
-                                        }}>
-                                            <Button 
+                                        <div style={{ padding: '10px 16px', borderTop: '1px solid #f0f0f0', textAlign: 'center' }}>
+                                            <Button
                                                 type="link"
                                                 onClick={() => {
                                                     setNotificationOpen(false);
@@ -354,10 +326,10 @@ const OrganizerLayout = () => {
                                 <Button
                                     type="text"
                                     icon={<BellOutlined />}
-                                    style={{ 
-                                        fontSize: 18, 
+                                    style={{
+                                        fontSize: 18,
                                         color: pendingCount > 0 ? '#2DC275' : '#606266',
-                                        animation: pendingCount > 0 ? 'bell-shake 0.5s ease-in-out' : 'none'
+                                        animation: pendingCount > 0 ? 'bell-shake 0.5s ease-in-out' : 'none',
                                     }}
                                     title={pendingCount > 0 ? `${pendingCount} yêu cầu hoàn tiền chờ xử lý` : 'Thông báo'}
                                 />
@@ -365,41 +337,39 @@ const OrganizerLayout = () => {
                         </Dropdown>
 
                         <div
-                            style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 4, transition: 'background 0.3s', display: 'flex', alignItems: 'center', gap: 8 }}
+                            style={{
+                                cursor: 'pointer',
+                                padding: '4px 8px',
+                                borderRadius: 4,
+                                transition: 'background 0.3s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                            }}
                             className="user-dropdown-hover"
                             onClick={() => navigate('/organizer/profile')}
                         >
-                            <Avatar
-                                src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=52c41a&color=fff`}
-                                size="small"
-                            />
-                            <Text strong style={{ color: '#606266' }}>{user?.full_name || 'Nhà tổ chức'}</Text>
+                            <Avatar src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=52c41a&color=fff`} size="small" />
+                            <Text strong style={{ color: '#606266' }}>
+                                {user?.full_name || 'Nhà tổ chức'}
+                            </Text>
                         </div>
                     </Space>
                 </Header>
-                <Content
-                    style={{
-                        margin: '24px',
-                        minHeight: 280,
-                        padding: 0
-                    }}
-                >
+
+                <Content style={{ margin: 24, minHeight: 280, padding: 0 }}>
                     <Outlet />
                 </Content>
+
                 <div style={{ textAlign: 'center', paddingBottom: 24, color: '#909399' }}>
                     <Text type="secondary">© 2026 TicketBooking</Text>
                 </div>
             </Layout>
 
             {user?.must_change_password && (
-                <ChangePasswordModal
-                    show
-                    forceChange
-                    onSuccess={() => updateUser({ must_change_password: false })}
-                />
+                <ChangePasswordModal show forceChange onSuccess={() => updateUser({ must_change_password: false })} />
             )}
-            
-            {/* Inline styles for hover effects and animations */}
+
             <style>{`
                 .notification-item-hover:hover {
                     background: #f5f5f5 !important;

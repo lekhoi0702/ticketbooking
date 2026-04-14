@@ -1,32 +1,29 @@
 from app.models.role import Role
 from app.models.user import User
+from app.models.organizer import Organizer
 from app.models.event_category import EventCategory
-from app.models.venue import Venue
 from app.models.event import Event
+from app.models.event_qrcode import EventQRCode
+from app.models.venue import Venue
+from app.models.seat import Seat
 from app.models.ticket_type import TicketType
 from app.models.order import Order
 from app.models.payment import Payment
 from app.models.ticket import Ticket
 from app.models.discount import Discount
-from app.models.banner import Banner
-from app.models.organizer_info import OrganizerInfo
-from app.models.favorite_event import FavoriteEvent
-from app.models.advertisement import Advertisement
-# Note: RefreshToken model removed - using Redis instead
 
 __all__ = [
     'Role',
     'User',
+    'Organizer',
     'EventCategory',
-    'Venue',
     'Event',
+    'EventQRCode',
+    'Venue',
+    'Seat',
     'TicketType',
     'Order',
     'Payment',
     'Ticket',
     'Discount',
-    'Banner',
-    'OrganizerInfo',
-    'FavoriteEvent',
-    'Advertisement',
 ]

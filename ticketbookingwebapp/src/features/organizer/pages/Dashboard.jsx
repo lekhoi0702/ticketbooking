@@ -1,71 +1,109 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
 import {
     Box,
     Grid,
     Typography,
-    Stack,
-    CircularProgress,
     Snackbar,
     Alert,
-    Skeleton
+    Skeleton,
+    Card,
+    CardHeader,
+    CardContent,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Stack,
 } from '@mui/material';
 import {
     Event as EventIcon,
     AttachMoney as MoneyIcon,
-    ConfirmationNumber as TicketIcon
+    ConfirmationNumber as TicketIcon,
 } from '@mui/icons-material';
 import StatCard from '@features/organizer/components/StatCard';
 import RecentOrdersTable from '@features/organizer/components/RecentOrdersTable';
 
 const Dashboard = () => {
     const { user } = useAuth();
+    const now = new Date();
+    const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(now.getFullYear());
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         totalEvents: 0,
         totalRevenue: 0,
         totalTicketsSold: 0,
-        recentOrders: []
+        recentOrders: [],
+        eventRevenueStats: [],
+        multiShowEvents: [],
     });
     const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
+
+    const monthOptions = useMemo(
+        () => Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `Th�ng ${i + 1}` })),
+        []
+    );
+
+    const yearOptions = useMemo(() => {
+        const current = new Date().getFullYear();
+        return [current - 2, current - 1, current, current + 1];
+    }, []);
 
     useEffect(() => {
         if (user?.user_id) {
             fetchStats();
         }
-    }, [user]);
+    }, [user, selectedMonth, selectedYear]);
 
     const fetchStats = async () => {
         try {
             setLoading(true);
-            const res = await api.getDashboardStats(user?.user_id || 1);
+            const res = await api.getDashboardStats(user?.user_id || 1, {
+                month: selectedMonth,
+                year: selectedYear,
+            });
             if (res.success) {
                 setStats({
                     totalEvents: res.data.total_events,
                     totalRevenue: res.data.total_revenue,
                     totalTicketsSold: res.data.total_tickets_sold,
-                    recentOrders: res.data.recent_orders
+                    recentOrders: res.data.recent_orders || [],
+                    eventRevenueStats: res.data.event_revenue_stats || [],
+                    multiShowEvents: res.data.multi_show_events || [],
                 });
             }
         } catch (error) {
-            console.error("Error fetching stats:", error);
+            console.error('Error fetching stats:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleProcessCancellation = async (orderId, action) => {
-        const confirmMsg = action === 'approve'
-            ? "Đồng ý yêu cầu hủy đơn này? Tiền sẽ được hoàn lại (nếu có) và vé sẽ bị hủy."
-            : "Từ chối yêu cầu hủy? Đơn hàng sẽ trở lại trạng thái Đã thanh toán.";
+        const confirmMsg =
+            action === 'approve'
+                ? '�?ng � y�u c?u h?y don n�y? Ti?n s? du?c ho�n l?i (n?u c�) v� v� s? b? h?y.'
+                : 'T? ch?i y�u c?u h?y? �on h�ng s? tr? l?i tr?ng th�i �� thanh to�n.';
 
         if (!window.confirm(confirmMsg)) return;
 
         try {
             const res = await api.processOrderCancellation(orderId, action);
             if (res.success) {
-                setToast({ show: true, message: action === 'approve' ? "Đã duyệt yêu cầu hủy" : "Đã từ chối yêu cầu hủy", variant: 'success' });
+                setToast({
+                    show: true,
+                    message: action === 'approve' ? '�� duy?t y�u c?u h?y' : '�� t? ch?i y�u c?u h?y',
+                    variant: 'success',
+                });
                 fetchStats();
             }
         } catch (error) {
@@ -73,20 +111,16 @@ const Dashboard = () => {
         }
     };
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-    };
+    const formatCurrency = (amount) =>
+        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
 
     if (loading) {
         return (
             <Box>
-                {/* Welcome Loading */}
                 <Box sx={{ mb: 4 }}>
                     <Skeleton variant="text" width={300} height={40} sx={{ mb: 1 }} />
                     <Skeleton variant="text" width={400} height={24} />
                 </Box>
-
-                {/* Stats Loading */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                     {[1, 2, 3].map((item) => (
                         <Grid item xs={12} sm={6} md={4} key={item}>
@@ -94,8 +128,6 @@ const Dashboard = () => {
                         </Grid>
                     ))}
                 </Grid>
-
-                {/* Table Loading */}
                 <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
             </Box>
         );
@@ -103,52 +135,130 @@ const Dashboard = () => {
 
     return (
         <Box>
-            {/* Welcome Section */}
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                    Chào mừng trở lại, {user?.full_name}! 👋
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                    Đây là tổng quan về các sự kiện và hoạt động của bạn
-                </Typography>
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+                        Ch�o m?ng tr? l?i, {user?.full_name}!
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        T?ng quan ho?t d?ng theo th?i gian b?n ch?n
+                    </Typography>
+                </Box>
+                <Stack direction="row" spacing={2}>
+                    <FormControl size="small" sx={{ minWidth: 130 }}>
+                        <InputLabel>Th�ng</InputLabel>
+                        <Select label="Th�ng" value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}>
+                            {monthOptions.map((m) => (
+                                <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 130 }}>
+                        <InputLabel>Nam</InputLabel>
+                        <Select label="Nam" value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+                            {yearOptions.map((y) => (
+                                <MenuItem key={y} value={y}>{`Nam ${y}`}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Stack>
             </Box>
 
-            {/* Stats Cards */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} sm={6} md={4}>
                     <StatCard
-                        title="Tổng sự kiện"
+                        title="T?ng s? ki?n"
                         value={stats.totalEvents}
                         icon={<EventIcon sx={{ fontSize: 28 }} />}
                         color="#2dc275"
-                        trend="+12%"
                         link="/organizer/events"
                     />
                 </Grid>
-
                 <Grid item xs={12} sm={6} md={4}>
                     <StatCard
                         title="Doanh thu"
                         value={formatCurrency(stats.totalRevenue).slice(0, -2)}
                         icon={<MoneyIcon sx={{ fontSize: 28 }} />}
                         color="#10b981"
-                        trend="+23%"
                     />
                 </Grid>
-
                 <Grid item xs={12} sm={6} md={4}>
                     <StatCard
-                        title="Vé đã bán"
+                        title="V� d� b�n"
                         value={stats.totalTicketsSold.toLocaleString()}
                         icon={<TicketIcon sx={{ fontSize: 28 }} />}
                         color="#059669"
-                        trend="+18%"
                         link="/organizer/events"
                     />
                 </Grid>
             </Grid>
 
-            {/* Recent Orders Table */}
+            <Card sx={{ mb: 3 }}>
+                <CardHeader title="Doanh thu theo s? ki?n" />
+                <CardContent>
+                    <TableContainer component={Paper} variant="outlined">
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>S? ki?n</TableCell>
+                                    <TableCell align="center">�on PAID</TableCell>
+                                    <TableCell align="right">Doanh thu</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {stats.eventRevenueStats.map((row) => (
+                                    <TableRow key={row.event_id}>
+                                        <TableCell>{row.event_name}</TableCell>
+                                        <TableCell align="center">{row.paid_orders}</TableCell>
+                                        <TableCell align="right">{formatCurrency(row.revenue)}</TableCell>
+                                    </TableRow>
+                                ))}
+                                {stats.eventRevenueStats.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={3} align="center">Kh�ng c� d? li?u</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </CardContent>
+            </Card>
+
+            <Card sx={{ mb: 3 }}>
+                <CardHeader title={`S? ki?n c� nhi?u bu?i bi?u di?n (${stats.multiShowEvents.length})`} />
+                <CardContent>
+                    <TableContainer component={Paper} variant="outlined">
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>S? ki?n</TableCell>
+                                    <TableCell align="center">S? bu?i</TableCell>
+                                    <TableCell>Bu?i g?n nh?t</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {stats.multiShowEvents.map((row) => (
+                                    <TableRow key={`${row.event_name}-${row.latest_start_datetime}`}>
+                                        <TableCell>{row.event_name}</TableCell>
+                                        <TableCell align="center">{row.show_count}</TableCell>
+                                        <TableCell>
+                                            {row.latest_start_datetime
+                                                ? new Date(row.latest_start_datetime).toLocaleString('vi-VN')
+                                                : 'N/A'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {stats.multiShowEvents.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={3} align="center">Kh�ng c� d? li?u</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </CardContent>
+            </Card>
+
             <RecentOrdersTable
                 orders={stats.recentOrders}
                 onProcessCancellation={handleProcessCancellation}

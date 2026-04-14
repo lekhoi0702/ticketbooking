@@ -18,8 +18,6 @@ import {
 
     Button,
 
-    Alert,
-
     ConfigProvider,
 
     Layout,
@@ -39,6 +37,7 @@ import {
 } from '@ant-design/icons';
 
 import { AntdThemeConfig } from '@theme/AntdThemeConfig';
+import AuthErrorNotice from '@shared/components/AuthErrorNotice';
 
 
 
@@ -76,7 +75,7 @@ const AdminLogin = () => {
 
             if (res.success && res.data) {
 
-                login(res.data.user, res.data.access_token, res.data.refresh_token);
+                login(res.data.user);
 
                 message.success('Đăng nhập quản trị viên thành công!');
 
@@ -174,25 +173,7 @@ const AdminLogin = () => {
 
 
 
-                        {error && (
-
-                            <Alert
-
-                                title={error}
-
-                                type="error"
-
-                                showIcon
-
-                                closable
-
-                                onClose={() => setError(null)}
-
-                                style={{ marginBottom: 24 }}
-
-                            />
-
-                        )}
+                        {error && <AuthErrorNotice message={error} style={{ marginBottom: 24 }} />}
 
 
 

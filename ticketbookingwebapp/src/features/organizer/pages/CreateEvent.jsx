@@ -38,7 +38,6 @@ import EventDateTime from '@features/organizer/components/EventDateTime';
 import EventBannerUpload from '@features/organizer/components/EventBannerUpload';
 import VietQRImageUpload from '@features/organizer/components/VietQRImageUpload';
 import TicketConfig from '@features/organizer/components/TicketConfig';
-import ExtraShowtimesConfig from '@features/organizer/components/ExtraShowtimesConfig';
 
 const { Title, Text } = Typography;
 
@@ -69,9 +68,6 @@ const CreateEvent = () => {
         toggleSeatSelection,
         addTicketType,
         removeTicketType,
-        addShowtime,
-        removeShowtime,
-        updateShowtime,
         toggleAreaSelection,
         handleSubmit
     } = useCreateEvent();
@@ -122,9 +118,17 @@ const CreateEvent = () => {
         <>
             <Spin spinning={loading} fullscreen tip="Đang tạo sự kiện..." />
             <div style={{ paddingTop: 0 }}>
-
-
-                {/* Steps Progress */}
+                {error && (
+                    <Alert
+                        type="error"
+                        showIcon
+                        message={error}
+                        closable
+                        onClose={() => setError(null)}
+                        style={{ marginBottom: 16 }}
+                    />
+                )}
+{/* Steps Progress */}
                 <Card style={{ marginBottom: 24 }}>
                     <Steps
                         current={currentStep}
@@ -174,24 +178,14 @@ const CreateEvent = () => {
                                         toggleSeatSelection={toggleSeatSelection}
                                         toggleAreaSelection={toggleAreaSelection}
                                         selectedVenueId={formData.venue_id}
+                                        eventStartDate={formData.start_datetime}
+                                        eventEndDate={formData.end_datetime}
                                         fieldErrors={fieldErrors}
                                         disabled={loading}
                                     />
                                 </Card>
 
-                                <Card title="4. Suất diễn bổ sung (Nâng cao)" headStyle={{ background: '#fafafa' }}>
-                                    <ExtraShowtimesConfig
-                                        formData={formData}
-                                        addShowtime={addShowtime}
-                                        removeShowtime={removeShowtime}
-                                        updateShowtime={updateShowtime}
-                                        venues={venues}
-                                        fieldErrors={fieldErrors}
-                                        disabled={loading}
-                                    />
-                                </Card>
-
-                                <Card title="5. Ảnh QR Code VietQR (Tùy chọn)" headStyle={{ background: '#fafafa' }}>
+                                <Card title="4. Ảnh QR Code VietQR (Tùy chọn)" headStyle={{ background: '#fafafa' }}>
                                     <div style={{ marginBottom: 16 }}>
                                         <Text type="secondary" style={{ fontSize: 12 }}>
                                             Upload ảnh QR code VietQR của bạn để khách hàng có thể thanh toán qua VietQR.
@@ -276,3 +270,4 @@ const CreateEvent = () => {
 };
 
 export default CreateEvent;
+

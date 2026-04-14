@@ -1,16 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Nav, Tab, Tabs } from 'react-bootstrap';
-import { message } from 'antd';
+import { Container, Row, Col, Nav } from 'react-bootstrap';
 
 // Hooks
 import { useEventDetail } from '@shared/hooks/useEventDetail';
 import { useAuth } from '@context/AuthContext';
-import { useFavorites } from '@context/FavoriteContext';
 
 // Sub-components
 import EventHero from '@features/user/components/Event/EventHero';
-import AuthModal from '@features/user/components/Auth/AuthModal';
 import ScheduleCalendar from '@features/user/components/Event/ScheduleCalendar';
 import EventVenueInfo from '@features/user/components/Event/EventVenueInfo';
 import EventOrganizerCard from '@features/user/components/Event/EventOrganizerCard';
@@ -24,10 +21,7 @@ import './EventDetail.css';
 function EventDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated, showLoginModal, setShowLoginModal, triggerLogin, redirectIntent, clearRedirectIntent } = useAuth();
-    const { toggleFavorite } = useFavorites();
-    const [activeTab, setActiveTab] = React.useState('tickets');
-    const pendingActionRef = useRef(null);
+    const { isAuthenticated, triggerLogin, redirectIntent, clearRedirectIntent } = useAuth();
 
     const {
         event,
@@ -45,45 +39,28 @@ function EventDetail() {
         validateSelection
     } = useEventDetail(id);
 
-    // Handle pending actions after login - MUST be before any early returns
+    // Handle pending checkout action after login
     useEffect(() => {
-        const handlePendingAction = async () => {
-            if (!isAuthenticated || !redirectIntent || !event) return;
-            
-            // Handle favorite action
-            if (redirectIntent.action === 'favorite' && redirectIntent.eventId === parseInt(id)) {
-                clearRedirectIntent();
-                const result = await toggleFavorite(parseInt(id));
-                if (result.success) {
-                    message.success(result.message);
-                }
-            }
-            
-            // Handle checkout action
-            if (redirectIntent.action === 'checkout' && redirectIntent.eventId === parseInt(id)) {
-                clearRedirectIntent();
-                
-                // Generate unique navigation ID for this checkout session
-                const navigationId = `checkout_${event.event_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                
-                // Store navigation ID in sessionStorage
-                sessionStorage.setItem(`checkout_nav_id_${event.event_id}`, navigationId);
-                
-                navigate(`/checkout/${event.event_id}`, {
-                    state: {
-                        selectedTickets,
-                        selectedSeats,
-                        hasSeatMap,
-                        fromEventDetail: true, // Add flag for valid navigation
-                        navigationId: navigationId // Unique ID to distinguish fresh navigation from forward
-                    },
-                    replace: false // Push normally so back button works
-                });
-            }
-        };
-        
-        handlePendingAction();
-    }, [isAuthenticated, redirectIntent, id, event, clearRedirectIntent, toggleFavorite, navigate, selectedTickets, selectedSeats, hasSeatMap]);
+        if (!isAuthenticated || !redirectIntent || !event) return;
+
+        if (redirectIntent.action === 'checkout' && redirectIntent.eventId === parseInt(id)) {
+            clearRedirectIntent();
+
+            const navigationId = `checkout_${event.event_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            sessionStorage.setItem(`checkout_nav_id_${event.event_id}`, navigationId);
+
+            navigate(`/checkout/${event.event_id}`, {
+                state: {
+                    selectedTickets,
+                    selectedSeats,
+                    hasSeatMap,
+                    fromEventDetail: true,
+                    navigationId,
+                },
+                replace: false,
+            });
+        }
+    }, [isAuthenticated, redirectIntent, id, event, clearRedirectIntent, navigate, selectedTickets, selectedSeats, hasSeatMap]);
 
     if (loading) {
         return <LoadingSpinner fullScreen tip="Đang tải thông tin sự kiện..." />;
@@ -118,18 +95,6 @@ function EventDetail() {
         proceedToCheckout();
     };
 
-    const handleToggleFavorite = async (eventId) => {
-        if (!isAuthenticated) {
-            triggerLogin({ action: 'favorite', eventId });
-            return;
-        }
-
-        const result = await toggleFavorite(eventId);
-        if (result.success) {
-            message.success(result.message);
-        }
-    };
-
     const proceedToCheckout = () => {
         // Generate unique navigation ID for this checkout session
         const navigationId = `checkout_${event.event_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -151,7 +116,7 @@ function EventDetail() {
 
     return (
         <div className="event-detail-page">
-            <EventHero event={event} onToggleFavorite={() => handleToggleFavorite(event.event_id)} />
+            <EventHero event={event} />
 
             {/* Sticky Navigation Bar */}
             <div className="event-detail-nav">

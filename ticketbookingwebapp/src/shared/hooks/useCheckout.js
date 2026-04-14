@@ -208,7 +208,9 @@ export const useCheckout = () => {
                 setEvent(eventRes.data);
             }
             if (ticketTypesRes.success) {
-                const types = ticketTypesRes.data.filter(tt => tt.is_active);
+                const types = (ticketTypesRes.data || []).filter(
+                    (tt) => tt.is_active !== false && String(tt.status || '').toUpperCase() !== 'INACTIVE'
+                );
                 setTicketTypes(types);
             }
         } catch (err) {
@@ -392,7 +394,7 @@ export const useCheckout = () => {
                     items.push({ ticket_type_id: tid, quantity: selectedTickets[tid] });
             });
 
-            const res = await api.checkDiscount({ code, items });
+            const res = await api.checkDiscount({ code, items, event_id: event?.event_id });
             if (res.success) {
                 setDiscountCode(code);
                 setDiscountAmount(res.discount_amount);
@@ -443,6 +445,9 @@ export const useCheckout = () => {
                 const seatsForTid = selectedSeats[tid] || [];
 
                 if (quantity > 0) {
+                    if (hasSeatMap[tid] !== true) {
+                        throw new Error('Su kien chua co so do ghe hop le. Vui long quay lai va chon su kien da duoc organizer cau hinh ghe.');
+                    }
                     // Check if seats are required but not fully selected
                     if (hasSeatMap[tid] && seatsForTid.length < quantity) {
                         throw new Error(`Vui lòng chọn đủ ${quantity} ghế cho loại vé ${ticketTypes.find(t => t.ticket_type_id === tid)?.type_name}`);
@@ -459,10 +464,12 @@ export const useCheckout = () => {
             // Create order
             const orderData = {
                 user_id: user.user_id,
+                event_id: event?.event_id,
                 customer_name: customerInfo.name,
                 customer_email: customerInfo.email,
                 customer_phone: customerInfo.phone,
                 tickets: tickets,
+                total_amount: calculateTotal(),
                 discount_code: isValidDiscount ? discountCode : null
             };
 
@@ -603,3 +610,4 @@ export const useCheckout = () => {
         navigate
     };
 };
+

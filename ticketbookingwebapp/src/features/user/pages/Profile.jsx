@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, Card, Avatar, Space, Typography, Divider, Button } from 'antd';
-import { UserOutlined, ShoppingOutlined, HistoryOutlined, LockOutlined, LogoutOutlined, PhoneOutlined, MailOutlined, StarOutlined } from '@ant-design/icons';
+import { ShoppingOutlined, HistoryOutlined, LockOutlined, LogoutOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
 import { useAuth } from '@context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MyOrdersTab from '@features/user/components/Account/MyOrdersTab';
 import MyTicketsTab from '@features/user/components/Account/MyTicketsTab';
 import ChangePasswordModal from '@features/user/components/Account/ChangePasswordModal';
-import MyFavoritesTab from '@features/user/components/Account/MyFavoritesTab';
+
 import './Profile.css';
 
 const { Title, Text } = Typography;
+const VALID_TABS = ['orders', 'tickets'];
+
+const getTabFromSearchParams = (params) => {
+    const tab = params.get('tab');
+    return VALID_TABS.includes(tab) ? tab : 'orders';
+};
 
 const Profile = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const [activeTab, setActiveTab] = useState('orders');
+    const [activeTab, setActiveTab] = useState(() => getTabFromSearchParams(searchParams));
     const [showPasswordModal, setShowPasswordModal] = useState(false);
 
     useEffect(() => {
@@ -25,10 +31,7 @@ const Profile = () => {
     }, [isAuthenticated, navigate]);
 
     useEffect(() => {
-        const tab = searchParams.get('tab');
-        if (tab && ['orders', 'tickets', 'favorites'].includes(tab)) {
-            setActiveTab(tab);
-        }
+        setActiveTab(getTabFromSearchParams(searchParams));
     }, [searchParams]);
 
     const tabItems = [
@@ -51,16 +54,6 @@ const Profile = () => {
                 </span>
             ),
             children: <MyTicketsTab />,
-        },
-        {
-            key: 'favorites',
-            label: (
-                <span>
-                    <StarOutlined />
-                    Yêu thích
-                </span>
-            ),
-            children: <MyFavoritesTab />,
         },
     ];
 

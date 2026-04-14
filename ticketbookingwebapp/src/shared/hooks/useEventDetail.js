@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '@services/api';
 
 /**
@@ -25,14 +25,9 @@ export const useEventDetail = (eventId) => {
             if (response.success) {
                 const eventData = response.data;
 
-                // Fix: Convert ticket_types to array if it's an object
                 if (eventData.ticket_types && typeof eventData.ticket_types === 'object' && !Array.isArray(eventData.ticket_types)) {
-                    console.log('Converting ticket_types object to array');
                     eventData.ticket_types = Object.values(eventData.ticket_types);
                 }
-
-                console.log('Event data after conversion:', eventData);
-                console.log('Ticket types is array?', Array.isArray(eventData.ticket_types));
 
                 setEvent(eventData);
                 if (eventData.ticket_types?.length > 0) {
@@ -47,31 +42,29 @@ export const useEventDetail = (eventId) => {
     };
 
     const handleTicketQuantityChange = (ticketTypeId, quantity) => {
-        const qty = Math.max(0, parseInt(quantity) || 0);
-        setSelectedTickets(prev => ({
+        const qty = Math.max(0, parseInt(quantity, 10) || 0);
+        setSelectedTickets((prev) => ({
             ...prev,
-            [ticketTypeId]: qty
+            [ticketTypeId]: qty,
         }));
 
-        // Clear seats if quantity decreases
         if (selectedSeats[ticketTypeId]?.length > qty) {
-            setSelectedSeats(prev => ({
+            setSelectedSeats((prev) => ({
                 ...prev,
-                [ticketTypeId]: prev[ticketTypeId].slice(0, qty)
+                [ticketTypeId]: prev[ticketTypeId].slice(0, qty),
             }));
         }
     };
 
     const handleSeatSelection = (ticketTypeId, seats) => {
-        setSelectedSeats(prev => ({
+        setSelectedSeats((prev) => ({
             ...prev,
-            [ticketTypeId]: seats
+            [ticketTypeId]: seats,
         }));
 
-        // Sync quantity with seats selected
-        setSelectedTickets(prev => ({
+        setSelectedTickets((prev) => ({
             ...prev,
-            [ticketTypeId]: seats.length
+            [ticketTypeId]: seats.length,
         }));
     };
 
@@ -79,7 +72,7 @@ export const useEventDetail = (eventId) => {
         if (!event || !event.ticket_types) return 0;
         return event.ticket_types.reduce((total, tt) => {
             const qty = selectedTickets[tt.ticket_type_id] || 0;
-            return total + (tt.price * qty);
+            return total + tt.price * qty;
         }, 0);
     };
 
@@ -87,10 +80,20 @@ export const useEventDetail = (eventId) => {
 
     const validateSelection = () => {
         for (const tid in selectedTickets) {
-            if (selectedTickets[tid] > 0 && hasSeatMap[tid] && (selectedSeats[tid]?.length || 0) < selectedTickets[tid]) {
+            if (selectedTickets[tid] <= 0) continue;
+            const ticketTypeName = event.ticket_types.find((t) => t.ticket_type_id === parseInt(tid, 10))?.type_name;
+
+            if (hasSeatMap[tid] !== true) {
                 return {
                     valid: false,
-                    message: `Vui lòng chọn đủ ghế cho loại vé ${event.ticket_types.find(t => t.ticket_type_id === parseInt(tid))?.type_name}`
+                    message: `Loai ve ${ticketTypeName} chua co so do ghe. Vui long lien he organizer.`,
+                };
+            }
+
+            if ((selectedSeats[tid]?.length || 0) < selectedTickets[tid]) {
+                return {
+                    valid: false,
+                    message: `Vui long chon du ghe cho loai ve ${ticketTypeName}`,
                 };
             }
         }
@@ -110,6 +113,6 @@ export const useEventDetail = (eventId) => {
         handleTicketQuantityChange,
         handleSeatSelection,
         calculateTotal,
-        validateSelection
+        validateSelection,
     };
 };

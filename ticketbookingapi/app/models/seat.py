@@ -1,31 +1,34 @@
 from app.extensions import db
-from datetime import datetime
+
 
 class Seat(db.Model):
-    __tablename__ = "Seat"
+    __tablename__ = "seat"
 
-    seat_id = db.Column(db.BigInteger, primary_key=True)
-    ticket_type_id = db.Column(db.BigInteger, db.ForeignKey('TicketType.ticket_type_id', ondelete='CASCADE'), nullable=False, index=True)
-    row_name = db.Column(db.String(10), nullable=False) # e.g., 'A', 'B'
-    seat_number = db.Column(db.String(10), nullable=False) # e.g., '1', '2'
-    status = db.Column(db.Enum('AVAILABLE', 'LOCKED', 'BOOKED', 'RESERVED'), default='AVAILABLE', index=True)
-    is_active = db.Column(db.Boolean, default=True, nullable=True)
-    area_name = db.Column(db.String(100), nullable=True) # e.g., 'Khán đài A', 'Khu vực VIP'
-    
-    # Optional: x, y coordinates for custom map drawing
-    x_pos = db.Column(db.Integer)
-    y_pos = db.Column(db.Integer)
+    seat_id = db.Column("SeatID", db.Integer, primary_key=True, autoincrement=True)
+    venue_id = db.Column("VenueID", db.Integer, db.ForeignKey("venue.VenueID"), nullable=False)
+    seat_number = db.Column("SeatNumber", db.String(20), nullable=False)
+    row_number = db.Column("RowNumber", db.String(20), nullable=False)
+    status = db.Column("Status", db.String(50), nullable=False, default="Available")
+    area = db.Column("Area", db.String(100), nullable=True)
+    x_position = db.Column("XPosition", db.Integer, nullable=True)
+    y_position = db.Column("YPosition", db.Integer, nullable=True)
+    create_id = db.Column("CreateID", db.Integer, nullable=False)
+    create_date = db.Column("CreateDate", db.DateTime, nullable=False)
+    update_date = db.Column("UpdateDate", db.DateTime, nullable=True)
+
+    tickets = db.relationship("Ticket", backref="seat", lazy=True)
 
     def to_dict(self):
         return {
-            'seat_id': self.seat_id,
-            'ticket_type_id': self.ticket_type_id,
-            'row_name': self.row_name,
-            'seat_number': self.seat_number,
-            'area_name': self.area_name,
-            'seat_label': f"{self.area_name + ' ' if self.area_name else ''}{self.row_name}{self.seat_number}",
-            'status': self.status,
-            'is_active': self.is_active,
-            'x_pos': self.x_pos,
-            'y_pos': self.y_pos
+            "SeatID": self.seat_id,
+            "VenueID": self.venue_id,
+            "SeatNumber": self.seat_number,
+            "RowNumber": self.row_number,
+            "Status": self.status,
+            "Area": self.area,
+            "XPosition": self.x_position,
+            "YPosition": self.y_position,
+            "CreateID": self.create_id,
+            "CreateDate": self.create_date.isoformat() if self.create_date else None,
+            "UpdateDate": self.update_date.isoformat() if self.update_date else None,
         }

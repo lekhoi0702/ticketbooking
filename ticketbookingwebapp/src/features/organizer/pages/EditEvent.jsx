@@ -38,7 +38,6 @@ import EventDateTime from '@features/organizer/components/EventDateTime';
 import EventBannerUpload from '@features/organizer/components/EventBannerUpload';
 import VietQRImageUpload from '@features/organizer/components/VietQRImageUpload';
 import TicketConfig from '@features/organizer/components/TicketConfig';
-import ExtraShowtimesConfig from '@features/organizer/components/ExtraShowtimesConfig';
 
 const { Title, Text } = Typography;
 
@@ -71,9 +70,6 @@ const EditEvent = () => {
         toggleSeatSelection,
         addTicketType,
         removeTicketType,
-        addShowtime,
-        removeShowtime,
-        updateShowtime,
         toggleAreaSelection,
         handleSubmit,
         setFormData,
@@ -117,8 +113,6 @@ const EditEvent = () => {
                     venue_id: event.venue_id,
                     start_datetime: formatDate(event.start_datetime),
                     end_datetime: formatDate(event.end_datetime),
-                    sale_start_datetime: formatDate(event.sale_start_datetime),
-                    sale_end_datetime: formatDate(event.sale_end_datetime),
                     total_capacity: event.total_capacity || 0,
                     status: event.status,
                     is_featured: event.is_featured,
@@ -175,6 +169,8 @@ const EditEvent = () => {
                             id: tt.ticket_type_id, // Add id for UI keys
                             price: String(tt.price),
                             quantity: String(tt.quantity || matchedSeats.length),
+                            sale_start_date: formatDate(tt.sale_start_date || tt.SaleStartDate),
+                            sale_end_date: formatDate(tt.sale_end_date || tt.SaleEndDate),
                             selectedSeats: matchedSeats
                         };
                     });
@@ -256,6 +252,8 @@ const EditEvent = () => {
                                         toggleSeatSelection={toggleSeatSelection}
                                         toggleAreaSelection={toggleAreaSelection}
                                         isEdit={true}
+                                        eventStartDate={formData.start_datetime}
+                                        eventEndDate={formData.end_datetime}
                                         disabled={isReadOnly || loading}
                                         fieldErrors={fieldErrors}
                                     />
@@ -267,17 +265,6 @@ const EditEvent = () => {
                                     />
                                 </Card>
 
-                                <Card title="4. Suất diễn bổ sung (Nâng cao)" headStyle={{ background: '#fafafa' }}>
-                                    <ExtraShowtimesConfig
-                                        formData={formData}
-                                        addShowtime={addShowtime}
-                                        removeShowtime={removeShowtime}
-                                        updateShowtime={updateShowtime}
-                                        venues={venues}
-                                        fieldErrors={fieldErrors}
-                                        disabled={isReadOnly || loading}
-                                    />
-                                </Card>
                             </Space>
                         </Col>
 

@@ -4,6 +4,7 @@ import { FaLock, FaEnvelope, FaUser, FaPhone, FaArrowRight, FaArrowLeft } from '
 import { LoadingOutlined } from '@ant-design/icons';
 import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
+import AuthErrorNotice from '@shared/components/AuthErrorNotice';
 import './AuthModal.css';
 
 const AuthModal = ({ show, onHide, onSuccess }) => {
@@ -89,10 +90,11 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                     try {
                         const loginRes = await api.login({
                             email: formData.email,
-                            password: formData.password
+                            password: formData.password,
+                            required_role: 'USER',
                         });
                         if (loginRes.success && loginRes.data) {
-                            login(loginRes.data.user, loginRes.data.access_token, loginRes.data.refresh_token);
+                            login(loginRes.data.user);
                             onHide();
                             if (onSuccess) onSuccess();
                         } else {
@@ -119,10 +121,11 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                 try {
                     const res = await api.login({
                         email: formData.email,
-                        password: formData.password
+                        password: formData.password,
+                        required_role: 'USER',
                     });
                     if (res.success && res.data) {
-                        login(res.data.user, res.data.access_token, res.data.refresh_token);
+                        login(res.data.user);
                         onHide();
                         if (onSuccess) onSuccess();
                     } else {
@@ -290,7 +293,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                     Nhập email đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu về email của bạn.
                                 </p>
                                 {forgotError && (
-                                    <div className="small mb-3 text-danger">{forgotError}</div>
+                                    <AuthErrorNotice message={forgotError} />
                                 )}
                                 <Form onSubmit={handleForgotSubmit} noValidate>
                                     <Form.Group className="mb-3">
@@ -341,8 +344,9 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                     </div>
                     {activeTab === 'login' && (
                         <>
-                        {error && (
-                            <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : error.type === 'warning' ? 'text-warning' : 'text-danger'}`}>
+                        {error?.type === 'danger' && <AuthErrorNotice message={error.msg} />}
+                        {error && error.type !== 'danger' && (
+                            <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : 'text-warning'}`}>
                                 {error.msg}
                             </div>
                         )}
@@ -400,8 +404,9 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                     )}
                     {activeTab === 'register' && (
                         <>
-                        {error && (
-                            <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : error.type === 'warning' ? 'text-warning' : 'text-danger'}`}>
+                        {error?.type === 'danger' && <AuthErrorNotice message={error.msg} />}
+                        {error && error.type !== 'danger' && (
+                            <div className={`small mb-3 ${error.type === 'success' ? 'text-success' : 'text-warning'}`}>
                                 {error.msg}
                             </div>
                         )}

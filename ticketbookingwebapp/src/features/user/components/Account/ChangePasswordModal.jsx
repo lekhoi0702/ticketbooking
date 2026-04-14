@@ -8,7 +8,7 @@ import '../Auth/AuthModal.css';
 import './ChangePasswordModal.css';
 
 const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) => {
-    const { user, token } = useAuth();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         oldPassword: '',
@@ -57,16 +57,10 @@ const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) =
                 setLoading(false);
                 return;
             }
-            if (forceChange && !token) {
-                setError({ type: 'danger', msg: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.' });
-                setLoading(false);
-                return;
-            }
-
             const payload = forceChange
                 ? { new_password: newPassword }
                 : { user_id: user.user_id, old_password: oldPassword, new_password: newPassword };
-            const res = await api.changePassword(payload, forceChange ? token : undefined);
+            const res = await api.changePassword(payload);
 
             if (res.success) {
                 setError({ type: 'success', msg: 'Đổi mật khẩu thành công!' });

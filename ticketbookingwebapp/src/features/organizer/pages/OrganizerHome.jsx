@@ -33,7 +33,7 @@ const OrganizerHome = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'ADMIN';
+        const isOrganizer = user?.role === 'ORGANIZER';
         if (isAuthenticated && isOrganizer) {
             navigate('/organizer/events');
         }

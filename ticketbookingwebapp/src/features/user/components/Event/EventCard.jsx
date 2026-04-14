@@ -1,52 +1,15 @@
-import React, { useEffect, useRef } from 'react';
-import { Card, Typography, Space, Tag } from 'antd';
-import { EnvironmentOutlined, ClockCircleOutlined, ArrowRightOutlined, FireOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
+import React from 'react';
+import { Card, Typography, Space } from 'antd';
+import { EnvironmentOutlined, ClockCircleOutlined, ArrowRightOutlined, FireOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import { message } from 'antd';
 import { motion } from 'framer-motion';
-import { useAuth } from '@context/AuthContext';
-import { useFavorites } from '@context/FavoriteContext';
-import { formatCurrency } from '@shared/utils/eventUtils';
+
 import './EventCard.css';
 
 const { Text, Title } = Typography;
 
 const EventCard = ({ event }) => {
-    const { triggerLogin, isAuthenticated, redirectIntent, clearRedirectIntent } = useAuth();
-    const { isFavorited, toggleFavorite } = useFavorites();
-    const favorited = isFavorited(event.id);
-    const pendingFavoriteRef = useRef(false);
 
-    // Handle auto-toggle favorite after login
-    useEffect(() => {
-        const handlePendingFavorite = async () => {
-            if (isAuthenticated &&
-                redirectIntent?.action === 'favorite' &&
-                redirectIntent?.eventId === event.id) {
-                clearRedirectIntent();
-                const result = await toggleFavorite(event.id);
-                if (result.success) {
-                    message.success(result.message);
-                }
-            }
-        };
-        handlePendingFavorite();
-    }, [isAuthenticated, redirectIntent, event.id, toggleFavorite, clearRedirectIntent]);
-
-    const handleToggleFavorite = async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!isAuthenticated) {
-            triggerLogin({ action: 'favorite', eventId: event.id });
-            return;
-        }
-
-        const result = await toggleFavorite(event.id);
-        if (result.success) {
-            message.success(result.message);
-        }
-    };
 
     return (
         <Link to={`/event/${event.id}`} className="event-card-link">
@@ -83,19 +46,6 @@ const EventCard = ({ event }) => {
                                 >
                                     Mua vé <ArrowRightOutlined />
                                 </motion.span>
-                            </motion.div>
-                            <motion.div
-                                className={`event-card-favorite-btn ${favorited ? 'active' : ''}`}
-                                onClick={handleToggleFavorite}
-                                whileHover={{ scale: 1.15 }}
-                                whileTap={{ scale: 0.9 }}
-                                transition={{
-                                    type: "spring",
-                                    stiffness: 400,
-                                    damping: 17
-                                }}
-                            >
-                                {favorited ? <StarFilled /> : <StarOutlined />}
                             </motion.div>
                             {event.badge && (
                                 <motion.div

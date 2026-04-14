@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Button,
     Modal,
@@ -10,7 +10,6 @@ import {
     Tooltip,
     Switch,
     App,
-    InputNumber,
 } from 'antd';
 import { EditOutlined, TagsOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
@@ -23,9 +22,6 @@ const { Text } = Typography;
 
 const normalizeCategories = (items = []) =>
     [...items].sort((a, b) => {
-        const orderA = Number.isFinite(Number(a.display_order)) ? Number(a.display_order) : Number.MAX_SAFE_INTEGER;
-        const orderB = Number.isFinite(Number(b.display_order)) ? Number(b.display_order) : Number.MAX_SAFE_INTEGER;
-        if (orderA !== orderB) return orderA - orderB;
         return (a.category_id || 0) - (b.category_id || 0);
     });
 
@@ -75,16 +71,6 @@ const Categories = () => {
         setSelectedRowKeys([]);
         clearUndo();
         form.resetFields();
-
-        const maxOrder = categories.reduce((max, item) => {
-            const value = Number.isFinite(Number(item.display_order)) ? Number(item.display_order) : 1;
-            return Math.max(max, value);
-        }, 1);
-
-        form.setFieldsValue({
-            display_order: maxOrder + 1,
-        });
-
         setModalVisible(true);
     };
 
@@ -97,7 +83,6 @@ const Categories = () => {
         clearUndo();
         form.setFieldsValue({
             category_name: categoryToEdit.category_name,
-            display_order: Number.isFinite(Number(categoryToEdit.display_order)) ? Number(categoryToEdit.display_order) : 1,
         });
         setModalVisible(true);
     };
@@ -110,12 +95,7 @@ const Categories = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            const payload = {
-                ...values,
-                display_order: Number.isFinite(Number(values.display_order))
-                    ? Math.max(1, Math.trunc(Number(values.display_order)))
-                    : 1,
-            };
+            const payload = { ...values };
 
             setSubmitting(true);
 
@@ -211,14 +191,6 @@ const Categories = () => {
             ),
         },
         {
-            title: 'Order',
-            dataIndex: 'display_order',
-            key: 'display_order',
-            width: 120,
-            align: 'center',
-            render: (value) => (Number.isFinite(Number(value)) ? Math.max(1, Number(value)) : 1),
-        },
-        {
             title: 'Trang thai',
             dataIndex: 'is_active',
             key: 'is_active',
@@ -308,24 +280,6 @@ const Categories = () => {
                         rules={[{ required: true, message: 'Vui long nhap ten the loai!' }]}
                     >
                         <Input placeholder="Vi du: Nhac kich" />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="display_order"
-                        label="Order hien thi"
-                        rules={[
-                            { required: true, message: 'Vui long nhap thu tu hien thi!' },
-                            {
-                                validator: (_, value) => {
-                                    if (value == null || Number.isNaN(Number(value)) || Number(value) < 1) {
-                                        return Promise.reject(new Error('Order phai la so nguyen >= 1'));
-                                    }
-                                    return Promise.resolve();
-                                },
-                            },
-                        ]}
-                    >
-                        <InputNumber min={1} precision={0} style={{ width: '100%' }} />
                     </Form.Item>
                 </Form>
             </Modal>

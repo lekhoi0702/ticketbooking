@@ -71,40 +71,19 @@ export const useManageSeats = (eventId) => {
         return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
     }, [fetchData]);
 
-    // Update selection when active ticket type or occupied seats change
+    // Event seats are now shared by venue, no per-ticket-type mapping.
     useEffect(() => {
-        if (activeTicketType) {
-            // Find seats for THIS specific ticket type
-            const currentTypeSeats = allOccupiedSeats.filter(s =>
-                String(s.ticket_type_id) === String(activeTicketType.ticket_type_id)
-            );
-
-            setSelectedTemplateSeats(currentTypeSeats.map(s => ({
-                row_name: s.row_name,
-                seat_number: String(s.seat_number),
-                area: s.area_name,
-                x_pos: s.x_pos,
-                y_pos: s.y_pos
-            })));
-
-            // hasSeats should be true if the event has ANY seats, 
-            // to avoid showing the grid initializer when data exists
-            setHasSeats(allOccupiedSeats.length > 0);
-        } else {
-            setSelectedTemplateSeats([]);
-            setHasSeats(allOccupiedSeats.length > 0);
-        }
-    }, [activeTicketType, allOccupiedSeats]);
+        setSelectedTemplateSeats((allOccupiedSeats || []).map((s) => ({
+            row_name: s.row_name || s.RowNumber,
+            seat_number: String(s.seat_number || s.SeatNumber),
+            area: s.area_name || s.area || s.Area || 'MAIN',
+            x_pos: s.x_pos || s.x_position || s.XPosition,
+            y_pos: s.y_pos || s.y_position || s.YPosition
+        })));
+        setHasSeats(allOccupiedSeats.length > 0);
+    }, [allOccupiedSeats]);
 
     const toggleTemplateSeat = useCallback((templateItem, forceMode = null) => {
-        const isOccupiedByOther = allOccupiedSeats.some(s =>
-            s.row_name === templateItem.row_name &&
-            s.seat_number === templateItem.seat_number &&
-            s.ticket_type_id !== activeTicketType?.ticket_type_id
-        );
-
-        if (isOccupiedByOther) return;
-
         setSelectedTemplateSeats(prev => {
             const isSelected = prev.some(s =>
                 s.row_name === templateItem.row_name &&
@@ -125,7 +104,7 @@ export const useManageSeats = (eventId) => {
             }
             return prev;
         });
-    }, [allOccupiedSeats, activeTicketType]);
+    }, []);
 
     const handleSeatMouseDown = useCallback((e, t) => {
         e.preventDefault();
@@ -152,11 +131,10 @@ export const useManageSeats = (eventId) => {
     }, [isDragging, dragMode, toggleTemplateSeat]);
 
     const handleInitializeSeats = async () => {
-        if (!activeTicketType) return;
         try {
             setInitializing(true);
             const res = await api.initializeSeats({
-                ticket_type_id: activeTicketType.ticket_type_id,
+                venue_id: event?.venue_id || event?.VenueID,
                 rows: initData.rows,
                 seats_per_row: initData.seats_per_row
             });
@@ -170,11 +148,10 @@ export const useManageSeats = (eventId) => {
     };
 
     const handleSaveTemplateAssignment = async () => {
-        if (!activeTicketType) return;
         try {
             setInitializing(true);
             const res = await api.assignSeatsFromTemplate({
-                ticket_type_id: activeTicketType.ticket_type_id,
+                venue_id: event?.venue_id || event?.VenueID,
                 seats: selectedTemplateSeats
             });
             if (res.success) {
@@ -187,16 +164,7 @@ export const useManageSeats = (eventId) => {
     };
 
     const toggleAreaSeats = useCallback((areaName, seatsInArea) => {
-        if (!activeTicketType) return;
-
-        // Determine if all available seats in this area are already selected
-        const availableSeatsInArea = seatsInArea.filter(t => {
-            return !allOccupiedSeats.some(s =>
-                s.row_name === t.row_name &&
-                String(s.seat_number) === String(t.seat_number) &&
-                s.ticket_type_id !== activeTicketType?.ticket_type_id
-            );
-        });
+        const availableSeatsInArea = seatsInArea;
 
         const currentSelectedInAreaCount = selectedTemplateSeats.filter(s =>
             s.area === areaName &&
@@ -226,7 +194,7 @@ export const useManageSeats = (eventId) => {
                 return [...prev, ...seatsToSelect];
             }
         });
-    }, [activeTicketType, allOccupiedSeats, selectedTemplateSeats]);
+    }, [selectedTemplateSeats]);
 
     const venueTemplate = useMemo(() => {
         const template = event?.venue?.seat_map;

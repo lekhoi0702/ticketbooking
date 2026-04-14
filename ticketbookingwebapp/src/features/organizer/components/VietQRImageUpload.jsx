@@ -61,7 +61,7 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
             setGeneratingQR(true);
             const qrImageUrl = `https://qr.sepay.vn/img?acc=${encodeURIComponent(accountNo.trim())}&bank=${encodeURIComponent(bankCode)}&template=compact`;
             handleURLChange(qrImageUrl);
-            message.success('Đã tạo QR code thành công!');
+            message.success('Đã tạo QR code thành công');
         } catch (err) {
             console.error('Error generating QR:', err);
             message.error('Không thể tạo QR code. Vui lòng thử lại.');
@@ -82,11 +82,7 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
                         textAlign: 'center'
                     }}
                 >
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        marginBottom: 12 
-                    }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
                         <Image
                             src={qrPreview}
                             alt="VietQR Preview"
@@ -101,12 +97,7 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
                         />
                     </div>
                     <Space size="small">
-                        <Button
-                            danger
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            onClick={removeQR}
-                        >
+                        <Button danger size="small" icon={<DeleteOutlined />} onClick={removeQR}>
                             Xóa QR Code
                         </Button>
                         <Button
@@ -141,7 +132,7 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
                             Nhập thông tin ngân hàng để tạo QR code tự động
                         </Text>
                     </div>
-                    
+
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div>
                             <Text strong style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>

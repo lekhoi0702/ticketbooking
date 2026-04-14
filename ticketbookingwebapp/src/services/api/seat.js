@@ -1,95 +1,98 @@
-import { API_BASE_URL } from '@shared/constants';
+import { apiRequest } from './_compat';
 
 export const seatApi = {
-    async getSeatsByTicketType(ticketTypeId) {
-        const response = await fetch(`${API_BASE_URL}/seats/ticket-type/${ticketTypeId}`);
-        if (!response.ok) throw new Error('Failed to fetch seats');
-        return await response.json();
+    async getSeatsByTicketType(eventId) {
+        const res = await apiRequest('/seats', {
+            query: eventId ? { EventID: eventId } : undefined,
+        });
+        if (!res.success) return res;
+        return { success: true, data: res.data || [], message: '' };
     },
 
     async getSeat(seatId) {
-        const response = await fetch(`${API_BASE_URL}/seats/${seatId}`);
-        if (!response.ok) throw new Error('Failed to fetch seat info');
-        return await response.json();
+        const res = await apiRequest('/seats');
+        if (!res.success) return res;
+        const seat = (res.data || []).find((s) => String(s.seat_id || s.SeatID) === String(seatId));
+        if (!seat) return { success: false, data: null, message: 'Khong tim thay ghe' };
+        return { success: true, data: seat, message: '' };
     },
 
-    async initializeSeats(data) {
-        const response = await fetch(`${API_BASE_URL}/seats/initialize-default`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to initialize seats');
+    async initializeSeats(payload = {}) {
+        const venueId = payload.venue_id || payload.VenueID || payload.venueId;
+        if (!venueId) {
+            return { success: true, data: [], message: 'Da bo mapping ghe theo hang ve.' };
         }
-        return await response.json();
+        return apiRequest('/seats/initialize', {
+            method: 'POST',
+            body: {
+                VenueID: venueId,
+                Rows: payload.rows ?? payload.Rows ?? 5,
+                SeatsPerRow: payload.seats_per_row ?? payload.SeatsPerRow ?? 10,
+                CreateID: payload.create_id ?? payload.CreateID ?? 1,
+            },
+        });
     },
 
     async getAllEventSeats(eventId) {
-        const response = await fetch(`${API_BASE_URL}/seats/event/${eventId}`);
-        if (!response.ok) throw new Error('Failed to fetch event seats');
-        return await response.json();
+        const res = await apiRequest('/seats', {
+            query: eventId ? { EventID: eventId } : undefined,
+        });
+        if (!res.success) return res;
+        return { success: true, data: res.data || [], message: '' };
     },
 
-    async assignSeatsFromTemplate(data) {
-        const response = await fetch(`${API_BASE_URL}/seats/assign-template`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to assign seats from template');
+    async assignSeatsFromTemplate(payload = {}) {
+        const venueId = payload.venue_id || payload.VenueID || payload.venueId;
+        if (!venueId) {
+            return { success: true, data: [], message: 'Da bo mapping ghe theo hang ve.' };
         }
-        return await response.json();
+        return apiRequest('/seats/assign-template', {
+            method: 'POST',
+            body: {
+                VenueID: venueId,
+                Seats: payload.seats || payload.Seats || [],
+                CreateID: payload.create_id ?? payload.CreateID ?? 1,
+            },
+        });
     },
 
     async lockSeat(seatId, userId, eventId) {
-        const response = await fetch(`${API_BASE_URL}/seats/lock`, {
+        return apiRequest('/seats/lock', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ seat_id: seatId, user_id: userId, event_id: eventId })
+            body: {
+                SeatID: seatId,
+                UserID: userId,
+                EventID: eventId,
+            },
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to lock seat');
-        }
-        return await response.json();
     },
 
-    async unlockSeat(seatId, userId, eventId) {
-        const response = await fetch(`${API_BASE_URL}/seats/unlock`, {
+    async unlockSeat(seatId, userId) {
+        return apiRequest('/seats/unlock', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ seat_id: seatId, user_id: userId, event_id: eventId })
+            body: {
+                SeatID: seatId,
+                UserID: userId,
+            },
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to unlock seat');
-        }
-        return await response.json();
     },
 
     async getMyReservations(eventId, userId) {
-        const response = await fetch(`${API_BASE_URL}/seats/my-reservations/${eventId}/${userId}`);
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to get reservations');
-        }
-        return await response.json();
+        return apiRequest('/seats/my-reservations', {
+            query: {
+                EventID: eventId,
+                UserID: userId,
+            },
+        });
     },
 
     async unlockAllSeats(userId, eventId) {
-        const response = await fetch(`${API_BASE_URL}/seats/unlock-all`, {
+        return apiRequest('/seats/unlock-all', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, event_id: eventId })
+            body: {
+                UserID: userId,
+                EventID: eventId,
+            },
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to unlock all seats');
-        }
-        return await response.json();
     },
 };

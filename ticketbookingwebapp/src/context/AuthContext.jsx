@@ -1,133 +1,61 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '@services/api';
 
 const AuthContext = createContext(null);
-
-const decodeTokenPayload = (token) => {
-    if (!token) return null;
-    try {
-        const payload = token.split('.')[1];
-        if (!payload) return null;
-        return JSON.parse(atob(payload));
-    } catch (_) {
-        return null;
-    }
-};
-
-// Helper to get storage key prefix based on current URL or user role
-const getScopePrefix = (role) => {
-    if (role) {
-        if (role === 'ADMIN') return 'admin_';
-        if (role === 'ORGANIZER') return 'org_';
-        return 'user_';
-    }
-    const path = window.location.pathname;
-    if (path.startsWith('/admin')) return 'admin_';
-    if (path.startsWith('/organizer')) return 'org_';
-    return 'user_';
-};
+const SESSION_USER_KEY = 'session_user';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(null);
-    const [refreshToken, setRefreshToken] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showLoginModal, setShowLoginModal] = useState(false);
-    const logoutTimerRef = useRef(null);
     
     // Redirect intent: stores where user wants to go after login
     // { path: string, state?: object, action?: string }
     const [redirectIntent, setRedirectIntent] = useState(null);
 
     useEffect(() => {
-        const prefix = getScopePrefix();
-        const savedToken = localStorage.getItem(`${prefix}token`);
-        const savedRefreshToken = localStorage.getItem(`${prefix}refresh_token`);
-        const savedUser = localStorage.getItem(`${prefix}user`);
+        const savedUser = localStorage.getItem(SESSION_USER_KEY);
 
-        if (savedToken && savedUser) {
-            setToken(savedToken);
+        if (savedUser) {
             setUser(JSON.parse(savedUser));
-            setRefreshToken(savedRefreshToken || null);
         }
+        // Clean up legacy multi-scope keys from the previous auth model.
+        ['admin_', 'org_', 'user_'].forEach((prefix) => {
+            localStorage.removeItem(`${prefix}user`);
+            localStorage.removeItem(`${prefix}token`);
+            localStorage.removeItem(`${prefix}refresh_token`);
+        });
         setLoading(false);
     }, []);
 
-    const login = (userData, userToken, userRefreshToken = null) => {
-        if (!userData || !userToken) {
-            console.error('Login failed: userData or userToken is missing');
+    const login = (userData) => {
+        if (!userData) {
+            console.error('Login failed: userData is missing');
             return;
         }
-        const prefix = getScopePrefix(userData?.role);
         setUser(userData);
-        setToken(userToken);
-        setRefreshToken(userRefreshToken);
-        localStorage.setItem(`${prefix}token`, userToken);
-        localStorage.setItem(`${prefix}user`, JSON.stringify(userData));
-        if (userRefreshToken) {
-            localStorage.setItem(`${prefix}refresh_token`, userRefreshToken);
-        } else {
-            localStorage.removeItem(`${prefix}refresh_token`);
-        }
+        localStorage.setItem(SESSION_USER_KEY, JSON.stringify(userData));
         setShowLoginModal(false);
     };
 
-    const clearLogoutTimer = () => {
-        if (logoutTimerRef.current) {
-            clearTimeout(logoutTimerRef.current);
-            logoutTimerRef.current = null;
-        }
-    };
-
     const logout = useCallback(async () => {
-        const prefix = getScopePrefix(user?.role);
-        const scopedRefreshToken = localStorage.getItem(`${prefix}refresh_token`) || refreshToken;
-        if (scopedRefreshToken) {
-            try {
-                await api.logout(scopedRefreshToken);
-            } catch (error) {
-                console.warn('Logout API failed, clearing local session anyway.', error);
-            }
+        try {
+            await api.logout();
+        } catch (error) {
+            console.warn('Logout API failed, clearing local session anyway.', error);
         }
         setUser(null);
-        setToken(null);
-        setRefreshToken(null);
-        localStorage.removeItem(`${prefix}token`);
-        localStorage.removeItem(`${prefix}user`);
-        localStorage.removeItem(`${prefix}refresh_token`);
-        clearLogoutTimer();
-    }, [refreshToken, user?.role]);
-
-    const scheduleRoleBasedLogout = useCallback((currentToken, role) => {
-        clearLogoutTimer();
-        if (!currentToken || !role) return;
-        if (role !== 'ADMIN' && role !== 'ORGANIZER') return;
-        const payload = decodeTokenPayload(currentToken);
-        const expSeconds = payload?.exp;
-        if (!expSeconds) {
-            logout();
-            return;
-        }
-        const expiresAtMs = expSeconds * 1000;
-        const remainingMs = expiresAtMs - Date.now();
-        if (remainingMs <= 0) {
-            logout();
-            return;
-        }
-        logoutTimerRef.current = setTimeout(() => {
-            logout();
-        }, remainingMs);
-    }, [logout]);
+        localStorage.removeItem(SESSION_USER_KEY);
+    }, []);
 
     const updateUser = useCallback((patches) => {
         setUser((prev) => {
             if (!prev) return prev;
             const updated = { ...prev, ...patches };
-            const prefix = getScopePrefix(prev.role);
             try {
-                const raw = localStorage.getItem(`${prefix}user`);
+                const raw = localStorage.getItem(SESSION_USER_KEY);
                 const stored = raw ? JSON.parse(raw) : {};
-                localStorage.setItem(`${prefix}user`, JSON.stringify({ ...stored, ...patches }));
+                localStorage.setItem(SESSION_USER_KEY, JSON.stringify({ ...stored, ...patches }));
             } catch (_) {}
             return updated;
         });
@@ -147,17 +75,10 @@ export const AuthProvider = ({ children }) => {
         setRedirectIntent(null);
     }, []);
 
-    useEffect(() => {
-        scheduleRoleBasedLogout(token, user?.role);
-        return () => {
-            clearLogoutTimer();
-        };
-    }, [token, user?.role, scheduleRoleBasedLogout]);
-
     return (
         <AuthContext.Provider value={{
-            user, token, login, logout, updateUser,
-            isAuthenticated: !!token, loading,
+            user, login, logout, updateUser,
+            isAuthenticated: !!user, loading,
             showLoginModal, setShowLoginModal, triggerLogin,
             redirectIntent, setRedirectIntent, clearRedirectIntent
         }}>

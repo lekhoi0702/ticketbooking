@@ -141,7 +141,8 @@ const MyOrdersTab = () => {
     ];
 
     const canRequestRefund = (order) => {
-        return order.order_status === 'PAID' && order.is_sale_active;
+        const canRefund = typeof order.can_refund === 'boolean' ? order.can_refund : order.is_sale_active;
+        return order.order_status === 'PAID' && !!canRefund;
     };
 
     const handleRefundRequest = async (order) => {

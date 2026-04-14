@@ -4,7 +4,6 @@ import {
     Form,
     Input,
     Button,
-    Alert,
     Typography,
     Divider,
     message
@@ -17,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
+import AuthErrorNotice from '@shared/components/AuthErrorNotice';
 
 const { Title, Text } = Typography;
 
@@ -33,12 +33,13 @@ const OrganizerAuthModal = ({ show, onHide }) => {
         try {
             const res = await api.login({
                 email: values.email,
-                password: values.password
+                password: values.password,
+                required_role: 'ORGANIZER',
             });
 
             if (res.success && res.data) {
-                if (res.data.user && (res.data.user.role === 'ORGANIZER' || res.data.user.role === 'ADMIN')) {
-                    login(res.data.user, res.data.access_token, res.data.refresh_token);
+                if (res.data.user && res.data.user.role === 'ORGANIZER') {
+                    login(res.data.user);
                     message.success('Đăng nhập thành công!');
                     onHide();
                     setTimeout(() => {
@@ -102,16 +103,7 @@ const OrganizerAuthModal = ({ show, onHide }) => {
 
             {/* Form */}
             <div style={{ padding: '24px 32px 32px' }}>
-                {error && (
-                    <Alert
-                        message={error}
-                        type="error"
-                        showIcon
-                        closable
-                        onClose={() => setError(null)}
-                        style={{ marginBottom: 20 }}
-                    />
-                )}
+                {error && <AuthErrorNotice message={error} style={{ marginBottom: 20 }} />}
 
                 <Form
                     name="organizer_auth"

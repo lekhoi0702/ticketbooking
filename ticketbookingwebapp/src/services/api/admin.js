@@ -1,258 +1,353 @@
-import { API_BASE_URL } from '@shared/constants';
+import { apiRequest, unsupported } from './_compat';
+import { STATIC_ADS } from '@shared/constants/staticAds';
+
+const flattenAds = () => Object.values(STATIC_ADS).flat();
+const pickValue = (...values) => values.find((v) => v !== undefined && v !== null);
+
+const normalizeRole = (user) => {
+    const roleName = String(user.role_name || user.RoleName || '').toLowerCase();
+    const roleId = Number(user.role_id ?? user.RoleID);
+    if (roleId === 1 || roleName.includes('admin')) return 'ADMIN';
+    if (roleId === 2 || roleName.includes('organizer')) return 'ORGANIZER';
+    return 'USER';
+};
+
+const normalizeUser = (user) => {
+    const status = String(user.status || user.Status || '').toUpperCase();
+    return {
+        ...user,
+        user_id: pickValue(user.user_id, user.UserID),
+        full_name: pickValue(user.full_name, user.FullName),
+        email: pickValue(user.email, user.Email),
+        phone: pickValue(user.phone, user.Phone),
+        status,
+        role: normalizeRole(user),
+        is_active: !['LOCKED', 'INACTIVE', 'DISABLED', 'BANNED'].includes(status),
+        created_at: user.create_date || user.CreateDate || null,
+    };
+};
+
+const normalizeEvent = (event) => ({
+    ...event,
+    event_id: pickValue(event.event_id, event.EventID),
+    event_name: pickValue(event.event_name, event.EventName),
+    status: String(pickValue(event.status, event.Status, 'DRAFT')).toUpperCase(),
+    category_id: pickValue(event.category_id, event.CategoryID),
+    venue_id: pickValue(event.venue_id, event.VenueID),
+    organizer_id: pickValue(event.organizer_id, event.OrganizerID),
+    organizer_name: pickValue(
+        event.organizer_name,
+        event.OrganizerName,
+        event.organizer?.organizer_name,
+        event.Organizer?.OrganizerName,
+        'N/A'
+    ),
+    banner_image_url: pickValue(event.banner_image_url, event.image_url, event.ImageURL, null),
+    start_datetime: pickValue(event.start_datetime, event.start_date, event.StartDate, null),
+    end_datetime: pickValue(event.end_datetime, event.end_date, event.EndDate, null),
+    is_featured: Boolean(
+        pickValue(
+            event.is_featured,
+            event.is_featured_event,
+            event.featured_event,
+            event.IsFeaturedEvent,
+            event.FeaturedEvent,
+            false
+        )
+    ),
+    category: event.category || event.Category || null,
+    venue: event.venue || event.Venue || null,
+    ticket_types: Array.isArray(event.ticket_types)
+        ? event.ticket_types
+        : (Array.isArray(event.TicketTypes) ? event.TicketTypes : []),
+});
+
+const normalizeOrder = (order) => ({
+    ...order,
+    order_id: pickValue(order.order_id, order.OrderID),
+    user_id: pickValue(order.user_id, order.UserID),
+    event_id: pickValue(order.event_id, order.EventID),
+    order_code: pickValue(order.order_code, order.OrderCode),
+    created_at: pickValue(order.created_at, order.CreatedAt, order.order_date, order.OrderDate),
+    total_amount: Number(pickValue(order.total_amount, order.TotalAmount, 0)) || 0,
+    order_status: String(
+        pickValue(order.order_status, order.OrderStatus, order.status, order.Status, 'PENDING')
+    ).toUpperCase(),
+    customer_name: pickValue(order.customer_name, order.CustomerName),
+    customer_email: pickValue(order.customer_email, order.CustomerEmail),
+    customer_phone: pickValue(order.customer_phone, order.CustomerPhone),
+    event_name: pickValue(order.event_name, order.EventName),
+    payment_method: pickValue(order.payment_method, order.PaymentMethod, 'CASH'),
+    tickets_count: Number(pickValue(order.tickets_count, order.TicketsCount, 0)) || 0,
+});
+
+const normalizeCategory = (category) => {
+    const status = String(category.status || category.Status || '').toUpperCase();
+    return {
+        ...category,
+        display_order: category.display_order ?? category.DisplayOrder ?? category.category_id ?? category.CategoryID ?? 1,
+        is_active: !['HIDDEN', 'INACTIVE', 'DISABLED'].includes(status),
+    };
+};
+
+const normalizeDiscount = (discount) => ({
+    ...discount,
+    id: pickValue(discount.id, discount.discount_id, discount.DiscountID),
+    event_id: pickValue(discount.event_id, discount.EventID, null),
+    applies_all_events: Boolean(pickValue(discount.applies_all_events, discount.AppliesAllEvents, false)),
+    code: discount.code || discount.Code || discount.discount_code,
+    name: discount.name || discount.description || discount.Description || discount.discount_name || 'Ma giam gia',
+    value: Number(pickValue(discount.value, discount.discount_amount, discount.DiscountAmount, discount.discount_value, 0)),
+    start_date: discount.start_date || discount.StartDate || null,
+    status: String(pickValue(discount.status, discount.Status, 'ACTIVE')).toUpperCase(),
+    discount_code: discount.discount_code || discount.code || discount.Code,
+    discount_name: discount.discount_name || discount.name || discount.description || discount.Description || 'Ma giam gia',
+    discount_type: discount.discount_type || 'FIXED_AMOUNT',
+    discount_value: Number(discount.discount_value ?? discount.discount_amount ?? discount.DiscountAmount ?? 0),
+    usage_limit: discount.usage_limit ?? 0,
+    used_count: discount.used_count ?? 0,
+    end_date: discount.end_date || discount.EndDate || null,
+});
 
 export const adminApi = {
     async getAdminStats() {
-        const response = await fetch(`${API_BASE_URL}/admin/stats`);
-        if (!response.ok) throw new Error('Failed to fetch admin stats');
-        return await response.json();
+        const [usersRes, eventsRes, ordersRes] = await Promise.all([
+            this.getAllUsers(),
+            apiRequest('/events'),
+            this.getAllAdminOrders(),
+        ]);
+
+        if (!usersRes.success && !eventsRes.success && !ordersRes.success) {
+            return { success: false, data: null, message: 'Không thể tải thống kê' };
+        }
+
+        const orders = ordersRes.data || [];
+        const totalRevenue = orders
+            .filter((o) => String(o.order_status || '').toUpperCase() === 'PAID')
+            .reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
+
+        return {
+            success: true,
+            data: {
+                total_users: (usersRes.data || []).length,
+                total_events: (eventsRes.data || []).length,
+                total_orders: orders.length,
+                total_revenue: totalRevenue,
+            },
+            message: '',
+        };
     },
 
     async getAllUsers() {
-        const response = await fetch(`${API_BASE_URL}/admin/users`);
-        if (!response.ok) throw new Error('Failed to fetch users');
-        return await response.json();
+        const res = await apiRequest('/users');
+        if (!res.success) return res;
+        return { success: true, data: (res.data || []).map(normalizeUser), message: '' };
     },
 
     async createUser(userData) {
-        const response = await fetch(`${API_BASE_URL}/admin/users/create`, {
+        const roleInput = String(userData.role || userData.Role || '').toUpperCase();
+        const roleIdFromName =
+            roleInput === 'ADMIN'
+                ? 1
+                : roleInput === 'ORGANIZER'
+                    ? 2
+                    : roleInput === 'USER'
+                        ? 3
+                        : null;
+        const roleId = userData.role_id || userData.RoleID || roleIdFromName || 3;
+
+        return apiRequest('/auth/register', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
+            body: {
+                Password: userData.password || userData.Password,
+                RoleID: roleId,
+                Email: userData.email || userData.Email,
+                Phone: userData.phone || userData.Phone || '',
+                FullName: userData.full_name || userData.FullName,
+                Status: userData.status || userData.Status || 'ACTIVE',
+                CreateID: userData.create_id || userData.CreateID || 1,
+            },
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to create user');
-        }
-        return await response.json();
-    },
-
-    async getAllAdminEvents() {
-        const response = await fetch(`${API_BASE_URL}/admin/events`);
-        if (!response.ok) throw new Error('Failed to fetch admin events');
-        return await response.json();
-    },
-
-    async getEventShowtimes(eventId) {
-        const response = await fetch(`${API_BASE_URL}/admin/events/${eventId}/showtimes`);
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `Failed to fetch event showtimes: ${response.status} ${response.statusText}`);
-        }
-        return await response.json();
-    },
-
-    async adminUpdateEventStatus(eventId, data) {
-        const response = await fetch(`${API_BASE_URL}/admin/events/${eventId}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.fromEntries(data instanceof FormData ? data : Object.entries(data)))
-        });
-        if (!response.ok) throw new Error('Failed to update event status');
-        return await response.json();
-    },
-
-    async adminDeleteEvent(eventId) {
-        const response = await fetch(`${API_BASE_URL}/admin/events/${eventId}`, {
-            method: 'DELETE'
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to delete event');
-        }
-        return await response.json();
-    },
-
-    async getAllAdminOrders() {
-        const response = await fetch(`${API_BASE_URL}/admin/orders`);
-        if (!response.ok) throw new Error('Failed to fetch admin orders');
-        return await response.json();
     },
 
     async resetUserPassword(userId) {
-        const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        if (!response.ok) {
-            const err = await response.json();
-            const msg = err?.error?.message || err?.message || 'Khôi phục mật khẩu thất bại';
-            throw new Error(msg);
-        }
-        return await response.json();
+        const res = await apiRequest(`/users/${userId}/reset-password`, { method: 'POST' });
+        if (!res.success) return res;
+        return {
+            success: true,
+            data: {
+                user_id: res.data.user_id || res.data.UserID,
+                email: res.data.email || res.data.Email,
+                full_name: res.data.full_name || res.data.FullName,
+                new_password: res.data.new_password || res.data.NewPassword,
+            },
+            message: '',
+        };
     },
 
-    async toggleUserLock(userId, isLocked) {
-        const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/toggle-lock`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ is_locked: isLocked })
+    async toggleUserLock(userId, shouldLock) {
+        return apiRequest(`/users/${userId}`, {
+            method: 'PATCH',
+            body: {
+                Status: shouldLock ? 'LOCKED' : 'ACTIVE',
+            },
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to toggle user lock');
-        }
-        return await response.json();
     },
 
-    async getAllVenues() {
-        const response = await fetch(`${API_BASE_URL}/admin/venues`);
-        if (!response.ok) throw new Error('Failed to fetch venues');
-        return await response.json();
+    async getAllAdminEvents() {
+        const res = await apiRequest('/events');
+        if (!res.success) return res;
+        return { success: true, data: (res.data || []).map(normalizeEvent), message: '' };
     },
 
-    async updateVenueSeats(venueId, areaData) {
-        const response = await fetch(`${API_BASE_URL}/admin/venues/${venueId}/seats`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(areaData)
-        });
-        if (!response.ok) throw new Error('Failed to update venue seats');
-        return await response.json();
+    async getEventShowtimes(eventId) {
+        const res = await apiRequest(`/events/${eventId}`);
+        if (!res.success) return res;
+        return { success: true, data: [res.data], message: '' };
     },
 
-    async updateVenueStatus(venueId, status) {
-        const response = await fetch(`${API_BASE_URL}/admin/venues/${venueId}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status })
+    async adminUpdateEventStatus(eventId, payload = {}) {
+        return apiRequest(`/events/${eventId}`, {
+            method: 'PATCH',
+            body: {
+                Status: payload.status ?? payload.Status,
+                IsFeaturedEvent: payload.is_featured ?? payload.is_featured_event ?? payload.IsFeaturedEvent,
+            },
         });
-        if (!response.ok) throw new Error('Failed to update venue status');
-        return await response.json();
+    },
+
+    async adminDeleteEvent(eventId) {
+        return apiRequest(`/events/${eventId}`, { method: 'DELETE' });
+    },
+
+    async confirmCashPayment(orderId) {
+        return apiRequest(`/orders/${orderId}/confirm-cash`, { method: 'POST' });
+    },
+
+    async getAllAdminOrders() {
+        const res = await apiRequest('/orders');
+        if (!res.success) return res;
+        return { success: true, data: (res.data || []).map(normalizeOrder), message: '' };
     },
 
     async processOrderCancellation(orderId, action) {
-        const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/cancellation`, {
+        return apiRequest(`/orders/${orderId}/refund-process`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action }) // action: 'approve' or 'reject'
+            body: { Action: action },
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to process cancellation');
-        }
-        return await response.json();
     },
 
-    // Event deletion request feature removed (no DB table)
+    async getAllVenues() {
+        return apiRequest('/venues');
+    },
+
+    async updateVenueStatus(venueId, status) {
+        return apiRequest(`/venues/${venueId}`, {
+            method: 'PUT',
+            body: { Status: status },
+        });
+    },
 
     async getAdminCategories() {
-        const response = await fetch(`${API_BASE_URL}/admin/categories`);
-        if (!response.ok) throw new Error('Failed to fetch categories');
-        return await response.json();
+        const res = await apiRequest('/categories');
+        if (!res.success) return res;
+        return { success: true, data: (res.data || []).map(normalizeCategory), message: '' };
     },
 
-    async createCategory(data) {
-        const token = localStorage.getItem('token');
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        const response = await fetch(`${API_BASE_URL}/admin/categories`, {
+    async createCategory(payload = {}) {
+        const res = await apiRequest('/categories', {
             method: 'POST',
-            headers,
-            body: JSON.stringify(data)
+            body: {
+                CategoryName: payload.category_name || payload.CategoryName,
+                Status: payload.status || payload.Status || 'ACTIVE',
+                CreateID: payload.create_id || payload.CreateID || 1,
+            },
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to create category');
-        }
-        return await response.json();
+        if (!res.success) return res;
+        return { success: true, data: normalizeCategory(res.data), message: '' };
     },
 
-    async updateCategory(categoryId, data) {
-        const response = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+    async updateCategory(categoryId, payload = {}) {
+        const res = await apiRequest(`/categories/${categoryId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: {
+                CategoryName: payload.category_name ?? payload.CategoryName,
+                Status: payload.status ?? payload.Status,
+            },
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to update category');
-        }
-        return await response.json();
+        if (!res.success) return res;
+        return { success: true, data: normalizeCategory(res.data), message: '' };
     },
 
     async deleteCategory(categoryId) {
-        const response = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
-            method: 'DELETE'
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to delete category');
-        }
-        return await response.json();
+        return apiRequest(`/categories/${categoryId}`, { method: 'DELETE' });
     },
 
-    // Banner Management
     async getBanners() {
-        const response = await fetch(`${API_BASE_URL}/admin/banners`);
-        if (!response.ok) throw new Error('Failed to fetch banners');
-        return await response.json();
+        return { success: true, data: flattenAds(), message: '' };
     },
 
-    async createBanner(data) {
-        // data should be FormData
-        const token = localStorage.getItem('token');
-        const headers = {};
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        // Don't set Content-Type for FormData - browser will set it with boundary
-        
-        const response = await fetch(`${API_BASE_URL}/admin/banners`, {
-            method: 'POST',
-            headers: headers,
-            body: data
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to create banner');
-        }
-        return await response.json();
+    async createBanner() {
+        return unsupported('Backend mới không dùng bảng banner.');
     },
 
-    async updateBanner(bannerId, data) {
-        // data should be FormData
-        const token = localStorage.getItem('token');
-        const headers = {};
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        // Don't set Content-Type for FormData - browser will set it with boundary
-        
-        const response = await fetch(`${API_BASE_URL}/admin/banners/${bannerId}`, {
-            method: 'PUT',
-            headers: headers,
-            body: data
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to update banner');
-        }
-        return await response.json();
+    async updateBanner() {
+        return unsupported('Backend mới không dùng bảng banner.');
     },
 
-    async deleteBanner(bannerId) {
-        const response = await fetch(`${API_BASE_URL}/admin/banners/${bannerId}`, {
-            method: 'DELETE'
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to delete banner');
-        }
-        return await response.json();
+    async deleteBanner() {
+        return unsupported('Backend mới không dùng bảng banner.');
     },
 
-    // Discount Management
     async getAllDiscounts(eventId = null) {
-        const params = eventId ? `?event_id=${eventId}` : '';
-        const response = await fetch(`${API_BASE_URL}/admin/discounts${params}`);
-        if (!response.ok) throw new Error('Failed to fetch discounts');
-        return await response.json();
+        const res = await apiRequest('/discounts', { query: eventId ? { EventID: eventId } : undefined });
+        if (!res.success) return res;
+        return { success: true, data: (res.data || []).map(normalizeDiscount), message: '' };
     },
 
     async getEventDiscounts(eventId) {
-        const response = await fetch(`${API_BASE_URL}/admin/events/${eventId}/discounts`);
-        if (!response.ok) throw new Error('Failed to fetch event discounts');
-        return await response.json();
+        const res = await apiRequest('/discounts', { query: { EventID: eventId } });
+        if (!res.success) return res;
+        return { success: true, data: (res.data || []).map(normalizeDiscount), message: '' };
     },
 
+    async createAdminDiscount(payload = {}) {
+        return apiRequest('/discounts', {
+            method: 'POST',
+            body: {
+                EventID: payload.event_id ?? payload.EventID ?? null,
+                AppliesAllEvents: Boolean(payload.applies_all_events ?? payload.AppliesAllEvents ?? false),
+                Code: payload.code || payload.Code,
+                Description: payload.name || payload.description || payload.Description,
+                DiscountAmount: payload.value ?? payload.discount_amount ?? payload.DiscountAmount ?? 0,
+                StartDate: payload.start_date || payload.StartDate,
+                EndDate: payload.end_date || payload.EndDate,
+                Status: payload.status || payload.Status || 'ACTIVE',
+                CreateID: payload.create_id || payload.CreateID || 1,
+            },
+        });
+    },
+
+    async updateAdminDiscount(discountId, payload = {}) {
+        return apiRequest(`/discounts/${discountId}`, {
+            method: 'PUT',
+            body: {
+                EventID: payload.event_id ?? payload.EventID,
+                AppliesAllEvents: payload.applies_all_events ?? payload.AppliesAllEvents,
+                Code: payload.code ?? payload.Code,
+                Description: payload.name ?? payload.description ?? payload.Description,
+                DiscountAmount: payload.value ?? payload.discount_amount ?? payload.DiscountAmount,
+                StartDate: payload.start_date ?? payload.StartDate,
+                EndDate: payload.end_date ?? payload.EndDate,
+                Status: payload.status ?? payload.Status,
+            },
+        });
+    },
+
+    async deleteAdminDiscount(discountId) {
+        return apiRequest(`/discounts/${discountId}`, { method: 'DELETE' });
+    },
 };
+
+
+

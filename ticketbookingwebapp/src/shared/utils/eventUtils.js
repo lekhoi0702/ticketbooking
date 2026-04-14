@@ -81,7 +81,8 @@ export const transformEvent = (event) => {
     }
 
     try {
-        const startDate = parseLocalDateTime(event.start_datetime);
+        const startDate = parseLocalDateTime(event.start_datetime || event.start_date || event.StartDate);
+        const eventImage = event.banner_image_url || event.image_url || event.ImageURL || null;
         return {
             id: event.event_id,
             title: event.event_name || 'Sự kiện',
@@ -93,7 +94,7 @@ export const transformEvent = (event) => {
                 minute: '2-digit'
             }) : 'TBA',
             location: event.venue ? (event.venue.city || 'TBA') : 'TBA',
-            image: getImageUrl(event.banner_image_url),
+            image: getImageUrl(eventImage),
             price: (() => {
                 if (!event.ticket_types || event.ticket_types.length === 0) return 'TBA';
                 const prices = event.ticket_types

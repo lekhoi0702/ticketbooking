@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Row, Col, OverlayTrigger, Tooltip, Alert } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip, Alert } from 'react-bootstrap';
 import LoadingSpinner from '@shared/components/LoadingSpinner';
 import { FaChair } from 'react-icons/fa';
 import { io } from 'socket.io-client';
-import { api } from '@services/api';
 import { seatApi } from '@services/api/seat';
 import { useAuth } from '@context/AuthContext';
 import './SeatMap.css';
@@ -17,7 +16,6 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number
     const [error, setError] = useState(null);
     const [rowsData, setRowsData] = useState({});
     const socketRef = useRef(null);
-    const reservationTimersRef = useRef({});
     const seatSelectionProcessedRef = useRef(false);
 
     // Initialize Socket.IO connection
@@ -40,26 +38,24 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number
 
         socket.on('seat_reserved', (data) => {
             // Update seat status when another user reserves a seat
-            setSeats(prevSeats => 
-                prevSeats.map(seat => 
-                    seat.seat_id === data.seat_id 
+            setSeats(prevSeats =>
+                prevSeats.map(seat =>
+                    seat.seat_id === data.seat_id
                         ? { ...seat, status: 'RESERVED' }
                         : seat
                 )
             );
-            updateRowsData();
         });
 
         socket.on('seat_released', (data) => {
             // Update seat status when a seat is released
-            setSeats(prevSeats => 
-                prevSeats.map(seat => 
-                    seat.seat_id === data.seat_id 
+            setSeats(prevSeats =>
+                prevSeats.map(seat =>
+                    seat.seat_id === data.seat_id
                         ? { ...seat, status: 'AVAILABLE' }
                         : seat
                 )
             );
-            updateRowsData();
         });
 
         socketRef.current = socket;
@@ -113,7 +109,6 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number
                                             : s
                                     )
                                 );
-                                updateRowsData();
                                 
                                 // Clear the redirect intent
                                 clearRedirectIntent();
@@ -186,9 +181,13 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number
         }
     }, [ticketType]);
 
-    const updateRowsData = () => {
+    useEffect(() => {
+        applyRowsData(seats);
+    }, [seats]);
+
+    const applyRowsData = (seatList) => {
         const rowData = {};
-        seats.forEach(seat => {
+        seatList.forEach(seat => {
             if (!rowData[seat.row_name]) {
                 rowData[seat.row_name] = [];
             }
@@ -206,27 +205,10 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number
     const fetchSeats = async () => {
         try {
             setLoading(true);
-            const res = await api.getSeatsByTicketType(ticketType.ticket_type_id);
+            const res = await seatApi.getSeatsByTicketType(eventId);
             if (res.success) {
                 setSeats(res.data);
-
-                // Group seats by row
-                const rowData = {};
-                res.data.forEach(seat => {
-                    if (!rowData[seat.row_name]) {
-                        rowData[seat.row_name] = [];
-                    }
-                    rowData[seat.row_name].push(seat);
-                });
-
-                // Sort by seat number within rows
-                Object.keys(rowData).forEach(row => {
-                    rowData[row].sort((a, b) => parseInt(a.seat_number) - parseInt(b.seat_number));
-                });
-
-                setRows(Object.keys(rowData).sort());
-                setRowsData(rowData);
-                if (onSeatsLoaded) onSeatsLoaded(true);
+                if (onSeatsLoaded) onSeatsLoaded((res.data || []).length > 0);
             } else {
                 if (onSeatsLoaded) onSeatsLoaded(false);
             }
@@ -335,7 +317,6 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number
                                 : s
                         )
                     );
-                    updateRowsData();
                 }
             } catch (err) {
                 setError(err.message || 'Không thể chọn ghế này');

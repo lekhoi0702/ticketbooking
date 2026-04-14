@@ -18,6 +18,29 @@ import './SeatSelection.css';
 const formatVnd = (amount) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
 
+const parseDateTime = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getTicketSaleState = (ticketType) => {
+    const now = new Date();
+    const saleStart = parseDateTime(ticketType?.sale_start_date || ticketType?.SaleStartDate);
+    const saleEnd = parseDateTime(ticketType?.sale_end_date || ticketType?.SaleEndDate);
+
+    if (!saleStart || !saleEnd) {
+        return { isAvailable: false, label: 'Chua cau hinh lich ban' };
+    }
+    if (now < saleStart) {
+        return { isAvailable: false, label: 'Chua mo ban' };
+    }
+    if (now > saleEnd) {
+        return { isAvailable: false, label: 'Da het thoi gian ban' };
+    }
+    return { isAvailable: true, label: 'Dang mo ban' };
+};
+
 const SeatSelection = () => {
     const { eventId } = useParams();
     const navigate = useNavigate();
@@ -43,13 +66,14 @@ const SeatSelection = () => {
         // Set initial ticket type if provided
         if (ticketTypeIdFromState && event && event.ticket_types) {
             const ticketType = event.ticket_types.find(t => t.ticket_type_id === parseInt(ticketTypeIdFromState));
-            if (ticketType) {
+            if (ticketType && getTicketSaleState(ticketType).isAvailable) {
                 setSelectedTicketType(ticketType);
                 setQuantity(location.state?.quantity || 1);
             }
         } else if (event && event.ticket_types && event.ticket_types.length > 0 && !selectedTicketType) {
-            // Auto-select first ticket type if none selected
-            setSelectedTicketType(event.ticket_types[0]);
+            // Auto-select first available ticket type if none selected
+            const firstAvailable = event.ticket_types.find((t) => getTicketSaleState(t).isAvailable);
+            setSelectedTicketType(firstAvailable || event.ticket_types[0]);
         }
     }, [event, ticketTypeIdFromState, location.state]);
 
@@ -126,6 +150,11 @@ const SeatSelection = () => {
     };
 
     const handleTicketTypeChange = (ticketType) => {
+        const saleState = getTicketSaleState(ticketType);
+        if (!saleState.isAvailable) {
+            message.warning(`Loai ve nay khong kha dung: ${saleState.label}`);
+            return;
+        }
         setSelectedTicketType(ticketType);
         setQuantity(1);
         setSelectedSeats([]);
@@ -142,10 +171,20 @@ const SeatSelection = () => {
             return;
         }
 
+        const saleState = getTicketSaleState(selectedTicketType);
+        if (!saleState.isAvailable) {
+            message.warning(`Loai ve nay khong kha dung: ${saleState.label}`);
+            return;
+        }
+
         const ticketTypeId = selectedTicketType.ticket_type_id;
         const seatMapState = hasSeatMap[ticketTypeId]; // true | false | undefined
         if (seatMapState === undefined) {
-            message.info('Đang kiểm tra sơ đồ ghế. Vui lòng chờ một chút...');
+            message.info('Dang kiem tra so do ghe. Vui long cho mot chut...');
+            return;
+        }
+        if (seatMapState !== true) {
+            message.error('Su kien chua co so do ghe. Organizer can tao ghe truoc khi checkout.');
             return;
         }
 
@@ -218,12 +257,17 @@ const SeatSelection = () => {
     const seatMapState = selectedTicketType ? hasSeatMap[selectedTicketType.ticket_type_id] : undefined; // true | false | undefined
     const requiresSeatSelection = seatMapState === true;
     const isSeatMapChecking = selectedTicketType ? seatMapState === undefined : false;
+    const seatMapMissing = selectedTicketType ? seatMapState === false : false;
+    const selectedTicketSaleState = selectedTicketType ? getTicketSaleState(selectedTicketType) : null;
+    const isSelectedTicketAvailable = selectedTicketSaleState ? selectedTicketSaleState.isAvailable : false;
 
     const isSelectionComplete = !selectedTicketType
         ? false
-        : requiresSeatSelection
-            ? selectedSeats.length > 0  // Just need at least 1 seat selected (quantity auto-updates)
-            : quantity > 0;  // For non-seat-map tickets, need quantity > 0
+        : seatMapMissing
+            ? false
+            : requiresSeatSelection
+                ? selectedSeats.length > 0  // Just need at least 1 seat selected (quantity auto-updates)
+                : quantity > 0;  // For non-seat-map tickets, need quantity > 0
 
     const totalPrice = selectedTicketType ? selectedTicketType.price * quantity : 0;
     const selectedTicketTypeStock = Math.max(
@@ -292,6 +336,7 @@ const SeatSelection = () => {
                                     {event.ticket_types.map((tt) => {
                                         const isActive = selectedTicketType?.ticket_type_id === tt.ticket_type_id;
                                         const ttSeatMapState = hasSeatMap[tt.ticket_type_id];
+                                        const saleState = getTicketSaleState(tt);
 
                                         return (
                                             <button
@@ -299,6 +344,7 @@ const SeatSelection = () => {
                                                 type="button"
                                                 className={`seat-ticket-card ${isActive ? 'active' : ''}`}
                                                 onClick={() => handleTicketTypeChange(tt)}
+                                                disabled={!saleState.isAvailable}
                                                 aria-label={`Chọn loại vé ${tt.type_name}`}
                                             >
                                                 <div className="seat-ticket-top">
@@ -313,6 +359,9 @@ const SeatSelection = () => {
                                                 <div className="seat-ticket-meta">
                                                     <span className="seat-meta-chip">
                                                         Còn lại {tt.available_quantity ?? tt.quantity ?? 0} vé
+                                                    </span>
+                                                    <span className={`seat-meta-chip ${saleState.isAvailable ? 'chip-green' : ''}`}>
+                                                        {saleState.label}
                                                     </span>
                                                     <span className={`seat-meta-chip ${ttSeatMapState === true ? 'chip-green' : ''}`}>
                                                         {ttSeatMapState === undefined
@@ -330,7 +379,7 @@ const SeatSelection = () => {
                         </Card>
 
                         {/* Quantity - Only show when no seat map (each seat = 1 ticket when seat map exists) */}
-                        {!requiresSeatSelection && (
+                        {!requiresSeatSelection && !seatMapMissing && (
                             <Card className="seat-panel mb-4">
                                 <Card.Body className="seat-panel-body">
                                     <div className="seat-qty-row">
@@ -519,7 +568,7 @@ const SeatSelection = () => {
                                         size="lg"
                                         className="seat-checkout-btn"
                                         onClick={handleProceedToCheckout}
-                                        disabled={!selectedTicketType || isSeatMapChecking || !isSelectionComplete}
+                                        disabled={!selectedTicketType || !isSelectedTicketAvailable || isSeatMapChecking || !isSelectionComplete}
                                     >
                                         <CheckCircleOutlined /> Tiến hành thanh toán
                                     </Button>
@@ -538,7 +587,7 @@ const SeatSelection = () => {
                                     variant="success"
                                     className="seat-mobile-cta"
                                     onClick={handleProceedToCheckout}
-                                    disabled={!selectedTicketType || isSeatMapChecking || !isSelectionComplete}
+                                    disabled={!selectedTicketType || !isSelectedTicketAvailable || isSeatMapChecking || !isSelectionComplete}
                                 >
                                     Thanh toán
                                 </Button>
@@ -552,3 +601,6 @@ const SeatSelection = () => {
 };
 
 export default SeatSelection;
+
+
+

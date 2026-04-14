@@ -39,12 +39,9 @@ export const useCreateEvent = () => {
         venue_id: '',
         start_datetime: '',
         end_datetime: '',
-        sale_start_datetime: '',
-        sale_end_datetime: '',
         total_capacity: 0,
         status: 'PENDING_APPROVAL',
         is_featured: false,
-        extra_showtimes: [],
         manager_id: user?.user_id || 1
     });
 
@@ -54,7 +51,15 @@ export const useCreateEvent = () => {
     const [vietqrPreview, setVietqrPreview] = useState(null);
     const [vietqrImageUrl, setVietqrImageUrl] = useState(null);
     const [ticketTypes, setTicketTypes] = useState([
-        { type_name: '', price: '', quantity: '0', description: '', selectedSeats: [] }
+        {
+            type_name: '',
+            price: '',
+            quantity: '0',
+            description: '',
+            sale_start_date: '',
+            sale_end_date: '',
+            selectedSeats: [],
+        }
     ]);
     const [activeTicketTypeIndex, setActiveTicketTypeIndex] = useState(0);
 
@@ -293,7 +298,18 @@ export const useCreateEvent = () => {
     };
 
     const addTicketType = () => {
-        setTicketTypes([...ticketTypes, { type_name: '', price: '', quantity: '0', description: '', selectedSeats: [] }]);
+        setTicketTypes([
+            ...ticketTypes,
+            {
+                type_name: '',
+                price: '',
+                quantity: '0',
+                description: '',
+                sale_start_date: '',
+                sale_end_date: '',
+                selectedSeats: [],
+            },
+        ]);
     };
 
     const removeTicketType = (index) => {
@@ -301,43 +317,6 @@ export const useCreateEvent = () => {
             const newTicketTypes = ticketTypes.filter((_, i) => i !== index);
             setTicketTypes(newTicketTypes);
         }
-    };
-
-    const addShowtime = () => {
-        setFormData(prev => ({
-            ...prev,
-            extra_showtimes: [
-                ...(prev.extra_showtimes || []),
-                {
-                    id: Date.now(),
-                    start_datetime: '',
-                    end_datetime: '',
-                    sale_start_datetime: '',
-                    sale_end_datetime: '',
-                    venue_id: prev.venue_id,
-                    ticket_types: JSON.parse(JSON.stringify(ticketTypes))
-                }
-            ]
-        }));
-    };
-
-    const removeShowtime = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            extra_showtimes: prev.extra_showtimes.filter((_, i) => i !== index)
-        }));
-    };
-
-    const updateShowtime = (index, field, value) => {
-        setFormData(prev => {
-            const newShowtimes = [...prev.extra_showtimes];
-            if (field === 'all') {
-                newShowtimes[index] = value;
-            } else {
-                newShowtimes[index] = { ...newShowtimes[index], [field]: value };
-            }
-            return { ...prev, extra_showtimes: newShowtimes };
-        });
     };
 
     const handleSubmit = async (e, eventId = null) => {
@@ -349,6 +328,10 @@ export const useCreateEvent = () => {
 
         // Validate required fields
         const errors = {};
+        const djs = dayjs;
+        const now = djs();
+        const start = formData.start_datetime ? djs(formData.start_datetime) : null;
+        const end = formData.end_datetime ? djs(formData.end_datetime) : null;
 
         if (!formData.event_name || formData.event_name.trim() === '') {
             errors.event_name = 'Vui lòng nhập tên sự kiện';
@@ -374,47 +357,6 @@ export const useCreateEvent = () => {
             errors.end_datetime = 'Vui lòng chọn thời gian kết thúc';
         }
 
-        if (!formData.sale_start_datetime) {
-            errors.sale_start_datetime = 'Vui lòng chọn thời gian mở bán';
-        }
-
-        if (!formData.sale_end_datetime) {
-            errors.sale_end_datetime = 'Vui lòng chọn thời gian kết thúc bán';
-        }
-
-        // Validate extra showtimes
-        if (formData.extra_showtimes && formData.extra_showtimes.length > 0) {
-            formData.extra_showtimes.forEach((st, idx) => {
-                const s = st.start_datetime ? dayjs(st.start_datetime) : null;
-                const e = st.end_datetime ? dayjs(st.end_datetime) : null;
-
-                if (!st.start_datetime) {
-                    errors[`extra_showtime_${idx}_start`] = 'Vui lòng chọn thời gian bắt đầu';
-                }
-                if (!st.end_datetime) {
-                    errors[`extra_showtime_${idx}_end`] = 'Vui lòng chọn thời gian kết thúc';
-                }
-                if (s && e && (e.isBefore(s) || e.isSame(s))) {
-                    errors[`extra_showtime_${idx}_end`] = 'Thời gian kết thúc phải sau bắt đầu';
-                }
-
-                if (s && start && s.isBefore(start)) {
-                    errors[`extra_showtime_${idx}_start`] = 'Suất diễn phụ phải bắt đầu sau suất diễn chính';
-                }
-
-                // Optional sale times validation
-                const ss = st.sale_start_datetime ? dayjs(st.sale_start_datetime) : null;
-                const se = st.sale_end_datetime ? dayjs(st.sale_end_datetime) : null;
-
-                if (ss && se && se.isBefore(ss)) {
-                    errors[`extra_showtime_${idx}_sale_end`] = 'Kết thúc bán phải sau mở bán';
-                }
-                if (ss && s && ss.isAfter(s)) {
-                    errors[`extra_showtime_${idx}_sale_start`] = 'Mở bán phải trước khi diễn ra';
-                }
-            });
-        }
-
         // Validate ticket types
         if (ticketTypes.length === 0) {
             errors.ticket_types = 'Vui lòng thêm ít nhất một loại vé';
@@ -423,7 +365,16 @@ export const useCreateEvent = () => {
             ticketTypes.forEach((tt, index) => {
                 const isNameEmpty = !tt.type_name || tt.type_name.trim() === '';
                 const isPriceEmpty = !tt.price || parseFloat(tt.price) <= 0;
-                const isSeatsEmpty = !tt.selectedSeats || tt.selectedSeats.length === 0;
+                const qty = Number(tt.quantity || 0);
+                const selectedQty = Array.isArray(tt.selectedSeats) ? tt.selectedSeats.length : 0;
+                const isQuantityEmpty = !(qty > 0 || selectedQty > 0);
+                const saleStart = tt.sale_start_date ? djs(tt.sale_start_date) : null;
+                const saleEnd = tt.sale_end_date ? djs(tt.sale_end_date) : null;
+                const isSaleStartEmpty = !tt.sale_start_date;
+                const isSaleEndEmpty = !tt.sale_end_date;
+                const isSaleRangeInvalid = !!(saleStart && saleEnd && saleEnd.isBefore(saleStart));
+                const isSaleStartAfterEventStart = !!(saleStart && start && saleStart.isAfter(start));
+                const isSaleEndAfterEventStart = !!(saleEnd && start && saleEnd.isAfter(start));
 
                 if (isNameEmpty) {
                     errors[`ticket_type_${index}_name`] = 'Vui lòng nhập tên hạng vé';
@@ -433,11 +384,40 @@ export const useCreateEvent = () => {
                     errors[`ticket_type_${index}_price`] = 'Vui lòng nhập giá vé hợp lệ';
                 }
 
-                if (isSeatsEmpty) {
-                    errors[`ticket_type_${index}_seats`] = `Vui lòng chọn ghế cho loại vé "${tt.type_name || (index + 1)}"`;
+                if (isSaleStartEmpty) {
+                    errors[`ticket_type_${index}_sale_start_date`] = 'Vui lòng chọn ngày mở bán';
                 }
 
-                if (isNameEmpty || isPriceEmpty || isSeatsEmpty) {
+                if (isSaleEndEmpty) {
+                    errors[`ticket_type_${index}_sale_end_date`] = 'Vui lòng chọn ngày kết thúc bán';
+                }
+
+                if (isSaleRangeInvalid) {
+                    errors[`ticket_type_${index}_sale_end_date`] = 'Ngày kết thúc bán phải sau hoặc bằng ngày mở bán';
+                }
+
+                if (isSaleStartAfterEventStart) {
+                    errors[`ticket_type_${index}_sale_start_date`] = 'Ngày mở bán vé phải trước hoặc bằng thời gian bắt đầu sự kiện';
+                }
+
+                if (isSaleEndAfterEventStart) {
+                    errors[`ticket_type_${index}_sale_end_date`] = 'Ngày kết thúc bán vé phải trước hoặc bằng thời gian bắt đầu sự kiện';
+                }
+
+                if (isQuantityEmpty) {
+                    errors[`ticket_type_${index}_seats`] = `Vui lòng nhập số lượng vé hoặc chọn ghế cho loại vé "${tt.type_name || (index + 1)}"`;
+                }
+
+                if (
+                    isNameEmpty ||
+                    isPriceEmpty ||
+                    isQuantityEmpty ||
+                    isSaleStartEmpty ||
+                    isSaleEndEmpty ||
+                    isSaleRangeInvalid ||
+                    isSaleStartAfterEventStart ||
+                    isSaleEndAfterEventStart
+                ) {
                     if (!errors.ticket_types) {
                         errors.ticket_types = 'Vui lòng hoàn thiện thông tin các hạng vé';
                     }
@@ -452,12 +432,6 @@ export const useCreateEvent = () => {
         if (!isEdit && !bannerImage) {
             errors.banner_image = 'Vui lòng tải lên ảnh bìa sự kiện';
         }
-        const djs = dayjs;
-        const now = djs();
-        const start = formData.start_datetime ? djs(formData.start_datetime) : null;
-        const end = formData.end_datetime ? djs(formData.end_datetime) : null;
-        const saleStart = formData.sale_start_datetime ? djs(formData.sale_start_datetime) : null;
-        const saleEnd = formData.sale_end_datetime ? djs(formData.sale_end_datetime) : null;
 
         // If not editing, or if editing but user might have changed dates, we usually want to be careful.
         // However, for editing an existing event, it's common that the start_datetime is already in the past.
@@ -466,29 +440,11 @@ export const useCreateEvent = () => {
             if (start && start.isBefore(now)) {
                 errors.start_datetime = 'Thời gian bắt đầu phải sau thời điểm hiện tại';
             }
-            if (saleStart && saleStart.isBefore(now)) {
-                errors.sale_start_datetime = 'Thời gian mở bán phải sau thời điểm hiện tại';
-            }
         }
 
         // Event end must always be after start
         if (end && start && (end.isBefore(start) || end.isSame(start))) {
             errors.end_datetime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
-        }
-
-        // Sale start must be before event start
-        if (saleStart && start && (saleStart.isAfter(start) || saleStart.isSame(start))) {
-            errors.sale_start_datetime = 'Thời gian mở bán phải trước khi sự kiện bắt đầu';
-        }
-
-        // Sale end must be after sale start
-        if (saleEnd && saleStart && (saleEnd.isBefore(saleStart) || saleEnd.isSame(saleStart))) {
-            errors.sale_end_datetime = 'Thời gian kết thúc bán phải sau thời gian mở bán';
-        }
-
-        // Sale end must be before event start
-        if (saleEnd && start && (saleEnd.isAfter(start) || saleEnd.isSame(start))) {
-            errors.sale_end_datetime = 'Thời gian kết thúc bán phải trước khi sự kiện bắt đầu';
         }
 
         // If there are errors, set them and return
@@ -515,20 +471,6 @@ export const useCreateEvent = () => {
             formDataToSend.append('is_featured', formData.is_featured);
             formDataToSend.append('manager_id', formData.manager_id);
 
-            if (formData.sale_start_datetime) {
-                formDataToSend.append('sale_start_datetime', formData.sale_start_datetime);
-            }
-            if (formData.sale_end_datetime) {
-                formDataToSend.append('sale_end_datetime', formData.sale_end_datetime);
-            }
-
-            // Append extra showtimes
-            if (formData.extra_showtimes && formData.extra_showtimes.length > 0) {
-                formData.extra_showtimes.forEach(st => {
-                    formDataToSend.append('extra_showtimes', JSON.stringify(st));
-                });
-            }
-
             // Add banner image if a new one was selected
             if (bannerImage) {
                 formDataToSend.append('banner_image', bannerImage);
@@ -546,11 +488,14 @@ export const useCreateEvent = () => {
                 // Also add ticket types for update mode if you want to support bulk update
                 ticketTypes.forEach((tt) => {
                     if (tt.type_name && tt.price && tt.quantity) {
+                        const quantity = Number(tt.quantity || (tt.selectedSeats?.length || 0));
                         const ttPayload = {
                             type_name: tt.type_name,
                             price: tt.price,
-                            quantity: tt.quantity,
-                            description: tt.description
+                            quantity,
+                            description: tt.description,
+                            sale_start_date: tt.sale_start_date,
+                            sale_end_date: tt.sale_end_date,
                         };
                         if (tt.ticket_type_id) {
                             ttPayload.ticket_type_id = tt.ticket_type_id;
@@ -563,11 +508,14 @@ export const useCreateEvent = () => {
                 // Add ticket types for create mode
                 ticketTypes.forEach((tt) => {
                     if (tt.type_name && tt.price && tt.quantity) {
+                        const quantity = Number(tt.quantity || (tt.selectedSeats?.length || 0));
                         formDataToSend.append('ticket_types', JSON.stringify({
                             type_name: tt.type_name,
                             price: tt.price,
-                            quantity: tt.quantity,
-                            description: tt.description
+                            quantity,
+                            description: tt.description,
+                            sale_start_date: tt.sale_start_date,
+                            sale_end_date: tt.sale_end_date,
                         }));
                     }
                 });
@@ -576,26 +524,6 @@ export const useCreateEvent = () => {
 
             if (response.success) {
                 const eventIdToUse = isEdit ? eventId : response.data.event_id;
-                const returnedTicketTypes = response.data.ticket_types;
-
-                // Assign/Re-assign seats for each ticket type sequentially to avoid database deadlocks
-                for (const localTT of ticketTypes) {
-                    const matchedTT = returnedTicketTypes?.find(rtt =>
-                        (localTT.ticket_type_id && rtt.ticket_type_id === localTT.ticket_type_id) ||
-                        (!localTT.ticket_type_id && rtt.type_name === localTT.type_name)
-                    );
-
-                    if (matchedTT && localTT.selectedSeats) {
-                        const assignResult = await api.assignSeatsFromTemplate({
-                            ticket_type_id: matchedTT.ticket_type_id,
-                            seats: localTT.selectedSeats
-                        });
-
-                        if (!assignResult.success) {
-                            throw new Error(assignResult.message || `Lỗi khi lưu ghế cho hạng vé ${localTT.type_name}`);
-                        }
-                    }
-                }
 
                 if (!isEdit) {
                     setCreatedEventId(eventIdToUse);
@@ -607,7 +535,7 @@ export const useCreateEvent = () => {
             }
         } catch (err) {
             console.error(`Error ${isEdit ? 'updating' : 'creating'} event:`, err);
-            setError(err.message || `Không thể ${isEdit ? 'tập nhật' : 'tạo'} sự kiện`);
+            setError(err.message || `Không thể ${isEdit ? 'cập nhật' : 'tạo'} sự kiện`);
         } finally {
             setLoading(false);
         }
@@ -662,11 +590,9 @@ export const useCreateEvent = () => {
         toggleAreaSelection,
         addTicketType,
         removeTicketType,
-        addShowtime,
-        removeShowtime,
-        updateShowtime,
         handleSubmit,
         fetchVenueTemplate,
         navigate
     };
 };
+

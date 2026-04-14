@@ -1,66 +1,46 @@
 from app.extensions import db
-from datetime import datetime
-from app.utils.datetime_utils import now_gmt7
+
 
 class Event(db.Model):
-    __tablename__ = "Event"
+    __tablename__ = "event"
 
-    event_id = db.Column(db.BigInteger, primary_key=True)
-    # NOTE: In current DB (`ticketbookingdb.sql`), category_id is nullable and may be set to NULL on delete.
-    category_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey('EventCategory.category_id', ondelete='SET NULL', onupdate='RESTRICT'),
-        nullable=True,
-        index=True,
-    )
-    venue_id = db.Column(db.BigInteger, db.ForeignKey('Venue.venue_id'), nullable=False, index=True)
-    organizer_id = db.Column(db.BigInteger, db.ForeignKey('User.user_id'), nullable=False)
-    event_name = db.Column(db.String(500), nullable=False)
-    description = db.Column(db.Text)
-    start_datetime = db.Column('start_time', db.DateTime, nullable=False, index=True)
-    end_datetime = db.Column('end_time', db.DateTime, nullable=False)
-    banner_image_url = db.Column('banner_image', db.String(1000), nullable=True)
-    # DB column is `qr_image` (not `qr_image_url`)
-    qr_image_url = db.Column('qr_image', db.String(1000), nullable=True)
-    total_capacity = db.Column(db.Integer, nullable=False)
-    sold_tickets = db.Column(db.Integer, default=0)
-    status = db.Column(
-        db.Enum('DRAFT', 'PENDING_APPROVAL', 'REJECTED', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED'),
-        default='PENDING_APPROVAL',
-        index=True,
-    )
-    is_featured = db.Column(db.Boolean, default=False, index=True)  # TiDB/MySQL stores as tinyint(1)
-    group_id = db.Column(db.String(100), index=True, nullable=True) # For grouping recurrent events (showtimes)
-    created_at = db.Column(db.DateTime, default=now_gmt7)
-    updated_at = db.Column(db.DateTime, default=now_gmt7, onupdate=now_gmt7)
+    event_id = db.Column("EventID", db.Integer, primary_key=True, autoincrement=True)
+    event_name = db.Column("EventName", db.String(255), nullable=False)
+    category_id = db.Column("CategoryID", db.Integer, db.ForeignKey("eventcategory.CategoryID"), nullable=False)
+    venue_id = db.Column("VenueID", db.Integer, db.ForeignKey("venue.VenueID"), nullable=True)
+    description = db.Column("Description", db.Text, nullable=True)
+    start_date = db.Column("StartDate", db.DateTime, nullable=False)
+    end_date = db.Column("EndDate", db.DateTime, nullable=False)
+    status = db.Column("Status", db.String(50), nullable=False, default="Active")
+    organizer_id = db.Column("OrganizerID", db.Integer, db.ForeignKey("organizer.OrganizerID"), nullable=False)
+    featured_event = db.Column("FeaturedEvent", db.Boolean, nullable=False, default=False)
+    image_url = db.Column("ImageURL", db.String(255), nullable=True)
+    is_banner = db.Column("IsBanner", db.Boolean, nullable=False, default=False)
+    is_featured_event = db.Column("IsFeaturedEvent", db.Boolean, nullable=False, default=False)
+    is_favorite = db.Column("IsFavorite", db.Boolean, nullable=False, default=False)
+    create_date = db.Column("CreateDate", db.DateTime, nullable=False)
+    update_date = db.Column("UpdateDate", db.DateTime, nullable=True)
 
-    # Relationships
-    ticket_types = db.relationship('TicketType', backref='event', lazy=True, cascade='all, delete-orphan')
-    organizer = db.relationship('User', foreign_keys=[organizer_id], backref='organized_events', lazy=True, overlaps="events,manager")
+    ticket_types = db.relationship("TicketType", backref="event", lazy=True)
+    orders = db.relationship("Order", backref="event", lazy=True)
+    venue = db.relationship("Venue", backref="events", lazy=True)
 
-    def to_dict(self, include_details=False):
-        data = {
-            'event_id': self.event_id,
-            'category_id': self.category_id,
-            'venue_id': self.venue_id,
-            'organizer_id': self.organizer_id,
-            'event_name': self.event_name,
-            'description': self.description,
-            'start_datetime': self.start_datetime.isoformat() if self.start_datetime else None,
-            'end_datetime': self.end_datetime.isoformat() if self.end_datetime else None,
-            'banner_image_url': self.banner_image_url,
-            'qr_image_url': self.qr_image_url,
-            'total_capacity': self.total_capacity,
-            'sold_tickets': self.sold_tickets,
-            'status': self.status,
-            'is_featured': self.is_featured,
-            'group_id': self.group_id
+    def to_dict(self):
+        return {
+            "EventID": self.event_id,
+            "EventName": self.event_name,
+            "CategoryID": self.category_id,
+            "VenueID": self.venue_id,
+            "Description": self.description,
+            "StartDate": self.start_date.isoformat() if self.start_date else None,
+            "EndDate": self.end_date.isoformat() if self.end_date else None,
+            "Status": self.status,
+            "OrganizerID": self.organizer_id,
+            "FeaturedEvent": self.featured_event,
+            "ImageURL": self.image_url,
+            "IsBanner": self.is_banner,
+            "IsFeaturedEvent": self.is_featured_event,
+            "IsFavorite": self.is_favorite,
+            "CreateDate": self.create_date.isoformat() if self.create_date else None,
+            "UpdateDate": self.update_date.isoformat() if self.update_date else None,
         }
-        
-        if include_details:
-            data['category'] = self.category.to_dict() if self.category else None
-            data['venue'] = self.venue.to_dict() if self.venue else None
-            data['ticket_types'] = [tt.to_dict() for tt in self.ticket_types] if self.ticket_types else []
-            data['organizer_info'] = self.organizer.organizer_info.to_dict() if self.organizer and self.organizer.organizer_info else None
-        
-        return data

@@ -155,7 +155,7 @@ const Header = () => {
                                                 }}
                                             >
                                                 <List.Item.Meta
-                                                    avatar={<Avatar src={getImageUrl(item.banner_image_url)} shape="square" />}
+                                                    avatar={<Avatar src={getImageUrl(item.banner_image_url || item.image_url || item.ImageURL)} shape="square" />}
                                                     title={item.event_name}
                                                     description={item.venue?.venue_name}
                                                 />

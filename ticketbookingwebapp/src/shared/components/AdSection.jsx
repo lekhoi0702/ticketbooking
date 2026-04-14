@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { advertisementAPI } from '@services/advertisementService';
 import AdBanner from './AdBanner';
 import { Container } from 'react-bootstrap';
+import { getStaticAdsByPosition } from '@shared/constants/staticAds';
 
 /**
  * AdSection Component
@@ -16,28 +16,9 @@ const AdSection = ({
     showContainer = true,
     spacing = '20px'
 }) => {
-    const [ads, setAds] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const ads = useMemo(() => getStaticAdsByPosition(position, limit), [position, limit]);
 
-    useEffect(() => {
-        loadAds();
-    }, [position, limit]);
-
-    const loadAds = async () => {
-        try {
-            setLoading(true);
-            const response = await advertisementAPI.getAdsByPosition(position, limit);
-            if (response.success && response.data) {
-                setAds(response.data);
-            }
-        } catch (error) {
-            console.error('Error loading advertisements:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading || ads.length === 0) {
+    if (ads.length === 0) {
         return null;
     }
 

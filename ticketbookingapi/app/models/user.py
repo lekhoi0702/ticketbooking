@@ -1,46 +1,34 @@
 from app.extensions import db
-from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-from app.utils.datetime_utils import now_gmt7
-from typing import Dict, Any
+
 
 class User(db.Model):
-    __tablename__ = "User"
+    __tablename__ = "users"
 
-    user_id = db.Column(db.BigInteger, primary_key=True)
-    role_id = db.Column(db.BigInteger, db.ForeignKey('Role.role_id'), nullable=False)
-    email = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
-    full_name = db.Column(db.String(255), nullable=False)
-    phone = db.Column(db.String(30))
-    created_at = db.Column(db.DateTime, default=now_gmt7)
-    updated_at = db.Column(db.DateTime, default=now_gmt7, onupdate=now_gmt7)
-    is_active = db.Column(db.Boolean, default=True, index=True)
-    must_change_password = db.Column(db.Boolean, default=False, nullable=False)
+    user_id = db.Column("UserID", db.Integer, primary_key=True, autoincrement=True)
+    password = db.Column("Password", db.String(255), nullable=False)
+    role_id = db.Column("RoleID", db.Integer, db.ForeignKey("role.RoleID"), nullable=False)
+    email = db.Column("Email", db.String(255), nullable=False)
+    phone = db.Column("Phone", db.String(20), nullable=False)
+    full_name = db.Column("FullName", db.String(255), nullable=False)
+    status = db.Column("Status", db.String(50), nullable=False, default="Active")
+    create_id = db.Column("CreateID", db.Integer, nullable=False)
+    create_date = db.Column("CreateDate", db.DateTime, nullable=False)
+    update_date = db.Column("UpdateDate", db.DateTime, nullable=True)
 
-    # Relationships
-    role = db.relationship('Role', backref='users')
-    events = db.relationship('Event', backref='manager', lazy=True)
-    orders = db.relationship('Order', backref='user', lazy=True)
+    orders = db.relationship("Order", backref="user", lazy=True)
 
-    def set_password(self, password: str) -> None:
-        """Set user password with hashing"""
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password: str) -> bool:
-        """Check if provided password matches hash"""
-        return check_password_hash(self.password_hash, password)
-
-    def to_dict(self) -> Dict[str, Any]:
-        role_map = {1: 'ADMIN', 2: 'ORGANIZER', 3: 'USER'}
+    def to_dict(self):
+        role_name = self.role.role_name if self.role is not None else None
         return {
-            'user_id': self.user_id,
-            'role_id': self.role_id,
-            'role': role_map.get(self.role_id, 'USER'),
-            'email': self.email,
-            'full_name': self.full_name,
-            'phone': self.phone,
-            'is_active': self.is_active,
-            'must_change_password': self.must_change_password,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            "UserID": self.user_id,
+            "Password": self.password,
+            "RoleID": self.role_id,
+            "RoleName": role_name,
+            "Email": self.email,
+            "Phone": self.phone,
+            "FullName": self.full_name,
+            "Status": self.status,
+            "CreateID": self.create_id,
+            "CreateDate": self.create_date.isoformat() if self.create_date else None,
+            "UpdateDate": self.update_date.isoformat() if self.update_date else None,
         }

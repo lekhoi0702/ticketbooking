@@ -4,7 +4,6 @@ import {
     Select,
     Row,
     Col,
-    Form,
     Typography
 } from 'antd';
 import { WarningOutlined } from '@ant-design/icons';
@@ -18,7 +17,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
             <Row gutter={[16, 24]}>
                 <Col span={24}>
                     <div style={{ marginBottom: 8 }}>
-                        <Text strong style={{ fontSize: 13 }}>TÊN SỰ KIỆN</Text>
+                        <Text strong style={{ fontSize: 13 }}>TEN SU KIEN</Text>
                         <Text type="danger"> *</Text>
                     </div>
                     <Input
@@ -38,7 +37,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
 
                 <Col xs={24} md={12}>
                     <div style={{ marginBottom: 8 }}>
-                        <Text strong style={{ fontSize: 13 }}>DANH MỤC</Text>
+                        <Text strong style={{ fontSize: 13 }}>DANH MUC</Text>
                         <Text type="danger"> *</Text>
                     </div>
                     <Select
@@ -46,6 +45,8 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
                         value={formData.category_id || undefined}
                         onChange={(val) => handleInputChange({ target: { name: 'category_id', value: val } })}
                         size="large"
+                        showSearch
+                        optionFilterProp="label"
                         status={fieldErrors.category_id ? 'error' : ''}
                         placeholder="Chọn danh mục"
                         options={categories.map(cat => ({
@@ -62,7 +63,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
 
                 <Col xs={24} md={12}>
                     <div style={{ marginBottom: 8 }}>
-                        <Text strong style={{ fontSize: 13 }}>ĐỊA ĐIỂM TỔ CHỨC</Text>
+                        <Text strong style={{ fontSize: 13 }}>DIA DIEM TO CHUC</Text>
                         <Text type="danger"> *</Text>
                     </div>
                     <Select
@@ -70,6 +71,8 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
                         value={formData.venue_id || undefined}
                         onChange={(val) => handleInputChange({ target: { name: 'venue_id', value: val } })}
                         size="large"
+                        showSearch
+                        optionFilterProp="label"
                         status={fieldErrors.venue_id ? 'error' : ''}
                         placeholder="Chọn địa điểm"
                         options={venues.map(venue => ({
@@ -86,7 +89,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
 
                 <Col span={24}>
                     <div style={{ marginBottom: 8 }}>
-                        <Text strong style={{ fontSize: 13 }}>MÔ TẢ CHI TIẾT</Text>
+                        <Text strong style={{ fontSize: 13 }}>MO TA CHI TIET</Text>
                         <Text type="danger"> *</Text>
                     </div>
                     <TextArea
@@ -106,7 +109,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
                 </Col>
 
                 <Col xs={24} md={12}>
-                    <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 13 }}>TRẠNG THÁI LƯU</Text></div>
+                    <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 13 }}>TRANG THAI LUU</Text></div>
                     <Select
                         style={{ width: '100%' }}
                         value={formData.status}
