@@ -1,4 +1,4 @@
-import {
+﻿import {
     TeamOutlined,
     TagsOutlined,
     CalendarOutlined,
@@ -8,13 +8,13 @@ import {
 } from '@ant-design/icons';
 
 export const ADMIN_MENU_ITEMS = [
-    { key: '/admin/users', icon: TeamOutlined, label: 'Nguoi dung' },
-    { key: '/admin/categories', icon: TagsOutlined, label: 'Quan ly the loai' },
-    { key: '/admin/events', icon: CalendarOutlined, label: 'Su kien' },
-    { key: '/admin/orders', icon: FileTextOutlined, label: 'Don hang' },
-    { key: '/admin/statistics', icon: BarChartOutlined, label: 'Thong ke' },
-    { key: '/admin/discounts', icon: PercentageOutlined, label: 'Ma giam gia' },
-    { key: '/admin/banners', icon: FileTextOutlined, label: 'Quan ly Banner' },
+    { key: '/admin/users', icon: TeamOutlined, label: 'Người dùng' },
+    { key: '/admin/categories', icon: TagsOutlined, label: 'Quản lí thể loại' },
+    { key: '/admin/events', icon: CalendarOutlined, label: 'Sự kiện' },
+    { key: '/admin/orders', icon: FileTextOutlined, label: 'Đơn hàng' },
+    { key: '/admin/statistics', icon: BarChartOutlined, label: 'Thống kê' },
+    { key: '/admin/discounts', icon: PercentageOutlined, label: 'Mã tham gia' },
+    { key: '/admin/banners', icon: FileTextOutlined, label: 'Quản lý Banner' },
 ];
 
 export const SIDER_WIDTH = 260;

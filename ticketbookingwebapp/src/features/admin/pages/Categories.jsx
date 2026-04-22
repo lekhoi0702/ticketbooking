@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
     Button,
     Modal,
@@ -48,7 +48,7 @@ const Categories = () => {
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
-            message.error('Khong the tai danh sach the loai');
+            message.error('Không thể tải danh sách thể loại');
         } finally {
             setLoading(false);
         }
@@ -57,8 +57,8 @@ const Categories = () => {
     const { canUndo, undo, recordCreate, clear: clearUndo, undoing } = useAdminUndo({
         onDelete: (id) => api.deleteCategory(id),
         onRefetch: fetchCategories,
-        onSuccess: () => message.success('Da hoan tac'),
-        onError: () => message.error('Khong the hoan tac'),
+        onSuccess: () => message.success('Đã hoàn tác'),
+        onError: () => message.error('Không thể hoàn tác'),
     });
 
     useEffect(() => {
@@ -101,12 +101,12 @@ const Categories = () => {
 
             if (isEditing) {
                 await api.updateCategory(currentCategory.category_id, payload);
-                message.success('Cap nhat the loai thanh cong');
+                message.success('Cập nhật thể loại thành công');
                 clearUndo();
                 setSelectedRowKeys([]);
             } else {
                 const res = await api.createCategory(payload);
-                message.success('Tao the loai moi thanh cong');
+                message.success('Tạo thể loại mới thành công');
                 if (res?.data?.category_id) recordCreate(res.data.category_id);
             }
 
@@ -115,7 +115,7 @@ const Categories = () => {
         } catch (error) {
             console.error('Submit error:', error);
             if (error instanceof Error) {
-                message.error(error.message || 'Co loi xay ra');
+                message.error(error.message || 'Có lỗi xảy ra');
             }
         } finally {
             setSubmitting(false);
@@ -127,20 +127,20 @@ const Categories = () => {
         if (!categoryToDelete) return;
 
         modal.confirm({
-            title: 'Xac nhan xoa the loai',
+            title: 'Xác nhận xóa thể loại',
             icon: <WarningOutlined style={{ color: '#ff4d4f' }} />,
-            content: `Ban co chac chan muon xoa the loai "${categoryToDelete.category_name}"? Hanh dong nay khong the hoan tac.`,
-            okText: 'Xoa the loai',
+            content: `Bạn có chắc chắn muốn xóa thể loại "${categoryToDelete.category_name}"? Hành động này không thể hoàn tác.`,
+            okText: 'Xóa thể loại',
             okType: 'danger',
-            cancelText: 'Huy',
+            cancelText: 'Hủy',
             onOk: async () => {
                 try {
                     await api.deleteCategory(categoryToDelete.category_id);
-                    message.success('Xoa the loai thanh cong');
+                    message.success('Xóa thể loại thành công');
                     setSelectedRowKeys([]);
                     fetchCategories();
                 } catch (error) {
-                    message.error('Khong the xoa the loai nay');
+                    message.error('Không thể xóa thể loại này');
                 }
             },
         });
@@ -165,7 +165,7 @@ const Categories = () => {
 
         try {
             await api.updateCategory(category.category_id, { status: newStatusKey });
-            message.success(`Da ${checked ? 'hien' : 'an'} the loai`);
+            message.success(`Đã ${checked ? 'hiện' : 'ẩn'} thể loại`);
         } catch (error) {
             setCategories((prev) =>
                 prev.map((c) =>
@@ -174,13 +174,13 @@ const Categories = () => {
                         : c
                 )
             );
-            message.error('Loi khi cap nhat trang thai');
+            message.error('Lỗi khi cập nhật trạng thái');
         }
     };
 
     const columns = [
         {
-            title: 'Ten the loai',
+            title: 'Tên thể loại',
             dataIndex: 'category_name',
             key: 'category_name',
             render: (text) => (
@@ -191,14 +191,14 @@ const Categories = () => {
             ),
         },
         {
-            title: 'Trang thai',
+            title: 'Trạng thái',
             dataIndex: 'is_active',
             key: 'is_active',
             width: 120,
             render: (isActive, record) => (
                 <Switch
-                    checkedChildren="Hien"
-                    unCheckedChildren="An"
+                    checkedChildren="Hiện"
+                    unCheckedChildren="Ẩn"
                     checked={isActive}
                     onChange={(checked) => handleToggleStatus(record, checked)}
                 />
@@ -206,7 +206,7 @@ const Categories = () => {
         },
     ];
 
-    if (loading) return <AdminLoadingScreen tip="Dang tai the loai..." />;
+    if (loading) return <AdminLoadingScreen tip="Đang tải thể loại..." />;
 
     return (
         <div style={{ paddingTop: 0 }}>
@@ -215,12 +215,12 @@ const Categories = () => {
                     onUndo={undo}
                     onAdd={handleAdd}
                     onRefresh={fetchCategories}
-                    addLabel="Them the loai"
+                    addLabel="Thêm thể loại"
                     undoDisabled={!canUndo}
                     undoLoading={undoing}
                     refreshLoading={loading}
                     extraActions={[
-                        <Tooltip key="edit" title="Chinh sua">
+                        <Tooltip key="edit" title="Chỉnh sửa">
                             <Button
                                 type="primary"
                                 ghost
@@ -229,10 +229,10 @@ const Categories = () => {
                                 disabled={selectedRowKeys.length === 0}
                                 size="middle"
                             >
-                                Chinh sua
+                                Chỉnh sửa
                             </Button>
                         </Tooltip>,
-                        <Tooltip key="delete" title="Xoa">
+                        <Tooltip key="delete" title="Xóa">
                             <Button
                                 danger
                                 icon={<DeleteOutlined />}
@@ -240,7 +240,7 @@ const Categories = () => {
                                 disabled={selectedRowKeys.length === 0}
                                 size="middle"
                             >
-                                Xoa
+                                Xóa
                             </Button>
                         </Tooltip>,
                     ]}
@@ -256,30 +256,30 @@ const Categories = () => {
                     setSelectedRowKeys={setSelectedRowKeys}
                     selectionType="single"
                     pagination={{ pageSize: 50 }}
-                    emptyText="Khong co the loai"
+                    emptyText="Không có thể loại"
                 />
             </Card>
 
             <Modal
                 title={
                     <Text strong style={{ fontSize: 16 }}>
-                        {isEditing ? `Chinh sua: ${currentCategory?.category_name}` : 'Them the loai moi'}
+                        {isEditing ? `Chỉnh sửa: ${currentCategory?.category_name}` : 'Thêm thể loại mới'}
                     </Text>
                 }
                 open={modalVisible}
                 onOk={handleSubmit}
                 onCancel={() => setModalVisible(false)}
                 confirmLoading={submitting}
-                okText={isEditing ? 'Luu thay doi' : 'Tao moi'}
-                cancelText="Huy"
+                okText={isEditing ? 'Lưu thay đổi' : 'Tạo mới'}
+                cancelText="Hủy"
             >
                 <Form form={form} layout="vertical" name="category_form">
                     <Form.Item
                         name="category_name"
-                        label="Ten the loai"
-                        rules={[{ required: true, message: 'Vui long nhap ten the loai!' }]}
+                        label="Tên thể loại"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên thể loại!' }]}
                     >
-                        <Input placeholder="Vi du: Nhac kich" />
+                        <Input placeholder="Ví dụ: Nhạc kịch" />
                     </Form.Item>
                 </Form>
             </Modal>

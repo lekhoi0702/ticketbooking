@@ -15,11 +15,11 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-please-change')
 
     # Database Configuration
-    DB_HOST = os.getenv('DB_HOST', 'localhost')
-    DB_PORT = int(os.getenv('DB_PORT', 3306))
+    DB_HOST = os.getenv('DB_HOST', 'shinkansen.proxy.rlwy.net')
+    DB_PORT = int(os.getenv('DB_PORT', 25419))
     DB_USER = os.getenv('DB_USER', 'root')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', '')
-    DB_NAME = os.getenv('DB_NAME', 'ticketbookingdb')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', 'PfxhqMrIYbmhcJnoiKGxzlqPcCUwttaO')
+    DB_NAME = os.getenv('DB_NAME', 'ticketbooking')
 
     # Build database URI
     SQLALCHEMY_DATABASE_URI = (

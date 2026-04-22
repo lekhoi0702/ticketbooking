@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Alert, Card, Tag, Typography } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
@@ -33,7 +33,7 @@ const Banners = () => {
 
     const columns = [
         {
-            title: 'Hinh anh',
+            title: 'Hình ảnh',
             dataIndex: 'image',
             key: 'image',
             width: 180,
@@ -46,36 +46,36 @@ const Banners = () => {
             ),
         },
         {
-            title: 'Tieu de',
+            title: 'Tiêu đề',
             dataIndex: 'title',
             key: 'title',
             render: (text) => <Text strong>{text || '-'}</Text>,
         },
         {
-            title: 'Lien ket',
+            title: 'Liên kết',
             dataIndex: 'url',
             key: 'url',
             render: (text) => (
-                text ? <a href={text} target="_blank" rel="noreferrer"><LinkOutlined /> Link</a> : '-'
+                text ? <a href={text} target="_blank" rel="noreferrer"><LinkOutlined /> Liên kết</a> : '-'
             ),
         },
         {
-            title: 'Thu tu',
+            title: 'Thứ tự',
             dataIndex: 'display_order',
             key: 'display_order',
             width: 100,
             align: 'center',
         },
         {
-            title: 'Trang thai',
+            title: 'Trạng thái',
             dataIndex: 'is_active',
             key: 'is_active',
             width: 120,
-            render: (isActive) => <Tag color={isActive ? 'success' : 'default'}>{isActive ? 'HIEN' : 'AN'}</Tag>,
+            render: (isActive) => <Tag color={isActive ? 'success' : 'default'}>{isActive ? 'Hiện' : 'Ẩn'}</Tag>,
         },
     ];
 
-    if (loading) return <AdminLoadingScreen tip="Dang tai banner..." />;
+    if (loading) return <AdminLoadingScreen tip="Đang tải banner..." />;
 
     return (
         <div style={{ paddingTop: 0 }}>
@@ -83,7 +83,7 @@ const Banners = () => {
                 type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
-                message="Trang banner hien tai chi de xem. Du lieu quang cao dang duoc lay tu file cau hinh tinh."
+                message="Trang banner hiện tại chỉ để xem. Dữ liệu quảng cáo đang được lấy từ file cấu hình tĩnh."
             />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
@@ -96,7 +96,7 @@ const Banners = () => {
                     dataSource={banners}
                     rowKey={(record) => record.banner_id || record.id || record.image}
                     pagination={{ pageSize: 50 }}
-                    emptyText="Khong co banner"
+                    emptyText="Không có banner"
                 />
             </Card>
         </div>

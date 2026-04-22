@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Table, Typography, App, Row, Col, Statistic, Select, Space } from 'antd';
 import { TrophyOutlined, DollarCircleOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -24,13 +24,13 @@ const AdminStatistics = () => {
     });
 
     const monthOptions = useMemo(
-        () => Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `Th�ng ${i + 1}` })),
+        () => Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `Tháng ${i + 1}` })),
         []
     );
 
     const yearOptions = useMemo(() => {
         const current = dayjs().year();
-        return [current - 2, current - 1, current, current + 1].map((y) => ({ value: y, label: `Nam ${y}` }));
+        return [current - 2, current - 1, current, current + 1].map((y) => ({ value: y, label: `Năm ${y}` }));
     }, []);
 
     useEffect(() => {
@@ -50,7 +50,7 @@ const AdminStatistics = () => {
             }
         } catch (error) {
             console.error('Error fetching stats:', error);
-            message.error('L?i khi t?i d? li?u th?ng k�');
+            message.error('Lỗi khi tải dữ liệu thống kê');
         } finally {
             setLoading(false);
         }
@@ -154,7 +154,7 @@ const AdminStatistics = () => {
 
     const organizerColumns = [
         {
-            title: 'H?ng',
+            title: 'Hạng',
             dataIndex: 'rank',
             key: 'rank',
             width: 80,
@@ -166,10 +166,10 @@ const AdminStatistics = () => {
                 return <Text strong>{rank}</Text>;
             },
         },
-        { title: 'Nh� t? ch?c', dataIndex: 'organizer', key: 'organizer', render: (text) => <Text strong>{text}</Text> },
-        { title: 'S? don h�ng', dataIndex: 'ordersCount', key: 'ordersCount', align: 'center' },
+        { title: 'Nhà tổ chức', dataIndex: 'organizer', key: 'organizer', render: (text) => <Text strong>{text}</Text> },
+        { title: 'Số đơn hàng', dataIndex: 'ordersCount', key: 'ordersCount', align: 'center' },
         {
-            title: 'T?ng doanh thu',
+            title: 'Tổng doanh thu',
             dataIndex: 'revenue',
             key: 'revenue',
             align: 'right',
@@ -178,9 +178,9 @@ const AdminStatistics = () => {
     ];
 
     const eventRevenueColumns = [
-        { title: 'S? ki?n', dataIndex: 'event_name', key: 'event_name', render: (text) => <Text strong>{text}</Text> },
-        { title: 'Nh� t? ch?c', dataIndex: 'organizer_name', key: 'organizer_name' },
-        { title: '�on PAID', dataIndex: 'paid_orders', key: 'paid_orders', align: 'center' },
+        { title: 'Sự kiện', dataIndex: 'event_name', key: 'event_name', render: (text) => <Text strong>{text}</Text> },
+        { title: 'Nhà tổ chức', dataIndex: 'organizer_name', key: 'organizer_name' },
+        { title: 'Đơn PAID', dataIndex: 'paid_orders', key: 'paid_orders', align: 'center' },
         {
             title: 'Doanh thu',
             dataIndex: 'revenue',
@@ -191,17 +191,17 @@ const AdminStatistics = () => {
     ];
 
     const multiShowColumns = [
-        { title: 'S? ki?n', dataIndex: 'event_name', key: 'event_name' },
-        { title: 'S? bu?i', dataIndex: 'show_count', key: 'show_count', align: 'center' },
+        { title: 'Sự kiện', dataIndex: 'event_name', key: 'event_name' },
+        { title: 'Số buổi', dataIndex: 'show_count', key: 'show_count', align: 'center' },
         {
-            title: 'Bu?i g?n nh?t',
+            title: 'Buổi gần nhất',
             dataIndex: 'latest_start_datetime',
             key: 'latest_start_datetime',
             render: (value) => (value ? dayjs(value).format('DD/MM/YYYY HH:mm') : 'N/A'),
         },
     ];
 
-    if (loading) return <AdminLoadingScreen tip="�ang t�nh to�n s? li?u..." />;
+    if (loading) return <AdminLoadingScreen tip="Đang tính toán số liệu..." />;
 
     return (
         <div style={{ paddingTop: 0 }}>
@@ -217,19 +217,18 @@ const AdminStatistics = () => {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="T?ng doanh thu to�n s�n"
+                            title="Tổng doanh thu toàn sàn"
                             value={summary.totalRevenue}
                             valueStyle={{ color: '#3f8600' }}
                             prefix={<DollarCircleOutlined />}
-                            suffix="?"
-                            formatter={(value) => formatCurrency(value).replace('?', '')}
+                            formatter={(value) => formatCurrency(value)}
                         />
                     </Card>
                 </Col>
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="T?ng don h�ng th�nh c�ng"
+                            title="Tổng đơn hàng thành công"
                             value={summary.totalOrders}
                             prefix={<ShoppingCartOutlined />}
                         />
@@ -238,7 +237,7 @@ const AdminStatistics = () => {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Nh� t? ch?c Top 1"
+                            title="Nhà tổ chức Top1"
                             value={summary.topOrganizer}
                             prefix={<TrophyOutlined style={{ color: '#fadb14' }} />}
                             valueStyle={{ fontSize: 16 }}
@@ -247,11 +246,11 @@ const AdminStatistics = () => {
                 </Col>
             </Row>
 
-            <Card className="shadow-sm" title="X?p h?ng nh� t? ch?c">
+            <Card className="shadow-sm" title="Xếp hạng nhà tổ chức">
                 <Table columns={organizerColumns} dataSource={organizerStats} rowKey="organizer" pagination={{ pageSize: 20 }} />
             </Card>
 
-            <Card className="shadow-sm" style={{ marginTop: 24 }} title="Doanh thu theo s? ki?n">
+            <Card className="shadow-sm" style={{ marginTop: 24 }} title="Doanh thu theo sự kiện">
                 <Table
                     columns={eventRevenueColumns}
                     dataSource={eventRevenueStats}
@@ -263,7 +262,7 @@ const AdminStatistics = () => {
             <Card
                 className="shadow-sm"
                 style={{ marginTop: 24 }}
-                title={`S? ki?n c� nhi?u bu?i bi?u di?n (${summary.multiShowEventCount})`}
+                title={`Sự kiện có nhiều buổi biểu diễn (${summary.multiShowEventCount})`}
             >
                 <Table
                     columns={multiShowColumns}
