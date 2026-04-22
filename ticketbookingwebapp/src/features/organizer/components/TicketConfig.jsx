@@ -156,7 +156,7 @@ const TicketConfig = ({
                             <Row gutter={16} style={{ marginBottom: 24 }}>
                                 <Col xs={24} md={12}>
                                     <div style={{ marginBottom: 8 }}>
-                                        <Text strong style={{ fontSize: 12 }}>TEN HANG VE</Text>
+                                        <Text strong style={{ fontSize: 12 }}>Tên hạng vé</Text>
                                         <Text type="danger"> *</Text>
                                     </div>
                                     <Input
@@ -175,7 +175,7 @@ const TicketConfig = ({
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <div style={{ marginBottom: 8 }}>
-                                        <Text strong style={{ fontSize: 12 }}>GIA VE (VND)</Text>
+                                        <Text strong style={{ fontSize: 12 }}>Giá vé (VND)</Text>
                                         <Text type="danger"> *</Text>
                                     </div>
                                     <InputNumber
@@ -199,7 +199,7 @@ const TicketConfig = ({
                             <Row gutter={16} style={{ marginBottom: 24 }}>
                                 <Col xs={24} md={12}>
                                     <div style={{ marginBottom: 8 }}>
-                                        <Text strong style={{ fontSize: 12 }}>NGÀY MỞ BÁN VÉ</Text>
+                                        <Text strong style={{ fontSize: 12 }}>Ngày mở bán vé</Text>
                                         <Text type="danger"> *</Text>
                                     </div>
                                     <DatePicker
@@ -223,7 +223,7 @@ const TicketConfig = ({
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <div style={{ marginBottom: 8 }}>
-                                        <Text strong style={{ fontSize: 12 }}>NGÀY KẾT THÚC BÁN VÉ</Text>
+                                        <Text strong style={{ fontSize: 12 }}>Ngày kết thúc bán vé</Text>
                                         <Text type="danger"> *</Text>
                                     </div>
                                     <DatePicker
@@ -260,7 +260,7 @@ const TicketConfig = ({
                                 >
                                     <Space>
                                         <AppstoreOutlined style={{ color: '#8c8c8c' }} />
-                                        <Text strong style={{ fontSize: 11, color: '#8c8c8c' }}>CHON GHE TREN SO DO DIA DIEM</Text>
+                                        <Text strong style={{ fontSize: 11, color: '#8c8c8c' }}>Chọn ghế trên sơ đồ địa điểm</Text>
                                     </Space>
                                 </div>
 

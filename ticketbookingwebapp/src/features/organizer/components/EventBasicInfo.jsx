@@ -17,7 +17,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
             <Row gutter={[16, 24]}>
                 <Col span={24}>
                     <div style={{ marginBottom: 8 }}>
-                        <Text strong style={{ fontSize: 13 }}>TEN SU KIEN</Text>
+                        <Text strong style={{ fontSize: 13 }}>Tên sự kiện</Text>
                         <Text type="danger"> *</Text>
                     </div>
                     <Input
@@ -37,7 +37,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
 
                 <Col xs={24} md={12}>
                     <div style={{ marginBottom: 8 }}>
-                        <Text strong style={{ fontSize: 13 }}>DANH MUC</Text>
+                        <Text strong style={{ fontSize: 13 }}>Danh mục</Text>
                         <Text type="danger"> *</Text>
                     </div>
                     <Select
@@ -63,7 +63,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
 
                 <Col xs={24} md={12}>
                     <div style={{ marginBottom: 8 }}>
-                        <Text strong style={{ fontSize: 13 }}>DIA DIEM TO CHUC</Text>
+                        <Text strong style={{ fontSize: 13 }}>Địa điểm tổ chức</Text>
                         <Text type="danger"> *</Text>
                     </div>
                     <Select
@@ -89,7 +89,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
 
                 <Col span={24}>
                     <div style={{ marginBottom: 8 }}>
-                        <Text strong style={{ fontSize: 13 }}>MO TA CHI TIET</Text>
+                        <Text strong style={{ fontSize: 13 }}>Mô tả chi tiết</Text>
                         <Text type="danger"> *</Text>
                     </div>
                     <TextArea
@@ -109,7 +109,7 @@ const EventBasicInfo = ({ formData, handleInputChange, categories, venues, field
                 </Col>
 
                 <Col xs={24} md={12}>
-                    <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 13 }}>TRANG THAI LUU</Text></div>
+                    <div style={{ marginBottom: 8 }}><Text strong style={{ fontSize: 13 }}>Trạng thái lưu</Text></div>
                     <Select
                         style={{ width: '100%' }}
                         value={formData.status}

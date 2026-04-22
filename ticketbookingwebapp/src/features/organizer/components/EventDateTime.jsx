@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Row, Col, Typography, DatePicker, Space } from 'antd';
 import dayjs from 'dayjs';
 import { CalendarOutlined, WarningOutlined } from '@ant-design/icons';
@@ -40,13 +40,13 @@ const EventDateTime = ({
         const end = formData.end_datetime ? dayjs(formData.end_datetime) : null;
 
         if (start && start.isBefore(now) && !existingSchedule) {
-            newErrors.start_datetime = 'Th?i gian b?t d?u ph?i sau th?i di?m hi?n t?i';
+            newErrors.start_datetime = 'Thời gian bắt đầu phải sau thời điểm hiện tại';
         }
         if (end && start && end.isBefore(start)) {
-            newErrors.end_datetime = 'Th?i gian k?t th�c ph?i sau th?i gian b?t d?u';
+            newErrors.end_datetime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
         }
         if (end && end.isBefore(now) && !existingSchedule) {
-            newErrors.end_datetime = 'Th?i gian k?t th�c ph?i sau th?i di?m hi?n t?i';
+            newErrors.end_datetime = 'Thời gian kết thúc phải sau thời điểm hiện tại';
         }
 
         setErrors(newErrors);
@@ -65,12 +65,12 @@ const EventDateTime = ({
             <Space orientation="vertical" size={32} style={{ width: '100%' }}>
                 <div>
                     <div style={{ marginBottom: 16 }}>
-                        <Text strong style={{ fontSize: 13, color: '#8c8c8c' }}>THOI GIAN DIEN RA SU KIEN</Text>
+                        <Text strong style={{ fontSize: 13, color: '#8c8c8c' }}>Thời gian diễn ra sự kiện</Text>
                     </div>
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <div style={{ marginBottom: 8 }}>
-                                <Text strong style={{ fontSize: 13 }}>BAT DAU</Text>
+                                <Text strong style={{ fontSize: 13 }}>Bắt đầu</Text>
                                 <Text type="danger"> *</Text>
                             </div>
                             <DatePicker
@@ -82,7 +82,7 @@ const EventDateTime = ({
                                 format={DATE_TIME_DISPLAY_FORMAT}
                                 disabledDate={disabledDate}
                                 status={allErrors.start_datetime ? 'error' : ''}
-                                placeholder="Ch?n ng�y gi? b?t d?u"
+                                placeholder="Chọn ngày giờ bắt đầu"
                                 allowClear
                                 disabled={disabled}
                             />
@@ -94,7 +94,7 @@ const EventDateTime = ({
                         </Col>
                         <Col xs={24} md={12}>
                             <div style={{ marginBottom: 8 }}>
-                                <Text strong style={{ fontSize: 13 }}>KET THUC</Text>
+                                <Text strong style={{ fontSize: 13 }}>Kết thúc</Text>
                                 <Text type="danger"> *</Text>
                             </div>
                             <DatePicker
@@ -106,7 +106,7 @@ const EventDateTime = ({
                                 format={DATE_TIME_DISPLAY_FORMAT}
                                 disabledDate={disabledEndDate}
                                 status={allErrors.end_datetime ? 'error' : ''}
-                                placeholder="Ch?n ng�y gi? k?t th�c"
+                                placeholder="Chọn ngày giờ kết thúc"
                                 allowClear
                                 disabled={disabled}
                             />
@@ -128,7 +128,7 @@ const EventDateTime = ({
                                     }}
                                 >
                                     <Text strong style={{ fontSize: 13, color: '#8c8c8c' }}>
-                                        LICH DIEN HIEN CO (DA LUU)
+                                        Lịch diễn hiện có (Đã lưu)
                                     </Text>
                                     <div style={{ marginTop: 8 }}>
                                         {existingSchedule.map((item, idx) => (
