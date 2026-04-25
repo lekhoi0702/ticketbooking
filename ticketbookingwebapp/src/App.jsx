@@ -65,18 +65,24 @@ import './App.css';
 import { AuthProvider, useAuth } from '@context/AuthContext';
 
 // Protected Route Component with Role Support
-const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/" }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/", scope = 'user' }) => {
+  const { user, admin, organizer, userAuthenticated, adminAuthenticated, organizerAuthenticated, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return null;
 
-  if (!isAuthenticated) {
+  const currentUser = scope === 'admin' ? admin : scope === 'organizer' ? organizer : user;
+  const currentAuthenticated = scope === 'admin'
+    ? adminAuthenticated
+    : scope === 'organizer'
+      ? organizerAuthenticated
+      : userAuthenticated;
+
+  if (!currentAuthenticated) {
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // Check roles if specified
-  if (allowedRoles && !allowedRoles.includes(user?.role)) {
+  if (allowedRoles && !allowedRoles.includes(currentUser?.role)) {
     return <Navigate to="/" replace />;
   }
 
@@ -239,7 +245,7 @@ function App() {
                 <Route
                   path="/organizer"
                   element={
-                    <ProtectedRoute allowedRoles={['ORGANIZER']} redirectTo="/organizer/home">
+                    <ProtectedRoute scope="organizer" allowedRoles={['ORGANIZER']} redirectTo="/organizer/home">
                       <OrganizerLayout />
                     </ProtectedRoute>
                   }

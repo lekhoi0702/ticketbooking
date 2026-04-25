@@ -29,15 +29,15 @@ const { Title, Text, Paragraph } = Typography;
 
 const OrganizerHome = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
-    const { user, isAuthenticated } = useAuth();
+    const { organizer, organizerAuthenticated } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
-        const isOrganizer = user?.role === 'ORGANIZER';
-        if (isAuthenticated && isOrganizer) {
+        const isOrganizer = organizer?.role === 'ORGANIZER';
+        if (organizerAuthenticated && isOrganizer) {
             navigate('/organizer/events');
         }
-    }, [isAuthenticated, user, navigate]);
+    }, [organizerAuthenticated, organizer, navigate]);
 
     const features = [
         {

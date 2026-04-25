@@ -12,6 +12,8 @@ const buildSessionPayload = (user) => {
     };
 };
 
+const SESSION_KEYS = ['user_session', 'admin_session', 'organizer_session', 'session_user'];
+
 export const authApi = {
     async login(credentials = {}) {
         const invalidLoginMessage = 'Sai thông tin đăng nhập.';
@@ -95,10 +97,12 @@ export const authApi = {
         let userId = payload.user_id || payload.UserID;
         if (!userId) {
             try {
-                const sessionRaw = localStorage.getItem('session_user');
-                if (sessionRaw) {
+                for (const key of SESSION_KEYS) {
+                    const sessionRaw = localStorage.getItem(key);
+                    if (!sessionRaw) continue;
                     const sessionUser = JSON.parse(sessionRaw);
                     userId = sessionUser?.user_id || sessionUser?.UserID || null;
+                    if (userId) break;
                 }
             } catch (_) {}
         }

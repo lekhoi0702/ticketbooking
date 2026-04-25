@@ -8,7 +8,8 @@ import '../Auth/AuthModal.css';
 import './ChangePasswordModal.css';
 
 const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) => {
-    const { user } = useAuth();
+    const { user, admin, organizer } = useAuth();
+    const currentAccount = user || admin || organizer;
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         oldPassword: '',
@@ -52,14 +53,14 @@ const ChangePasswordModal = ({ show, onHide, forceChange = false, onSuccess }) =
             setError(null);
             setFieldErrors({});
 
-            if (!forceChange && (!user || !user.user_id)) {
+            if (!forceChange && (!currentAccount || !currentAccount.user_id)) {
                 setError({ type: 'danger', msg: 'Không tìm thấy thông tin người dùng' });
                 setLoading(false);
                 return;
             }
             const payload = forceChange
-                ? { new_password: newPassword }
-                : { user_id: user.user_id, old_password: oldPassword, new_password: newPassword };
+                ? { user_id: currentAccount?.user_id, new_password: newPassword }
+                : { user_id: currentAccount.user_id, old_password: oldPassword, new_password: newPassword };
             const res = await api.changePassword(payload);
 
             if (res.success) {

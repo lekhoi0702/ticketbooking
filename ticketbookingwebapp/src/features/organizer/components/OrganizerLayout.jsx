@@ -37,7 +37,7 @@ const { Title, Text } = Typography;
 const OrganizerLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, logout, updateUser } = useAuth();
+    const { organizer, organizerAuthenticated, logoutOrganizer, updateOrganizer } = useAuth();
     const { pendingCount } = usePendingRefunds();
 
     const [notifications, setNotifications] = useState([]);
@@ -45,10 +45,10 @@ const OrganizerLayout = () => {
     const [notificationOpen, setNotificationOpen] = useState(false);
 
     const fetchNotifications = async () => {
-        if (!user?.user_id) return;
+        if (!organizer?.user_id) return;
         try {
             setLoadingNotifications(true);
-            const res = await api.getRefundRequests(user.user_id);
+            const res = await api.getRefundRequests(organizer.user_id);
             if (res.success) setNotifications(res.data || []);
         } catch (error) {
             console.error('Error fetching notifications:', error);
@@ -58,8 +58,8 @@ const OrganizerLayout = () => {
     };
 
     useEffect(() => {
-        if (notificationOpen && user?.user_id) fetchNotifications();
-    }, [notificationOpen, user?.user_id]);
+        if (notificationOpen && organizer?.user_id) fetchNotifications();
+    }, [notificationOpen, organizer?.user_id]);
 
     const menuItems = [
         { key: '/organizer/events', icon: <CalendarOutlined />, label: 'Quản lý sự kiện', onClick: () => navigate('/organizer/events') },
@@ -143,6 +143,15 @@ const OrganizerLayout = () => {
         });
 
         return breadcrumbs;
+    };
+
+    const handleLogout = async () => {
+        try {
+            await logoutOrganizer();
+            navigate('/organizer/login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     return (
@@ -349,9 +358,9 @@ const OrganizerLayout = () => {
                             className="user-dropdown-hover"
                             onClick={() => navigate('/organizer/profile')}
                         >
-                            <Avatar src={`https://ui-avatars.com/api/?name=${user?.full_name || 'Organizer'}&background=52c41a&color=fff`} size="small" />
+                            <Avatar src={`https://ui-avatars.com/api/?name=${organizer?.full_name || 'Organizer'}&background=52c41a&color=fff`} size="small" />
                             <Text strong style={{ color: '#606266' }}>
-                                {user?.full_name || 'Nhà tổ chức'}
+                                {organizer?.full_name || 'Nhà tổ chức'}
                             </Text>
                         </div>
                     </Space>
@@ -366,8 +375,8 @@ const OrganizerLayout = () => {
                 </div>
             </Layout>
 
-            {user?.must_change_password && (
-                <ChangePasswordModal show forceChange onSuccess={() => updateUser({ must_change_password: false })} />
+            {organizer?.must_change_password && (
+                <ChangePasswordModal show forceChange onSuccess={() => updateOrganizer({ must_change_password: false })} />
             )}
 
             <style>{`

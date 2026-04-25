@@ -9,7 +9,7 @@ import './Profile.css';
 const { Title, Text } = Typography;
 
 const Profile = () => {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { admin, adminAuthenticated, logoutAdmin } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('password');
 
@@ -28,14 +28,14 @@ const Profile = () => {
 
     const handleLogout = async () => {
         try {
-            await logout();
+            await logoutAdmin();
             navigate('/admin/login');
         } catch (error) {
             console.error("Logout failed:", error);
         }
     };
 
-    if (!isAuthenticated) {
+    if (!adminAuthenticated) {
         return null;
     }
 
@@ -53,9 +53,9 @@ const Profile = () => {
                             />
                             <div>
                                 <Title level={3} style={{ margin: 0 }}>
-                                    {user?.full_name || 'Admin'}
+                                    {admin?.full_name || 'Admin'}
                                 </Title>
-                                <Text type="secondary">{user?.email}</Text>
+                                <Text type="secondary">{admin?.email}</Text>
                                 <div style={{ marginTop: 4 }}>
                                     <Text type="success" strong>ADMINISTRATOR</Text>
                                 </div>

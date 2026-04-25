@@ -8,11 +8,11 @@ import { api } from '@services/api';
 const { Title, Text } = Typography;
 
 const OrganizerProfile = () => {
-    const { user, logout } = useAuth();
+    const { organizer, logoutOrganizer } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        logout();
+        logoutOrganizer();
         navigate('/organizer/login');
     };
     const [stats, setStats] = useState({
@@ -24,15 +24,15 @@ const OrganizerProfile = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (user?.user_id) {
+        if (organizer?.user_id) {
             fetchStats();
         }
-    }, [user?.user_id]);
+    }, [organizer?.user_id]);
 
     const fetchStats = async () => {
         try {
             setLoading(true);
-            const res = await api.getOrganizerStats(user.user_id);
+            const res = await api.getOrganizerStats(organizer.user_id);
             if (res.success) {
                 setStats(res.data);
             }
@@ -167,11 +167,11 @@ const OrganizerProfile = () => {
                     </Col>
                     <Col span={12} md={8}>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Tên nhà tổ chức</Text>
-                        <Title level={5} style={{ margin: 0 }}>{user?.full_name}</Title>
+                        <Title level={5} style={{ margin: 0 }}>{organizer?.full_name}</Title>
                     </Col>
                     <Col span={12} md={8}>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Email</Text>
-                        <Title level={5} style={{ margin: 0 }}>{user?.email}</Title>
+                        <Title level={5} style={{ margin: 0 }}>{organizer?.email}</Title>
                     </Col>
                     <Col span={12} md={8}>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Vai trò</Text>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, message, Space, Typography } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
+import { useAuth } from '@context/AuthContext';
 import { api } from '@services/api';
 
 const { Title, Text } = Typography;
@@ -8,11 +9,14 @@ const { Title, Text } = Typography;
 const ChangePasswordTab = () => {
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
+    const { user, admin, organizer } = useAuth();
+    const currentAccount = user || admin || organizer;
 
     const onFinish = async (values) => {
         try {
             setLoading(true);
             const res = await api.changePassword({
+                user_id: currentAccount?.user_id,
                 old_password: values.oldPassword,
                 new_password: values.newPassword
             });

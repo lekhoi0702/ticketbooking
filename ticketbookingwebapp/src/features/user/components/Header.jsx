@@ -25,7 +25,7 @@ const Header = () => {
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
     const [categories, setCategories] = useState([]);
 
-    const { user, logout, isAuthenticated, showLoginModal, setShowLoginModal, triggerLogin, redirectIntent, clearRedirectIntent } = useAuth();
+    const { user, logoutUser, userAuthenticated, showLoginModal, setShowLoginModal, triggerLogin, redirectIntent, clearRedirectIntent } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const suggestionRef = useRef(null);
@@ -81,12 +81,12 @@ const Header = () => {
     };
 
     const handleLogout = () => {
-        logout();
+        logoutUser();
         navigate('/');
     };
 
     const handleMyTickets = () => {
-        if (isAuthenticated) {
+        if (userAuthenticated) {
             navigate('/profile?tab=tickets');
         } else {
             triggerLogin({ path: '/profile?tab=tickets', action: 'navigate' });
@@ -187,7 +187,7 @@ const Header = () => {
 
                     <div className="header-right">
                         <Space size="middle">
-                            {isAuthenticated ? (
+                            {userAuthenticated ? (
                                 <Space size="middle">
                                     <Button
                                         type="text"

@@ -46,7 +46,7 @@ const getActiveMenuKey = (pathname = '') => {
 };
 
 const AdminLayout = () => {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { admin, adminAuthenticated, logoutAdmin } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const screens = useBreakpoint();
@@ -115,6 +115,7 @@ const AdminLayout = () => {
         try {
             setChangingPassword(true);
             const res = await api.changePassword({
+                user_id: admin?.user_id,
                 old_password: values.oldPassword,
                 new_password: values.newPassword
             });
@@ -136,7 +137,7 @@ const AdminLayout = () => {
 
     const handleLogout = async () => {
         try {
-            await logout();
+            await logoutAdmin();
             navigate('/admin/login');
         } catch (error) {
             console.error("Logout failed:", error);
@@ -165,7 +166,7 @@ const AdminLayout = () => {
     const siderWidth = collapsed ? 80 : SIDER_WIDTH;
     const contentMarginLeft = isDesktop ? siderWidth : 0;
 
-    if (!isAuthenticated || user?.role !== 'ADMIN') {
+    if (!adminAuthenticated || admin?.role !== 'ADMIN') {
         return <AdminLogin />;
     }
 
@@ -252,7 +253,7 @@ const AdminLayout = () => {
                                     icon={<UserOutlined />}
                                 />
                                 <Text strong>
-                                    {user?.full_name || user?.email?.split('@')[0] || 'Admin'}
+                                    {admin?.full_name || admin?.email?.split('@')[0] || 'Admin'}
                                 </Text>
                                 <DownOutlined style={{ fontSize: 16, color: '#8c8c8c' }} />
                             </Space>
