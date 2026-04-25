@@ -35,7 +35,12 @@ const Header = () => {
             try {
                 const res = await api.getCategories();
                 if (res.success) {
-                    setCategories(res.data);
+                  const sorted = [...(res.data || [])].sort((a, b) => {
+                    const orderA = a.display_order ?? a.category_id ?? 0;
+                    const orderB = b.display_order ?? b.category_id ?? 0;
+                    return orderA - orderB;
+                  });
+                  setCategories(sorted);
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error);

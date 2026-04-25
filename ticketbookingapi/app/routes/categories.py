@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 
 from flask import Blueprint, request
 
@@ -48,14 +48,21 @@ class CategoryDetailView(ApiMethodView):
         data = request.get_json(silent=True) or {}
         category_name = data.get("CategoryName") or data.get("category_name")
         status = data.get("Status") or data.get("status")
+        display_order = data.get("DisplayOrder") if "DisplayOrder" in data else data.get("display_order")  # 👈 thêm dòng này
 
         if category_name is not None:
             category.category_name = category_name
         if status is not None:
             category.status = str(status).upper()
+        if display_order is not None:                          # 👈 thêm block này
+            try:
+                category.display_order = int(display_order)
+            except (TypeError, ValueError):
+                pass
 
         category.update_date = datetime.utcnow()
         db.session.commit()
+        return self.ok(category.to_dict())
         return self.ok(category.to_dict())
 
     def delete(self, category_id):

@@ -87,6 +87,8 @@ const normalizeCategory = (category) => {
         ...category,
         display_order: category.display_order ?? category.DisplayOrder ?? category.category_id ?? category.CategoryID ?? 1,
         is_active: !['HIDDEN', 'INACTIVE', 'DISABLED'].includes(status),
+        category_id: pickValue(category.category_id, category.CategoryID),
+        category_name: pickValue(category.category_name, category.CategoryName),
     };
 };
 
@@ -271,8 +273,9 @@ export const adminApi = {
         const res = await apiRequest(`/categories/${categoryId}`, {
             method: 'PUT',
             body: {
-                CategoryName: payload.category_name ?? payload.CategoryName,
-                Status: payload.status ?? payload.Status,
+              CategoryName: payload.category_name ?? payload.CategoryName,
+              Status: payload.status ?? payload.Status,
+              ...(payload.display_order !== undefined && { DisplayOrder: payload.display_order }),
             },
         });
         if (!res.success) return res;
@@ -282,7 +285,21 @@ export const adminApi = {
     async deleteCategory(categoryId) {
         return apiRequest(`/categories/${categoryId}`, { method: 'DELETE' });
     },
-
+    async saveCategoryOrder(orderedCategories = []) {
+      const results = await Promise.allSettled(
+        orderedCategories.map((cat, index) =>
+          apiRequest(`/categories/${cat.category_id}`, {
+            method: 'PUT',
+            body: { DisplayOrder: index + 1 },
+          })
+        )
+      );
+      const failed = results.filter((r) => r.status === 'rejected' || r.value?.success === false);
+      if (failed.length > 0) {
+        return { success: false, message: `${failed.length} thể loại không thể cập nhật` };
+      }
+      return { success: true, message: '' };
+    },
     async getBanners() {
         return { success: true, data: flattenAds(), message: '' };
     },

@@ -1,4 +1,4 @@
-from app.extensions import db
+﻿from app.extensions import db
 
 
 class EventCategory(db.Model):
@@ -10,6 +10,7 @@ class EventCategory(db.Model):
     create_id = db.Column("CreateID", db.Integer, nullable=False)
     create_date = db.Column("CreateDate", db.DateTime, nullable=False)
     update_date = db.Column("UpdateDate", db.DateTime, nullable=True)
+    display_order = db.Column("DisplayOrder", db.Integer, nullable=True, default=None)  # 👈 thêm dòng này
 
     events = db.relationship("Event", backref="category", lazy=True)
 
@@ -21,4 +22,5 @@ class EventCategory(db.Model):
             "CreateID": self.create_id,
             "CreateDate": self.create_date.isoformat() if self.create_date else None,
             "UpdateDate": self.update_date.isoformat() if self.update_date else None,
-        }
+            "DisplayOrder": self.display_order if self.display_order is not None else self.category_id,        
+            }

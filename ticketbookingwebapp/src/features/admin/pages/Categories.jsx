@@ -1,17 +1,17 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState, useRef } from 'react';
 import {
-    Button,
-    Modal,
-    Form,
-    Input,
-    Card,
-    Space,
-    Typography,
-    Tooltip,
-    Switch,
-    App,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Card,
+  Space,
+  Typography,
+  Tooltip,
+  Switch,
+  App,
 } from 'antd';
-import { EditOutlined, TagsOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons';
+import { EditOutlined, TagsOutlined, DeleteOutlined, WarningOutlined, HolderOutlined, SaveOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
 import AdminTable from '@features/admin/components/AdminTable';
@@ -22,7 +22,9 @@ const { Text } = Typography;
 
 const normalizeCategories = (items = []) =>
     [...items].sort((a, b) => {
-        return (a.category_id || 0) - (b.category_id || 0);
+        const orderA = a.display_order ?? a.category_id ?? 0;
+        const orderB = b.display_order ?? b.category_id ?? 0;
+        return orderA - orderB;
     });
 
 const Categories = () => {
@@ -36,7 +38,9 @@ const Categories = () => {
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-
+    const [savedOrder, setSavedOrder] = useState([]);
+    const [savingOrder, setSavingOrder] = useState(false);
+    const dragIndex = useRef(null);
     const fetchCategories = async () => {
         try {
             setLoading(true);
@@ -45,6 +49,8 @@ const Categories = () => {
             if (response.success) {
                 const normalized = normalizeCategories(response.data || []);
                 setCategories(normalized);
+                setSavedOrder(normalized);
+
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
@@ -180,6 +186,19 @@ const Categories = () => {
 
     const columns = [
         {
+            title: '',
+            key: 'drag',
+            width: 40,
+            onCell: (_, index) => ({
+                draggable: true,
+                onDragStart: () => onDragStart(index),
+                onDragOver: (e) => onDragOver(e, index),
+                onDragEnd,
+                style: { cursor: 'grab' },
+            }),
+            render: () => <HolderOutlined style={{ color: '#ccc' }} />,
+        },
+        {
             title: 'Tên thể loại',
             dataIndex: 'category_name',
             key: 'category_name',
@@ -208,6 +227,42 @@ const Categories = () => {
 
     if (loading) return <AdminLoadingScreen tip="Đang tải thể loại..." />;
 
+    const hasOrderChanged = categories.some(
+      (cat, i) => cat.category_id !== savedOrder[i]?.category_id
+    );
+
+    const onDragStart = (index) => { dragIndex.current = index; };
+
+    const onDragOver = (e, index) => {
+      e.preventDefault();
+      if (dragIndex.current === null || dragIndex.current === index) return;
+      setCategories((prev) => {
+        const next = [...prev];
+        const [dragged] = next.splice(dragIndex.current, 1);
+        next.splice(index, 0, dragged);
+        dragIndex.current = index;
+        return next;
+      });
+    };
+
+    const onDragEnd = () => { dragIndex.current = null; };
+
+    const handleSaveOrder = async () => {
+      setSavingOrder(true);
+      try {
+        const res = await api.saveCategoryOrder(categories);
+        if (res.success) {
+          message.success('Đã lưu thứ tự thể loại');
+          setSavedOrder([...categories]);
+        } else {
+          message.error(res.message || 'Không thể lưu thứ tự');
+        }
+      } catch {
+        message.error('Lỗi khi lưu thứ tự');
+      } finally {
+        setSavingOrder(false);
+      }
+    };
     return (
         <div style={{ paddingTop: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
@@ -220,6 +275,17 @@ const Categories = () => {
                     undoLoading={undoing}
                     refreshLoading={loading}
                     extraActions={[
+                        <Button
+                            key="save-order"
+                            type="primary"
+                            icon={<SaveOutlined />}
+                            onClick={handleSaveOrder}
+                            loading={savingOrder}
+                            disabled={!hasOrderChanged}
+                            size="middle"
+                        >
+                            Lưu thứ tự
+                        </Button>,
                         <Tooltip key="edit" title="Chỉnh sửa">
                             <Button
                                 type="primary"
