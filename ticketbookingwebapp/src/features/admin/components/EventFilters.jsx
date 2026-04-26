@@ -1,28 +1,9 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { Card, Row, Col, Input, Select, Divider, Button, Space, Typography } from 'antd';
 import { SearchOutlined, EyeOutlined } from '@ant-design/icons';
-import AdminToolbar from './AdminToolbar';
+import debounce from 'lodash/debounce';
 
 const { Text } = Typography;
-const { Option } = Select;
-
-const STATUS_OPTIONS = [
-    { value: 'ALL', label: 'Tất cả trạng thái' },
-    { value: 'DRAFT', label: 'Nháp' },
-    { value: 'PENDING_APPROVAL', label: 'Chờ duyệt' },
-    { value: 'PUBLISHED', label: 'Công khai' },
-    { value: 'REJECTED', label: 'Từ chối duyệt' },
-    { value: 'CANCELLED', label: 'Hủy' },
-    { value: 'ONGOING', label: 'Đang diễn ra' },
-    { value: 'COMPLETED', label: 'Đã kết thúc' },
-    { value: 'DELETED', label: 'Đã xóa' },
-];
-
-const FEATURED_OPTIONS = [
-    { value: 'ALL', label: 'Tất cả' },
-    { value: 'FEATURED', label: 'Sự kiện nổi bật' },
-    { value: 'NOT_FEATURED', label: 'Sự kiện thường' },
-];
 
 const EventFilters = ({
     searchQuery,
@@ -40,13 +21,54 @@ const EventFilters = ({
     undoLoading,
     loading,
 }) => {
+    // 1. Local state for immediate input feedback
+    const [localSearch, setLocalSearch] = React.useState(searchQuery);
+
+    // 2. Debounce search query to prevent excessive filtering lag
+    const debouncedSetSearch = useMemo(
+        () => debounce((val) => setSearchQuery(val), 300),
+        [setSearchQuery]
+    );
+
+    const handleSearchChange = (e) => {
+        const val = e.target.value;
+        setLocalSearch(val);
+        debouncedSetSearch(val);
+    };
+
+    // 2.5 Clean up debounce on unmount
+    React.useEffect(() => {
+        return () => {
+            debouncedSetSearch.cancel();
+        };
+    }, [debouncedSetSearch]);
+
+    // 3. Memoize options
+    const STATUS_OPTIONS = useMemo(() => [
+        { value: 'ALL', label: 'Tất cả trạng thái' },
+        { value: 'DRAFT', label: 'Nháp' },
+        { value: 'PENDING_APPROVAL', label: 'Chờ duyệt' },
+        { value: 'PUBLISHED', label: 'Công khai' },
+        { value: 'REJECTED', label: 'Từ chối duyệt' },
+        { value: 'CANCELLED', label: 'Hủy' },
+        { value: 'ONGOING', label: 'Đang diễn ra' },
+        { value: 'COMPLETED', label: 'Đã kết thúc' },
+        { value: 'DELETED', label: 'Đã xóa' },
+    ], []);
+
+    const FEATURED_OPTIONS = useMemo(() => [
+        { value: 'ALL', label: 'Tất cả' },
+        { value: 'FEATURED', label: 'Sự kiện nổi bật' },
+        { value: 'NOT_FEATURED', label: 'Sự kiện thường' },
+    ], []);
+
     const hasSelection = selectedRowKeys?.length > 0;
     const firstRecord = hasSelection && events?.length
         ? events.find((e) => e.event_id === selectedRowKeys[0])
         : null;
 
     return (
-        <Card style={{ marginBottom: 24, borderRadius: 12 }}>
+        <Card style={{ marginBottom: 24, borderRadius: 12, overflow: 'visible' }}>
             <Row gutter={16}>
                 <Col xs={24} md={8}>
                     <div style={{ marginBottom: 8, fontSize: 16, color: '#8c8c8c', fontWeight: 600 }}>
@@ -55,8 +77,8 @@ const EventFilters = ({
                     <Input
                         placeholder="Tên sự kiện, địa điểm..."
                         prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        value={localSearch}
+                        onChange={handleSearchChange}
                         allowClear
                         size="large"
                     />
@@ -70,13 +92,12 @@ const EventFilters = ({
                         style={{ width: '100%' }}
                         onChange={setFilterStatus}
                         size="large"
-                    >
-                        {STATUS_OPTIONS.map((o) => (
-                            <Option key={o.value} value={o.value}>
-                                {o.label}
-                            </Option>
-                        ))}
-                    </Select>
+                        options={STATUS_OPTIONS}
+                        placeholder="Chọn trạng thái"
+                        allowClear
+                        dropdownStyle={{ zIndex: 10001 }}
+                        virtual={false}
+                    />
                 </Col>
                 <Col xs={12} md={8}>
                     <div style={{ marginBottom: 8, fontSize: 16, color: '#8c8c8c', fontWeight: 600 }}>
@@ -87,13 +108,12 @@ const EventFilters = ({
                         style={{ width: '100%' }}
                         onChange={setFilterFeatured}
                         size="large"
-                    >
-                        {FEATURED_OPTIONS.map((o) => (
-                            <Option key={o.value} value={o.value}>
-                                {o.label}
-                            </Option>
-                        ))}
-                    </Select>
+                        options={FEATURED_OPTIONS}
+                        placeholder="Chọn loại"
+                        allowClear
+                        dropdownStyle={{ zIndex: 10001 }}
+                        virtual={false}
+                    />
                 </Col>
             </Row>
 
@@ -113,14 +133,26 @@ const EventFilters = ({
                         </Space>
                     )}
                 </div>
-                <AdminToolbar
-                    onUndo={onUndo}
-                    onRefresh={onRefresh}
-                    undoDisabled={undoDisabled}
-                    undoLoading={undoLoading}
-                    refreshLoading={loading}
-                    refreshDisabled={loading}
-                />
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <Button 
+                        onClick={() => {
+                            setLocalSearch('');
+                            setSearchQuery('');
+                            setFilterStatus('ALL');
+                            setFilterFeatured('ALL');
+                        }}
+                        disabled={loading}
+                    >
+                        Xóa bộ lọc
+                    </Button>
+                    <Button 
+                        type="primary"
+                        onClick={onRefresh}
+                        loading={loading}
+                    >
+                        Làm mới
+                    </Button>
+                </div>
             </div>
         </Card>
     );

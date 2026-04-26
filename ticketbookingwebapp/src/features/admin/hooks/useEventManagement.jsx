@@ -143,15 +143,29 @@ const useEventManagement = () => {
     );
 
     const filteredEvents = useMemo(() => {
+        if (!events) return [];
+        const query = searchQuery?.toLowerCase().trim();
+        
         return events.filter((event) => {
-            if (filterStatus !== 'ALL' && event.status !== filterStatus) return false;
-            if (filterFeatured === 'FEATURED' && !event.is_featured) return false;
-            if (filterFeatured === 'NOT_FEATURED' && event.is_featured) return false;
-            if (
-                searchQuery &&
-                !event.event_name?.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-                return false;
+            // Robust status filtering
+            const effectiveStatus = filterStatus || 'ALL';
+            if (effectiveStatus !== 'ALL') {
+                if (!event.status || event.status.toUpperCase() !== effectiveStatus.toUpperCase()) {
+                    return false;
+                }
+            }
+            
+            const effectiveFeatured = filterFeatured || 'ALL';
+            if (effectiveFeatured === 'FEATURED' && !event.is_featured) return false;
+            if (effectiveFeatured === 'NOT_FEATURED' && event.is_featured) return false;
+            
+            if (query) {
+                const nameMatch = event.event_name?.toLowerCase().includes(query);
+                const locationMatch = event.location?.toLowerCase().includes(query);
+                const organizerMatch = event.organizer_name?.toLowerCase().includes(query);
+                if (!nameMatch && !locationMatch && !organizerMatch) return false;
+            }
+            
             return true;
         });
     }, [events, filterStatus, filterFeatured, searchQuery]);

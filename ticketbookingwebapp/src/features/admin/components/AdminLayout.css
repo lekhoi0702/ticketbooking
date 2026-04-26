@@ -1,6 +1,30 @@
 /* Admin Layout - Pure / Borderless (admin thuần, không có border) */
 /* Thống nhất font-size 16px cho toàn bộ giao diện admin */
 
+/* Global dropdown fix - ensure it's above everything and visible */
+.ant-select-dropdown {
+  z-index: 10001 !important;
+  font-size: 16px !important;
+  visibility : visible !important;
+  opacity : 1 !important;
+  transition : none !important;
+}
+
+.ant-select-item {
+  font-size: 16px !important;
+  padding: 8px 12px !important;
+}
+
+.ant-select-selection-item {
+  font-size: 16px !important;
+  line-height: 38px !important; /* Matches large size height */
+}
+
+.ant-select-dropdown-hidden {
+  display: none !important;
+  visibility : hidden !important;
+}
+
 .admin-layout-pure {
   min-height: 100vh;
   font-size: 16px;
@@ -72,6 +96,7 @@
 /* Content area: no extra borders */
 .admin-layout-pure .ant-layout-content {
   background: transparent;
+  overflow: visible !important;
 }
 
 .admin-layout-pure .admin-content-inner {
