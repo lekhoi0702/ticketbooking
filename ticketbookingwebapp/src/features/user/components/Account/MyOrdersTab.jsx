@@ -26,7 +26,19 @@ const MyOrdersTab = () => {
             setLoading(true);
             const res = await api.getUserOrders(user.user_id);
             if (res.success) {
-                setOrders(res.data);
+                const baseOrders = Array.isArray(res.data) ? res.data : [];
+                const detailResults = await Promise.all(
+                    baseOrders.map((o) => api.getOrder(o.order_id))
+                );
+                const enrichedOrders = baseOrders.map((order, idx) => {
+                    const detail = detailResults[idx];
+                    const tickets = detail?.success && Array.isArray(detail?.data?.tickets) ? detail.data.tickets : [];
+                    const hasUsedTicket = tickets.some(
+                        (t) => String(t.ticket_status || t.TicketStatus || t.status || "").toUpperCase() === "USED"
+                    );
+                    return { ...order, has_used_ticket: hasUsedTicket };
+                });
+                setOrders(enrichedOrders);
             }
         } catch (error) {
             console.error('Error fetching orders:', error);
@@ -142,7 +154,7 @@ const MyOrdersTab = () => {
 
     const canRequestRefund = (order) => {
         const canRefund = typeof order.can_refund === 'boolean' ? order.can_refund : order.is_sale_active;
-        return order.order_status === 'PAID' && !!canRefund;
+        return order.order_status === 'PAID' && !!canRefund && !order.has_used_ticket;
     };
 
     const handleRefundRequest = async (order) => {
@@ -224,3 +236,4 @@ const MyOrdersTab = () => {
 };
 
 export default MyOrdersTab;
+

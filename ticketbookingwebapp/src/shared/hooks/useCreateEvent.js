@@ -9,7 +9,8 @@ import { useAuth } from '@context/AuthContext';
  */
 export const useCreateEvent = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, organizer, loading: authLoading } = useAuth();
+    const actor = organizer || user;
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState(null);
@@ -42,7 +43,7 @@ export const useCreateEvent = () => {
         total_capacity: 0,
         status: 'PENDING_APPROVAL',
         is_featured: false,
-        manager_id: user?.user_id || 1
+        manager_id: actor?.user_id || 1
     });
 
     const [bannerImage, setBannerImage] = useState(null);
@@ -50,6 +51,8 @@ export const useCreateEvent = () => {
     const [vietqrImage, setVietqrImage] = useState(null);
     const [vietqrPreview, setVietqrPreview] = useState(null);
     const [vietqrImageUrl, setVietqrImageUrl] = useState(null);
+    const [qrBankName, setQrBankName] = useState('');
+    const [qrAccountNumber, setQrAccountNumber] = useState('');
     const [ticketTypes, setTicketTypes] = useState([
         {
             type_name: '',
@@ -64,8 +67,9 @@ export const useCreateEvent = () => {
     const [activeTicketTypeIndex, setActiveTicketTypeIndex] = useState(0);
 
     useEffect(() => {
+        if (authLoading) return;
         fetchInitialData();
-    }, []);
+    }, [authLoading, actor?.user_id]);
 
     useEffect(() => {
         if (formData.venue_id) {
@@ -76,9 +80,16 @@ export const useCreateEvent = () => {
     const fetchInitialData = async () => {
         try {
             setLoadingData(true);
+            const withTimeout = (promise, ms = 15000) =>
+                Promise.race([
+                    promise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('REQUEST_TIMEOUT')), ms)),
+                ]);
+
+            const managerId = actor?.user_id || 1;
             const [categoriesRes, venuesRes] = await Promise.all([
-                api.getCategories(),
-                api.getOrganizerVenues(user?.user_id || 1)
+                withTimeout(api.getCategories()),
+                withTimeout(api.getOrganizerVenues(managerId))
             ]);
 
             if (categoriesRes.success) {
@@ -189,6 +200,11 @@ export const useCreateEvent = () => {
             setVietqrImage(null); // Clear file if URL is selected
             setVietqrPreview(url.trim());
         }
+    };
+
+    const handleVietQRBankInfoChange = ({ bank_name, account_number }) => {
+        setQrBankName((bank_name || '').trim());
+        setQrAccountNumber((account_number || '').trim());
     };
 
     const handleTicketTypeChange = (index, field, value) => {
@@ -432,16 +448,6 @@ export const useCreateEvent = () => {
         if (!isEdit && !bannerImage) {
             errors.banner_image = 'Vui lòng tải lên ảnh bìa sự kiện';
         }
-
-        // If not editing, or if editing but user might have changed dates, we usually want to be careful.
-        // However, for editing an existing event, it's common that the start_datetime is already in the past.
-        // So we only enforce "future" for NEW events.
-        if (!isEdit) {
-            if (start && start.isBefore(now)) {
-                errors.start_datetime = 'Thời gian bắt đầu phải sau thời điểm hiện tại';
-            }
-        }
-
         // Event end must always be after start
         if (end && start && (end.isBefore(start) || end.isSame(start))) {
             errors.end_datetime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
@@ -482,6 +488,12 @@ export const useCreateEvent = () => {
             } else if (vietqrImageUrl) {
                 formDataToSend.append('qr_image_url', vietqrImageUrl);
             }
+            if (qrBankName) {
+                formDataToSend.append('bank_name', qrBankName);
+            }
+            if (qrAccountNumber) {
+                formDataToSend.append('account_number', qrAccountNumber);
+            }
 
             let response;
             if (isEdit) {
@@ -489,6 +501,14 @@ export const useCreateEvent = () => {
                 ticketTypes.forEach((tt) => {
                     if (tt.type_name && tt.price && tt.quantity) {
                         const quantity = Number(tt.quantity || (tt.selectedSeats?.length || 0));
+                        const selectedSeats = Array.isArray(tt.selectedSeats)
+                            ? tt.selectedSeats.map((seat) => ({
+                                seat_id: seat.seat_id ?? seat.SeatID ?? null,
+                                row_name: seat.row_name ?? seat.RowNumber ?? '',
+                                seat_number: String(seat.seat_number ?? seat.SeatNumber ?? ''),
+                                area: seat.area ?? seat.area_name ?? seat.Area ?? null,
+                            }))
+                            : [];
                         const ttPayload = {
                             type_name: tt.type_name,
                             price: tt.price,
@@ -496,6 +516,7 @@ export const useCreateEvent = () => {
                             description: tt.description,
                             sale_start_date: tt.sale_start_date,
                             sale_end_date: tt.sale_end_date,
+                            selected_seats: selectedSeats,
                         };
                         if (tt.ticket_type_id) {
                             ttPayload.ticket_type_id = tt.ticket_type_id;
@@ -509,6 +530,14 @@ export const useCreateEvent = () => {
                 ticketTypes.forEach((tt) => {
                     if (tt.type_name && tt.price && tt.quantity) {
                         const quantity = Number(tt.quantity || (tt.selectedSeats?.length || 0));
+                        const selectedSeats = Array.isArray(tt.selectedSeats)
+                            ? tt.selectedSeats.map((seat) => ({
+                                seat_id: seat.seat_id ?? seat.SeatID ?? null,
+                                row_name: seat.row_name ?? seat.RowNumber ?? '',
+                                seat_number: String(seat.seat_number ?? seat.SeatNumber ?? ''),
+                                area: seat.area ?? seat.area_name ?? seat.Area ?? null,
+                            }))
+                            : [];
                         formDataToSend.append('ticket_types', JSON.stringify({
                             type_name: tt.type_name,
                             price: tt.price,
@@ -516,6 +545,7 @@ export const useCreateEvent = () => {
                             description: tt.description,
                             sale_start_date: tt.sale_start_date,
                             sale_end_date: tt.sale_end_date,
+                            selected_seats: selectedSeats,
                         }));
                     }
                 });
@@ -576,6 +606,7 @@ export const useCreateEvent = () => {
         handleImageChange,
         handleVietQRImageChange,
         handleVietQRURLChange,
+        handleVietQRBankInfoChange,
         removeBanner: () => {
             setBannerImage(null);
             setBannerPreview(null);
@@ -584,6 +615,8 @@ export const useCreateEvent = () => {
             setVietqrImage(null);
             setVietqrImageUrl(null);
             setVietqrPreview(null);
+            setQrBankName('');
+            setQrAccountNumber('');
         },
         handleTicketTypeChange,
         toggleSeatSelection,
@@ -595,4 +628,5 @@ export const useCreateEvent = () => {
         navigate
     };
 };
+
 

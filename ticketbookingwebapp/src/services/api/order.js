@@ -72,6 +72,8 @@ const normalizeTicket = (ticket, order) => ({
     ticket_status: String(ticket.ticket_status || ticket.TicketStatus || ticket.status || ticket.Status || 'ACTIVE').toUpperCase(),
     ticket_type_name: ticket.ticket_type_name || ticket.TicketTypeName || null,
     seat_name: ticket.seat_name || ticket.SeatName || null,
+    seat_label: ticket.seat_label || ticket.SeatLabel || ticket.seat_name || ticket.SeatName || null,
+    seat_id: ticket.seat_id || ticket.SeatID || null,
     price: toNumber(ticket.price || ticket.Price || ticket.ticket_price || ticket.TicketPrice || 0),
     order_id: order?.order_id,
     order_code: order?.order_code,
@@ -297,11 +299,44 @@ export const orderApi = {
         const ordersRes = await this.getUserOrders(userId);
         if (!ordersRes.success) return ordersRes;
 
+        const seatsByEventId = {};
         const tickets = [];
         for (const order of ordersRes.data || []) {
             const tRes = await apiRequest('/tickets', { query: { OrderID: order.order_id } });
+            if (!seatsByEventId[order.event_id]) {
+                const sRes = await apiRequest('/seats', { query: { EventID: order.event_id } });
+                const seatMap = {};
+                if (sRes.success && Array.isArray(sRes.data)) {
+                    sRes.data.forEach((s) => {
+                        const seatId = s.seat_id || s.SeatID;
+                        if (!seatId) return;
+                        seatMap[String(seatId)] = {
+                            seat_id: seatId,
+                            row_name: s.row_name || s.row_number || s.RowNumber || null,
+                            seat_number: s.seat_number || s.SeatNumber || null,
+                            seat_label: s.seat_label || s.SeatLabel || null,
+                        };
+                    });
+                }
+                seatsByEventId[order.event_id] = seatMap;
+            }
             if (tRes.success && Array.isArray(tRes.data)) {
-                tickets.push(...tRes.data.map((t) => normalizeTicket(t, order)));
+                const seatMap = seatsByEventId[order.event_id] || {};
+                tickets.push(
+                    ...tRes.data.map((t) => {
+                        const normalized = normalizeTicket(t, order);
+                        const seatInfo = seatMap[String(normalized.seat_id)];
+                        if (seatInfo) {
+                            normalized.seat = {
+                                row_name: seatInfo.row_name,
+                                seat_number: seatInfo.seat_number,
+                            };
+                            normalized.seat_label = seatInfo.seat_label || `${seatInfo.row_name || ''}${seatInfo.seat_number || ''}`.trim() || null;
+                            normalized.seat_name = normalized.seat_label;
+                        }
+                        return normalized;
+                    })
+                );
             }
         }
 

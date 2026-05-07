@@ -9,8 +9,7 @@ import {
     Space,
     Tooltip,
     Image,
-    Card,
-    Skeleton
+    Card
 } from 'antd';
 import {
     EditOutlined,
@@ -108,21 +107,13 @@ const EventTable = ({
         },
     };
 
-    if (loading) {
-        return (
-            <div style={{ padding: 20 }}>
-                <Skeleton active paragraph={{ rows: 5 }} />
-            </div>
-        );
-    }
-
     return (
         <Table
             rowSelection={rowSelection}
             columns={columns}
             dataSource={events}
             rowKey="event_id"
-            loading={false}
+            loading={loading}
             pagination={{ pageSize: 10 }}
             size="middle"
             locale={{ emptyText: 'Không tìm thấy dữ liệu' }}

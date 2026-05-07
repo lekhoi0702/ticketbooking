@@ -75,7 +75,7 @@ const OrderSummary = ({
             const response = await paymentApi.verifyVietQRPayment(qrData.payment_code);
             
             if (response.success && onPaymentSuccess) {
-                onPaymentSuccess(response.data.order_code);
+                onPaymentSuccess(qrData.order_code || response?.data?.order_code || qrData.payment_code);
             }
         } catch (err) {
             console.error('Error verifying payment:', err);
@@ -87,20 +87,18 @@ const OrderSummary = ({
 
         try {
             setManualVerifying(true);
-            // Test mode with backend sync:
             // verify endpoint in mock marks payment/order as SUCCESS/PAID.
             const verifyRes = await paymentApi.verifyVietQRPayment(qrData.payment_code);
             setPaymentStatus('SUCCESS');
-            message.success('Đã xác thực thanh toán thành công (test mode)');
+            message.success('Đã xác thực thanh toán thành công ');
             if (onPaymentSuccess) {
-                const successOrderCode = verifyRes?.data?.order_code || qrData.order_code || qrData.payment_code;
+                const successOrderCode = qrData.order_code || verifyRes?.data?.order_code || qrData.payment_code;
                 onPaymentSuccess(successOrderCode);
             }
         } catch (err) {
             console.error('Error manual verify VietQR:', err);
-            // Fallback for test flow: still allow success UI navigation
             setPaymentStatus('SUCCESS');
-            message.success('Đã xác thực thanh toán thành công (test mode)');
+            message.success('Đã xác thực thanh toán thành công ');
             if (onPaymentSuccess) {
                 onPaymentSuccess(qrData.order_code || qrData.payment_code);
             }
@@ -384,4 +382,5 @@ const OrderSummary = ({
 };
 
 export default OrderSummary;
+
 

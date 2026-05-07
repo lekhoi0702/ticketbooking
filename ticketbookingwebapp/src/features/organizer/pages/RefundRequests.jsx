@@ -10,7 +10,6 @@ import {
     Modal, 
     Descriptions,
     Empty,
-    Skeleton,
     Tooltip
 } from 'antd';
 import { 
@@ -27,7 +26,8 @@ import { usePendingRefunds } from '@shared/hooks/usePendingRefunds';
 const { Title, Text } = Typography;
 
 const RefundRequests = () => {
-    const { user } = useAuth();
+    const { user, organizer } = useAuth();
+    const actor = organizer || user;
     const { refresh: refreshPendingCount } = usePendingRefunds();
     const [loading, setLoading] = useState(false);
     const [requests, setRequests] = useState([]);
@@ -36,17 +36,40 @@ const RefundRequests = () => {
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
-        if (user?.user_id) {
+        if (actor?.user_id) {
             fetchRefundRequests();
         }
-    }, [user?.user_id]);
+    }, [actor?.user_id]);
 
     const fetchRefundRequests = async () => {
+        if (!actor?.user_id) return;
         try {
             setLoading(true);
-            const res = await api.getRefundRequests(user.user_id);
+            const res = await api.getRefundRequests(actor.user_id);
             if (res.success) {
-                setRequests(res.data);
+                const baseRows = Array.isArray(res.data) ? res.data : [];
+                const details = await Promise.all(
+                    baseRows.map((row) => api.getOrder(row.order_id))
+                );
+                const merged = baseRows.map((row, idx) => {
+                    const detail = details[idx];
+                    if (!detail?.success || !detail.data) return row;
+                    const d = detail.data;
+                    return {
+                        ...row,
+                        customer_name: d.customer_name || d.order?.customer_name || row.customer_name,
+                        customer_email: d.customer_email || d.order?.customer_email || row.customer_email,
+                        customer_phone: d.customer_phone || d.order?.customer_phone || row.customer_phone,
+                        event_name: d.event_name || d.order?.event_name || row.event_name,
+                        event_date: d.event_date || d.order?.event_date || row.event_date,
+                        tickets: Array.isArray(d.tickets) ? d.tickets : (Array.isArray(row.tickets) ? row.tickets : []),
+                    };
+                });
+                const pendingOnly = merged.filter((row) => {
+                    const status = String(row.order_status || row.status || '').toUpperCase();
+                    return status === 'CANCELLATION_PENDING';
+                });
+                setRequests(pendingOnly);
             }
         } catch (error) {
             console.error('Error fetching refund requests:', error);
@@ -223,9 +246,7 @@ const RefundRequests = () => {
             </div>
 
             <Card bordered={false} style={{ borderRadius: 12 }}>
-                {loading ? (
-                    <Skeleton active paragraph={{ rows: 8 }} />
-                ) : requests.length === 0 ? (
+                {requests.length === 0 ? (
                     <Empty 
                         description="Không có yêu cầu hoàn tiền nào"
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -235,6 +256,7 @@ const RefundRequests = () => {
                         columns={columns}
                         dataSource={requests}
                         rowKey="order_id"
+                        loading={loading}
                         pagination={{ 
                             pageSize: 10,
                             showSizeChanger: true,

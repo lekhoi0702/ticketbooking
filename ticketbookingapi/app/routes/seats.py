@@ -3,12 +3,12 @@ from datetime import datetime, timedelta
 from flask import Blueprint, request
 
 from app.extensions import db, socketio
-from app.models import Event, Seat
+from app.models import Event, EventSeat, Seat
 from app.routes.helpers import ApiMethodView
 
 seats_bp = Blueprint("seats", __name__)
 LOCK_MINUTES = 5
-_seat_locks = {}
+_seat_locks = {}  # key: (event_id, seat_id)
 
 
 def _to_status(value):
@@ -24,18 +24,37 @@ def _seat_label(seat):
     return f"{seat.row_number}{seat.seat_number}"
 
 
-def _serialize_seat(seat):
+def _get_or_create_event_seat(event_id, seat_id, create_id=1):
+    row = EventSeat.query.filter_by(event_id=event_id, seat_id=seat_id).first()
+    if row:
+        return row
+    row = EventSeat(
+        event_id=event_id,
+        seat_id=seat_id,
+        status="AVAILABLE",
+        create_id=create_id,
+        create_date=datetime.utcnow(),
+        update_date=None,
+    )
+    db.session.add(row)
+    db.session.flush()
+    return row
+
+
+def _serialize_seat(seat, status_override=None, event_seat_id=None):
     data = seat.to_dict()
-    data["Status"] = _to_status(seat.status)
+    data["Status"] = _to_status(status_override if status_override is not None else seat.status)
     data["SeatLabel"] = _seat_label(seat)
+    if event_seat_id is not None:
+        data["EventSeatID"] = event_seat_id
     return data
 
 
 def _cleanup_expired_locks():
     now = datetime.utcnow()
     expired = [
-        (seat_id, lock)
-        for seat_id, lock in _seat_locks.items()
+        (key, lock)
+        for key, lock in _seat_locks.items()
         if (lock.get("expires_at") or now) <= now
     ]
     if not expired:
@@ -43,21 +62,23 @@ def _cleanup_expired_locks():
 
     changed = False
     released_events = []
-    for seat_id, lock in expired:
-        _seat_locks.pop(seat_id, None)
-        seat = Seat.query.filter_by(seat_id=seat_id).first()
-        if seat and _to_status(seat.status) == "RESERVED":
-            seat.status = "AVAILABLE"
-            seat.update_date = now
+    for (event_id, seat_id), lock in expired:
+        _seat_locks.pop((event_id, seat_id), None)
+        if event_id is None:
+            continue
+        event_seat = EventSeat.query.filter_by(event_id=event_id, seat_id=seat_id).first()
+        if event_seat and _to_status(event_seat.status) == "RESERVED":
+            event_seat.status = "AVAILABLE"
+            event_seat.update_date = now
             changed = True
-            released_events.append((lock.get("event_id"), seat_id))
+            released_events.append((event_id, seat_id))
     if changed:
         db.session.commit()
         for event_id, seat_id in released_events:
             socketio.emit(
                 "seat_released",
                 {"seat_id": seat_id, "event_id": event_id, "status": "AVAILABLE"},
-                to=f"event_{event_id}" if event_id is not None else None,
+                to=f"event_{event_id}",
             )
 
 
@@ -72,7 +93,24 @@ class SeatListView(ApiMethodView):
             venue_id = event.venue_id if event else None
         if venue_id:
             query = query.filter_by(venue_id=venue_id)
-        return self.ok([_serialize_seat(row) for row in query.all()])
+        seats = query.all()
+
+        if not event_id:
+            return self.ok([_serialize_seat(row) for row in seats])
+
+        mappings = EventSeat.query.filter_by(event_id=event_id).all()
+        status_by_seat = {m.seat_id: m for m in mappings}
+        out = []
+        for seat in seats:
+            m = status_by_seat.get(seat.seat_id)
+            out.append(
+                _serialize_seat(
+                    seat,
+                    status_override=(m.status if m else "AVAILABLE"),
+                    event_seat_id=(m.event_seat_id if m else None),
+                )
+            )
+        return self.ok(out)
 
 
 class SeatInitializeView(ApiMethodView):
@@ -173,13 +211,13 @@ class SeatLockView(ApiMethodView):
         seat_id = data.get("SeatID") or data.get("seat_id")
         user_id = data.get("UserID") or data.get("user_id")
         event_id = data.get("EventID") or data.get("event_id")
-        if seat_id is None or user_id is None:
-            return self.fail("SeatID and UserID are required", 400)
+        if seat_id is None or user_id is None or event_id is None:
+            return self.fail("SeatID, UserID and EventID are required", 400)
 
         try:
             seat_id = int(seat_id)
             user_id = int(user_id)
-            event_id = int(event_id) if event_id not in (None, "") else None
+            event_id = int(event_id)
         except (TypeError, ValueError):
             return self.fail("SeatID/UserID/EventID must be valid integers", 400)
 
@@ -187,26 +225,28 @@ class SeatLockView(ApiMethodView):
         if not seat:
             return self.fail("Seat not found", 404)
 
-        current_status = _to_status(seat.status)
+        event_seat = _get_or_create_event_seat(event_id, seat_id, user_id)
+        current_status = _to_status(event_seat.status)
         if current_status == "BOOKED":
             return self.fail("Seat already booked", 409)
 
         now = datetime.utcnow()
-        existing_lock = _seat_locks.get(seat_id)
+        lock_key = (event_id, seat_id)
+        existing_lock = _seat_locks.get(lock_key)
         if existing_lock and existing_lock.get("user_id") != user_id:
             if (existing_lock.get("expires_at") or now) > now:
                 return self.fail("Seat is being reserved by another user", 409)
 
         expires_at = now.replace(microsecond=0) + timedelta(minutes=LOCK_MINUTES)
-        _seat_locks[seat_id] = {
+        _seat_locks[lock_key] = {
             "seat_id": seat_id,
             "user_id": user_id,
             "event_id": event_id,
             "expires_at": expires_at,
         }
 
-        seat.status = "RESERVED"
-        seat.update_date = now
+        event_seat.status = "RESERVED"
+        event_seat.update_date = now
         db.session.commit()
         socketio.emit(
             "seat_reserved",
@@ -217,13 +257,14 @@ class SeatLockView(ApiMethodView):
                 "status": "RESERVED",
                 "expires_at": expires_at.isoformat(),
             },
-            to=f"event_{event_id}" if event_id is not None else None,
+            to=f"event_{event_id}",
         )
         return self.ok(
             {
                 "SeatID": seat_id,
-                "UserID": user_id,
                 "EventID": event_id,
+                "EventSeatID": event_seat.event_seat_id,
+                "UserID": user_id,
                 "SeatLabel": _seat_label(seat),
                 "Status": "RESERVED",
                 "ExpiresAt": expires_at.isoformat(),
@@ -237,30 +278,33 @@ class SeatUnlockView(ApiMethodView):
         data = request.get_json(silent=True) or {}
         seat_id = data.get("SeatID") or data.get("seat_id")
         user_id = data.get("UserID") or data.get("user_id")
-        if seat_id is None or user_id is None:
-            return self.fail("SeatID and UserID are required", 400)
+        event_id = data.get("EventID") or data.get("event_id")
+        if seat_id is None or user_id is None or event_id is None:
+            return self.fail("SeatID, UserID and EventID are required", 400)
         try:
             seat_id = int(seat_id)
             user_id = int(user_id)
+            event_id = int(event_id)
         except (TypeError, ValueError):
-            return self.fail("SeatID and UserID must be valid integers", 400)
+            return self.fail("SeatID/UserID/EventID must be valid integers", 400)
 
-        lock = _seat_locks.get(seat_id)
+        lock_key = (event_id, seat_id)
+        lock = _seat_locks.get(lock_key)
         if lock and lock.get("user_id") != user_id:
             return self.fail("Cannot unlock seat reserved by another user", 403)
 
-        _seat_locks.pop(seat_id, None)
-        seat = Seat.query.filter_by(seat_id=seat_id).first()
-        if seat and _to_status(seat.status) == "RESERVED":
-            seat.status = "AVAILABLE"
-            seat.update_date = datetime.utcnow()
+        _seat_locks.pop(lock_key, None)
+        event_seat = EventSeat.query.filter_by(event_id=event_id, seat_id=seat_id).first()
+        if event_seat and _to_status(event_seat.status) == "RESERVED":
+            event_seat.status = "AVAILABLE"
+            event_seat.update_date = datetime.utcnow()
             db.session.commit()
             socketio.emit(
                 "seat_released",
-                {"seat_id": seat_id, "event_id": lock.get("event_id") if lock else None, "status": "AVAILABLE"},
-                to=f"event_{lock.get('event_id')}" if lock and lock.get("event_id") is not None else None,
+                {"seat_id": seat_id, "event_id": event_id, "status": "AVAILABLE"},
+                to=f"event_{event_id}",
             )
-        return self.ok({"SeatID": seat_id, "Unlocked": True})
+        return self.ok({"SeatID": seat_id, "EventID": event_id, "Unlocked": True})
 
 
 class SeatUnlockAllView(ApiMethodView):
@@ -279,17 +323,17 @@ class SeatUnlockAllView(ApiMethodView):
 
         now = datetime.utcnow()
         unlocked = []
-        for seat_id, lock in list(_seat_locks.items()):
+        for (lock_event_id, seat_id), lock in list(_seat_locks.items()):
             if lock.get("user_id") != user_id:
                 continue
-            if event_id is not None and lock.get("event_id") != event_id:
+            if event_id is not None and lock_event_id != event_id:
                 continue
             unlocked.append(seat_id)
-            _seat_locks.pop(seat_id, None)
-            seat = Seat.query.filter_by(seat_id=seat_id).first()
-            if seat and _to_status(seat.status) == "RESERVED":
-                seat.status = "AVAILABLE"
-                seat.update_date = now
+            _seat_locks.pop((lock_event_id, seat_id), None)
+            event_seat = EventSeat.query.filter_by(event_id=lock_event_id, seat_id=seat_id).first()
+            if event_seat and _to_status(event_seat.status) == "RESERVED":
+                event_seat.status = "AVAILABLE"
+                event_seat.update_date = now
 
         if unlocked:
             db.session.commit()
@@ -313,17 +357,17 @@ class SeatMyReservationsView(ApiMethodView):
 
         rows = []
         now = datetime.utcnow()
-        for seat_id, lock in _seat_locks.items():
+        for (lock_event_id, seat_id), lock in _seat_locks.items():
             if lock.get("user_id") != user_id:
                 continue
-            if event_id is not None and lock.get("event_id") != event_id:
+            if event_id is not None and lock_event_id != event_id:
                 continue
 
             seat = Seat.query.filter_by(seat_id=seat_id).first()
             rows.append(
                 {
                     "SeatID": seat_id,
-                    "EventID": lock.get("event_id"),
+                    "EventID": lock_event_id,
                     "UserID": user_id,
                     "SeatLabel": _seat_label(seat) if seat else None,
                     "ExpiresAt": lock.get("expires_at").isoformat() if lock.get("expires_at") else None,

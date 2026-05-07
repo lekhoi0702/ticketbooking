@@ -1,25 +1,27 @@
 from app.extensions import db
 
 
-class EventQRCode(db.Model):
-    __tablename__ = "eventqrcode"
+class EventSeat(db.Model):
+    __tablename__ = "eventseat"
 
-    qrcode_id = db.Column("QRCodeID", db.Integer, primary_key=True, autoincrement=True)
+    event_seat_id = db.Column("EventSeatID", db.Integer, primary_key=True, autoincrement=True)
     event_id = db.Column("EventID", db.Integer, db.ForeignKey("event.EventID"), nullable=False)
-    qrcode_url = db.Column("QRCodeURL", db.String(255), nullable=False)
-    bank_name = db.Column("BankName", db.String(100), nullable=True)
-    account_number = db.Column("AccountNumber", db.String(50), nullable=True)
+    seat_id = db.Column("SeatID", db.Integer, db.ForeignKey("seat.SeatID"), nullable=False)
+    status = db.Column("Status", db.String(50), nullable=False, default="AVAILABLE")
     create_id = db.Column("CreateID", db.Integer, nullable=False)
     create_date = db.Column("CreateDate", db.DateTime, nullable=False)
     update_date = db.Column("UpdateDate", db.DateTime, nullable=True)
 
+    __table_args__ = (
+        db.UniqueConstraint("EventID", "SeatID", name="uq_eventseat_event_seat"),
+    )
+
     def to_dict(self):
         return {
-            "QRCodeID": self.qrcode_id,
+            "EventSeatID": self.event_seat_id,
             "EventID": self.event_id,
-            "QRCodeURL": self.qrcode_url,
-            "BankName": self.bank_name,
-            "AccountNumber": self.account_number,
+            "SeatID": self.seat_id,
+            "Status": self.status,
             "CreateID": self.create_id,
             "CreateDate": self.create_date.isoformat() if self.create_date else None,
             "UpdateDate": self.update_date.isoformat() if self.update_date else None,

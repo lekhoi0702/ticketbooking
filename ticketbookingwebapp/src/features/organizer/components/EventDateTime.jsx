@@ -35,18 +35,11 @@ const EventDateTime = ({
 
     const validateDates = () => {
         const newErrors = {};
-        const now = dayjs();
         const start = formData.start_datetime ? dayjs(formData.start_datetime) : null;
         const end = formData.end_datetime ? dayjs(formData.end_datetime) : null;
 
-        if (start && start.isBefore(now) && !existingSchedule) {
-            newErrors.start_datetime = 'Thời gian bắt đầu phải sau thời điểm hiện tại';
-        }
         if (end && start && end.isBefore(start)) {
             newErrors.end_datetime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
-        }
-        if (end && end.isBefore(now) && !existingSchedule) {
-            newErrors.end_datetime = 'Thời gian kết thúc phải sau thời điểm hiện tại';
         }
 
         setErrors(newErrors);

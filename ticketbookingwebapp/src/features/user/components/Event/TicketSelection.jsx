@@ -10,6 +10,13 @@ const SeatMapChecker = ({ ticketType, eventId, onSeatsLoaded }) => {
     useEffect(() => {
         const checkSeatMap = async () => {
             if (!eventId || !ticketType) return;
+
+            const mappedSeats = ticketType.selected_seats || ticketType.SelectedSeats;
+            if (Array.isArray(mappedSeats) && mappedSeats.length > 0) {
+                onSeatsLoaded(true);
+                return;
+            }
+
             try {
                 const response = await seatApi.getSeatsByTicketType(eventId, ticketType.ticket_type_id);
                 const exists = response.success && response.data && response.data.length > 0;

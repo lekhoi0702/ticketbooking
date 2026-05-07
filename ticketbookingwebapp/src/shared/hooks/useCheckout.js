@@ -154,6 +154,7 @@ export const useCheckout = () => {
     const isInitialMountRef = useRef(true); // Track if this is the initial mount
     const previousPaymentMethodRef = useRef(paymentMethod); // Track previous payment method
     const hasValidatedRef = useRef(false); // Track if validation has run
+    const submittingOrderRef = useRef(false); // Hard guard against double submit
 
     // Update customer info when user changes
     useEffect(() => {
@@ -422,14 +423,20 @@ export const useCheckout = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (processing || submittingOrderRef.current) {
+            return;
+        }
+        submittingOrderRef.current = true;
 
         if (getTotalTickets() === 0) {
-            setError('Vui lòng chọn ít nhất một vé');
+            setError('Vui l�ng ch?n �t nh?t m?t v�');
+            submittingOrderRef.current = false;
             return;
         }
 
         if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
-            setError('Vui lòng điền đầy đủ thông tin liên hệ');
+            setError('Vui l�ng di?n d?y d? th�ng tin li�n h?');
+            submittingOrderRef.current = false;
             return;
         }
 
@@ -501,14 +508,15 @@ export const useCheckout = () => {
                 if (paymentResponse.success) {
                     // Set QR data to display on checkout page
                     setQrData(paymentResponse.data);
-                    
+
                     // Save QR data and payment method to sessionStorage so it persists after page refresh
                     sessionStorage.setItem(`vietqr_qr_${eventId}`, JSON.stringify(paymentResponse.data));
                     sessionStorage.setItem(`vietqr_order_created_${eventId}`, 'true');
                     sessionStorage.setItem(`vietqr_payment_method_${eventId}`, 'VIETQR');
                     sessionStorage.setItem(`vietqr_order_id_${eventId}`, orderId.toString());
-                    
+
                     setProcessing(false);
+                    submittingOrderRef.current = false;
                     // Scroll to QR section (center in viewport so sticky header does not overlap)
                     setTimeout(() => {
                         const qrElement = document.getElementById('vietqr-display');
@@ -534,6 +542,7 @@ export const useCheckout = () => {
             console.error('Error creating order:', err);
             setError(err.message || 'Không thể tạo đơn hàng');
             setProcessing(false);
+            submittingOrderRef.current = false;
         }
     };
 
@@ -610,4 +619,12 @@ export const useCheckout = () => {
         navigate
     };
 };
+
+
+
+
+
+
+
+
 

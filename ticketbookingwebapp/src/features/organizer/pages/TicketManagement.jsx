@@ -25,7 +25,8 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 
 const TicketManagement = () => {
-    const { user } = useAuth();
+    const { user, organizer } = useAuth();
+    const actor = organizer || user;
     const [loading, setLoading] = useState(false);
     const [checkInLoading, setCheckInLoading] = useState(false);
     const [tickets, setTickets] = useState([]);
@@ -41,15 +42,15 @@ const TicketManagement = () => {
     const [showCheckInModal, setShowCheckInModal] = useState(false);
 
     React.useEffect(() => {
-        if (user) {
+        if (actor?.user_id) {
             fetchEvents();
         }
-    }, [user]);
+    }, [actor?.user_id]);
 
     const fetchEvents = async () => {
-        if (!user) return;
+        if (!actor?.user_id) return;
         try {
-            const res = await api.getOrganizerEvents(user.user_id);
+            const res = await api.getOrganizerEvents(actor.user_id);
             if (res.success) {
                 setEvents(res.data);
             }
@@ -66,7 +67,7 @@ const TicketManagement = () => {
 
         try {
             setLoading(true);
-            const res = await api.searchTickets(value, user.user_id, selectedEvent, searchStatus);
+            const res = await api.searchTickets(value, actor?.user_id, selectedEvent, searchStatus);
             if (res.success) {
                 setTickets(res.data);
                 setSearched(true);
@@ -84,7 +85,7 @@ const TicketManagement = () => {
     const handleQuickCheckIn = async (ticketCode) => {
         try {
             setCheckInLoading(true);
-            const res = await api.checkInTicket(ticketCode, user.user_id);
+            const res = await api.checkInTicket(ticketCode, actor?.user_id);
             if (res.success) {
                 message.success('Check-in thành công!');
                 // Update local state

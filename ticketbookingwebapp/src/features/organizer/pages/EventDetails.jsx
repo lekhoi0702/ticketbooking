@@ -211,8 +211,20 @@ const EventDetails = () => {
                         <Card title="DANH SÁCH LOẠI VÉ" headStyle={{ fontSize: 13, color: '#8c8c8c' }}>
                             <Row gutter={[16, 16]}>
                                 {ticketTypes.map((tt, index) => {
-                                    const soldInType = (eventSeats || []).filter(s => s.ticket_type_id === tt.ticket_type_id && s.status === 'BOOKED').length;
-                                    const totalInType = (eventSeats || []).filter(s => s.ticket_type_id === tt.ticket_type_id).length;
+                                    const selectedSeatsCount = Array.isArray(tt.selected_seats) ? tt.selected_seats.length : 0;
+                                    const quantityFromApi = Number(tt.quantity ?? 0) || 0;
+                                    const soldFromApi = Number(tt.sold_quantity ?? 0) || 0;
+                                    const availableFromApi = Number(tt.available_quantity ?? 0) || 0;
+
+                                    const totalInType = selectedSeatsCount > 0
+                                        ? selectedSeatsCount
+                                        : (quantityFromApi > 0 ? quantityFromApi : (availableFromApi + soldFromApi));
+                                    const soldInType = soldFromApi > 0
+                                        ? soldFromApi
+                                        : (totalInType > 0 ? Math.max(totalInType - availableFromApi, 0) : 0);
+                                    const remainingInType = availableFromApi > 0
+                                        ? availableFromApi
+                                        : Math.max(totalInType - soldInType, 0);
                                     const percentageInType = totalInType > 0 ? (soldInType / totalInType) * 100 : 0;
 
                                     return (
@@ -222,12 +234,16 @@ const EventDetails = () => {
                                                     <div>
                                                         <Text strong style={{ fontSize: 14 }}>{tt.type_name}</Text><br />
                                                         <Text strong style={{ fontSize: 16, color: '#2DC275' }}>
-                                                            {parseFloat(tt.price).toLocaleString()}Ä'
+                                                            {(Number(tt.price ?? 0) || 0).toLocaleString()}
                                                         </Text>
                                                     </div>
                                                     <div style={{ textAlign: 'right' }}>
                                                         <Text type="secondary" style={{ fontSize: 12 }}>
-                                                            {soldInType} / {totalInType} vé
+                                                            Đã bán {soldInType} / Tổng {totalInType}
+                                                        </Text>
+                                                        <br />
+                                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                                            Còn lại {remainingInType} vé
                                                         </Text>
                                                     </div>
                                                 </div>

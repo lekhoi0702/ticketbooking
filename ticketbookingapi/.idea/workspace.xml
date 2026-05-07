@@ -2,137 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8c437842-2924-438d-9951-03c68a551ea3" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/ticketbookingapi.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AGENTS.md" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vscode/lauch.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/decorators/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/decorators/auth.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/decorators/validation.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/extensions.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/extensions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/main.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/advertisement.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/banner.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/discount.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/discount.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/event.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/event.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/event_category.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/event_category.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/favorite_event.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/order.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/order.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/organizer_info.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/payment.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/payment.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/role.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/role.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/seat.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/seat.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/ticket.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/ticket.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/models/event_qrcode.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/event_qrcode.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/models/ticket_type.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/ticket_type.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/user.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/user.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/venue.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/venue.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/repositories/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/repositories/base_repository.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/repositories/discount_repository.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/repositories/event_repository.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/repositories/order_repository.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/repositories/payment_repository.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/repositories/ticket_repository.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/repositories/user_repository.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/repositories/venue_repository.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/admin.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/advertisement.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/auth.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/auth_stateless.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/banners.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/categories.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/categories.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/chatbot.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/chatbot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/event_deletion.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app/routes/events.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/events.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/health.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/health.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/routes/orders.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/orders.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/organizer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/organizer_discount.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/payments.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/payments.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/routes/seats.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/seats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/venues.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/venues.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schemas/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schemas/discount_schema.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schemas/event_schema.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schemas/order_schema.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schemas/payment_schema.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schemas/ticket_schema.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schemas/user_schema.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schemas/venue_schema.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/advertisement_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/chatbot_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/chatbot_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/event_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/order_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/organizer_event_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/organizer_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/organizer_stats_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/organizer_venue_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/socket_handlers.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/swagger_config.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/swagger_spec.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/email_sender.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/fallback_token_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/password_utils.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/qr_generator.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/redis_password_reset_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/redis_reservation_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/redis_token_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/token_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/upload_helper.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/validators.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/check_discount_schema.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/check_schema.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/backend.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/backend_v2.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/backend_v3.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/backend_v4_err.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/backend_v4_out.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/images_list.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/out.log" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routes/ticket_types.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/ticket_types.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routes/tickets.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/tickets.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/add_category_display_order.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_api.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/api/auth.api.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/api/client.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/api/endpoints.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/api/events.api.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/api/index.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/api/orders.api.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/context/AuthContext.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/context/AuthContext.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/context/AuthContext.refactored.jsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/context/FavoriteContext.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/context/FavoriteContext.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/admin/config/breadcrumbConfig.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/admin/config/breadcrumbConfig.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/admin/config/menuConfig.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/admin/config/menuConfig.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/admin/pages/Advertisements.jsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/admin/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/admin/pages/Login.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/organizer/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/organizer/pages/Login.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Account/ChangePasswordModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Account/ChangePasswordModal.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Account/MyFavoritesTab.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Account/MyFavoritesTab.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Account/MyOrdersTab.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Account/MyOrdersTab.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Auth/AuthModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Auth/AuthModal.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Auth/OrganizerAuthModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Auth/OrganizerAuthModal.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/ScheduleCalendar.css" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/ScheduleCalendar.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/pages/Login.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/pages/Profile.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/pages/Profile.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/advertisementService.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/admin.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/admin.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/auth.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/chatbot.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/chatbot.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/event.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/event.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/order.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/order.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/organizer.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/organizer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/payment.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/payment.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/seat.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/seat.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/shared/components/AdSection.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/shared/components/AdSection.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,20 +30,48 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Administrator/Desktop/ticketbooking/ticketbookingapi&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.run.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/src/ticketbooking/ticketbookingapi",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
+  <component name="RunManager">
+    <configuration name="run" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="ticketbookingapi" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.14 (PyCharmMiscProject)" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

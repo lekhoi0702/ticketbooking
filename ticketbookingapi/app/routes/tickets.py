@@ -3,7 +3,7 @@
 from flask import Blueprint, request
 
 from app.extensions import db
-from app.models import Order, Seat, Ticket, TicketType
+from app.models import EventSeat, Order, Seat, Ticket, TicketType
 from app.routes.helpers import ApiMethodView, parse_datetime
 
 
@@ -38,10 +38,6 @@ class TicketListCreateView(ApiMethodView):
         if not seat:
             return self.fail("Seat not found", 404)
 
-        seat_status = str(seat.status or "").strip().upper()
-        if seat_status == "BOOKED":
-            return self.fail("Seat already booked", 409)
-
         ticket_type = TicketType.query.filter_by(ticket_type_id=data["TicketTypeID"]).first()
         if not ticket_type:
             return self.fail("TicketType not found", 404)
@@ -65,6 +61,23 @@ class TicketListCreateView(ApiMethodView):
         if existing:
             return self.fail("Seat already assigned for this event", 409)
 
+        event_seat = EventSeat.query.filter_by(event_id=order.event_id, seat_id=seat.seat_id).first()
+        if not event_seat:
+            event_seat = EventSeat(
+                event_id=order.event_id,
+                seat_id=seat.seat_id,
+                status="AVAILABLE",
+                create_id=data["CreateID"],
+                create_date=datetime.utcnow(),
+                update_date=None,
+            )
+            db.session.add(event_seat)
+            db.session.flush()
+
+        event_seat_status = str(event_seat.status or "").strip().upper()
+        if event_seat_status == "BOOKED":
+            return self.fail("Seat already booked", 409)
+
         ticket = Ticket(
             order_id=data["OrderID"],
             seat_id=data["SeatID"],
@@ -77,8 +90,8 @@ class TicketListCreateView(ApiMethodView):
             update_date=parse_datetime(data.get("UpdateDate")),
         )
         db.session.add(ticket)
-        seat.status = "BOOKED"
-        seat.update_date = datetime.utcnow()
+        event_seat.status = "BOOKED"
+        event_seat.update_date = datetime.utcnow()
         db.session.commit()
         return self.ok(ticket.to_dict(), 201)
 

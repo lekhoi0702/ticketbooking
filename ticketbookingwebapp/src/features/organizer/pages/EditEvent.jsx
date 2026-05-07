@@ -11,8 +11,7 @@ import {
     Result,
     Spin,
     Divider,
-    message,
-    Affix,
+    message ,
     Alert
 } from 'antd';
 import {
@@ -64,6 +63,7 @@ const EditEvent = () => {
         handleImageChange,
         handleVietQRImageChange,
         handleVietQRURLChange,
+        handleVietQRBankInfoChange,
         removeBanner,
         removeVietQR,
         handleTicketTypeChange,
@@ -80,7 +80,6 @@ const EditEvent = () => {
     } = useCreateEvent();
 
     const [eventRaw, setEventRaw] = useState(null);
-    const [allSeatsRaw, setAllSeatsRaw] = useState([]);
 
     useEffect(() => {
         if (eventId) {
@@ -127,42 +126,25 @@ const EditEvent = () => {
                 if (event.qr_image_url) {
                     setVietqrPreview(getImageUrl(event.qr_image_url));
                 }
+                handleVietQRBankInfoChange({
+                    bank_name: event.qr_bank_name || '',
+                    account_number: event.qr_account_number || '',
+                });
 
-                // Optimized: Fetch ALL seats for the event in one go
-                console.log('Fetching all event seats for eventId:', eventId);
-                let allEventSeats = [];
-                try {
-                    const allSeatsRes = await api.getAllEventSeats(eventId);
-                    console.log('All event seats response:', allSeatsRes);
-                    if (allSeatsRes.success && Array.isArray(allSeatsRes.data)) {
-                        allEventSeats = allSeatsRes.data;
-                        setAllSeatsRaw(allEventSeats);
-                    } else {
-                        console.warn('Failed to fetch seats or data is not an array:', allSeatsRes);
-                    }
-                } catch (seatErr) {
-                    console.error('Error fetching all event seats:', seatErr);
-                }
-
-                // Map ticket types and THEIR specific seats
                 let rawTicketTypes = event.ticket_types || [];
-                console.log('Raw ticket types from event:', rawTicketTypes);
-
                 if (rawTicketTypes && rawTicketTypes.length > 0) {
-                    const enrichedTT = rawTicketTypes.map((tt, idx) => {
-                        // Filter seats for this specific ticket type
-                        const matchedSeats = allEventSeats.filter(s =>
-                            String(s.ticket_type_id) === String(tt.ticket_type_id)
-                        ).map(s => ({
-                            ...s,
-                            // Ensure area fields are present for matching
-                            area: s.area_name || s.area || '',
-                            area_name: s.area_name || s.area || '',
-                            seat_number: String(s.seat_number),
-                            row_name: s.row_name
-                        }));
-
-                        console.log(`TT "${tt.type_name}" (ID: ${tt.ticket_type_id}) matched seats:`, matchedSeats.length);
+                    const enrichedTT = rawTicketTypes.map((tt) => {
+                        const selectedSeatsRaw = tt.selected_seats || tt.SelectedSeats || [];
+                        const matchedSeats = Array.isArray(selectedSeatsRaw)
+                            ? selectedSeatsRaw.map((s) => ({
+                                ...s,
+                                seat_id: s.seat_id ?? s.SeatID,
+                                area: s.area_name || s.area || s.Area || '',
+                                area_name: s.area_name || s.area || s.Area || '',
+                                seat_number: String(s.seat_number ?? s.SeatNumber ?? ''),
+                                row_name: s.row_name || s.RowNumber || '',
+                            }))
+                            : [];
 
                         return {
                             ...tt,
@@ -174,8 +156,6 @@ const EditEvent = () => {
                             selectedSeats: matchedSeats
                         };
                     });
-
-                    console.log('Final enriched ticket types:', enrichedTT);
                     setTicketTypes(enrichedTT);
                 }
             } else {
@@ -269,7 +249,7 @@ const EditEvent = () => {
                         </Col>
 
                         <Col xs={24} lg={8}>
-                            <Affix offsetTop={80}>
+                            
                                 <Card title="Quản lý sự kiện" headStyle={{ background: '#fafafa' }}>
                                     <EventBannerUpload
                                         bannerPreview={bannerPreview}
@@ -293,6 +273,7 @@ const EditEvent = () => {
                                         qrPreview={vietqrPreview}
                                         handleURLChange={handleVietQRURLChange}
                                         removeQR={removeVietQR}
+                                        onBankInfoChange={handleVietQRBankInfoChange}
                                     />
 
                                     <Divider style={{ margin: '24px 0' }} />
@@ -322,7 +303,7 @@ const EditEvent = () => {
 
                                     </Space>
                                 </Card>
-                            </Affix>
+                            
                         </Col>
                     </Row>
                 </form>
@@ -350,3 +331,4 @@ const EditEvent = () => {
 };
 
 export default EditEvent;
+

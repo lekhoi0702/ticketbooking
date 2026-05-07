@@ -7,7 +7,8 @@ import { useAuth } from '@context/AuthContext';
  * Custom hook for managing event list logic for organizers
  */
 export const useEventList = () => {
-    const { user } = useAuth();
+    const { user, organizer } = useAuth();
+    const actor = organizer || user;
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [events, setEvents] = useState([]);
@@ -17,14 +18,17 @@ export const useEventList = () => {
 
     useEffect(() => {
         fetchEvents();
-    }, [user]);
+    }, [actor?.user_id]);
 
     const fetchEvents = async () => {
-        if (!user) return;
+        if (!actor?.user_id) {
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             setError(null);
-            const response = await api.getOrganizerEvents(user.user_id);
+            const response = await api.getOrganizerEvents(actor.user_id);
 
             if (response.success) {
                 setEvents(response.data);
@@ -52,7 +56,7 @@ export const useEventList = () => {
 
             // Prepare request body with reason (will be collected from modal if needed)
             const requestBody = {
-                manager_id: user.user_id,
+                manager_id: actor?.user_id,
                 reason: eventToDelete.deleteReason || ''
             };
 
@@ -156,7 +160,7 @@ export const useEventList = () => {
 
             const requestBody = {
                 event_ids: eventIds,
-                manager_id: user.user_id
+                manager_id: actor?.user_id
             };
 
             const response = await api.bulkDeleteEvents(requestBody);

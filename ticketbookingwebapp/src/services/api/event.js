@@ -16,6 +16,9 @@ const normalizeTicketType = (tt = {}) => ({
     status: String(tt.status || tt.Status || 'ACTIVE').toUpperCase(),
     is_active: String(tt.status || tt.Status || 'ACTIVE').toUpperCase() !== 'INACTIVE',
     quantity: Number(tt.quantity ?? tt.Quantity ?? 0) || 0,
+    sold_quantity: Number(tt.sold_quantity ?? tt.SoldQuantity ?? 0) || 0,
+    available_quantity: Number(tt.available_quantity ?? tt.AvailableQuantity ?? 0) || 0,
+    selected_seats: tt.selected_seats || tt.SelectedSeats || [],
 });
 
 const normalizeVenue = (venue = null) => {
@@ -86,6 +89,8 @@ const normalizeEvent = (event = {}) => {
             : null,
         ticket_types: Array.isArray(ticketTypesRaw) ? ticketTypesRaw.map(normalizeTicketType) : [],
         qr_image_url: event.qr_image_url || event.qr_code_url || event.QRCodeURL || null,
+        qr_bank_name: event.qr_bank_name || event.QRBankName || null,
+        qr_account_number: event.qr_account_number || event.QRAccountNumber || null,
     };
 };
 

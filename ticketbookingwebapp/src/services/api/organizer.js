@@ -26,6 +26,9 @@ const normalizeTicketType = (ticketType = {}) => ({
     sale_end_date: getValue(ticketType.sale_end_date, ticketType.SaleEndDate, null),
     status: String(getValue(ticketType.status, ticketType.Status, 'ACTIVE')).toUpperCase(),
     quantity: Number(getValue(ticketType.quantity, ticketType.Quantity, 0)) || 0,
+    sold_quantity: Number(getValue(ticketType.sold_quantity, ticketType.SoldQuantity, 0)) || 0,
+    available_quantity: Number(getValue(ticketType.available_quantity, ticketType.AvailableQuantity, 0)) || 0,
+    selected_seats: getValue(ticketType.selected_seats, ticketType.SelectedSeats, []),
 });
 
 const normalizeEvent = (event = {}) => ({
@@ -94,6 +97,9 @@ const normalizeTicketRow = (ticket, order) => ({
     ticket_id: getValue(ticket.ticket_id, ticket.TicketID),
     ticket_code: getValue(ticket.ticket_code, ticket.TicketCode, ticket.ticket_qrcode, ticket.TicketQRCode),
     ticket_status: String(getValue(ticket.ticket_status, ticket.TicketStatus, ticket.status, ticket.Status, 'ACTIVE')).toUpperCase(),
+    seat_id: getValue(ticket.seat_id, ticket.SeatID),
+    seat_label: getValue(ticket.seat_label, ticket.SeatLabel),
+    seat_name: getValue(ticket.seat_name, ticket.SeatName),
     event_id: order?.event_id,
     event_name: order?.event_name,
     order_id: order?.order_id,

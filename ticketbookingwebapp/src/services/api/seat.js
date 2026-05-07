@@ -67,12 +67,13 @@ export const seatApi = {
         });
     },
 
-    async unlockSeat(seatId, userId) {
+    async unlockSeat(seatId, userId, eventId) {
         return apiRequest('/seats/unlock', {
             method: 'POST',
             body: {
                 SeatID: seatId,
                 UserID: userId,
+                EventID: eventId,
             },
         });
     },

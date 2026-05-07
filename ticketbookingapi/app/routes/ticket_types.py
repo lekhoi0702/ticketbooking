@@ -3,10 +3,50 @@ from datetime import datetime
 from flask import Blueprint, request
 
 from app.extensions import db
-from app.models import TicketType
+from app.models import Order, Seat, Ticket, TicketType, TicketTypeSeat
 from app.routes.helpers import ApiMethodView, parse_datetime
 
 ticket_types_bp = Blueprint("ticket_types", __name__)
+
+
+def _ticket_type_to_payload(row):
+    data = row.to_dict()
+    mappings = TicketTypeSeat.query.filter_by(ticket_type_id=row.ticket_type_id).all()
+    seat_ids = [m.seat_id for m in mappings]
+    seat_rows = Seat.query.filter(Seat.seat_id.in_(seat_ids)).all() if seat_ids else []
+    seat_map = {seat.seat_id: seat for seat in seat_rows}
+    selected_seats = []
+    for mapping in mappings:
+        seat = seat_map.get(mapping.seat_id)
+        if not seat:
+            continue
+        selected_seats.append(
+            {
+                "seat_id": seat.seat_id,
+                "row_name": seat.row_number,
+                "seat_number": seat.seat_number,
+                "area": seat.area,
+                "area_name": seat.area,
+                "ticket_type_id": row.ticket_type_id,
+            }
+        )
+
+    total_quantity = len(selected_seats)
+    sold_quantity = (
+        db.session.query(Ticket.ticket_id)
+        .join(Order, Order.order_id == Ticket.order_id)
+        .filter(Ticket.ticket_type_id == row.ticket_type_id)
+        .filter(Ticket.status != "CANCELLED")
+        .filter(Order.status.in_(["PAID", "COMPLETED", "CANCELLATION_PENDING"]))
+        .count()
+    )
+    available_quantity = max(total_quantity - sold_quantity, 0)
+    data["SelectedSeats"] = selected_seats
+    data["selected_seats"] = selected_seats
+    data["Quantity"] = total_quantity
+    data["SoldQuantity"] = sold_quantity
+    data["AvailableQuantity"] = available_quantity
+    return data
 
 
 class TicketTypeListView(ApiMethodView):
@@ -15,7 +55,7 @@ class TicketTypeListView(ApiMethodView):
         query = TicketType.query
         if event_id:
             query = query.filter_by(event_id=event_id)
-        return self.ok([row.to_dict() for row in query.all()])
+        return self.ok([_ticket_type_to_payload(row) for row in query.all()])
 
     def post(self):
         data = request.get_json(silent=True) or {}
@@ -47,7 +87,7 @@ class TicketTypeListView(ApiMethodView):
         )
         db.session.add(row)
         db.session.commit()
-        return self.ok(row.to_dict(), 201)
+        return self.ok(_ticket_type_to_payload(row), 201)
 
 
 class TicketTypeDetailView(ApiMethodView):
@@ -76,7 +116,7 @@ class TicketTypeDetailView(ApiMethodView):
             row.status = str(status).upper()
         row.update_date = datetime.utcnow()
         db.session.commit()
-        return self.ok(row.to_dict())
+        return self.ok(_ticket_type_to_payload(row))
 
     def delete(self, ticket_type_id):
         row = TicketType.query.filter_by(ticket_type_id=ticket_type_id).first()

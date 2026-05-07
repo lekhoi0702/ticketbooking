@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Modal, Form, Input, Select, DatePicker, InputNumber, Tag, Space, message, Typography, Popconfirm, Skeleton } from 'antd';
+import { Card, Table, Button, Modal, Form, Input, Select, DatePicker, InputNumber, Tag, Space, message, Typography, Popconfirm } from 'antd';
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { parseGMT7 } from '@shared/utils/dateUtils';
@@ -10,7 +10,8 @@ const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const DiscountManagement = () => {
-    const { user } = useAuth();
+    const { user, organizer } = useAuth();
+    const actor = organizer || user;
     const [loading, setLoading] = useState(false);
     const [discounts, setDiscounts] = useState([]);
     const [events, setEvents] = useState([]);
@@ -21,17 +22,18 @@ const DiscountManagement = () => {
     const [editingDiscount, setEditingDiscount] = useState(null);
 
     useEffect(() => {
-        if (user?.user_id) {
+        if (actor?.user_id) {
             fetchData();
         }
-    }, [user?.user_id]);
+    }, [actor?.user_id]);
 
     const fetchData = async () => {
+        if (!actor?.user_id) return;
         setLoading(true);
         try {
             const [discRes, eventRes] = await Promise.all([
-                api.getDiscounts(user.user_id),
-                api.getOrganizerEvents(user.user_id)
+                api.getDiscounts(actor.user_id),
+                api.getOrganizerEvents(actor.user_id)
             ]);
 
             if (discRes.success) setDiscounts(discRes.data);
@@ -52,7 +54,7 @@ const DiscountManagement = () => {
 
 
             const payload = {
-                manager_id: user.user_id,
+                manager_id: actor.user_id,
                 ...values,
                 code: values.code.toUpperCase(),
                 event_id: values.event_id,
@@ -220,24 +222,18 @@ const DiscountManagement = () => {
             </div>
 
             <Card bordered={false} style={{ borderRadius: 12 }}>
-                {loading ? (
-                    <div style={{ padding: 20 }}>
-                        <Skeleton active paragraph={{ rows: 5 }} />
-                    </div>
-                ) : (
-                    <Table
-                        columns={columns}
-                        dataSource={discounts}
-                        rowKey="id"
-                        rowSelection={{
-                            type: 'radio', // Chỉ cho phép chọn 1 mã giảm giá
-                            selectedRowKeys,
-                            onChange: setSelectedRowKeys
-                        }}
-                        loading={false}
-                        pagination={{ pageSize: 5 }}
-                    />
-                )}
+                <Table
+                    columns={columns}
+                    dataSource={discounts}
+                    rowKey="id"
+                    rowSelection={{
+                        type: 'radio', // Chỉ cho phép chọn 1 mã giảm giá
+                        selectedRowKeys,
+                        onChange: setSelectedRowKeys
+                    }}
+                    loading={loading}
+                    pagination={{ pageSize: 5 }}
+                />
             </Card>
 
             <Modal

@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, request
 
 from app.extensions import db
-from app.models import Order, Payment, Ticket, TicketType, Seat, User, Event
+from app.models import EventSeat, Order, Payment, Ticket, TicketType, Seat, User, Event
 from app.routes.helpers import ApiMethodView, parse_datetime
 
 orders_bp = Blueprint("orders", __name__)
@@ -162,9 +162,11 @@ class OrderRefundProcessView(ApiMethodView):
             for ticket in order.tickets:
                 ticket.status = "CANCELLED"
                 ticket.update_date = datetime.utcnow()
-                if ticket.seat:
-                    ticket.seat.status = "AVAILABLE"
-                    ticket.seat.update_date = datetime.utcnow()
+                if ticket.seat_id:
+                    event_seat = EventSeat.query.filter_by(event_id=order.event_id, seat_id=ticket.seat_id).first()
+                    if event_seat:
+                        event_seat.status = "AVAILABLE"
+                        event_seat.update_date = datetime.utcnow()
         else:
             order.status = "PAID"
 

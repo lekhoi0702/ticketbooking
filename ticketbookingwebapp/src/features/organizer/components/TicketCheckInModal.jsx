@@ -11,6 +11,17 @@ const TicketCheckInModal = ({
     onConfirm,
     loading
 }) => {
+    const seatText = (() => {
+        const raw = ticket?.seat_label || ticket?.seat_name || '';
+        if (raw) {
+            const m = String(raw).trim().match(/^([A-Za-z]+)\s*([0-9]+)$/);
+            if (m) return `Hàng ${m[1].toUpperCase()} - Ghế ${m[2]}`;
+            return String(raw).trim();
+        }
+        if (ticket?.seat_id) return `Ghế #${ticket.seat_id}`;
+        return 'Tự do';
+    })();
+
     return (
         <Modal
             title={[
@@ -59,7 +70,7 @@ const TicketCheckInModal = ({
                             {ticket.holder_email}
                         </Descriptions.Item>
                         <Descriptions.Item label="Ghế ngồi">
-                            {ticket.seat_id ? `Ghế ID: ${ticket.seat_id}` : 'Tự do'}
+                            {seatText}
                         </Descriptions.Item>
                     </Descriptions>
 

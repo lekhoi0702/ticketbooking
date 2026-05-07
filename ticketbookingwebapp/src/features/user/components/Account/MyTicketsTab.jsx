@@ -92,6 +92,23 @@ const MyTicketsTab = () => {
         });
     };
 
+    const getSeatDisplay = (ticket) => {
+        if (ticket?.seat?.row_name && ticket?.seat?.seat_number) {
+            return `Hàng ${ticket.seat.row_name} - Ghế ${ticket.seat.seat_number}`;
+        }
+        if (typeof ticket?.seat_label === 'string' && ticket.seat_label.trim()) {
+            const raw = ticket.seat_label.trim();
+            const m = raw.match(/^([A-Za-z]+)\s*([0-9]+)$/);
+            if (m) return `Hàng ${m[1].toUpperCase()} - Ghế ${m[2]}`;
+        }
+        if (typeof ticket?.seat_name === 'string' && ticket.seat_name.trim()) {
+            const raw = ticket.seat_name.trim();
+            const m = raw.match(/^([A-Za-z]+)\s*([0-9]+)$/);
+            if (m) return `Hàng ${m[1].toUpperCase()} - Ghế ${m[2]}`;
+        }
+        return 'Chưa có thông tin ghế';
+    };
+
     const getStatusBadge = (status) => {
         if (status === 'USED') {
             return (
@@ -164,7 +181,7 @@ const MyTicketsTab = () => {
                                         </div>
                                         <div className="detail-item">
                                             <FaChair className="detail-icon" />
-                                            <span>{ticket.seat ? `${ticket.seat.row_name}${ticket.seat.seat_number}` : (ticket.ticket_type_name || 'Vé tham dự')}</span>
+                                            <span>{getSeatDisplay(ticket)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -233,7 +250,7 @@ const MyTicketsTab = () => {
                                     <div className="mb-1"><FaMapMarkerAlt className="me-2" />{selectedTicket.venue_name}</div>
                                     <div className="fw-bold text-white mt-2" style={{ fontSize: '13px' }}>
                                         <FaChair className="me-2" style={{ color: '#2DC275' }} />
-                                        {selectedTicket.seat ? `HÀNG GHẾ: ${selectedTicket.seat.row_name}${selectedTicket.seat.seat_number}` : `LOẠI VÉ: ${selectedTicket.ticket_type_name || 'Vé tham dự'}`}
+                                        {`GHẾ: ${getSeatDisplay(selectedTicket)}`}
                                     </div>
                                 </div>
 

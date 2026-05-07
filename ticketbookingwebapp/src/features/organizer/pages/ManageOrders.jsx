@@ -7,28 +7,30 @@ import { useAuth } from '@context/AuthContext';
 const { Title, Text } = Typography;
 
 const ManageOrders = () => {
-    const { user } = useAuth();
+    const { user, organizer } = useAuth();
+    const actor = organizer || user;
     const [loading, setLoading] = useState(false);
     const [orders, setOrders] = useState([]);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [searchText, setSearchText] = useState('');
 
     useEffect(() => {
-        if (user?.user_id) {
+        if (actor?.user_id) {
             fetchOrders(1, 10);
         }
-    }, [user?.user_id]);
+    }, [actor?.user_id]);
 
     const fetchOrders = async (page = 1, pageSize = 10, search = '') => {
+        if (!actor?.user_id) return;
         try {
             setLoading(true);
-            const res = await api.getOrders(user.user_id, { page, limit: pageSize, search });
+            const res = await api.getOrders(actor.user_id, { page, limit: pageSize, search });
             if (res.success) {
-                setOrders(res.data);
+                setOrders(Array.isArray(res.data) ? res.data : []);
                 setPagination({
-                    current: res.pagination.page,
-                    pageSize: res.pagination.limit,
-                    total: res.pagination.total
+                    current: res.pagination?.page || page,
+                    pageSize: res.pagination?.limit || pageSize,
+                    total: res.pagination?.total || 0
                 });
             }
         } catch (error) {

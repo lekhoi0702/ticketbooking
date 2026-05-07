@@ -16,6 +16,7 @@ class TicketType(db.Model):
     update_date = db.Column("UpdateDate", db.DateTime, nullable=True)
 
     tickets = db.relationship("Ticket", backref="ticket_type", lazy=True)
+    seat_mappings = db.relationship("TicketTypeSeat", backref="ticket_type", lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
         return {

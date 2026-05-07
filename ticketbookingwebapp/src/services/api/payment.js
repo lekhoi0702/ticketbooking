@@ -85,17 +85,42 @@ export const paymentApi = {
 
     async createVietQR(orderId) {
         const order = await fetchOrderById(orderId);
-        if (!order) return unsupported('Không tìm thấy đơn hàng để tạo VietQR.');
+        if (!order) return unsupported('Khong tim thay don hang de tao VietQR.');
 
-        await createPaymentRecord(orderId, 'VIETQR', 'Pending');
+        const eventId = order.event_id || order.EventID;
+        if (!eventId) {
+            return unsupported('Don hang khong co event_id cho VietQR.');
+        }
+        const eventRes = await apiRequest(`/events/${eventId}`);
+        if (!eventRes.success || !eventRes.data) {
+            return unsupported('Khong tai duoc thong tin su kien de tao VietQR.');
+        }
+        const eventData = eventRes.data;
+        const qrImageUrl = eventData.qr_image_url || eventData.qr_code_url || eventData.QRCodeURL;
+        const bankName = eventData.qr_bank_name || eventData.QRBankName;
+        const accountNo = eventData.qr_account_number || eventData.QRAccountNumber;
+        if (!qrImageUrl || !bankName || !accountNo) {
+            return unsupported('Su kien chua cau hinh day du VietQR (QR, ngan hang, so tai khoan).');
+        }
+
+        await createPaymentRecord(orderId, 'VIETQR', 'Completed');
+        await apiRequest(`/orders/${orderId}`, {
+            method: 'PATCH',
+            body: { Status: 'PAID' },
+        });
         return {
             success: true,
             data: {
                 payment_code: `VQR${orderId}`,
                 order_code: order.order_code,
-                qr_url: '/uploads/misc/quangcaoshopee.png',
+                qr_image_url: qrImageUrl,
                 amount: order.total_amount || 0,
-                payment_status: 'COMPLETED',
+                qr_data: {
+                    bankName,
+                    accountNo,
+                    addInfo: order.order_code,
+                },
+                payment_status: 'SUCCESS',
             },
             message: '',
         };
@@ -118,16 +143,20 @@ export const paymentApi = {
 
     async verifyVietQRPayment(paymentCode) {
         const parsedOrderId = Number(String(paymentCode || '').replace(/^VQR/i, ''));
+        let resolvedOrderCode = null;
         if (Number.isFinite(parsedOrderId) && parsedOrderId > 0) {
             await apiRequest(`/orders/${parsedOrderId}`, {
                 method: 'PATCH',
                 body: { Status: 'PAID' },
             });
+            const orderRes = await apiRequest(`/orders/${parsedOrderId}`);
+            if (orderRes.success && orderRes.data) {
+                resolvedOrderCode = orderRes.data.order_code || orderRes.data.OrderCode || null;
+            }
         }
-        const orderCode = String(paymentCode || '').replace(/^VQR/i, 'TB');
         return {
             success: true,
-            data: { order_code: orderCode || `TB${Date.now()}`, payment_status: 'COMPLETED' },
+            data: { order_code: resolvedOrderCode, payment_status: 'COMPLETED' },
             message: '',
         };
     },
@@ -149,3 +178,4 @@ export const paymentApi = {
         }
     },
 };
+

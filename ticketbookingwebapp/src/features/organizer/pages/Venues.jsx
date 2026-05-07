@@ -19,7 +19,6 @@ import {
     message,
     Spin,
     Tooltip,
-    Skeleton,
     Popconfirm,
     Card,
 } from 'antd';
@@ -29,7 +28,8 @@ import VenueSeatMapEditor from '@features/organizer/components/VenueSeatMapEdito
 import VenueFormModal from '@features/organizer/components/VenueFormModal';
 
 const OrganizerVenues = () => {
-    const { user } = useAuth();
+    const { user, organizer } = useAuth();
+    const actor = organizer || user;
     const [loading, setLoading] = useState(true);
     const [venues, setVenues] = useState([]);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -44,13 +44,13 @@ const OrganizerVenues = () => {
     const [editingVenue, setEditingVenue] = useState(null);
 
     useEffect(() => {
-        if (user) fetchVenues();
-    }, [user]);
+        if (actor?.user_id) fetchVenues();
+    }, [actor?.user_id]);
 
     const fetchVenues = async () => {
         try {
             setLoading(true);
-            const res = await api.getOrganizerVenues(user.user_id, false);
+            const res = await api.getOrganizerVenues(actor.user_id, false);
             if (res.success) setVenues(res.data || []);
         } catch (error) {
             console.error('Error fetching venues:', error);
@@ -141,7 +141,7 @@ const OrganizerVenues = () => {
 
     const handleDeleteVenue = async (venueId) => {
         try {
-            const res = await api.deleteVenue(venueId, user?.user_id);
+            const res = await api.deleteVenue(venueId, actor?.user_id);
             if (res.success) {
                 message.success('Xóa địa điểm thành công');
                 fetchVenues();
@@ -251,18 +251,6 @@ const OrganizerVenues = () => {
         },
     ];
 
-    if (loading) {
-        return (
-            <div style={{ padding: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24, gap: 10 }}>
-                    <Skeleton.Button active size="default" style={{ width: 150 }} />
-                    <Skeleton.Button active size="default" style={{ width: 100 }} />
-                </div>
-                <Skeleton active paragraph={{ rows: 10 }} />
-            </div>
-        );
-    }
-
     return (
         <Spin spinning={saving} tip="Đang xử lý...">
             <div style={{ padding: 24 }}>
@@ -344,6 +332,7 @@ const OrganizerVenues = () => {
                     key={refreshKey}
                     columns={columns}
                     dataSource={venues}
+                    loading={loading}
                     rowKey="venue_id"
                     rowSelection={rowSelection}
                     pagination={{
@@ -360,7 +349,7 @@ const OrganizerVenues = () => {
                     onCancel={() => setShowVenueModal(false)}
                     onSuccess={fetchVenues}
                     editingVenue={editingVenue}
-                    user={user}
+                    user={actor}
                 />
 
                 <VenueSeatMapEditor
@@ -377,3 +366,4 @@ const OrganizerVenues = () => {
 };
 
 export default OrganizerVenues;
+

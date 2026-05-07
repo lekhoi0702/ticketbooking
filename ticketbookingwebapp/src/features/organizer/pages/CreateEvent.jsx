@@ -14,7 +14,6 @@ import {
     Divider,
     message,
     Affix,
-    Skeleton,
     Alert
 } from 'antd';
 import {
@@ -62,6 +61,7 @@ const CreateEvent = () => {
         handleImageChange,
         handleVietQRImageChange,
         handleVietQRURLChange,
+        handleVietQRBankInfoChange,
         removeVietQR,
         removeBanner,
         handleTicketTypeChange,
@@ -72,47 +72,7 @@ const CreateEvent = () => {
         handleSubmit
     } = useCreateEvent();
 
-    if (loadingData) {
-        return (
-            <div>
-                {/* Header Skeleton */}
-                <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center' }}>
-                    <Skeleton.Button active size="default" style={{ width: 40, marginRight: 16 }} />
-                    <Skeleton.Input active size="default" style={{ width: 200 }} />
-                </div>
-
-                {/* Steps Skeleton */}
-                <Card style={{ marginBottom: 24 }}>
-                    <Skeleton active paragraph={{ rows: 1 }} />
-                </Card>
-
-                {/* Form Content Skeleton */}
-                <Row gutter={24}>
-                    <Col xs={24} lg={16}>
-                        <Space orientation="vertical" size={24} style={{ width: '100%' }}>
-                            <Card title={<Skeleton.Input active size="small" style={{ width: 150 }} />}>
-                                <Skeleton active paragraph={{ rows: 4 }} />
-                            </Card>
-                            <Card title={<Skeleton.Input active size="small" style={{ width: 150 }} />}>
-                                <Skeleton active paragraph={{ rows: 3 }} />
-                            </Card>
-                            <Card title={<Skeleton.Input active size="small" style={{ width: 150 }} />}>
-                                <Skeleton active paragraph={{ rows: 5 }} />
-                            </Card>
-                        </Space>
-                    </Col>
-                    <Col xs={24} lg={8}>
-                        <Card title={<Skeleton.Input active size="small" style={{ width: 150 }} />}>
-                            <Skeleton.Image active style={{ width: '100%', height: 200 }} />
-                            <Skeleton active paragraph={{ rows: 2 }} style={{ marginTop: 24 }} />
-                            <Skeleton.Button active block size="large" style={{ marginTop: 12 }} />
-                            <Skeleton.Button active block size="large" style={{ marginTop: 12 }} />
-                        </Card>
-                    </Col>
-                </Row>
-            </div>
-        );
-    }
+    if (loadingData) return <LoadingSpinner tip="Đang tải dữ liệu..." />;
 
     return (
         <>
@@ -196,6 +156,7 @@ const CreateEvent = () => {
                                         qrPreview={vietqrPreview}
                                         handleURLChange={handleVietQRURLChange}
                                         removeQR={removeVietQR}
+                                        onBankInfoChange={handleVietQRBankInfoChange}
                                     />
                                 </Card>
                             </Space>

@@ -18,6 +18,40 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number
     const socketRef = useRef(null);
     const seatSelectionProcessedRef = useRef(false);
 
+    const normalizeSeat = (seat, fallbackIndex = 0) => {
+        const seatId = seat.seat_id ?? seat.SeatID ?? `seat_${fallbackIndex}`;
+        const rowName = String(seat.row_name ?? seat.row_number ?? seat.RowNumber ?? "A");
+        const seatNumber = String(seat.seat_number ?? seat.SeatNumber ?? fallbackIndex + 1);
+        const seatLabel = seat.seat_label ?? seat.SeatLabel ?? `${rowName}${seatNumber}`;
+        const rawStatus = String(seat.status ?? seat.Status ?? "AVAILABLE").toUpperCase();
+        const status = ["BOOKED", "RESERVED"].includes(rawStatus) ? rawStatus : "AVAILABLE";
+
+        return {
+            ...seat,
+            seat_id: seatId,
+            row_name: rowName,
+            seat_number: seatNumber,
+            seat_label: seatLabel,
+            status,
+            area: seat.area ?? seat.area_name ?? seat.Area ?? null,
+        };
+    };
+
+    const isSameSeat = (a, b) => {
+        if (!a || !b) return false;
+        const aId = a.seat_id ?? a.SeatID;
+        const bId = b.seat_id ?? b.SeatID;
+        if (aId && bId) return String(aId) === String(bId);
+
+        const aRow = String(a.row_name ?? a.row_number ?? a.RowNumber ?? '').trim();
+        const bRow = String(b.row_name ?? b.row_number ?? b.RowNumber ?? '').trim();
+        const aNum = String(a.seat_number ?? a.SeatNumber ?? '').trim();
+        const bNum = String(b.seat_number ?? b.SeatNumber ?? '').trim();
+        const aArea = String(a.area ?? a.area_name ?? a.Area ?? '').trim();
+        const bArea = String(b.area ?? b.area_name ?? b.Area ?? '').trim();
+        return aRow === bRow && aNum === bNum && aArea === bArea;
+    };
+
     // Initialize Socket.IO connection
     useEffect(() => {
         if (!eventId || !user) return;
@@ -28,7 +62,8 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number
             : (import.meta.env.DEV ? 'http://localhost:5000' : window.location.origin);
 
         const socket = io(socketUrl, {
-            transports: ['websocket', 'polling']
+            transports: ['polling'],
+            upgrade: false,
         });
 
         socket.on('connect', () => {
@@ -207,8 +242,27 @@ const SeatMap = ({ ticketType, eventId, onSelectionChange, maxSelection = Number
             setLoading(true);
             const res = await seatApi.getSeatsByTicketType(eventId);
             if (res.success) {
-                setSeats(res.data);
-                if (onSeatsLoaded) onSeatsLoaded((res.data || []).length > 0);
+                const allEventSeats = Array.isArray(res.data)
+                    ? res.data.map((s, idx) => normalizeSeat(s, idx))
+                    : [];
+                const mappedSeats = ticketType?.selected_seats || ticketType?.SelectedSeats || [];
+
+                let filteredSeats = Array.isArray(mappedSeats) && mappedSeats.length > 0
+                    ? allEventSeats.filter((seat) => mappedSeats.some((m) => isSameSeat(seat, m)))
+                    : allEventSeats;
+
+                // Fallback: if seat mapping exists but /seats payload cannot be matched,
+                // keep UI visible using mapped seats so user still sees seat map by ticket type.
+                if (Array.isArray(mappedSeats) && mappedSeats.length > 0 && filteredSeats.length === 0) {
+                    filteredSeats = mappedSeats.map((m, idx) => normalizeSeat({
+                        ...m,
+                        seat_id: m.seat_id ?? m.SeatID ?? `mapped_${ticketType?.ticket_type_id || 'tt'}_${idx}`,
+                        status: 'AVAILABLE',
+                    }, idx));
+                }
+
+                setSeats(filteredSeats);
+                if (onSeatsLoaded) onSeatsLoaded(filteredSeats.length > 0);
             } else {
                 if (onSeatsLoaded) onSeatsLoaded(false);
             }

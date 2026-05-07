@@ -17,7 +17,7 @@ import { paymentApi } from '@services/api/payment';
 
 const { Text, Title } = Typography;
 
-const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
+const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR, onBankInfoChange }) => {
     const [banks, setBanks] = useState([]);
     const [loadingBanks, setLoadingBanks] = useState(false);
     const [generatingQR, setGeneratingQR] = useState(false);
@@ -37,7 +37,7 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
             }
         } catch (err) {
             console.error('Error fetching banks:', err);
-            message.error('Không thể tải danh sách ngân hàng');
+            message.error('Kh�ng th? t?i danh s�ch ng�n h�ng');
         } finally {
             setLoadingBanks(false);
         }
@@ -45,15 +45,15 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
 
     const generateQRFromBankInfo = async () => {
         if (!accountNo || !accountNo.trim()) {
-            message.error('Vui lòng nhập số tài khoản');
+            message.error('Vui l�ng nh?p s? t�i kho?n');
             return;
         }
         if (!/^[0-9]+$/.test(accountNo.trim())) {
-            message.error('Số tài khoản chỉ chứa số');
+            message.error('S? t�i kho?n ch? ch?a s?');
             return;
         }
         if (!bankCode || !bankCode.trim()) {
-            message.error('Vui lòng chọn ngân hàng');
+            message.error('Vui l�ng ch?n ng�n h�ng');
             return;
         }
 
@@ -61,10 +61,13 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
             setGeneratingQR(true);
             const qrImageUrl = `https://qr.sepay.vn/img?acc=${encodeURIComponent(accountNo.trim())}&bank=${encodeURIComponent(bankCode)}&template=compact`;
             handleURLChange(qrImageUrl);
-            message.success('Đã tạo QR code thành công');
+            if (typeof onBankInfoChange === 'function') {
+                onBankInfoChange({ bank_name: bankCode.trim(), account_number: accountNo.trim() });
+            }
+            message.success('�� t?o QR code th�nh c�ng');
         } catch (err) {
             console.error('Error generating QR:', err);
-            message.error('Không thể tạo QR code. Vui lòng thử lại.');
+            message.error('Kh�ng th? t?o QR code. Vui l�ng th? l?i.');
         } finally {
             setGeneratingQR(false);
         }
@@ -97,8 +100,18 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
                         />
                     </div>
                     <Space size="small">
-                        <Button danger size="small" icon={<DeleteOutlined />} onClick={removeQR}>
-                            Xóa QR Code
+                        <Button
+                            danger
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            onClick={() => {
+                                removeQR();
+                                if (typeof onBankInfoChange === 'function') {
+                                    onBankInfoChange({ bank_name: '', account_number: '' });
+                                }
+                            }}
+                        >
+                            X�a QR Code
                         </Button>
                         <Button
                             size="small"
@@ -107,9 +120,12 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
                                 removeQR();
                                 setAccountNo('');
                                 setBankCode('');
+                                if (typeof onBankInfoChange === 'function') {
+                                    onBankInfoChange({ bank_name: '', account_number: '' });
+                                }
                             }}
                         >
-                            Tạo QR mới
+                            T?o QR m?i
                         </Button>
                     </Space>
                 </div>
@@ -126,20 +142,20 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
                     <div style={{ textAlign: 'center', marginBottom: 16 }}>
                         <QrcodeOutlined style={{ fontSize: 32, color: '#d9d9d9', marginBottom: 8 }} />
                         <Title level={5} style={{ margin: '0 0 4px 0', fontSize: 14 }}>
-                            Tạo QR Code từ thông tin ngân hàng
+                            T?o QR Code t? th�ng tin ng�n h�ng
                         </Title>
                         <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
-                            Nhập thông tin ngân hàng để tạo QR code tự động
+                            Nh?p th�ng tin ng�n h�ng d? t?o QR code t? d?ng
                         </Text>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div>
                             <Text strong style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>
-                                Ngân hàng <span style={{ color: '#ff4d4f' }}>*</span>
+                                Ng�n h�ng <span style={{ color: '#ff4d4f' }}>*</span>
                             </Text>
                             <Select
-                                placeholder="Chọn ngân hàng"
+                                placeholder="Ch?n ng�n h�ng"
                                 loading={loadingBanks}
                                 showSearch
                                 value={bankCode}
@@ -157,10 +173,10 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
 
                         <div>
                             <Text strong style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>
-                                Số tài khoản <span style={{ color: '#ff4d4f' }}>*</span>
+                                S? t�i kho?n <span style={{ color: '#ff4d4f' }}>*</span>
                             </Text>
                             <Input
-                                placeholder="Nhập số tài khoản"
+                                placeholder="Nh?p s? t�i kho?n"
                                 prefix={<BankOutlined style={{ color: '#bfbfbf' }} />}
                                 value={accountNo}
                                 onChange={(e) => setAccountNo(e.target.value)}
@@ -177,7 +193,7 @@ const VietQRImageUpload = ({ qrPreview, handleURLChange, removeQR }) => {
                             onClick={generateQRFromBankInfo}
                             style={{ backgroundColor: '#1A73E8', borderColor: '#1A73E8', marginTop: '4px', height: '40px' }}
                         >
-                            {generatingQR ? 'Đang tạo QR...' : 'Tạo QR Code'}
+                            {generatingQR ? '�ang t?o QR...' : 'T?o QR Code'}
                         </Button>
                     </div>
                 </div>
