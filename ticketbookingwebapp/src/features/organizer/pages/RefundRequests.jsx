@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    Card, 
+ Card, 
     Table, 
     Button, 
     Tag, 
@@ -10,20 +10,28 @@ import {
     Modal, 
     Descriptions,
     Empty,
-    Tooltip
+    Tooltip,
+    Row,
+    Col,
+    Select,
+    DatePicker,
+    Input
 } from 'antd';
 import { 
     CheckCircleOutlined, 
-    CloseCircleOutlined, 
+ CloseCircleOutlined, 
     ReloadOutlined,
     EyeOutlined,
-    ExclamationCircleOutlined
+    ExclamationCircleOutlined,
+    SearchOutlined
 } from '@ant-design/icons';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
 import { usePendingRefunds } from '@shared/hooks/usePendingRefunds';
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const RefundRequests = () => {
     const { user, organizer } = useAuth();
@@ -31,53 +39,117 @@ const RefundRequests = () => {
     const { refresh: refreshPendingCount } = usePendingRefunds();
     const [loading, setLoading] = useState(false);
     const [requests, setRequests] = useState([]);
-    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [filteredRequests, setFilteredRequests] = useState([]);
+    const [events, setEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+    const [dateRange, setDateRange] = useState(null);
+    const [searchText, setSearchText] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState(null);
     const [detailModalVisible, setDetailModalVisible] = useState(false);
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
-        if (actor?.user_id) {
+     if (actor?.user_id) {
             fetchRefundRequests();
-        }
+     fetchEvents();
+     }
     }, [actor?.user_id]);
 
-    const fetchRefundRequests = async () => {
-        if (!actor?.user_id) return;
+    useEffect(() => {
+        applyFilters();
+    }, [requests, selectedEventId, dateRange, searchText]);
+
+    const fetchEvents = async () => {
         try {
-            setLoading(true);
+            const res = await api.getEvents(actor.user_id);
+            if (res.success && Array.isArray(res.data)) {
+        const eventOptions = res.data.map(e => ({
+                    label: e.event_name,
+          value: e.event_id
+       }));
+    setEvents(eventOptions);
+            }
+ } catch (error) {
+            console.error('Error fetching events:', error);
+    }
+    };
+
+    const fetchRefundRequests = async () => {
+  if (!actor?.user_id) return;
+        try {
+setLoading(true);
             const res = await api.getRefundRequests(actor.user_id);
             if (res.success) {
                 const baseRows = Array.isArray(res.data) ? res.data : [];
-                const details = await Promise.all(
-                    baseRows.map((row) => api.getOrder(row.order_id))
+      const details = await Promise.all(
+           baseRows.map((row) => api.getOrder(row.order_id))
                 );
-                const merged = baseRows.map((row, idx) => {
-                    const detail = details[idx];
-                    if (!detail?.success || !detail.data) return row;
-                    const d = detail.data;
-                    return {
-                        ...row,
-                        customer_name: d.customer_name || d.order?.customer_name || row.customer_name,
-                        customer_email: d.customer_email || d.order?.customer_email || row.customer_email,
-                        customer_phone: d.customer_phone || d.order?.customer_phone || row.customer_phone,
-                        event_name: d.event_name || d.order?.event_name || row.event_name,
-                        event_date: d.event_date || d.order?.event_date || row.event_date,
-                        tickets: Array.isArray(d.tickets) ? d.tickets : (Array.isArray(row.tickets) ? row.tickets : []),
-                    };
+  const merged = baseRows.map((row, idx) => {
+         const detail = details[idx];
+  if (!detail?.success || !detail.data) return row;
+  const d = detail.data;
+      return {
+         ...row,
+        customer_name: d.customer_name || d.order?.customer_name || row.customer_name,
+         customer_email: d.customer_email || d.order?.customer_email || row.customer_email,
+ customer_phone: d.customer_phone || d.order?.customer_phone || row.customer_phone,
+      event_name: d.event_name || d.order?.event_name || row.event_name,
+event_id: d.event_id || d.order?.event_id || row.event_id,
+          event_date: d.event_date || d.order?.event_date || row.event_date,
+        tickets: Array.isArray(d.tickets) ? d.tickets : (Array.isArray(row.tickets) ? row.tickets : []),
+            };
                 });
-                const pendingOnly = merged.filter((row) => {
-                    const status = String(row.order_status || row.status || '').toUpperCase();
-                    return status === 'CANCELLATION_PENDING';
-                });
-                setRequests(pendingOnly);
-            }
-        } catch (error) {
-            console.error('Error fetching refund requests:', error);
+      const pendingOnly = merged.filter((row) => {
+          const status = String(row.order_status || row.status || '').toUpperCase();
+    return status === 'CANCELLATION_PENDING';
+     });
+    setRequests(pendingOnly);
+         }
+      } catch (error) {
+        console.error('Error fetching refund requests:', error);
             message.error('Không thể tải danh sách yêu cầu hoàn tiền');
         } finally {
             setLoading(false);
         }
+};
+
+    const applyFilters = () => {
+      let filtered = [...requests];
+
+        // Filter by event
+   if (selectedEventId) {
+            filtered = filtered.filter(req => req.event_id === selectedEventId);
+        }
+
+        // Filter by date range
+        if (dateRange && dateRange[0] && dateRange[1]) {
+ filtered = filtered.filter(req => {
+            const reqDate = dayjs(req.created_at);
+            return reqDate.isAfter(dateRange[0].startOf('day').subtract(1, 'ms')) &&
+           reqDate.isBefore(dateRange[1].endOf('day').add(1, 'ms'));
+   });
+        }
+
+        // Filter by search text
+        if (searchText) {
+            filtered = filtered.filter(req =>
+         req.order_code?.toLowerCase().includes(searchText.toLowerCase()) ||
+ req.customer_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+            req.user_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+    req.customer_email?.toLowerCase().includes(searchText.toLowerCase()) ||
+      req.user_email?.toLowerCase().includes(searchText.toLowerCase())
+        );
+  }
+
+        setFilteredRequests(filtered);
     };
+
+    const handleRefresh = () => {
+  setSelectedEventId(null);
+        setDateRange(null);
+        setSearchText('');
+        fetchRefundRequests();
+ };
 
     const handleApprove = (order) => {
         Modal.confirm({
@@ -233,147 +305,189 @@ const RefundRequests = () => {
     ];
 
     return (
-        <div className="refund-requests-page">
+    <div className="refund-requests-page">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <Title level={4} style={{ margin: 0 }}>Yêu cầu hoàn tiền</Title>
-                <Button 
-                    icon={<ReloadOutlined />} 
-                    onClick={fetchRefundRequests}
-                    loading={loading}
-                >
-                    Làm mới
+       <Title level={4} style={{ margin: 0 }}>Yêu cầu hoàn tiền</Title>
+        <Button 
+    icon={<ReloadOutlined />} 
+        onClick={handleRefresh}
+ loading={loading}
+         >
+   Làm mới
                 </Button>
-            </div>
+   </div>
 
-            <Card bordered={false} style={{ borderRadius: 12 }}>
-                {requests.length === 0 ? (
-                    <Empty 
-                        description="Không có yêu cầu hoàn tiền nào"
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    />
-                ) : (
-                    <Table
-                        columns={columns}
-                        dataSource={requests}
-                        rowKey="order_id"
-                        loading={loading}
-                        pagination={{ 
-                            pageSize: 10,
-                            showSizeChanger: true,
-                            showTotal: (total) => `Tổng ${total} yêu cầu`
-                        }}
-                    />
-                )}
+            <Card bordered={false} style={{ borderRadius: 12, marginBottom: 16 }}>
+       <Row gutter={16}>
+     <Col xs={24} sm={8}>
+        <div style={{ marginBottom: 8, fontWeight: 600, color: '#8c8c8c' }}>LỌC THEO SỰ KIỆN</div>
+        <Select
+ placeholder="Tất cả sự kiện"
+      style={{ width: '100%' }}
+   allowClear
+      showSearch
+     optionFilterProp="label"
+         options={events}
+    value={selectedEventId}
+          onChange={setSelectedEventId}
+            size="large"
+    />
+          </Col>
+          <Col xs={24} sm={8}>
+           <div style={{ marginBottom: 8, fontWeight: 600, color: '#8c8c8c' }}>LỌC THEO NGÀY YÊU CẦU</div>
+       <RangePicker
+       style={{ width: '100%' }}
+    size="large"
+   format="DD/MM/YYYY"
+      placeholder={['Từ ngày', 'Đến ngày']}
+           value={dateRange}
+       onChange={setDateRange}
+       allowClear
+     />
+  </Col>
+    <Col xs={24} sm={8}>
+            <div style={{ marginBottom: 8, fontWeight: 600, color: '#8c8c8c' }}>TÌM KIẾM</div>
+            <Input
+      prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+        placeholder="Tìm theo mã đơn, khách hàng..."
+   value={searchText}
+   onChange={(e) => setSearchText(e.target.value)}
+        allowClear
+      size="large"
+           />
+        </Col>
+  </Row>
+      </Card>
+
+   <Card bordered={false} style={{ borderRadius: 12 }}>
+          {filteredRequests.length === 0 ? (
+         <Empty 
+            description="Không có yêu cầu hoàn tiền nào"
+  image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+          ) : (
+           <Table
+    columns={columns}
+         dataSource={filteredRequests}
+       rowKey="order_id"
+       loading={loading}
+             pagination={{ 
+      pageSize: 10,
+          showSizeChanger: true,
+      showTotal: (total) => `Tổng ${total} yêu cầu`
+             }}
+         />
+            )}
             </Card>
 
             {/* Detail Modal */}
-            <Modal
-                title={`Chi tiết yêu cầu hoàn tiền - ${selectedOrder?.order_code}`}
-                open={detailModalVisible}
-                onCancel={() => setDetailModalVisible(false)}
+    <Modal
+   title={`Chi tiết yêu cầu hoàn tiền - ${selectedOrder?.order_code}`}
+             open={detailModalVisible}
+        onCancel={() => setDetailModalVisible(false)}
                 footer={[
-                    <Button key="close" onClick={() => setDetailModalVisible(false)}>
-                        Đóng
-                    </Button>,
+             <Button key="close" onClick={() => setDetailModalVisible(false)}>
+         Đóng
+                 </Button>,
+       <Button
+            key="reject"
+danger
+     icon={<CloseCircleOutlined />}
+   onClick={() => {
+       setDetailModalVisible(false);
+                handleReject(selectedOrder);
+          }}
+         >
+  Từ chối
+    </Button>,
                     <Button
-                        key="reject"
-                        danger
-                        icon={<CloseCircleOutlined />}
-                        onClick={() => {
-                            setDetailModalVisible(false);
-                            handleReject(selectedOrder);
-                        }}
-                    >
-                        Từ chối
-                    </Button>,
-                    <Button
-                        key="approve"
-                        type="primary"
-                        icon={<CheckCircleOutlined />}
-                        onClick={() => {
-                            setDetailModalVisible(false);
-                            handleApprove(selectedOrder);
-                        }}
-                        style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-                    >
-                        Duyệt hoàn tiền
-                    </Button>
-                ]}
-                width={700}
-            >
-                {selectedOrder && (
-                    <>
-                        <Descriptions bordered column={2} size="small" style={{ marginBottom: 16 }}>
-                            <Descriptions.Item label="Mã đơn hàng" span={2}>
-                                <Text strong copyable>{selectedOrder.order_code}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Khách hàng">
-                                {selectedOrder.customer_name || selectedOrder.user_name || 'N/A'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Email">
-                                {selectedOrder.customer_email || selectedOrder.user_email || 'N/A'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Số điện thoại">
-                                {selectedOrder.customer_phone || 'N/A'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Ngày đặt">
-                                {selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleString('vi-VN') : 'N/A'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Sự kiện" span={2}>
-                                <Text strong>{selectedOrder.event_name}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Ngày sự kiện">
-                                {selectedOrder.event_date ? new Date(selectedOrder.event_date).toLocaleDateString('vi-VN') : 'N/A'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Tổng tiền">
-                                <Text type="success" strong style={{ fontSize: 16 }}>
-                                    {selectedOrder.total_amount?.toLocaleString()} ₫
-                                </Text>
-                            </Descriptions.Item>
-                        </Descriptions>
+    key="approve"
+      type="primary"
+         icon={<CheckCircleOutlined />}
+            onClick={() => {
+    setDetailModalVisible(false);
+            handleApprove(selectedOrder);
+       }}
+    style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+>
+       Duyệt hoàn tiền
+     </Button>
+ ]}
+      width={700}
+      >
+      {selectedOrder && (
+              <>
+               <Descriptions bordered column={2} size="small" style={{ marginBottom: 16 }}>
+         <Descriptions.Item label="Mã đơn hàng" span={2}>
+  <Text strong copyable>{selectedOrder.order_code}</Text>
+      </Descriptions.Item>
+         <Descriptions.Item label="Khách hàng">
+   {selectedOrder.customer_name || selectedOrder.user_name || 'N/A'}
+     </Descriptions.Item>
+        <Descriptions.Item label="Email">
+     {selectedOrder.customer_email || selectedOrder.user_email || 'N/A'}
+          </Descriptions.Item>
+             <Descriptions.Item label="Số điện thoại">
+            {selectedOrder.customer_phone || 'N/A'}
+  </Descriptions.Item>
+           <Descriptions.Item label="Ngày đặt">
+               {selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleString('vi-VN') : 'N/A'}
+              </Descriptions.Item>
+         <Descriptions.Item label="Sự kiện" span={2}>
+    <Text strong>{selectedOrder.event_name}</Text>
+          </Descriptions.Item>
+       <Descriptions.Item label="Ngày sự kiện">
+          {selectedOrder.event_date ? new Date(selectedOrder.event_date).toLocaleDateString('vi-VN') : 'N/A'}
+   </Descriptions.Item>
+  <Descriptions.Item label="Tổng tiền">
+           <Text type="success" strong style={{ fontSize: 16 }}>
+               {selectedOrder.total_amount?.toLocaleString()} ₫
+          </Text>
+               </Descriptions.Item>
+        </Descriptions>
 
-                        <Title level={5}>Danh sách vé ({selectedOrder.tickets?.length || 0} vé)</Title>
-                        <Table
-                            size="small"
-                            dataSource={selectedOrder.tickets || []}
-                            rowKey="ticket_id"
-                            pagination={false}
-                            columns={[
-                                {
-                                    title: 'Mã vé',
-                                    dataIndex: 'ticket_code',
-                                    key: 'ticket_code',
-                                    render: (code) => <Tag>{code}</Tag>
-                                },
-                                {
-                                    title: 'Loại vé',
-                                    dataIndex: 'type_name',
-                                    key: 'type_name'
-                                },
-                                {
-                                    title: 'Chỗ ngồi',
-                                    dataIndex: 'seat_label',
-                                    key: 'seat_label',
-                                    render: (seat) => seat || 'Không có'
-                                },
-                                {
-                                    title: 'Người sử dụng',
-                                    dataIndex: 'holder_name',
-                                    key: 'holder_name',
-                                    render: (name) => name || 'N/A'
-                                },
-                                {
-                                    title: 'Giá',
-                                    dataIndex: 'price',
-                                    key: 'price',
-                                    align: 'right',
-                                    render: (price) => `${price?.toLocaleString()} ₫`
-                                }
-                            ]}
-                        />
-                    </>
+               <Title level={5}>Danh sách vé ({selectedOrder.tickets?.length || 0} vé)</Title>
+     <Table
+            size="small"
+     dataSource={selectedOrder.tickets || []}
+      rowKey="ticket_id"
+        pagination={false}
+   columns={[
+      {
+              title: 'Mã vé',
+             dataIndex: 'ticket_code',
+          key: 'ticket_code',
+  render: (code) => <Tag>{code}</Tag>
+         },
+      {
+      title: 'Loại vé',
+      dataIndex: 'type_name',
+     key: 'type_name'
+         },
+      {
+         title: 'Chỗ ngồi',
+dataIndex: 'seat_label',
+               key: 'seat_label',
+   render: (seat) => seat || 'Không có'
+            },
+ {
+    title: 'Người sử dụng',
+      dataIndex: 'holder_name',
+     key: 'holder_name',
+    render: (name) => name || 'N/A'
+           },
+        {
+              title: 'Giá',
+    dataIndex: 'price',
+             key: 'price',
+       align: 'right',
+                 render: (price) => `${price?.toLocaleString()} ₫`
+           }
+     ]}
+     />
+         </>
                 )}
-            </Modal>
+     </Modal>
         </div>
     );
 };

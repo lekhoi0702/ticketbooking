@@ -1,24 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Input, Button, Tag, Space, Typography, message, Skeleton } from 'antd';
+import { Card, Table, Input, Button, Tag, Space, Typography, message, Skeleton, DatePicker, Row, Col } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { api } from '@services/api';
 import { useAuth } from '@context/AuthContext';
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const ManageOrders = () => {
     const { user, organizer } = useAuth();
     const actor = organizer || user;
     const [loading, setLoading] = useState(false);
     const [orders, setOrders] = useState([]);
+    const [filteredOrders, setFilteredOrders] = useState([]);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [searchText, setSearchText] = useState('');
+    const [dateRange, setDateRange] = useState(null);
 
     useEffect(() => {
         if (actor?.user_id) {
             fetchOrders(1, 10);
         }
     }, [actor?.user_id]);
+
+    useEffect(() => {
+        applyFilters();
+    }, [orders, searchText, dateRange]);
 
     const fetchOrders = async (page = 1, pageSize = 10, search = '') => {
         if (!actor?.user_id) return;
@@ -41,13 +49,50 @@ const ManageOrders = () => {
         }
     };
 
+    const applyFilters = () => {
+        let filtered = [...orders];
+
+    // Filter by search text
+        if (searchText) {
+       filtered = filtered.filter(order => 
+   order.order_code?.toLowerCase().includes(searchText.toLowerCase()) ||
+    order.customer_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+       order.customer_email?.toLowerCase().includes(searchText.toLowerCase()) ||
+       order.customer_phone?.includes(searchText)
+            );
+        }
+
+        // Filter by date range
+        if (dateRange && dateRange[0] && dateRange[1]) {
+ filtered = filtered.filter(order => {
+    const orderDate = dayjs(order.created_at);
+      return orderDate.isAfter(dateRange[0].startOf('day').subtract(1, 'ms')) &&
+        orderDate.isBefore(dateRange[1].endOf('day').add(1, 'ms'));
+            });
+}
+
+        setFilteredOrders(filtered);
+        setPagination(prev => ({ ...prev, total: filtered.length }));
+    };
+
     const handleTableChange = (pag) => {
-        fetchOrders(pag.current, pag.pageSize, searchText);
+      setPagination(pag);
     };
 
     const handleSearch = (val) => {
         setSearchText(val);
-        fetchOrders(1, pagination.pageSize, val);
+        setPagination(prev => ({ ...prev, current: 1 }));
+};
+
+    const handleDateRangeChange = (dates) => {
+  setDateRange(dates);
+        setPagination(prev => ({ ...prev, current: 1 }));
+    };
+
+    const handleRefresh = () => {
+ setSearchText('');
+  setDateRange(null);
+     fetchOrders(1, pagination.pageSize);
     };
 
     const columns = [
@@ -127,42 +172,57 @@ const ManageOrders = () => {
 
     return (
         <div className="manage-orders-page">
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-                <Button icon={<ReloadOutlined />} onClick={() => fetchOrders(pagination.current, pagination.pageSize, searchText)}>Làm mới</Button>
-            </div>
+   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+       <Button icon={<ReloadOutlined />} onClick={handleRefresh}>Làm mới</Button>
+          </div>
 
-            <Card bordered={false} style={{ borderRadius: 12 }}>
-                <div style={{ marginBottom: 16 }}>
-                    <Input.Search
-                        placeholder="Tìm theo mã đơn, khách hàng, email..."
-                        allowClear
-                        onSearch={handleSearch}
-                        style={{ width: 400 }}
-                        enterButton={<Button icon={<SearchOutlined />}>Tìm kiếm</Button>}
-                    />
-                </div>
+        <Card bordered={false} style={{ borderRadius: 12 }}>
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col xs={24} sm={12} md={10}>
+       <div style={{ marginBottom: 8, fontWeight: 600, color: '#8c8c8c' }}>TÌM KIẾM</div>
+             <Input.Search
+         placeholder="Tìm theo mã đơn, khách hàng, email..."
+                   allowClear
+      onSearch={handleSearch}
+  onChange={(e) => !e.target.value && setSearchText('')}
+     value={searchText}
+   enterButton={<Button icon={<SearchOutlined />}>Tìm kiếm</Button>}
+         />
+            </Col>
+          <Col xs={24} sm={12} md={10}>
+     <div style={{ marginBottom: 8, fontWeight: 600, color: '#8c8c8c' }}>LỌC THEO NGÀY MUA</div>
+             <RangePicker
+       style={{ width: '100%' }}
+        format="DD/MM/YYYY"
+         placeholder={['Từ ngày', 'Đến ngày']}
+         onChange={handleDateRangeChange}
+        value={dateRange}
+    allowClear
+  />
+ </Col>
+   </Row>
 
                 {loading ? (
-                    <div style={{ padding: 20 }}>
-                        <Skeleton active paragraph={{ rows: 10 }} />
-                    </div>
-                ) : (
-                    <Table
-                        columns={columns}
-                        dataSource={orders}
-                        rowKey="order_id"
-                        pagination={pagination}
-                        onChange={handleTableChange}
-                        loading={false}
-                        expandable={{
-                            expandedRowRender,
-                            rowExpandable: record => record.Ticket && record.Ticket.length > 0,
-                            expandRowByClick: true
-                        }}
-                    />
-                )}
-            </Card>
-        </div>
+    <div style={{ padding: 20 }}>
+       <Skeleton active paragraph={{ rows: 10 }} />
+         </div>
+         ) : (
+        <Table
+   columns={columns}
+   dataSource={filteredOrders}
+         rowKey="order_id"
+     pagination={pagination}
+        onChange={handleTableChange}
+       loading={false}
+           expandable={{
+            expandedRowRender,
+             rowExpandable: record => record.Ticket && record.Ticket.length > 0,
+    expandRowByClick: true
+               }}
+       />
+       )}
+ </Card>
+    </div>
     );
 };
 
