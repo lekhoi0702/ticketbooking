@@ -1,8 +1,6 @@
-import { apiRequest, unsupported } from './_compat';
-import { STATIC_ADS } from '@shared/constants/staticAds';
+import { apiRequest } from './_compat';
 import { isFeaturedByTime } from '@shared/utils/eventUtils';
 
-const flattenAds = () => Object.values(STATIC_ADS).flat();
 const pickValue = (...values) => values.find((v) => v !== undefined && v !== null);
 
 const normalizeRole = (user) => {
@@ -201,6 +199,10 @@ export const adminApi = {
     async getEventShowtimes(eventId) {
         const res = await apiRequest(`/events/${eventId}`);
         if (!res.success) return res;
+        const showtimes = res.data?.Showtimes || res.data?.showtimes || [];
+        if (Array.isArray(showtimes) && showtimes.length > 0) {
+            return { success: true, data: showtimes, message: '' };
+        }
         return { success: true, data: [res.data], message: '' };
     },
 
@@ -297,19 +299,61 @@ export const adminApi = {
       return { success: true, message: '' };
     },
     async getBanners() {
-        return { success: true, data: flattenAds(), message: '' };
+        const res = await apiRequest('/banners');
+        if (!res.success) return res;
+        const data = (res.data || []).map((row) => ({
+            banner_id: pickValue(row.banner_id, row.BannerID),
+            title: pickValue(row.title, row.Title),
+            image: pickValue(row.image, row.image_url, row.ImageURL),
+            display_order: Number(pickValue(row.display_order, row.DisplayOrder, 0)) || 0,
+            is_active: Boolean(pickValue(row.is_active, row.IsActive, true)),
+        }));
+        return { success: true, data, message: '' };
     },
 
-    async createBanner() {
-        return unsupported('Backend mới không dùng bảng banner.');
+    async createBanner(payload = {}) {
+        return apiRequest('/banners', {
+            method: 'POST',
+            body: {
+                Title: payload.title ?? payload.Title ?? '',
+                ImageURL: payload.image ?? payload.image_url ?? payload.ImageURL ?? '',
+                DisplayOrder: payload.display_order ?? payload.DisplayOrder ?? 0,
+                IsActive: payload.is_active ?? payload.IsActive ?? true,
+            },
+        });
     },
 
-    async updateBanner() {
-        return unsupported('Backend mới không dùng bảng banner.');
+    async updateBanner(bannerId, payload = {}) {
+        return apiRequest(`/banners/${bannerId}`, {
+            method: 'PUT',
+            body: {
+                Title: payload.title ?? payload.Title,
+                ImageURL: payload.image ?? payload.image_url ?? payload.ImageURL,
+                DisplayOrder: payload.display_order ?? payload.DisplayOrder,
+                IsActive: payload.is_active ?? payload.IsActive,
+            },
+        });
     },
 
-    async deleteBanner() {
-        return unsupported('Backend mới không dùng bảng banner.');
+    async deleteBanner(bannerId) {
+        return apiRequest(`/banners/${bannerId}`, { method: 'DELETE' });
+    },
+
+    async uploadBannerImage(file) {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await apiRequest('/banners/upload', {
+            method: 'POST',
+            body: formData,
+        });
+        if (!res.success) return res;
+        return {
+            success: true,
+            data: {
+                image_url: pickValue(res.data?.image_url, res.data?.ImageURL),
+            },
+            message: '',
+        };
     },
 
     async getAllDiscounts(eventId = null) {

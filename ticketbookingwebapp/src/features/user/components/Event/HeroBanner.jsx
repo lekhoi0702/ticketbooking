@@ -1,29 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Carousel, Button } from 'antd';
+import React from 'react';
+import { Carousel } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import { getImageUrl } from '@shared/utils/eventUtils';
 import './HeroBanner.css';
 
 const HeroBanner = ({ banners = [] }) => {
-    const navigate = useNavigate();
     const displayBanners = banners && banners.length > 0 ? banners : [];
-    const [slidesToShow, setSlidesToShow] = useState(2);
     const carouselRef = React.useRef(null);
-
-    useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth <= 768) {
-                setSlidesToShow(1);
-            } else {
-                setSlidesToShow(2);
-            }
-        };
-
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     if (displayBanners.length === 0) {
         return null;
@@ -43,17 +26,7 @@ const HeroBanner = ({ banners = [] }) => {
 
     return (
         <div className="hero-banner-container">
-            <Carousel 
-                ref={carouselRef}
-                autoplay 
-                effect="scrollx" 
-                autoplaySpeed={4000} 
-                dots={true}
-                arrows={false}
-                slidesToShow={slidesToShow}
-                slidesToScroll={slidesToShow}
-                infinite={displayBanners.length > slidesToShow}
-            >
+            <Carousel ref={carouselRef} autoplay effect="fade" autoplaySpeed={4500} dots arrows={false}>
                 {displayBanners.map((banner, index) => {
                     const imageUrl = getImageUrl(banner.image_url || banner.image);
 
@@ -69,28 +42,19 @@ const HeroBanner = ({ banners = [] }) => {
                                         e.target.parentElement.style.backgroundColor = '#1f1f1f';
                                     }}
                                 />
-                                {banner.link && (
-                                    <div className="banner-button-wrapper">
-                                        <Button
-                                            className="banner-button"
-                                            onClick={() => navigate(banner.link)}
-                                        >
-                                            Xem chi tiết
-                                        </Button>
-                                    </div>
-                                )}
+                                {banner.title && <div className="banner-title">{banner.title}</div>}
                             </div>
                         </div>
                     );
                 })}
             </Carousel>
-            {/* Custom Navigation Arrows - đặt bên ngoài carousel */}
-            {displayBanners.length > slidesToShow && (
+
+            {displayBanners.length > 1 && (
                 <>
                     <button
                         className="hero-carousel-arrow hero-carousel-prev"
                         onClick={handlePrev}
-                        aria-label="Previous slide"
+                        aria-label="Slide trước"
                         type="button"
                     >
                         <LeftOutlined />
@@ -98,7 +62,7 @@ const HeroBanner = ({ banners = [] }) => {
                     <button
                         className="hero-carousel-arrow hero-carousel-next"
                         onClick={handleNext}
-                        aria-label="Next slide"
+                        aria-label="Slide sau"
                         type="button"
                     >
                         <RightOutlined />

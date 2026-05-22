@@ -215,4 +215,35 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context) return context;
+
+    return {
+        user: null,
+        admin: null,
+        organizer: null,
+        login: () => {},
+        loginUser: () => {},
+        loginAdmin: () => {},
+        loginOrganizer: () => {},
+        logout: async () => {},
+        logoutUser: async () => {},
+        logoutAdmin: async () => {},
+        logoutOrganizer: async () => {},
+        updateUser: () => {},
+        updateAdmin: () => {},
+        updateOrganizer: () => {},
+        isAuthenticated: false,
+        userAuthenticated: false,
+        adminAuthenticated: false,
+        organizerAuthenticated: false,
+        loading: false,
+        showLoginModal: false,
+        setShowLoginModal: () => {},
+        triggerLogin: () => {},
+        redirectIntent: null,
+        setRedirectIntent: () => {},
+        clearRedirectIntent: () => {},
+    };
+};

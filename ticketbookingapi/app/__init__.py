@@ -50,7 +50,7 @@ def create_app():
     # Import models to ensure they are registered
     from app.models import (
         Role, User, Organizer, EventCategory, Event, EventQRCode,
-        Venue, Seat, TicketType, Order, Payment, Ticket, Discount
+        Venue, Seat, TicketType, Order, Payment, Ticket, Discount, Banner, Showtime
     )
 
     # Register blueprints
@@ -71,6 +71,7 @@ def create_app():
     from app.routes.discounts import discounts_bp
     from app.routes.event_qrcodes import event_qrcodes_bp
     from app.routes.uploads import uploads_bp
+    from app.routes.banners import banners_bp
 
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(chatbot_bp, url_prefix="/api")
@@ -89,5 +90,6 @@ def create_app():
     app.register_blueprint(discounts_bp, url_prefix="/api")
     app.register_blueprint(event_qrcodes_bp, url_prefix="/api")
     app.register_blueprint(uploads_bp)
+    app.register_blueprint(banners_bp, url_prefix="/api")
 
     return app

@@ -13,6 +13,8 @@ from app.models.payment import Payment
 from app.models.ticket import Ticket
 from app.models.discount import Discount
 from app.models.ticket_type_seat import TicketTypeSeat
+from app.models.banner import Banner
+from app.models.showtime import Showtime
 
 __all__ = [
     'Role',
@@ -30,4 +32,6 @@ __all__ = [
     'Ticket',
     'Discount',
     'TicketTypeSeat',
+    'Banner',
+    'Showtime',
 ]

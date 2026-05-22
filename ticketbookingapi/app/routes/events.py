@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
-from app.models import Event, EventQRCode, Order, Seat, Ticket, TicketType, TicketTypeSeat, Venue
+from app.models import Event, EventQRCode, Order, Payment, Seat, Showtime, Ticket, TicketType, TicketTypeSeat, Venue
 from app.models.organizer import Organizer
 from app.routes.helpers import ApiMethodView, parse_datetime
 
@@ -66,6 +66,120 @@ def _extract_ticket_type_payloads():
         return payloads
 
     return []
+
+
+def _parse_showtimes(payload):
+    if payload is None:
+        return []
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if isinstance(payload, dict):
+        return [payload]
+    if isinstance(payload, str):
+        try:
+            parsed = json.loads(payload)
+            return _parse_showtimes(parsed)
+        except Exception:
+            return []
+    return []
+
+
+def _extract_showtime_payloads():
+    data = request.get_json(silent=True)
+    if isinstance(data, dict) and "showtimes" in data:
+        return _parse_showtimes(data.get("showtimes"))
+
+    if request.form:
+        payloads = []
+        for item in request.form.getlist("showtimes"):
+            payloads.extend(_parse_showtimes(item))
+        return payloads
+
+    return []
+
+
+def _normalize_showtimes_input(raw_showtimes, fallback_start=None, fallback_end=None, fallback_venue_id=None):
+    normalized = []
+    for row in raw_showtimes or []:
+        start_raw = row.get("start_datetime") or row.get("StartDateTime") or row.get("StartDate")
+        end_raw = row.get("end_datetime") or row.get("EndDateTime") or row.get("EndDate")
+        if not start_raw or not end_raw:
+            continue
+        start_dt = parse_datetime(start_raw)
+        end_dt = parse_datetime(end_raw)
+        if not start_dt or not end_dt:
+            continue
+        if end_dt <= start_dt:
+            raise ValueError("showtime end_datetime must be after start_datetime")
+        venue_raw = row.get("venue_id") if "venue_id" in row else row.get("VenueID")
+        venue_id = fallback_venue_id if venue_raw in (None, "") else int(venue_raw)
+        normalized.append(
+            {
+                "showtime_id": row.get("showtime_id") or row.get("ShowtimeID"),
+                "start_datetime": start_dt,
+                "end_datetime": end_dt,
+                "venue_id": venue_id,
+                "status": str(row.get("status") or row.get("Status") or "ACTIVE").upper(),
+            }
+        )
+
+    if not normalized and fallback_start and fallback_end:
+        start_dt = parse_datetime(fallback_start)
+        end_dt = parse_datetime(fallback_end)
+        if start_dt and end_dt:
+            if end_dt <= start_dt:
+                raise ValueError("end_datetime must be after start_datetime")
+            normalized.append(
+                {
+                    "showtime_id": None,
+                    "start_datetime": start_dt,
+                    "end_datetime": end_dt,
+                    "venue_id": fallback_venue_id,
+                    "status": "ACTIVE",
+                }
+            )
+    return normalized
+
+
+def _replace_event_showtimes(event, normalized_showtimes):
+    Showtime.query.filter_by(event_id=event.event_id).delete(synchronize_session=False)
+    now = datetime.utcnow()
+    for item in normalized_showtimes:
+        db.session.add(
+            Showtime(
+                event_id=event.event_id,
+                venue_id=item.get("venue_id") if item.get("venue_id") not in ("", None) else event.venue_id,
+                start_datetime=item["start_datetime"],
+                end_datetime=item["end_datetime"],
+                status=item.get("status") or "ACTIVE",
+                create_date=now,
+                update_date=now,
+            )
+        )
+
+
+def _delete_event_dependencies(event_id):
+    ticket_type_ids = [
+        row.ticket_type_id
+        for row in TicketType.query.filter_by(event_id=event_id).all()
+    ]
+
+    # Remove event-level ancillary records first
+    EventQRCode.query.filter_by(event_id=event_id).delete(synchronize_session=False)
+    Showtime.query.filter_by(event_id=event_id).delete(synchronize_session=False)
+
+    # Remove order/payment/ticket chain for this event
+    order_ids = [row.order_id for row in Order.query.filter_by(event_id=event_id).all()]
+    if order_ids:
+        Payment.query.filter(Payment.order_id.in_(order_ids)).delete(synchronize_session=False)
+        Ticket.query.filter(Ticket.order_id.in_(order_ids)).delete(synchronize_session=False)
+        Order.query.filter(Order.order_id.in_(order_ids)).delete(synchronize_session=False)
+
+    # Remove ticket type related rows
+    if ticket_type_ids:
+        TicketTypeSeat.query.filter(TicketTypeSeat.ticket_type_id.in_(ticket_type_ids)).delete(synchronize_session=False)
+        Ticket.query.filter(Ticket.ticket_type_id.in_(ticket_type_ids)).delete(synchronize_session=False)
+    TicketType.query.filter_by(event_id=event_id).delete(synchronize_session=False)
 
 
 def _event_to_payload(event):
@@ -133,6 +247,26 @@ def _event_to_payload(event):
     data["QRCodeURL"] = qr.qrcode_url if qr else None
     data["QRBankName"] = qr.bank_name if qr else None
     data["QRAccountNumber"] = qr.account_number if qr else None
+
+    showtimes = (
+        Showtime.query
+        .filter_by(event_id=event.event_id)
+        .order_by(Showtime.start_datetime.asc(), Showtime.showtime_id.asc())
+        .all()
+    )
+    data["Showtimes"] = [
+        {
+            **row.to_dict(),
+            "Venue": row.venue.to_dict() if getattr(row, "venue", None) else None,
+            "start_datetime": row.start_datetime.isoformat() if row.start_datetime else None,
+            "end_datetime": row.end_datetime.isoformat() if row.end_datetime else None,
+            "status": row.status,
+            "ticket_types": ticket_types_payload,
+            "total_capacity": (row.venue.capacity if getattr(row, "venue", None) and row.venue.capacity else 0),
+        }
+        for row in showtimes
+    ]
+
     return data
 
 
@@ -364,8 +498,11 @@ class EventListView(ApiMethodView):
         category_id = data.get("CategoryID") or data.get("category_id")
         venue_id = data.get("VenueID") or data.get("venue_id")
         description = data.get("Description") or data.get("description")
-        start_date = parse_datetime(data.get("StartDate") or data.get("start_datetime"))
-        end_date = parse_datetime(data.get("EndDate") or data.get("end_datetime"))
+        try:
+            start_date = parse_datetime(data.get("StartDate") or data.get("start_datetime"))
+            end_date = parse_datetime(data.get("EndDate") or data.get("end_datetime"))
+        except Exception:
+            return self.fail("Invalid start_datetime/end_datetime format", 400)
         status = data.get("Status") or data.get("status") or "PENDING_APPROVAL"
         manager_id = data.get("ManagerID") or data.get("manager_id") or data.get("CreateID") or 1
 
@@ -375,8 +512,10 @@ class EventListView(ApiMethodView):
         if saved_banner:
             image_url = saved_banner
 
-        if not event_name or category_id is None or not start_date or not end_date:
-            return self.fail("event_name, category_id, start_datetime and end_datetime are required", 400)
+        raw_showtimes = _extract_showtime_payloads()
+
+        if not event_name or category_id is None:
+            return self.fail("event_name and category_id are required", 400)
 
         try:
             category_id = int(category_id)
@@ -389,6 +528,23 @@ class EventListView(ApiMethodView):
             venue = Venue.query.filter_by(venue_id=venue_id).first()
             if not venue:
                 return self.fail("Venue not found", 400)
+        try:
+            normalized_showtimes = _normalize_showtimes_input(
+                raw_showtimes,
+                fallback_start=start_date,
+                fallback_end=end_date,
+                fallback_venue_id=venue_id,
+            )
+        except ValueError as ex:
+            return self.fail(str(ex), 400)
+        except Exception:
+            return self.fail("Invalid showtimes payload", 400)
+
+        if not normalized_showtimes:
+            return self.fail("At least one showtime is required", 400)
+
+        start_date = min(item["start_datetime"] for item in normalized_showtimes)
+        end_date = max(item["end_datetime"] for item in normalized_showtimes)
 
         organizer = Organizer.query.filter_by(organizer_id=manager_id).first()
         if not organizer:
@@ -421,6 +577,7 @@ class EventListView(ApiMethodView):
         )
         db.session.add(event)
         db.session.flush()
+        _replace_event_showtimes(event, normalized_showtimes)
 
         ticket_types = _extract_ticket_type_payloads()
         assigned_seat_ids = set()
@@ -517,6 +674,7 @@ class EventDetailView(ApiMethodView):
         venue_id = data.get("VenueID") or data.get("venue_id")
         start_date = data.get("StartDate") or data.get("start_datetime")
         end_date = data.get("EndDate") or data.get("end_datetime")
+        raw_showtimes = _extract_showtime_payloads()
 
         banner_file = request.files.get("banner_image")
         saved_banner = _save_upload(banner_file) if banner_file else None
@@ -533,17 +691,80 @@ class EventDetailView(ApiMethodView):
             event.image_url = image_url
             has_changes = True
         if category_id is not None:
-            event.category_id = int(category_id)
+            try:
+                event.category_id = int(category_id)
+            except (TypeError, ValueError):
+                return self.fail("category_id must be an integer", 400)
             has_changes = True
         if venue_id is not None and str(venue_id).strip() != "":
-            event.venue_id = int(venue_id)
+            try:
+                event.venue_id = int(venue_id)
+            except (TypeError, ValueError):
+                return self.fail("venue_id must be an integer", 400)
+            if not Venue.query.filter_by(venue_id=event.venue_id).first():
+                return self.fail("Venue not found", 400)
             has_changes = True
         if start_date is not None:
-            event.start_date = parse_datetime(start_date)
+            try:
+                event.start_date = parse_datetime(start_date)
+            except Exception:
+                return self.fail("Invalid start_datetime format", 400)
             has_changes = True
         if end_date is not None:
-            event.end_date = parse_datetime(end_date)
+            try:
+                event.end_date = parse_datetime(end_date)
+            except Exception:
+                return self.fail("Invalid end_datetime format", 400)
             has_changes = True
+
+        if raw_showtimes:
+            try:
+                normalized_showtimes = _normalize_showtimes_input(
+                    raw_showtimes,
+                    fallback_start=None,
+                    fallback_end=None,
+                    fallback_venue_id=event.venue_id,
+                )
+            except ValueError as ex:
+                return self.fail(str(ex), 400)
+            except Exception:
+                return self.fail("Invalid showtimes payload", 400)
+
+            if not normalized_showtimes:
+                return self.fail("At least one valid showtime is required", 400)
+
+            _replace_event_showtimes(event, normalized_showtimes)
+            event.start_date = min(item["start_datetime"] for item in normalized_showtimes)
+            event.end_date = max(item["end_datetime"] for item in normalized_showtimes)
+            has_changes = True
+        elif start_date is not None or end_date is not None or venue_id is not None:
+            # Backward-compatible sync for legacy clients that only send event start/end.
+            showtime = (
+                Showtime.query
+                .filter_by(event_id=event.event_id)
+                .order_by(Showtime.start_datetime.asc(), Showtime.showtime_id.asc())
+                .first()
+            )
+            if showtime:
+                if start_date is not None:
+                    showtime.start_datetime = event.start_date
+                if end_date is not None:
+                    showtime.end_datetime = event.end_date
+                if venue_id is not None and str(venue_id).strip() != "":
+                    showtime.venue_id = event.venue_id
+                showtime.update_date = datetime.utcnow()
+            elif event.start_date and event.end_date:
+                _replace_event_showtimes(
+                    event,
+                    [
+                        {
+                            "start_datetime": event.start_date,
+                            "end_datetime": event.end_date,
+                            "venue_id": event.venue_id,
+                            "status": "ACTIVE",
+                        }
+                    ],
+                )
 
         ticket_types = _extract_ticket_type_payloads()
         if ticket_types:
@@ -618,7 +839,11 @@ class EventDetailView(ApiMethodView):
             return self.fail("No fields to update", 400)
 
         event.update_date = datetime.utcnow()
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return self.fail("Invalid related data for event update", 400)
         return self.ok(_event_to_payload(event))
 
     def put(self, event_id):
@@ -628,8 +853,13 @@ class EventDetailView(ApiMethodView):
         event = Event.query.filter_by(event_id=event_id).first()
         if not event:
             return self.fail("Not found", 404)
+        _delete_event_dependencies(event.event_id)
         db.session.delete(event)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return self.fail("Cannot delete event because related data still exists", 400)
         return self.ok({"Deleted": True})
 
 
@@ -647,10 +877,15 @@ class EventBulkDeleteView(ApiMethodView):
             if not event:
                 failed_events.append({"event_id": event_id, "event_name": None, "reason": "Not found"})
                 continue
+            _delete_event_dependencies(event.event_id)
             deleted_ids.append(event.event_id)
             db.session.delete(event)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return self.fail("Cannot bulk delete events because related data still exists", 400)
 
         return self.ok(
             {

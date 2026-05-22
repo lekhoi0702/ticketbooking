@@ -112,10 +112,21 @@ const EditEvent = () => {
                     venue_id: event.venue_id,
                     start_datetime: formatDate(event.start_datetime),
                     end_datetime: formatDate(event.end_datetime),
+                    showtimes: Array.isArray(event.showtimes) && event.showtimes.length > 0
+                        ? event.showtimes.map((slot) => ({
+                            start_datetime: formatDate(slot.start_datetime || slot.StartDateTime),
+                            end_datetime: formatDate(slot.end_datetime || slot.EndDateTime),
+                        }))
+                        : [
+                            {
+                                start_datetime: formatDate(event.start_datetime),
+                                end_datetime: formatDate(event.end_datetime),
+                            },
+                        ],
                     total_capacity: event.total_capacity || 0,
                     status: event.status,
                     is_featured: event.is_featured,
-                    schedule: event.schedule || [],
+                    schedule: event.showtimes || event.schedule || [],
                     manager_id: event.manager_id || user?.user_id || 1  // Ensure manager_id is set
                 });
 

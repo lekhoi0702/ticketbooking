@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { api } from '@services/api';
@@ -40,6 +40,12 @@ export const useCreateEvent = () => {
         venue_id: '',
         start_datetime: '',
         end_datetime: '',
+        showtimes: [
+            {
+                start_datetime: '',
+                end_datetime: '',
+            }
+        ],
         total_capacity: 0,
         status: 'PENDING_APPROVAL',
         is_featured: false,
@@ -365,12 +371,23 @@ export const useCreateEvent = () => {
             errors.venue_id = 'Vui lòng chọn địa điểm';
         }
 
-        if (!formData.start_datetime) {
-            errors.start_datetime = 'Vui lòng chọn thời gian bắt đầu';
-        }
-
-        if (!formData.end_datetime) {
-            errors.end_datetime = 'Vui lòng chọn thời gian kết thúc';
+        const showtimes = Array.isArray(formData.showtimes) ? formData.showtimes : [];
+        if (showtimes.length === 0) {
+            errors.showtimes = 'Vui lòng thêm ít nhất một suất diễn';
+        } else {
+            showtimes.forEach((slot, index) => {
+                const slotStart = slot?.start_datetime ? djs(slot.start_datetime) : null;
+                const slotEnd = slot?.end_datetime ? djs(slot.end_datetime) : null;
+                if (!slot?.start_datetime) {
+                    errors[`start_datetime_${index}`] = 'Vui lòng chọn thời gian bắt đầu';
+                }
+                if (!slot?.end_datetime) {
+                    errors[`end_datetime_${index}`] = 'Vui lòng chọn thời gian kết thúc';
+                }
+                if (slotStart && slotEnd && !slotEnd.isAfter(slotStart)) {
+                    errors[`end_datetime_${index}`] = 'Thời gian kết thúc phải sau thời gian bắt đầu';
+                }
+            });
         }
 
         // Validate ticket types
@@ -476,6 +493,15 @@ export const useCreateEvent = () => {
             formDataToSend.append('status', formData.status);
             formDataToSend.append('is_featured', formData.is_featured);
             formDataToSend.append('manager_id', formData.manager_id);
+            (Array.isArray(formData.showtimes) ? formData.showtimes : []).forEach((slot) => {
+                if (slot?.start_datetime && slot?.end_datetime) {
+                    formDataToSend.append('showtimes', JSON.stringify({
+                        start_datetime: slot.start_datetime,
+                        end_datetime: slot.end_datetime,
+                        venue_id: formData.venue_id,
+                    }));
+                }
+            });
 
             // Add banner image if a new one was selected
             if (bannerImage) {

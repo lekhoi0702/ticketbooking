@@ -1,5 +1,4 @@
 import { apiRequest } from './_compat';
-import { getStaticAdsByPosition } from '@shared/constants/staticAds';
 import { isFeaturedByTime } from '@shared/utils/eventUtils';
 
 const normalizeBool = (value) => value === true || value === 1 || value === '1';
@@ -54,6 +53,7 @@ const normalizeEvent = (event = {}) => {
     const venue = normalizeVenue(event.venue || event.Venue || null);
     const organizer = event.organizer || event.Organizer || null;
     const ticketTypesRaw = event.ticket_types || event.TicketTypes || [];
+    const showtimesRaw = event.showtimes || event.Showtimes || [];
 
     return {
         ...event,
@@ -96,6 +96,15 @@ const normalizeEvent = (event = {}) => {
         qr_image_url: event.qr_image_url || event.qr_code_url || event.QRCodeURL || null,
         qr_bank_name: event.qr_bank_name || event.QRBankName || null,
         qr_account_number: event.qr_account_number || event.QRAccountNumber || null,
+        showtimes: Array.isArray(showtimesRaw)
+            ? showtimesRaw.map((slot) => ({
+                showtime_id: slot.showtime_id || slot.ShowtimeID,
+                start_datetime: slot.start_datetime || slot.StartDateTime || slot.StartDate || null,
+                end_datetime: slot.end_datetime || slot.EndDateTime || slot.EndDate || null,
+                venue_id: slot.venue_id || slot.VenueID || null,
+                status: String(slot.status || slot.Status || 'ACTIVE').toUpperCase(),
+            }))
+            : [],
     };
 };
 
@@ -225,11 +234,25 @@ export const eventApi = {
         return { success: true, data: event, message: '' };
     },
 
-    async getFeaturedEvents(limit = 10) {
-        const res = await this.getEvents();
+    async getFavoriteEvents(limit = 10) {
+        const res = await apiRequest('/events');
         if (!res.success) return res;
-        const featured = res.data.filter((e) => isFeaturedByTime(e));
+
+        const events = Array.isArray(res.data) ? res.data.map(normalizeEvent) : [];
+        const featured = events
+            .filter((e) => normalizeBool(e.is_favorite || e.IsFavorite))
+            .filter((e) => String(e.status || '').toUpperCase() === 'PUBLISHED')
+            .sort((a, b) => {
+                const aTs = new Date(a.start_datetime || a.start_date || 0).getTime();
+                const bTs = new Date(b.start_datetime || b.start_date || 0).getTime();
+                return aTs - bTs;
+            });
+
         return { success: true, data: featured.slice(0, limit), message: '' };
+    },
+
+    async getFeaturedEvents(limit = 10) {
+        return this.getFavoriteEvents(limit);
     },
 
     async getEventsByCategory(categoryId, limit = 20) {
@@ -267,11 +290,15 @@ export const eventApi = {
     },
 
     async getPublicBanners() {
-        return {
-            success: true,
-            data: getStaticAdsByPosition('HOME_TOP'),
-            message: '',
-        };
+        const res = await apiRequest('/banners/public');
+        if (!res.success) return res;
+        const data = (res.data || []).map((row) => ({
+            banner_id: row.banner_id || row.BannerID,
+            title: row.title || row.Title || '',
+            image: row.image || row.image_url || row.ImageURL || '',
+            display_order: row.display_order || row.DisplayOrder || 0,
+        }));
+        return { success: true, data, message: '' };
     },
 
     async getRecommendedEvents(eventId, limit = 8) {

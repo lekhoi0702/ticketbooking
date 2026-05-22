@@ -51,6 +51,15 @@ const normalizeEvent = (event = {}) => ({
         ? event.ticket_types.map(normalizeTicketType)
         : (Array.isArray(event.TicketTypes) ? event.TicketTypes.map(normalizeTicketType) : []),
     qr_image_url: getValue(event.qr_image_url, event.qr_code_url, event.QRCodeURL, null),
+    showtimes: Array.isArray(getValue(event.showtimes, event.Showtimes, []))
+        ? getValue(event.showtimes, event.Showtimes, []).map((slot) => ({
+            showtime_id: getValue(slot.showtime_id, slot.ShowtimeID),
+            start_datetime: getValue(slot.start_datetime, slot.StartDateTime, slot.StartDate),
+            end_datetime: getValue(slot.end_datetime, slot.EndDateTime, slot.EndDate),
+            venue_id: getValue(slot.venue_id, slot.VenueID),
+            status: String(getValue(slot.status, slot.Status, 'ACTIVE')).toUpperCase(),
+        }))
+        : [],
 });
 
 const normalizeOrderTicket = (ticket = {}) => {
