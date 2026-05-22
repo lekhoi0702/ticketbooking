@@ -7,15 +7,20 @@ const ScheduleCalendar = ({ currentEvent, schedules, onSelectSchedule, selectedS
     const [viewMode, setViewMode] = useState('calendar'); // Default to calendar view
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
-    // Combine current event with other schedules
-    const allSchedules = [
-        {
+    // Ưu tiên dữ liệu showtimes; fallback về 1 mốc thời gian của currentEvent
+    const allSchedules = (Array.isArray(schedules) && schedules.length > 0)
+        ? schedules.map((s, idx) => ({
+            showtime_id: s.showtime_id || s.ShowtimeID || idx,
+            event_id: currentEvent.event_id,
+            start_datetime: s.start_datetime || s.StartDateTime || s.StartDate,
+            end_datetime: s.end_datetime || s.EndDateTime || s.EndDate,
+        }))
+        : [{
+            showtime_id: `event-${currentEvent.event_id}`,
             event_id: currentEvent.event_id,
             start_datetime: currentEvent.start_datetime,
-            end_datetime: currentEvent.end_datetime
-        },
-        ...schedules
-    ];
+            end_datetime: currentEvent.end_datetime,
+        }];
 
 
     // Group schedules by date - Use parseLocalDateTime to prevent timezone issues
@@ -83,7 +88,7 @@ const ScheduleCalendar = ({ currentEvent, schedules, onSelectSchedule, selectedS
             const isToday = currentDate.toDateString() === today.toDateString();
             const hasSchedules = daySchedules.length > 0;
             const isPast = currentDate < today;
-            const isSelected = daySchedules.some(s => s.event_id === selectedScheduleId);
+            const isSelected = daySchedules.some(s => String(s.event_id) === String(selectedScheduleId));
 
             days.push(
                 <div
@@ -168,7 +173,7 @@ const ScheduleCalendar = ({ currentEvent, schedules, onSelectSchedule, selectedS
                         const scheduleDate = parseLocalDateTime(schedule.start_datetime);
                         return (
                             <div
-                                key={schedule.event_id}
+                                key={schedule.showtime_id || schedule.event_id}
                                 className={`schedule-list-item ${selectedScheduleId === schedule.event_id ? 'selected' : ''}`}
                                 onClick={() => onSelectSchedule(schedule.event_id)}
                             >

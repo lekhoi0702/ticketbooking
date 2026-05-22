@@ -69,6 +69,11 @@ const EventCard = ({ event }) => {
                             <Text type="secondary" className="info-item">
                                 <ClockCircleOutlined /> {event.date}
                             </Text>
+                            {event.showtime_count > 1 && (
+                                <Text className="info-item showtime-count">
+                                    {event.showtime_count} suất diễn
+                                </Text>
+                            )}
                             <Text type="secondary" className="info-item" ellipsis>
                                 <EnvironmentOutlined /> {event.location}
                             </Text>

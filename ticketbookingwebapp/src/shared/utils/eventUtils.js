@@ -92,7 +92,22 @@ export const transformEvent = (event) => {
     }
 
     try {
-        const startDate = parseLocalDateTime(event.start_datetime || event.start_date || event.StartDate);
+        const rawShowtimes = Array.isArray(event.showtimes)
+            ? event.showtimes
+            : (Array.isArray(event.Showtimes) ? event.Showtimes : []);
+        const sortedShowtimes = [...rawShowtimes]
+            .filter((s) => s?.start_datetime || s?.StartDateTime)
+            .sort((a, b) =>
+                new Date(a.start_datetime || a.StartDateTime || 0).getTime()
+                - new Date(b.start_datetime || b.StartDateTime || 0).getTime()
+            );
+        const startDate = parseLocalDateTime(
+            sortedShowtimes[0]?.start_datetime
+            || sortedShowtimes[0]?.StartDateTime
+            || event.start_datetime
+            || event.start_date
+            || event.StartDate
+        );
         const eventImage = event.banner_image_url || event.image_url || event.ImageURL || null;
         return {
             id: event.event_id,
@@ -115,7 +130,13 @@ export const transformEvent = (event) => {
                 const minPrice = Math.min(...prices);
                 return minPrice === 0 ? 'Miễn phí' : `${minPrice.toLocaleString('vi-VN')}đ`;
             })(),
-            badge: isFeaturedByTime(event) ? 'Hot' : null
+            badge: isFeaturedByTime(event) ? 'Hot' : null,
+            showtime_count: sortedShowtimes.length,
+            showtimes: sortedShowtimes.map((s) => ({
+                showtime_id: s.showtime_id || s.ShowtimeID,
+                start_datetime: s.start_datetime || s.StartDateTime,
+                end_datetime: s.end_datetime || s.EndDateTime,
+            })),
         };
     } catch (error) {
         console.error('Error transforming event:', error, event);

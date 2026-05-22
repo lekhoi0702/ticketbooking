@@ -3,15 +3,19 @@ import { Button } from 'react-bootstrap';
 import { FaMapMarkerAlt, FaCalendar } from 'react-icons/fa';
 import { getImageUrl, parseLocalDateTime } from '@shared/utils/eventUtils';
 
-const EventHero = ({ event }) => {
+export default function EventHero({ event }) {
     const bannerUrl = getImageUrl(event.banner_image_url);
+    const showtimes = Array.isArray(event.showtimes) && event.showtimes.length > 0
+        ? [...event.showtimes].sort(
+            (a, b) => new Date(a.start_datetime || 0).getTime() - new Date(b.start_datetime || 0).getTime()
+        )
+        : [];
 
-    // Date Logic - Use parseLocalDateTime to prevent timezone issues
-    const startDate = parseLocalDateTime(event.start_datetime);
-    const dateStr = startDate ? startDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
-    const timeStr = startDate ? startDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+    const startDate = parseLocalDateTime(showtimes[0]?.start_datetime || event.start_datetime);
+    const timeStr = startDate
+        ? startDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        : '';
 
-    // If end date is same day, show range
     let timeRange = timeStr;
     if (event.end_datetime && startDate) {
         const endDate = parseLocalDateTime(event.end_datetime);
@@ -21,24 +25,22 @@ const EventHero = ({ event }) => {
         }
     }
 
-    // Formatting for new design: "19:30 - 21:00, 24 Tháng 01, 2026"
-    const displayDateTime = startDate ? `${timeRange}, ${startDate.getDate()} Tháng ${startDate.getMonth() + 1}, ${startDate.getFullYear()}` : 'Chưa xác định';
-
+    const displayDateTime = startDate
+        ? `${timeRange}, ${startDate.getDate()} Tháng ${startDate.getMonth() + 1}, ${startDate.getFullYear()}`
+        : 'Chưa xác định';
 
     const venueName = event.venue?.venue_name || 'Địa điểm chưa cập nhật';
     const venueFullAddress = event.venue?.address || '';
 
-    // Price Logic
     const getPriceRange = () => {
         if (!event.ticket_types || event.ticket_types.length === 0) return 'Đang cập nhật';
-        const minPrice = Math.min(...event.ticket_types.map(t => t.price));
+        const minPrice = Math.min(...event.ticket_types.map((t) => t.price));
         return minPrice > 0 ? `${minPrice.toLocaleString('vi-VN')} đ` : 'Miễn phí';
     };
 
     return (
         <div className="container py-5">
             <div className="ticket-hero-container">
-                {/* LEFT SIDE: INFO */}
                 <div className="ticket-hero-left">
                     <div className="ticket-content">
                         <h1 className="ticket-title">{event.event_name}</h1>
@@ -47,6 +49,34 @@ const EventHero = ({ event }) => {
                             <FaCalendar className="ticket-icon" />
                             <span className="ticket-info-text">{displayDateTime}</span>
                         </div>
+
+                        {showtimes.length > 1 && (
+                            <div className="ticket-info-row">
+                                <FaCalendar className="ticket-icon" />
+                                <span className="ticket-info-text">{showtimes.length} suất diễn</span>
+                            </div>
+                        )}
+
+                        {showtimes.length > 1 && (
+                            <div className="ticket-address" style={{ marginBottom: 8 }}>
+                                {showtimes
+                                    .slice(0, 3)
+                                    .map((slot) => {
+                                        const d = parseLocalDateTime(slot.start_datetime);
+                                        return d
+                                            ? d.toLocaleString('vi-VN', {
+                                                day: '2-digit',
+                                                month: '2-digit',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })
+                                            : '';
+                                    })
+                                    .filter(Boolean)
+                                    .join(' • ')}
+                                {showtimes.length > 3 ? ' • ...' : ''}
+                            </div>
+                        )}
 
                         <div className="ticket-info-row align-items-start">
                             <FaMapMarkerAlt className="ticket-icon mt-1" />
@@ -72,7 +102,6 @@ const EventHero = ({ event }) => {
                     </div>
                 </div>
 
-                {/* RIGHT SIDE: IMAGE */}
                 <div className="ticket-hero-right">
                     <div className="ticket-image-wrapper">
                         <img src={bannerUrl} alt={event.event_name} />
@@ -81,6 +110,4 @@ const EventHero = ({ event }) => {
             </div>
         </div>
     );
-};
-
-export default EventHero;
+}

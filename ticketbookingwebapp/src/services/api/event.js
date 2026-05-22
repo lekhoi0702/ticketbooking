@@ -105,6 +105,13 @@ const normalizeEvent = (event = {}) => {
                 status: String(slot.status || slot.Status || 'ACTIVE').toUpperCase(),
             }))
             : [],
+        schedule: Array.isArray(showtimesRaw)
+            ? showtimesRaw.map((slot) => ({
+                showtime_id: slot.showtime_id || slot.ShowtimeID,
+                start_datetime: slot.start_datetime || slot.StartDateTime || slot.StartDate || null,
+                end_datetime: slot.end_datetime || slot.EndDateTime || slot.EndDate || null,
+            }))
+            : [],
     };
 };
 

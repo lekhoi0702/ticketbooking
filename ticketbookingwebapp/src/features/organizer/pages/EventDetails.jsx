@@ -46,6 +46,7 @@ const EventDetails = () => {
     const [ticketTypes, setTicketTypes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showtimes, setShowtimes] = useState([]);
 
     const [venueTemplate, setVenueTemplate] = useState(null);
     const [eventSeats, setEventSeats] = useState([]);
@@ -65,6 +66,7 @@ const EventDetails = () => {
 
             if (eventRes.success) {
                 setEvent(eventRes.data);
+                setShowtimes(Array.isArray(eventRes.data?.showtimes) ? eventRes.data.showtimes : []);
                 fetchSeatMapData(eventRes.data.venue_id, eventId);
             } else {
                 setError('Không tìm thấy thông tin sự kiện');
@@ -157,6 +159,19 @@ const EventDetails = () => {
     }
 
     const statusConfig = getStatusConfig(event.status);
+    const normalizedShowtimes = (Array.isArray(showtimes) && showtimes.length > 0
+        ? showtimes
+        : [{
+            start_datetime: event.start_datetime,
+            end_datetime: event.end_datetime,
+            venue: event.venue,
+            status: event.status,
+        }]).slice().sort(
+            (a, b) => new Date((a.start_datetime || a.StartDateTime || 0)).getTime()
+                - new Date((b.start_datetime || b.StartDateTime || 0)).getTime()
+        );
+    const firstShowtime = normalizedShowtimes[0];
+    const lastShowtime = normalizedShowtimes[normalizedShowtimes.length - 1];
 
     return (
         <div>
@@ -260,6 +275,41 @@ const EventDetails = () => {
                             </Row>
                         </Card>
 
+
+                        <Card title={`SUẤT DIỄN (${normalizedShowtimes.length})`} headStyle={{ fontSize: 13, color: '#8c8c8c' }}>
+                            <List
+                                dataSource={normalizedShowtimes}
+                                renderItem={(slot, index) => {
+                                    const startRaw = slot.start_datetime || slot.StartDateTime;
+                                    const endRaw = slot.end_datetime || slot.EndDateTime;
+                                    const venueName = slot.venue?.venue_name || event.venue?.venue_name || 'N/A';
+                                    const venueAddress = slot.venue?.address || event.venue?.address || '';
+                                    return (
+                                        <List.Item>
+                                            <Space direction="vertical" size={2} style={{ width: '100%' }}>
+                                                <Space style={{ justifyContent: 'space-between', width: '100%' }}>
+                                                    <Text strong>Suất {index + 1}</Text>
+                                                    <Tag color={getStatusConfig(slot.status || event.status).color}>
+                                                        {getStatusConfig(slot.status || event.status).label}
+                                                    </Tag>
+                                                </Space>
+                                                <Text type="secondary">
+                                                    {startRaw ? formatLocale(startRaw, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
+                                                </Text>
+                                                <Text type="secondary">
+                                                    {startRaw ? formatLocale(startRaw, { hour: '2-digit', minute: '2-digit' }) : '--'}
+                                                    {' - '}
+                                                    {endRaw ? formatLocale(endRaw, { hour: '2-digit', minute: '2-digit' }) : '--'}
+                                                </Text>
+                                                <Text type="secondary">{venueName}</Text>
+                                                {venueAddress && <Text type="secondary" style={{ fontSize: 12 }}>{venueAddress}</Text>}
+                                            </Space>
+                                        </List.Item>
+                                    );
+                                }}
+                            />
+                        </Card>
+
                         {/* Seat Map */}
                         <Card
                             title={
@@ -301,7 +351,7 @@ const EventDetails = () => {
                                     <Space><CalendarOutlined /> <Text strong>Ngày tổ chức</Text></Space>
                                 }>
                                     <Text type="secondary">
-                                        {event.start_datetime ? formatLocale(event.start_datetime, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
+                                        {firstShowtime?.start_datetime ? formatLocale(firstShowtime.start_datetime, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
                                     </Text>
                                 </Descriptions.Item>
 
@@ -309,9 +359,9 @@ const EventDetails = () => {
                                     <Space><ClockCircleOutlined /> <Text strong>Thời gian</Text></Space>
                                 }>
                                     <Text type="secondary">
-                                        {event.start_datetime ? formatLocale(event.start_datetime, { hour: '2-digit', minute: '2-digit' }) : '--'}
+                                        {firstShowtime?.start_datetime ? formatLocale(firstShowtime.start_datetime, { hour: '2-digit', minute: '2-digit' }) : '--'}
                                         {' - '}
-                                        {event.end_datetime ? formatLocale(event.end_datetime, { hour: '2-digit', minute: '2-digit' }) : '--'}
+                                        {firstShowtime?.end_datetime ? formatLocale(firstShowtime.end_datetime, { hour: '2-digit', minute: '2-digit' }) : '--'}
                                     </Text>
                                 </Descriptions.Item>
 

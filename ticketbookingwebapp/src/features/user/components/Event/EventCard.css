@@ -287,6 +287,11 @@
     color: rgba(255, 255, 255, 0.7) !important;
 }
 
+.showtime-count {
+    color: #2dc275 !important;
+    font-weight: 600;
+}
+
 .event-card-footer {
     margin-top: auto;
     padding-top: 10px;

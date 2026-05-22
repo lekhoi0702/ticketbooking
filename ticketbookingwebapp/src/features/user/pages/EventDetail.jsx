@@ -146,7 +146,7 @@ function EventDetail() {
                                 <div className="tab-content-wrapper">
                                     <ScheduleCalendar
                                         currentEvent={event}
-                                        schedules={event.schedule || []}
+                                        schedules={event.showtimes || event.schedule || []}
                                         onSelectSchedule={(eventId) => {
                                             // Navigate to seat selection page
                                             navigate(`/event/${eventId}/seats`, {

@@ -3,21 +3,14 @@
   <component name="ChangeListManager">
     <list default="true" id="8c437842-2924-438d-9951-03c68a551ea3" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/events.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/events.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/context/AuthContext.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/context/AuthContext.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/admin/pages/Banners.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/admin/pages/Banners.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/organizer/components/EventDateTime.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/organizer/components/EventDateTime.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/organizer/pages/EditEvent.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/organizer/pages/EditEvent.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/HeroBanner.css" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/HeroBanner.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/HeroBanner.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/HeroBanner.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/pages/Home.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/pages/Home.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/admin.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/admin.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/organizer/pages/EventDetails.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/organizer/pages/EventDetails.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/EventCard.css" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/EventCard.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/EventCard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/EventCard.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/EventHero.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/EventHero.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/ScheduleCalendar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/components/Event/ScheduleCalendar.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/pages/EventDetail.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/features/user/pages/EventDetail.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/event.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/event.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/organizer.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/services/api/organizer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/shared/constants/staticAds.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/shared/constants/staticAds.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/shared/hooks/useCreateEvent.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/shared/hooks/useCreateEvent.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ticketbookingwebapp/src/shared/utils/eventUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ticketbookingwebapp/src/shared/utils/eventUtils.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
