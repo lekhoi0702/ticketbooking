@@ -13,10 +13,8 @@ class Event(db.Model):
     end_date = db.Column("EndDate", db.DateTime, nullable=False)
     status = db.Column("Status", db.String(50), nullable=False, default="Active")
     organizer_id = db.Column("OrganizerID", db.Integer, db.ForeignKey("organizer.OrganizerID"), nullable=False)
-    featured_event = db.Column("FeaturedEvent", db.Boolean, nullable=False, default=False)
     image_url = db.Column("ImageURL", db.String(255), nullable=True)
     is_banner = db.Column("IsBanner", db.Boolean, nullable=False, default=False)
-    is_featured_event = db.Column("IsFeaturedEvent", db.Boolean, nullable=False, default=False)
     is_favorite = db.Column("IsFavorite", db.Boolean, nullable=False, default=False)
     create_date = db.Column("CreateDate", db.DateTime, nullable=False)
     update_date = db.Column("UpdateDate", db.DateTime, nullable=True)
@@ -36,10 +34,10 @@ class Event(db.Model):
             "EndDate": self.end_date.isoformat() if self.end_date else None,
             "Status": self.status,
             "OrganizerID": self.organizer_id,
-            "FeaturedEvent": self.featured_event,
+            "FeaturedEvent": False,
             "ImageURL": self.image_url,
             "IsBanner": self.is_banner,
-            "IsFeaturedEvent": self.is_featured_event,
+            "IsFeaturedEvent": False,
             "IsFavorite": self.is_favorite,
             "CreateDate": self.create_date.isoformat() if self.create_date else None,
             "UpdateDate": self.update_date.isoformat() if self.update_date else None,

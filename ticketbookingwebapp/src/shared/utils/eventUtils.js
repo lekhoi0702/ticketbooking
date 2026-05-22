@@ -11,6 +11,17 @@ export const parseLocalDateTime = (datetimeString) => {
     return d ? d.toDate() : null;
 };
 
+export const isFeaturedByTime = (event) => {
+    if (!event) return false;
+    const startRaw = event.start_datetime || event.start_date || event.StartDate;
+    const endRaw = event.end_datetime || event.end_date || event.EndDate;
+    const start = parseLocalDateTime(startRaw);
+    const end = parseLocalDateTime(endRaw);
+    if (!start || !end) return false;
+    const now = new Date();
+    return now >= start && now <= end;
+};
+
 // Default placeholder - using data URI to avoid external dependency
 const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450"%3E%3Crect fill="%23333" width="800" height="450"/%3E%3Ctext fill="%232DC275" font-family="Arial" font-size="32" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ETicketBooking%3C/text%3E%3C/svg%3E';
 
@@ -104,7 +115,7 @@ export const transformEvent = (event) => {
                 const minPrice = Math.min(...prices);
                 return minPrice === 0 ? 'Miễn phí' : `${minPrice.toLocaleString('vi-VN')}đ`;
             })(),
-            badge: event.is_featured ? 'Hot' : null
+            badge: isFeaturedByTime(event) ? 'Hot' : null
         };
     } catch (error) {
         console.error('Error transforming event:', error, event);

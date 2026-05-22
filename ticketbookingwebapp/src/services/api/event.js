@@ -1,5 +1,6 @@
 import { apiRequest } from './_compat';
 import { getStaticAdsByPosition } from '@shared/constants/staticAds';
+import { isFeaturedByTime } from '@shared/utils/eventUtils';
 
 const normalizeBool = (value) => value === true || value === 1 || value === '1';
 
@@ -70,7 +71,11 @@ const normalizeEvent = (event = {}) => {
         status: String(event.status || event.Status || 'DRAFT').toUpperCase(),
         banner_image_url: event.banner_image_url || event.image_url || event.ImageURL || null,
         image_url: event.image_url || event.ImageURL || event.banner_image_url || null,
-        is_featured: normalizeBool(event.is_featured || event.is_featured_event || event.featured_event || event.IsFeaturedEvent || event.FeaturedEvent),
+        is_featured: isFeaturedByTime({
+            start_datetime: start,
+            end_datetime: end,
+        }),
+        is_favorite: normalizeBool(event.is_favorite || event.IsFavorite),
         category,
         venue,
         organizer,
@@ -223,7 +228,7 @@ export const eventApi = {
     async getFeaturedEvents(limit = 10) {
         const res = await this.getEvents();
         if (!res.success) return res;
-        const featured = res.data.filter((e) => normalizeBool(e.is_featured_event) || normalizeBool(e.featured_event) || normalizeBool(e.is_featured));
+        const featured = res.data.filter((e) => isFeaturedByTime(e));
         return { success: true, data: featured.slice(0, limit), message: '' };
     },
 

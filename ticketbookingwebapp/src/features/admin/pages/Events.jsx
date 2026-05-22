@@ -41,7 +41,7 @@ const AdminEventsManagement = () => {
     filteredEvents,
     selectedRowKeys,
     handleSelectionChange,
-    toggleFeatured,
+    toggleFavorite,
     getStatusConfig,
     filterStatus,
     setFilterStatus,
@@ -71,6 +71,7 @@ const AdminEventsManagement = () => {
             width={80}
             height={45}
             src={getImageUrl(record.banner_image_url)}
+            fallback={getImageUrl(null)}
             style={{ borderRadius: 12, objectFit: 'cover' }}
             alt=""
           />
@@ -148,32 +149,28 @@ const AdminEventsManagement = () => {
         },
       },
       {
-        title: 'NỔI BẬT',
-        key: 'featured',
+        title: 'YÊU THÍCH',
+        key: 'favorite',
         align: 'center',
         render: (_, record) => (
-          <Tooltip title={record.is_featured ? 'Bỏ nổi bật' : 'Đánh dấu nổi bật'}>
+          <Tooltip title={record.is_favorite ? 'Bỏ yêu thích' : 'Đánh dấu yêu thích'}>
             <Button
               type="text"
               icon={
-                record.is_featured ? (
+                record.is_favorite ? (
                   <StarFilled style={{ color: '#faad14' }} />
                 ) : (
                   <StarOutlined />
                 )
               }
-              onClick={() => toggleFeatured(record)}
-              disabled={
-                !record.is_featured &&
-                !['PUBLISHED', 'ONGOING'].includes(record.status)
-              }
-              aria-label={record.is_featured ? 'Bỏ nổi bật' : 'Đánh dấu nổi bật'}
+              onClick={() => toggleFavorite(record)}
+              aria-label={record.is_favorite ? 'Bỏ yêu thích' : 'Đánh dấu yêu thích'}
             />
           </Tooltip>
         ),
       },
     ],
-    [getStatusConfig, toggleFeatured]
+    [getStatusConfig, toggleFavorite]
   );
 
   if (loading) {

@@ -85,20 +85,15 @@ const useEventManagement = () => {
     [fetchEvents]
   );
 
-  const toggleFeatured = useCallback(
+  const toggleFavorite = useCallback(
     async (event) => {
-      const allowed = ['PUBLISHED', 'ONGOING'];
-      if (!event.is_featured && !allowed.includes(event.status)) {
-        message.warning('Chỉ sự kiện công khai hoặc đang diễn ra mới có thể đánh dấu nổi bật');
-        return;
-      }
       try {
         const res = await api.adminUpdateEventStatus(event.event_id, {
-          is_featured: !event.is_featured,
+          is_favorite: !event.is_favorite,
         });
         if (res?.success) {
           message.success(
-            event.is_featured ? 'Đã bỏ đánh dấu nổi bật' : 'Đã đánh dấu sự kiện nổi bật'
+            event.is_favorite ? 'Đã bỏ đánh dấu yêu thích' : 'Đã đánh dấu sự kiện yêu thích'
           );
           fetchEvents();
         } else {
@@ -212,7 +207,7 @@ const useEventManagement = () => {
     handleSelectionChange,
     actionLoading,
     handleUpdateStatus,
-    toggleFeatured,
+    toggleFavorite,
     handleDeleteEvent,
     getStatusConfig,
     filterStatus,

@@ -1,5 +1,6 @@
 import { apiRequest, unsupported } from './_compat';
 import { STATIC_ADS } from '@shared/constants/staticAds';
+import { isFeaturedByTime } from '@shared/utils/eventUtils';
 
 const flattenAds = () => Object.values(STATIC_ADS).flat();
 const pickValue = (...values) => values.find((v) => v !== undefined && v !== null);
@@ -45,16 +46,11 @@ const normalizeEvent = (event) => ({
     banner_image_url: pickValue(event.banner_image_url, event.image_url, event.ImageURL, null),
     start_datetime: pickValue(event.start_datetime, event.start_date, event.StartDate, null),
     end_datetime: pickValue(event.end_datetime, event.end_date, event.EndDate, null),
-    is_featured: Boolean(
-        pickValue(
-            event.is_featured,
-            event.is_featured_event,
-            event.featured_event,
-            event.IsFeaturedEvent,
-            event.FeaturedEvent,
-            false
-        )
-    ),
+    is_featured: isFeaturedByTime({
+        start_datetime: pickValue(event.start_datetime, event.start_date, event.StartDate, null),
+        end_datetime: pickValue(event.end_datetime, event.end_date, event.EndDate, null),
+    }),
+    is_favorite: Boolean(pickValue(event.is_favorite, event.IsFavorite, false)),
     category: event.category || event.Category || null,
     venue: event.venue || event.Venue || null,
     ticket_types: Array.isArray(event.ticket_types)
@@ -213,7 +209,7 @@ export const adminApi = {
             method: 'PATCH',
             body: {
                 Status: payload.status ?? payload.Status,
-                IsFeaturedEvent: payload.is_featured ?? payload.is_featured_event ?? payload.IsFeaturedEvent,
+                IsFavorite: payload.is_favorite ?? payload.IsFavorite,
             },
         });
     },

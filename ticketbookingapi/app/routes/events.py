@@ -413,10 +413,8 @@ class EventListView(ApiMethodView):
             end_date=end_date,
             status=status,
             organizer_id=organizer.organizer_id,
-            featured_event=False,
             image_url=image_url,
             is_banner=False,
-            is_featured_event=False,
             is_favorite=False,
             create_date=datetime.utcnow(),
             update_date=None,
@@ -499,20 +497,17 @@ class EventDetailView(ApiMethodView):
             event.status = status
             has_changes = True
 
-        is_featured = data.get("IsFeaturedEvent")
-        if is_featured is None:
-            is_featured = data.get("is_featured_event")
-        if is_featured is None:
-            is_featured = data.get("is_featured")
+        is_favorite = data.get("IsFavorite")
+        if is_favorite is None:
+            is_favorite = data.get("is_favorite")
 
-        if is_featured is not None:
-            if isinstance(is_featured, str):
-                normalized = is_featured.strip().lower()
-                is_featured = normalized in ("1", "true", "yes", "on")
+        if is_favorite is not None:
+            if isinstance(is_favorite, str):
+                normalized = is_favorite.strip().lower()
+                is_favorite = normalized in ("1", "true", "yes", "on")
             else:
-                is_featured = bool(is_featured)
-            event.is_featured_event = is_featured
-            event.featured_event = is_featured
+                is_favorite = bool(is_favorite)
+            event.is_favorite = is_favorite
             has_changes = True
 
         event_name = data.get("EventName") or data.get("event_name")
