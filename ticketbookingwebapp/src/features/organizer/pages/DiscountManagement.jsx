@@ -58,6 +58,7 @@ const DiscountManagement = () => {
                 ...values,
                 code: values.code.toUpperCase(),
                 event_id: values.event_id,
+                discount_type: 'FIXED_AMOUNT',
                 start_date: startDate.format('YYYY-MM-DDTHH:mm:ss'),
                 end_date: endDate.format('YYYY-MM-DDTHH:mm:ss'),
             };
@@ -96,7 +97,7 @@ const DiscountManagement = () => {
         {
             title: 'Giảm giá',
             key: 'value',
-            render: (_, r) => r.discount_type === 'PERCENTAGE' ? `${r.value}%` : `${Number(r.value).toLocaleString()} đ`
+            render: (_, r) => `${Number(r.value).toLocaleString()} ₫`
         },
         { title: 'Áp dụng cho', dataIndex: 'event_name', key: 'event_name' },
         {
@@ -277,21 +278,19 @@ const DiscountManagement = () => {
                         </Select>
                     </Form.Item>
 
-                    <Space style={{ display: 'flex' }} align="baseline">
-                        <Form.Item name="discount_type" label="Loại giảm" initialValue="PERCENTAGE">
-                            <Select style={{ width: 120 }}>
-                                <Select.Option value="PERCENTAGE">Theo %</Select.Option>
-                                <Select.Option value="FIXED_AMOUNT">Số tiền</Select.Option>
-                            </Select>
-                        </Form.Item>
-                        <Form.Item name="value" label="Giá trị" rules={[{ required: true, message: 'Nhập giá trị' }]}>
-                            <InputNumber min={0} style={{ width: 150 }} />
-                        </Form.Item>
-                    </Space>
+                    <Form.Item name="value" label="Số tiền giảm (₫)" rules={[{ required: true, message: 'Nhập số tiền giảm' }]}>
+                        <InputNumber 
+                            min={0} 
+                            style={{ width: '100%' }} 
+                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                            parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                            placeholder="Vd: 50000"
+                        />
+                    </Form.Item>
 
                     <Form.Item name="date_range" label="Thời gian áp dụng" rules={[{ required: true, message: 'Chọn thời gian' }]}>
                         <RangePicker showTime style={{ width: '100%' }} format="DD/MM/YYYY HH:mm" />
-                    </Form.Item>              
+                    </Form.Item>    
 
                     <Button type="primary" htmlType="submit" block loading={submitting} size="large">
                         {editingDiscount ? 'CẬP NHẬT MÃ GIẢM GIÁ' : 'TẠO MÃ GIẢM GIÁ'}
