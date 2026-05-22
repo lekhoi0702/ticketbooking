@@ -1,27 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-    Card,
-    Button,
-    Input,
-    Typography,
-    Space,
-    Alert,
-    Modal,
-    Tooltip,
-    message,
-    Divider
+  Card,
+  Button,
+  Input,
+  Typography,
+  Space,
+  Alert,
+  Modal,
+  Tooltip,
+  message,
+  Divider,
+  Select
 } from 'antd';
 import {
-    PlusOutlined,
-    SearchOutlined,
-    ReloadOutlined,
-    EditOutlined,
-    EyeOutlined,
-    ShoppingOutlined,
-    DeleteOutlined,
-    CloseCircleOutlined
+  PlusOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  EditOutlined,
+  EyeOutlined,
+  ShoppingOutlined,
+  DeleteOutlined,
+  CloseCircleOutlined
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import EventTable from '@features/organizer/components/EventTable';
 import DeleteEventModal from '@features/organizer/components/DeleteEventModal';
 import { useEventList } from '@shared/hooks/useEventList';
@@ -29,163 +31,199 @@ import { useEventList } from '@shared/hooks/useEventList';
 const { Text, Title } = Typography;
 
 const EventList = () => {
-    const navigate = useNavigate();
-    const {
-        events,
-        loading,
-        error,
-        handleCancelApproval,
-        fetchEvents,
-        handleDeleteClick,
-        handleDeleteConfirm,
-        handleBulkDelete,
-        showDeleteModal,
-        setShowDeleteModal,
-        eventToDelete,
-        setEventToDelete,
-        deleting
-    } = useEventList();
+  const navigate = useNavigate();
+  const {
+    events,
+    loading,
+    error,
+    handleCancelApproval,
+    fetchEvents,
+    handleDeleteClick,
+    handleDeleteConfirm,
+    handleBulkDelete,
+    showDeleteModal,
+    setShowDeleteModal,
+    eventToDelete,
+    setEventToDelete,
+    deleting
+  } = useEventList();
 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(null);
 
-    const filteredEvents = events.filter(event =>
-        event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const monthOptions = useMemo(
+    () => Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `Tháng ${i + 1}` })),
+    []
+  );
 
-    const selectedEvents = events.filter(e => selectedRowKeys.includes(e.event_id));
-    const firstSelected = selectedEvents[0];
+  const yearOptions = useMemo(() => {
+    const current = dayjs().year();
+    return [current - 2, current - 1, current, current + 1].map((y) => ({ value: y, label: `Năm ${y}` }));
+  }, []);
 
-    return (
-        <div className="event-list-page">
-            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'flex-end' }}>
-                <Space>
-                    <Link to="/organizer/create-event">
-                        <Button type="primary" icon={<PlusOutlined />} disabled={loading || deleting}>
-                            Tạo sự kiện mới
-                        </Button>
-                    </Link>
-                    <Button icon={<ReloadOutlined />} onClick={() => { fetchEvents(); setSelectedRowKeys([]); }} disabled={loading || deleting}>
-                        Làm mới
-                    </Button>
-                </Space>
-            </div>
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.event_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-            {/* Selection Toolbar */}
-            {selectedRowKeys.length > 0 && firstSelected && (
-                <Card
-                    style={{
-                        marginBottom: 16,
-                        background: '#f6ffed',
-                        border: '1px solid #b7eb8f',
-                        borderRadius: 8
-                    }}
-                    styles={{ body: { padding: '12px 24px' } }}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Space size={16}>
-                            <Text strong>Đã chọn sự kiện: {firstSelected.event_name}</Text>
-                            <Divider type="vertical" />
-                            <Space size={8}>
-                                {firstSelected.status === 'DRAFT' ? (
-                                    <Tooltip title="Chỉnh sửa thông tin sự kiện">
-                                        <Button
-                                            type="primary"
-                                            icon={<EditOutlined />}
-                                            onClick={() => navigate(`/organizer/edit-event/${firstSelected.event_id}`)}
-                                        >Sửa sự kiện</Button>
-                                    </Tooltip>
-                                ) : (
-                                    ['PENDING_APPROVAL', 'PUBLISHED'].includes(firstSelected.status) && (
-                                        <Tooltip title="Chuyển về bản nháp để có thể chỉnh sửa">
-                                            <Button
-                                                icon={<ReloadOutlined />}
-                                                onClick={() => handleCancelApproval(firstSelected.event_id)}
-                                                loading={loading}
-                                            >Lấy về</Button>
-                                        </Tooltip>
-                                    )
-                                )}
-                                <Tooltip title="Xem chi tiết">
-                                    <Button
-                                        icon={<EyeOutlined />}
-                                        onClick={() => navigate(`/organizer/event/${firstSelected.event_id}`)}
-                                    >Xem</Button>
-                                </Tooltip>
-                                <Tooltip title="Đơn hàng">
-                                    <Button
-                                        icon={<ShoppingOutlined />}
-                                        onClick={() => navigate(`/organizer/event/${firstSelected.event_id}/orders`)}
-                                    >Đơn hàng</Button>
-                                </Tooltip>
-                                {firstSelected.status === 'DRAFT' && (
-                                    <Button
-                                        danger
-                                        icon={<DeleteOutlined />}
-                                        onClick={() => handleDeleteClick(firstSelected)}
-                                        loading={deleting}
-                                    >Xóa</Button>
-                                )}
-                            </Space>
-                        </Space>
-                        <Button type="text" onClick={() => setSelectedRowKeys([])}>Hủy chọn</Button>
-                    </div>
-                </Card>
-            )}
+    const eventDate = dayjs(event.start_datetime || event.start_date || null);
+    const matchesMonth = selectedMonth ? (eventDate.isValid() && eventDate.month() + 1 === selectedMonth) : true;
+    const matchesYear = selectedYear ? (eventDate.isValid() && eventDate.year() === selectedYear) : true;
 
-            {error && (
-                <Alert
-                    message="Lỗi"
-                    description={error}
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 24 }}
-                />
-            )}
+    return matchesSearch && matchesMonth && matchesYear;
+  });
 
-            <Card
-                styles={{ body: { padding: 0 } }}
-                extra={
-                    <Text type="secondary">
-                        Tổng số: <Text strong style={{ color: '#2DC275' }}>{filteredEvents.length}</Text> sự kiện
-                    </Text>
-                }
-                title={
-                    <Input
-                        prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ width: 300 }}
-                        allowClear
-                        placeholder="Tìm kiếm sự kiện..."
-                    />
-                }
-            >
-                <div style={{ padding: '0 0px' }}>
-                    <EventTable
-                        events={filteredEvents}
-                        selectedRowKeys={selectedRowKeys}
-                        onSelectionChange={setSelectedRowKeys}
-                        loading={loading || deleting}
-                    />
-                </div>
-            </Card>
+  const selectedEvents = events.filter(e => selectedRowKeys.includes(e.event_id));
+  const firstSelected = selectedEvents[0];
 
-            {/* Delete Modal */}
-            <DeleteEventModal
-                open={showDeleteModal}
-                onCancel={() => setShowDeleteModal(false)}
-                onConfirm={async () => {
-                    await handleDeleteConfirm();
-                    setSelectedRowKeys([]);
-                }}
-                loading={deleting}
-                event={eventToDelete}
-                setEvent={setEventToDelete}
+  return (
+    <div className="event-list-page">
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'flex-end' }}>
+        <Space>
+          <Link to="/organizer/create-event">
+            <Button type="primary" icon={<PlusOutlined />} disabled={loading || deleting}>
+              Tạo sự kiện mới
+            </Button>
+          </Link>
+          <Button icon={<ReloadOutlined />} onClick={() => { fetchEvents(); setSelectedRowKeys([]); }} disabled={loading || deleting}>
+            Làm mới
+          </Button>
+        </Space>
+      </div>
+
+      {/* Selection Toolbar */}
+      {selectedRowKeys.length > 0 && firstSelected && (
+        <Card
+          style={{
+            marginBottom: 16,
+            background: '#f6ffed',
+            border: '1px solid #b7eb8f',
+            borderRadius: 8
+          }}
+          styles={{ body: { padding: '12px 24px' } }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Space size={16}>
+              <Text strong>Đã chọn sự kiện: {firstSelected.event_name}</Text>
+              <Divider type="vertical" />
+              <Space size={8}>
+                {firstSelected.status === 'DRAFT' ? (
+                  <Tooltip title="Chỉnh sửa thông tin sự kiện">
+                    <Button
+                      type="primary"
+                      icon={<EditOutlined />}
+                      onClick={() => navigate(`/organizer/edit-event/${firstSelected.event_id}`)}
+                    >Sửa sự kiện</Button>
+                  </Tooltip>
+                ) : (
+                  ['PENDING_APPROVAL', 'PUBLISHED'].includes(firstSelected.status) && (
+                    <Tooltip title="Chuyển về bản nháp để có thể chỉnh sửa">
+                      <Button
+                        icon={<ReloadOutlined />}
+                        onClick={() => handleCancelApproval(firstSelected.event_id)}
+                        loading={loading}
+                      >Lấy về</Button>
+                    </Tooltip>
+                  )
+                )}
+                <Tooltip title="Xem chi tiết">
+                  <Button
+                    icon={<EyeOutlined />}
+                    onClick={() => navigate(`/organizer/event/${firstSelected.event_id}`)}
+                  >Xem</Button>
+                </Tooltip>
+                <Tooltip title="Đơn hàng">
+                  <Button
+                    icon={<ShoppingOutlined />}
+                    onClick={() => navigate(`/organizer/event/${firstSelected.event_id}/orders`)}
+                  >Đơn hàng</Button>
+                </Tooltip>
+                {firstSelected.status === 'DRAFT' && (
+                  <Button
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDeleteClick(firstSelected)}
+                    loading={deleting}
+                  >Xóa</Button>
+                )}
+              </Space>
+            </Space>
+            <Button type="text" onClick={() => setSelectedRowKeys([])}>Hủy chọn</Button>
+          </div>
+        </Card>
+      )}
+
+      {error && (
+        <Alert
+          message="Lỗi"
+          description={error}
+          type="error"
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
+      )}
+
+      <Card
+        styles={{ body: { padding: 0 } }}
+        extra={
+          <Text type="secondary">
+            Tổng số: <Text strong style={{ color: '#2DC275' }}>{filteredEvents.length}</Text> sự kiện
+          </Text>
+        }
+        title={
+          <Space>
+            <Input
+              prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: 300 }}
+              allowClear
+              placeholder="Tìm kiếm sự kiện..."
             />
-
+            <Select
+              value={selectedMonth}
+              onChange={setSelectedMonth}
+              options={monthOptions}
+              style={{ width: 140 }}
+              placeholder="Tất cả tháng"
+              allowClear
+            />
+            <Select
+              value={selectedYear}
+              onChange={setSelectedYear}
+              options={yearOptions}
+              style={{ width: 120 }}
+              placeholder="Tất cả năm"
+              allowClear
+            />
+          </Space>
+        }
+      >
+        <div style={{ padding: '0 0px' }}>
+          <EventTable
+            events={filteredEvents}
+            selectedRowKeys={selectedRowKeys}
+            onSelectionChange={setSelectedRowKeys}
+            loading={loading || deleting}
+          />
         </div>
-    );
+      </Card>
+
+      {/* Delete Modal */}
+      <DeleteEventModal
+        open={showDeleteModal}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={async () => {
+          await handleDeleteConfirm();
+          setSelectedRowKeys([]);
+        }}
+        loading={deleting}
+        event={eventToDelete}
+        setEvent={setEventToDelete}
+      />
+
+    </div>
+  );
 };
 
 export default EventList;

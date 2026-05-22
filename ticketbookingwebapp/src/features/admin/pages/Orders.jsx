@@ -16,6 +16,7 @@ import {
     Row,
     Col
 } from 'antd';
+import { DatePicker } from 'antd';
 import {
     SearchOutlined,
     EyeOutlined,
@@ -33,8 +34,10 @@ import AdminPortal from '@shared/components/AdminPortal';
 import AdminLoadingScreen from '@features/admin/components/AdminLoadingScreen';
 import AdminTable from '@features/admin/components/AdminTable';
 import AdminToolbar from '@features/admin/components/AdminToolbar';
+import dayjs from 'dayjs';
 
 const { Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const AdminOrdersManagement = () => {
     const [loading, setLoading] = useState(true);
@@ -45,6 +48,7 @@ const AdminOrdersManagement = () => {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [detailVisible, setDetailVisible] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [dateRange, setDateRange] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -139,7 +143,12 @@ const AdminOrdersManagement = () => {
 
         const matchesEvent = selectedEventId ? order.event_id === selectedEventId : true;
 
-        return matchesSearch && matchesEvent;
+        const matchesDate = dateRange && dateRange[0] && dateRange[1]
+            ? dayjs(order.created_at).isAfter(dateRange[0].startOf('day').subtract(1, 'ms')) &&
+            dayjs(order.created_at).isBefore(dateRange[1].endOf('day').add(1, 'ms'))
+            : true;
+
+        return matchesSearch && matchesEvent && matchesDate;
     });
 
     const getStatusConfig = (status) => {
@@ -224,7 +233,7 @@ const AdminOrdersManagement = () => {
         <div style={{ paddingTop: 0 }}>
             <Card style={{ marginBottom: 24, borderRadius: 12 }}>
                 <Row gutter={16}>
-                    <Col span={12}>
+                    <Col span={8}>
                         <div style={{ marginBottom: 8, fontSize: 16, color: '#8c8c8c', fontWeight: 600 }}>LỌC THEO SỰ KIỆN</div>
                         <Select
                             placeholder="Tất cả sự kiện"
@@ -237,7 +246,18 @@ const AdminOrdersManagement = () => {
                             size="large"
                         />
                     </Col>
-                    <Col span={12}>
+                    <Col span={8}>
+                        <div style={{ marginBottom: 8, fontSize: 16, color: '#8c8c8c', fontWeight: 600 }}>LỌC THEO NGÀY ĐẶT</div>
+                        <RangePicker
+                            style={{ width: '100%' }}
+                            size="large"
+                            format="DD/MM/YYYY"
+                            placeholder={['Từ ngày', 'Đến ngày']}
+                            onChange={(dates) => setDateRange(dates)}
+                            allowClear
+                        />
+                    </Col>
+                    <Col span={8}>
                         <div style={{ marginBottom: 8, fontSize: 16, color: '#8c8c8c', fontWeight: 600 }}>TÌM KIẾM CHI TIẾT</div>
                         <Input
                             prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}

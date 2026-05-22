@@ -290,12 +290,8 @@ const DiscountManagement = () => {
                     </Space>
 
                     <Form.Item name="date_range" label="Thời gian áp dụng" rules={[{ required: true, message: 'Chọn thời gian' }]}>
-                        <RangePicker showTime style={{ width: '100%' }} />
-                    </Form.Item>
-
-                    <Form.Item name="usage_limit" label="Giới hạn số lần dùng (0 = Không giới hạn)" initialValue={0}>
-                        <InputNumber min={0} style={{ width: '100%' }} />
-                    </Form.Item>
+                        <RangePicker showTime style={{ width: '100%' }} format="DD/MM/YYYY HH:mm" />
+                    </Form.Item>              
 
                     <Button type="primary" htmlType="submit" block loading={submitting} size="large">
                         {editingDiscount ? 'CẬP NHẬT MÃ GIẢM GIÁ' : 'TẠO MÃ GIẢM GIÁ'}
