@@ -13,7 +13,7 @@ export const ADMIN_MENU_ITEMS = [
     { key: '/admin/events', icon: CalendarOutlined, label: 'Sự kiện' },
     { key: '/admin/orders', icon: FileTextOutlined, label: 'Đơn hàng' },
     { key: '/admin/statistics', icon: BarChartOutlined, label: 'Thống kê' },
-    { key: '/admin/discounts', icon: PercentageOutlined, label: 'Mã tham gia' },
+    { key: '/admin/discounts', icon: PercentageOutlined, label: 'Mã giảm giá' },
     { key: '/admin/banners', icon: FileTextOutlined, label: 'Quản lý Banner' },
 ];
 

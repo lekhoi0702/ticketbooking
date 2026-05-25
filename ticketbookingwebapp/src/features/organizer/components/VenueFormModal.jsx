@@ -1,23 +1,23 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, message, AutoComplete, Alert } from 'antd';
 import VenueLocationSearch from './VenueLocationSearch';
 import { api } from '@services/api';
 import { organizerApi } from '@services/api/organizer';
 
 const vietnameseCities = [
-    'Ha Noi', 'Ho Chi Minh', 'Da Nang', 'Hai Phong', 'Can Tho',
-    'An Giang', 'Ba Ria - Vung Tau', 'Bac Giang', 'Bac Kan', 'Bac Lieu',
-    'Bac Ninh', 'Ben Tre', 'Binh Dinh', 'Binh Duong', 'Binh Phuoc',
-    'Binh Thuan', 'Ca Mau', 'Cao Bang', 'Dak Lak', 'Dak Nong',
-    'Dien Bien', 'Dong Nai', 'Dong Thap', 'Gia Lai', 'Ha Giang',
-    'Ha Nam', 'Ha Tinh', 'Hai Duong', 'Hau Giang', 'Hoa Binh',
-    'Hung Yen', 'Khanh Hoa', 'Kien Giang', 'Kon Tum', 'Lai Chau',
-    'Lam Dong', 'Lang Son', 'Lao Cai', 'Long An', 'Nam Dinh',
-    'Nghe An', 'Ninh Binh', 'Ninh Thuan', 'Phu Tho', 'Phu Yen',
-    'Quang Binh', 'Quang Nam', 'Quang Ngai', 'Quang Ninh', 'Quang Tri',
-    'Soc Trang', 'Son La', 'Tay Ninh', 'Thai Binh', 'Thai Nguyen',
-    'Thanh Hoa', 'Thua Thien Hue', 'Tien Giang', 'Tra Vinh',
-    'Tuyen Quang', 'Vinh Long', 'Vinh Phuc', 'Yen Bai',
+    'Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ',
+    'An Giang', 'Bà Rịa - Vũng Tàu', 'Bắc Giang', 'Bắc Kạn', 'Bạc Liêu',
+    'Bắc Ninh', 'Bến Tre', 'Bình Định', 'Bình Dương', 'Bình Phước',
+    'Bình Thuận', 'Cà Mau', 'Cao Bằng', 'Đắk Lắk', 'Đắk Nông',
+    'Điện Biên', 'Đồng Nai', 'Đồng Tháp', 'Gia Lai', 'Hà Giang',
+    'Hà Nam', 'Hà Tĩnh', 'Hải Dương', 'Hậu Giang', 'Hòa Bình',
+    'Hưng Yên', 'Khánh Hòa', 'Kiên Giang', 'Kon Tum', 'Lai Châu',
+    'Lâm Đồng', 'Lạng Sơn', 'Lào Cai', 'Long An', 'Nam Định',
+    'Nghệ An', 'Ninh Bình', 'Ninh Thuận', 'Phú Thọ', 'Phú Yên',
+    'Quảng Bình', 'Quảng Nam', 'Quảng Ngãi', 'Quảng Ninh', 'Quảng Trị',
+    'Sóc Trăng', 'Sơn La', 'Tây Ninh', 'Thái Bình', 'Thái Nguyên',
+    'Thanh Hóa', 'Thừa Thiên Huế', 'Tiền Giang', 'Trà Vinh',
+    'Tuyên Quang', 'Vĩnh Long', 'Vĩnh Phúc', 'Yên Bái',
 ];
 
 const VenueFormModal = ({ visible, onCancel, onSuccess, editingVenue, user }) => {
@@ -78,27 +78,27 @@ const VenueFormModal = ({ visible, onCancel, onSuccess, editingVenue, user }) =>
                     status: editingVenue.status || 'ACTIVE',
                 });
                 if (!updateRes.success) {
-                    message.error(updateRes.message || 'Cap nhat dia diem that bai');
+                    message.error(updateRes.message || 'Cập nhật địa điểm thất bại');
                     return;
                 }
-                message.success('Cap nhat dia diem thanh cong');
+                message.success('Cập nhật địa điểm thành công');
             } else {
                 const createRes = await api.createVenue({
                     ...values,
                     manager_id: user?.user_id,
                 });
                 if (!createRes.success) {
-                    message.error(createRes.message || 'Tao dia diem that bai');
+                    message.error(createRes.message || 'Tạo địa điểm thất bại');
                     return;
                 }
-                message.success('Tao dia diem moi thanh cong');
+                message.success('Tạo địa điểm mới thành công');
             }
 
             await onSuccess?.();
             onCancel?.();
         } catch (error) {
             if (error?.errorFields?.length) return;
-            message.error(error?.message || 'Co loi xay ra');
+            message.error(error?.message || 'Có lỗi xảy ra');
         } finally {
             setSaving(false);
         }
@@ -108,7 +108,7 @@ const VenueFormModal = ({ visible, onCancel, onSuccess, editingVenue, user }) =>
 
     return (
         <Modal
-            title={editingVenue ? 'Cap nhat dia diem' : 'Tao dia diem moi'}
+            title={editingVenue ? 'Cập nhật địa điểm' : 'Tạo địa điểm mới'}
             open={visible}
             onOk={handleOk}
             onCancel={onCancel}
@@ -118,8 +118,8 @@ const VenueFormModal = ({ visible, onCancel, onSuccess, editingVenue, user }) =>
         >
             {hasPublishedEvents && (
                 <Alert
-                    message="Khong the sua dia diem nay"
-                    description={`Dia diem dang duoc su dung boi ${publishedEventCount} su kien dang cong bo.`}
+                    message="Không thể sửa địa điểm này"
+                    description={`Địa điểm đang được sử dụng bởi ${publishedEventCount} sự kiện đang được công bố.`}
                     type="warning"
                     showIcon
                     style={{ marginBottom: 16 }}
@@ -128,20 +128,20 @@ const VenueFormModal = ({ visible, onCancel, onSuccess, editingVenue, user }) =>
             <Form form={form} layout="vertical" disabled={hasPublishedEvents || loadingVenueDetails}>
                 <Form.Item
                     name="venue_name"
-                    label="Ten dia diem"
-                    rules={[{ required: true, message: 'Vui long nhap ten dia diem' }]}
+                    label="Tên địa điểm"
+                    rules={[{ required: true, message: 'Vui lòng nhập tên địa điểm' }]}
                 >
-                    <Input placeholder="Vi du: Nha hat lon Ha Noi" />
+                    <Input placeholder="Ví dụ: Nhà hát lớn Hà Nội" />
                 </Form.Item>
 
                 <Form.Item
                     name="city"
-                    label="Thanh pho/Tinh"
-                    rules={[{ required: true, message: 'Vui long chon thanh pho' }]}
+                    label="Thành phố / Tỉnh"
+                    rules={[{ required: true, message: 'Vui lòng chọn thành phố' }]}
                 >
                     <AutoComplete
                         options={cityOptions}
-                        placeholder="Chon hoac nhap ten thanh pho/tinh"
+                        placeholder="Chọn hoặc nhập tên thành phố/tỉnh"
                         filterOption={(inputValue, option) =>
                             option.value.toUpperCase().includes(inputValue.toUpperCase())
                         }
