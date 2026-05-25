@@ -163,56 +163,91 @@ export const organizerApi = {
         const eventById = Object.fromEntries(events.map((e) => [e.event_id, e]));
         const paidOrders = orders.filter((o) => o.order_status === 'PAID');
 
-        const eventRevenueMap = {};
-        paidOrders.forEach((order) => {
+        // Revenue per event
+     const eventRevenueMap = {};
+   paidOrders.forEach((order) => {
+        const event = eventById[order.event_id];
+            if (!event) return;
+if (!eventRevenueMap[order.event_id]) {
+              eventRevenueMap[order.event_id] = {
+              event_id: order.event_id,
+        event_name: event.event_name || `Event #${order.event_id}`,
+        paid_orders: 0,
+            revenue: 0,
+  };
+     }
+            eventRevenueMap[order.event_id].paid_orders += 1;
+          eventRevenueMap[order.event_id].revenue += Number(order.total_amount || 0);
+        });
+
+        // Sold tickets per event (from all orders regardless of status)
+  const eventTicketSoldMap = {};
+        orders.forEach((order) => {
             const event = eventById[order.event_id];
             if (!event) return;
-            if (!eventRevenueMap[order.event_id]) {
-                eventRevenueMap[order.event_id] = {
-                    event_id: order.event_id,
-                    event_name: event.event_name || `Event #${order.event_id}`,
-                    paid_orders: 0,
-                    revenue: 0,
-                };
-            }
-            eventRevenueMap[order.event_id].paid_orders += 1;
-            eventRevenueMap[order.event_id].revenue += Number(order.total_amount || 0);
+   if (!eventTicketSoldMap[order.event_id]) {
+    eventTicketSoldMap[order.event_id] = {
+  event_id: order.event_id,
+               event_name: event.event_name || `Event #${order.event_id}`,
+    sold_tickets: 0,
+           total_capacity: (event.ticket_types || []).reduce((sum, tt) => sum + Number(tt.quantity || 0), 0),
+          };
+       }
+     eventTicketSoldMap[order.event_id].sold_tickets += Number(order.tickets_count || 0);
         });
 
-        const byEventName = {};
+  // Compute fill_rate and build best_selling_events
+      const best_selling_events = Object.values(eventTicketSoldMap)
+            .map((item) => ({
+           ...item,
+     fill_rate: item.total_capacity > 0
+     ? Math.round((item.sold_tickets / item.total_capacity) * 100)
+          : 0,
+            }))
+    .sort((a, b) => b.sold_tickets - a.sold_tickets);
+
+    // Revenue events sorted by revenue desc
+     const revenue_events = Object.values(eventRevenueMap)
+        .sort((a, b) => b.revenue - a.revenue);
+
+   const byEventName = {};
         events.forEach((event) => {
-            const key = String(event.event_name || '').trim().toLowerCase();
-            if (!key) return;
-            if (!byEventName[key]) {
-                byEventName[key] = {
-                    event_name: event.event_name,
-                    show_count: 0,
-                    latest_start_datetime: event.start_datetime || event.start_date || null,
-                };
-            }
-            byEventName[key].show_count += 1;
-            const current = new Date(byEventName[key].latest_start_datetime || 0).getTime();
+      const key = String(event.event_name || '').trim().toLowerCase();
+     if (!key) return;
+      if (!byEventName[key]) {
+       byEventName[key] = {
+     event_name: event.event_name,
+ show_count: 0,
+   latest_start_datetime: event.start_datetime || event.start_date || null,
+    };
+     }
+       byEventName[key].show_count += 1;
+          const current = new Date(byEventName[key].latest_start_datetime || 0).getTime();
             const candidate = new Date(event.start_datetime || event.start_date || 0).getTime();
-            if (Number.isFinite(candidate) && candidate > current) {
+  if (Number.isFinite(candidate) && candidate > current) {
                 byEventName[key].latest_start_datetime = event.start_datetime || event.start_date || null;
-            }
+  }
         });
         const multiShowEvents = Object.values(byEventName)
-            .filter((x) => x.show_count > 1)
-            .sort((a, b) => b.show_count - a.show_count);
+    .filter((x) => x.show_count > 1)
+     .sort((a, b) => b.show_count - a.show_count);
 
         return {
-            success: true,
-            data: {
-                total_events: events.length,
-                total_revenue: paidOrders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0),
-                total_tickets_sold: orders.reduce((sum, o) => sum + Number(o.tickets_count || 0), 0),
-                recent_orders: orders.slice(0, 10),
-                event_revenue_stats: Object.values(eventRevenueMap).sort((a, b) => b.revenue - a.revenue),
-                multi_show_events: multiShowEvents,
-            },
-            message: '',
-        };
+          success: true,
+   data: {
+            total_events: events.length,
+      total_revenue: paidOrders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0),
+                total_tickets_sold: paidOrders.reduce((sum, o) => sum + Number(o.tickets_count || 0), 0),
+   refunded_tickets: orders.filter((o) => ['CANCELLED', 'REFUNDED'].includes(o.order_status))
+         .reduce((sum, o) => sum + Number(o.tickets_count || 0), 0),
+   recent_orders: orders.slice(0, 10),
+      event_revenue_stats: revenue_events,
+                best_selling_events,
+     revenue_events,
+         multi_show_events: multiShowEvents,
+     },
+ message: '',
+  };
     },
 
     async getOrganizerEvents(managerId = 1) {
